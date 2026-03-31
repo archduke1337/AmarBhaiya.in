@@ -47,7 +47,7 @@ export default async function CommunityPage() {
 
       <section className="border border-border p-5 md:p-6 space-y-4">
         <h2 className="text-xl">Start a discussion</h2>
-        <form className="space-y-3" onSubmit={(event) => event.preventDefault()}>
+        <form className="space-y-3">
           <input
             type="text"
             placeholder="Thread title"

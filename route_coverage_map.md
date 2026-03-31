@@ -6,8 +6,8 @@ Source of truth: implementation_plan.md + current src/app tree
 ## Coverage Snapshot
 
 - Planned page routes: 33
-- Implemented page routes: 14
-- Missing page routes: 19
+- Implemented page routes: 33
+- Missing page routes: 0
 - Planned API routes: 9
 - Implemented API routes: 9
 - Missing API routes: 0
@@ -31,23 +31,6 @@ Source of truth: implementation_plan.md + current src/app tree
 - `src/app/(dashboard)/app/courses/[id]/page.tsx` -> `/app/courses/[id]`
 - `src/app/(dashboard)/app/community/page.tsx` -> `/app/community`
 - `src/app/(dashboard)/app/profile/[id]/page.tsx` -> `/app/profile/[id]`
-
-### Additional Implemented (Not in original target table)
-
-- `src/app/(dashboard)/app/courses/page.tsx` -> `/app/courses`
-
-## Missing Page Routes
-
-### Public Group (`(marketing)` target)
-
-- None
-
-### Student App Group (`(dashboard)/app`)
-
-- None
-
-### Instructor Group (`(dashboard)/instructor`)
-
 - `src/app/(dashboard)/instructor/page.tsx` -> `/instructor`
 - `src/app/(dashboard)/instructor/courses/page.tsx` -> `/instructor/courses`
 - `src/app/(dashboard)/instructor/courses/new/page.tsx` -> `/instructor/courses/new`
@@ -55,16 +38,10 @@ Source of truth: implementation_plan.md + current src/app tree
 - `src/app/(dashboard)/instructor/courses/[id]/curriculum/page.tsx` -> `/instructor/courses/[id]/curriculum`
 - `src/app/(dashboard)/instructor/students/page.tsx` -> `/instructor/students`
 - `src/app/(dashboard)/instructor/live/page.tsx` -> `/instructor/live`
-
-### Moderator Group (`(dashboard)/moderator`)
-
 - `src/app/(dashboard)/moderator/page.tsx` -> `/moderator`
 - `src/app/(dashboard)/moderator/reports/page.tsx` -> `/moderator/reports`
 - `src/app/(dashboard)/moderator/students/page.tsx` -> `/moderator/students`
 - `src/app/(dashboard)/moderator/community/page.tsx` -> `/moderator/community`
-
-### Admin Group (`(dashboard)/admin`)
-
 - `src/app/(dashboard)/admin/page.tsx` -> `/admin`
 - `src/app/(dashboard)/admin/users/page.tsx` -> `/admin/users`
 - `src/app/(dashboard)/admin/courses/page.tsx` -> `/admin/courses`
@@ -73,6 +50,14 @@ Source of truth: implementation_plan.md + current src/app tree
 - `src/app/(dashboard)/admin/live/page.tsx` -> `/admin/live`
 - `src/app/(dashboard)/admin/moderation/page.tsx` -> `/admin/moderation`
 - `src/app/(dashboard)/admin/audit/page.tsx` -> `/admin/audit`
+
+### Additional Implemented (Not in original target table)
+
+- `src/app/(dashboard)/app/courses/page.tsx` -> `/app/courses`
+
+## Missing Page Routes
+
+- None
 
 ### Framework Routes
 
@@ -112,6 +97,7 @@ Source of truth: implementation_plan.md + current src/app tree
 - Added dashboard shell with authenticated sidebar/header layout
 - Added student learning routes: /app/courses/[id], /app/community, /app/profile/[id]
 - Added course player foundation components and actions for enrollment/progress
+- Added role route sets for instructor (7), moderator (4), and admin (8)
 
 ## Phase-Aligned Execution Checklist
 
@@ -137,9 +123,9 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Phase D: Role Dashboards (Medium Priority)
 
-- [ ] Build instructor route set (7 routes)
-- [ ] Build moderator route set (4 routes)
-- [ ] Build admin route set (8 routes)
+- [x] Build instructor route set (7 routes)
+- [x] Build moderator route set (4 routes)
+- [x] Build admin route set (8 routes)
 
 ### Phase E: Framework Safety Net (Medium Priority)
 
