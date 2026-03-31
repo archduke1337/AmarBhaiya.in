@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "antigravity-design-expert": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "68abfc94815f20545aa1071eaafe1cf4468297fd588dc916f3c8bb509afb0496"
+    },
     "appwrite-cli": {
       "source": "appwrite/agent-skills",
       "sourceType": "github",
@@ -10,6 +15,126 @@
       "source": "appwrite/agent-skills",
       "sourceType": "github",
       "computedHash": "c2654d10a77e48197df43d29b3dcfe230b6f3b8efc81c5566f0f45afffb28e09"
+    },
+    "cc-skill-frontend-patterns": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "f813d01525eecc641d9699f40e7ac7c1853c4d7763214b03d89fae28d2398132"
+    },
+    "clean-code": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "53e960930ce5af70af8d57539ee5682feeeace5f7befa8035bfe71e33e3cb4c0"
+    },
+    "codex-review": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "39484d5ade88c9ec8395157913e906cd8498290d692e088bfcf92035e058d9b9"
+    },
+    "content-marketing": {
+      "source": "refoundai/lenny-skills",
+      "sourceType": "github",
+      "computedHash": "c30cecde78967d528d362d5d0afad32b01d7760c32cec5379f80821fbbbd99f0"
+    },
+    "copy-editing": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "f8bb575dff23a5cf1f105b4e94ef32038a8b45984a96cfe1f3c4a5b38996ce4d"
+    },
+    "copywriting": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "246c121e1115db8fa73ea504fa993364abff4c34279fd51830530c881e6252e3"
+    },
+    "design-orchestration": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "9a11fb45e435415118a33fca964c84eb91da784dd3da65a198bbc3786c7045c7"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
+    "marketing-psychology": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "5b8654c4d6db63d9da55f7cd56f2babd92e602b089e96a86ef38c7f547f51d52"
+    },
+    "privacy-policy": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "computedHash": "4f79d99d3bc7d1a14108bbff25d28cce0f86a70d89edb1ef908f30001b176a9c"
+    },
+    "production-code-audit": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "a15d5ce4b86b24051dbb2646be659e1a90f9090472a1f2267e69ac58d31ae2e5"
+    },
+    "scroll-experience": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "3074cd7685512873bb403914d300f55d1827b3bce685a3b29af4853d9cbd8ea3"
+    },
+    "senior-architect": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "d366a07e659616fafc2ce261be37f414ba9cee4d8fda03a3233032b7824c3c3a"
+    },
+    "senior-fullstack": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "bd8a907082b982dcac07b203d7c98b74f46a84d40349138310667942effde2ff"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "computedHash": "77faba608ea949351d1757e29e6cb726f6ec5937f7595be0593038a7d2d76bb9"
+    },
+    "shadcn-ui": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "computedHash": "5264d0399edb2e9cb517c722067fea44657a35ece43407a3aaa9e3ba9bd7f670"
+    },
+    "startup-analyst": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "ddc939e56ceea73ded4f67adccc130697b29126e6e0f270f931ac7320253217a"
+    },
+    "theme-factory": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "0290eabfd6fea9fcfd59c12de15e3f4046593185089956802b6d48ba1d07f428"
+    },
+    "threejs-skills": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "3a685f89276b81dde9f46cbb1531c33756dc5f64e76f033d7e523592e3cfbafe"
+    },
+    "ui-skills": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "f14e3d64b532b035ceda345c76bd5001235ca2efdc4ab9182ed91e10ddbd226d"
+    },
+    "ui-ux-designer": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "22679556473dfc3dae4747f2e367fab36ebf7898035cb4d7e4faaac4e937deb0"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "computedHash": "6337038fe1fe6bbe1b9f252ab678ee575859190bab6f0f246f4061824eb40875"
+    },
+    "ui-visual-validator": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "833a6bf891e9d2ad65487161af58ee8c0edb28dbc0aec00675dca8b774164c7b"
+    },
+    "web-performance-optimization": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "460270cda762058064f373cab8e57215dea3cb0950fc67f6d0d8c574d515ebe3"
     }
   }
 }
