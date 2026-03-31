@@ -7,7 +7,7 @@ const PROTECTED_PREFIXES = ["/app", "/instructor", "/moderator", "/admin"];
 // Routes that should redirect logged-in users away
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Build the cookie name dynamically
