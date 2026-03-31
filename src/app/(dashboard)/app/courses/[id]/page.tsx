@@ -20,13 +20,13 @@ export default async function CoursePlayerPage({ params }: PageProps) {
 
   const courseId = course.id;
 
-  const modules = course.curriculum.map((module, moduleIndex) => ({
-    id: `module-${moduleIndex + 1}`,
+  const modules = course.curriculum.map((module) => ({
+    id: module.id,
     title: module.title,
-    lessons: module.lessons.map((lessonTitle, lessonIndex) => ({
-      id: `${course.slug}-m${moduleIndex + 1}-l${lessonIndex + 1}`,
-      title: lessonTitle,
-      durationMinutes: 12 + lessonIndex * 4,
+    lessons: module.lessons.map((lesson) => ({
+      id: lesson.id,
+      title: lesson.title,
+      durationMinutes: lesson.durationMinutes,
     })),
   }));
 

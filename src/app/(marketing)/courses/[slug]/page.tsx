@@ -121,8 +121,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <h3 className="text-xl">{module.title}</h3>
               <ul className="space-y-2">
                 {module.lessons.map((lesson) => (
-                  <li key={lesson} className="text-muted-foreground text-sm">
-                    - {lesson}
+                  <li key={lesson.id} className="text-muted-foreground text-sm">
+                    - {lesson.title}
+                    {lesson.durationMinutes > 0 ? ` (${lesson.durationMinutes}m)` : ""}
                   </li>
                 ))}
               </ul>

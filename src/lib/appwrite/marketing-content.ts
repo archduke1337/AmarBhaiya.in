@@ -46,8 +46,13 @@ export type PublicCourseDetail = PublicCourseListItem & {
   whatYouLearn: string[];
   requirements: string[];
   curriculum: Array<{
+    id: string;
     title: string;
-    lessons: string[];
+    lessons: Array<{
+      id: string;
+      title: string;
+      durationMinutes: number;
+    }>;
   }>;
 };
 
@@ -146,6 +151,20 @@ function toDate(value: unknown): Date | null {
 function toNumber(value: unknown, fallback = 0): number {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function toDurationMinutes(value: unknown): number {
+  const raw = toNumber(value, 0);
+  if (raw <= 0) {
+    return 0;
+  }
+
+  // Lessons are commonly stored in seconds, while UI renders minutes.
+  if (raw > 240) {
+    return Math.max(1, Math.round(raw / 60));
+  }
+
+  return Math.round(raw);
 }
 
 function parseStringArray(value: unknown): string[] {
@@ -402,17 +421,21 @@ export async function getPublicCourseBySlug(
   const curriculum = modulesResult.rows
     .sort((left, right) => toNumber(left.order, 0) - toNumber(right.order, 0))
     .map((module) => ({
+      id: module.$id,
       title:
         typeof module.title === "string" && module.title.length > 0
           ? module.title
           : "Untitled module",
       lessons: (lessonsByModule.get(module.$id) ?? [])
         .sort((left, right) => toNumber(left.order, 0) - toNumber(right.order, 0))
-        .map((lesson) =>
-          typeof lesson.title === "string" && lesson.title.length > 0
-            ? lesson.title
-            : "Untitled lesson"
-        ),
+        .map((lesson) => ({
+          id: lesson.$id,
+          title:
+            typeof lesson.title === "string" && lesson.title.length > 0
+              ? lesson.title
+              : "Untitled lesson",
+          durationMinutes: toDurationMinutes(lesson.duration),
+        })),
     }));
 
   const base = toPublicCourse(row, categoryById, enrollmentCounts);

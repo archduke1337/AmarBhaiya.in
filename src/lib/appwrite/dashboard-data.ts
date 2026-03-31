@@ -200,6 +200,12 @@ export type InstructorCurriculumModule = {
   }>;
 };
 
+export type StudentProfileStats = {
+  currentStreakDays: number;
+  activeCourses: number;
+  certificates: number;
+};
+
 function chunkValues<T>(values: T[], chunkSize = 20): T[][] {
   if (values.length <= chunkSize) {
     return [values];
@@ -223,6 +229,48 @@ function toDate(value: unknown): Date | null {
   }
 
   return parsed;
+}
+
+function toUtcDateKey(value: unknown): string | null {
+  const date = toDate(value);
+  if (!date) {
+    return null;
+  }
+
+  const normalized = new Date(date);
+  normalized.setUTCHours(0, 0, 0, 0);
+  return normalized.toISOString().slice(0, 10);
+}
+
+function calculateCurrentStreak(dateKeys: Set<string>): number {
+  if (dateKeys.size === 0) {
+    return 0;
+  }
+
+  const cursor = new Date();
+  cursor.setUTCHours(0, 0, 0, 0);
+
+  const todayKey = cursor.toISOString().slice(0, 10);
+  if (!dateKeys.has(todayKey)) {
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+    const yesterdayKey = cursor.toISOString().slice(0, 10);
+    if (!dateKeys.has(yesterdayKey)) {
+      return 0;
+    }
+  }
+
+  let streak = 0;
+  while (true) {
+    const key = cursor.toISOString().slice(0, 10);
+    if (!dateKeys.has(key)) {
+      break;
+    }
+
+    streak += 1;
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+
+  return streak;
 }
 
 function isToday(value: unknown): boolean {
@@ -1184,4 +1232,48 @@ export async function getAdminAuditLogs(): Promise<AdminAuditItem[]> {
     entityId: typeof log.entityId === "string" ? log.entityId : "n/a",
     createdAt: typeof log.createdAt === "string" ? log.createdAt : null,
   }));
+}
+
+export async function getStudentProfileStats(
+  userId: string
+): Promise<StudentProfileStats> {
+  if (!userId) {
+    return {
+      currentStreakDays: 0,
+      activeCourses: 0,
+      certificates: 0,
+    };
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  const [enrollmentsResult, certificatesResult, progressResult] = await Promise.all([
+    safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+      Query.equal("userId", [userId]),
+      Query.equal("isActive", [true]),
+      Query.limit(500),
+    ]),
+    safeListRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.certificates, [
+      Query.equal("userId", [userId]),
+      Query.limit(500),
+    ]),
+    safeListRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.progress, [
+      Query.equal("userId", [userId]),
+      Query.limit(2000),
+    ]),
+  ]);
+
+  const completedDateKeys = new Set<string>();
+  for (const row of progressResult.rows) {
+    const key = toUtcDateKey(row.completedAt);
+    if (key) {
+      completedDateKeys.add(key);
+    }
+  }
+
+  return {
+    currentStreakDays: calculateCurrentStreak(completedDateKeys),
+    activeCourses: enrollmentsResult.total,
+    certificates: certificatesResult.total,
+  };
 }

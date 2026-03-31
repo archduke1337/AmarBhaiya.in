@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { requireAuth } from "@/lib/appwrite/auth";
+import { getStudentProfileStats } from "@/lib/appwrite/dashboard-data";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -17,6 +18,9 @@ export default async function ProfilePage({ params }: PageProps) {
 
   const isOwner = id === currentUser.$id;
   const role = getUserRole(currentUser);
+  const profileStats = isOwner
+    ? await getStudentProfileStats(currentUser.$id)
+    : null;
 
   const profileName = isOwner ? currentUser.name : "Community Learner";
   const profileEmail = isOwner ? currentUser.email : "Hidden";
@@ -35,15 +39,21 @@ export default async function ProfilePage({ params }: PageProps) {
       <section className="grid md:grid-cols-3 gap-4">
         <article className="border border-border p-5">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Current streak</p>
-          <p className="text-2xl">14 days</p>
+          <p className="text-2xl">
+            {profileStats ? `${profileStats.currentStreakDays} days` : "Private"}
+          </p>
         </article>
         <article className="border border-border p-5">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Courses active</p>
-          <p className="text-2xl">3</p>
+          <p className="text-2xl">
+            {profileStats ? profileStats.activeCourses : "Private"}
+          </p>
         </article>
         <article className="border border-border p-5">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Certificates</p>
-          <p className="text-2xl">0</p>
+          <p className="text-2xl">
+            {profileStats ? profileStats.certificates : "Private"}
+          </p>
         </article>
       </section>
 
