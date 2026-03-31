@@ -46,6 +46,8 @@ async function safe(name, fn) {
   }
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 // Column creators — all use object-params style
 const varchar = (t, key, size, required = false) =>
   safe(`col: ${key}`, () => db.createVarcharColumn({ databaseId: DB, tableId: t, key, size, required }));
@@ -80,9 +82,16 @@ const urlCol = (t, key, required = false) =>
 const emailCol = (t, key, required = false) =>
   safe(`col: ${key}`, () => db.createEmailColumn({ databaseId: DB, tableId: t, key, required }));
 
-// Index creators
-const idx = (t, key, cols, type = "key") =>
-  safe(`idx: ${key}`, () => db.createIndex({ databaseId: DB, tableId: t, key, type, columns: cols }));
+// Index creators — wait for columns to be available (Appwrite processes async)
+// Only sleep once per table, before the first index
+let _lastIndexTable = "";
+const idx = async (t, key, cols, type = "key") => {
+  if (_lastIndexTable !== t) {
+    _lastIndexTable = t;
+    await sleep(2000);
+  }
+  await safe(`idx: ${key}`, () => db.createIndex({ databaseId: DB, tableId: t, key, type, columns: cols }));
+};
 
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -729,61 +738,121 @@ async function main() {
   console.log("\n\n🪣 Creating storage buckets...\n");
 
   await safe("Bucket: course_videos", () =>
-    storage.createBucket("course_videos", "Course Videos", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["video/mp4", "video/webm", "video/quicktime"], 524288000)
+    storage.createBucket({
+      bucketId: "course_videos",
+      name: "Course Videos",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+      ],
+      maximumFileSize: 524288000, // 500MB
+      allowedFileExtensions: ["mp4", "webm", "mov"],
+      compression: "gzip",
+      encryption: true,
+      antivirus: true,
+    })
   );
 
   await safe("Bucket: course_thumbnails", () =>
-    storage.createBucket("course_thumbnails", "Course Thumbnails", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp"], 5242880)
+    storage.createBucket({
+      bucketId: "course_thumbnails",
+      name: "Course Thumbnails",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+      ],
+      maximumFileSize: 5242880, // 5MB
+      allowedFileExtensions: ["jpg", "jpeg", "png", "webp"],
+      compression: "gzip",
+      encryption: true,
+      antivirus: true,
+    })
   );
 
   await safe("Bucket: course_resources", () =>
-    storage.createBucket("course_resources", "Course Resources", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["application/pdf", "application/zip", "text/plain"], 52428800)
+    storage.createBucket({
+      bucketId: "course_resources",
+      name: "Course Resources",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+      ],
+      maximumFileSize: 52428800, // 50MB
+      allowedFileExtensions: ["pdf", "zip", "txt", "doc", "docx", "pptx"],
+      compression: "gzip",
+      encryption: true,
+      antivirus: true,
+    })
   );
 
   await safe("Bucket: user_avatars", () =>
-    storage.createBucket("user_avatars", "User Avatars", [
-      Permission.read(Role.any()),
-      Permission.create(Role.users()),
-      Permission.update(Role.users()),
-      Permission.delete(Role.users()),
-    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp"], 2097152)
+    storage.createBucket({
+      bucketId: "user_avatars",
+      name: "User Avatars",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.users()),
+        Permission.update(Role.users()),
+        Permission.delete(Role.users()),
+      ],
+      fileSecurity: true,
+      maximumFileSize: 2097152, // 2MB
+      allowedFileExtensions: ["jpg", "jpeg", "png", "webp"],
+      compression: "gzip",
+      encryption: true,
+      antivirus: true,
+    })
   );
 
   await safe("Bucket: certificates", () =>
-    storage.createBucket("certificates", "Certificates", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["image/png", "image/jpeg", "application/pdf"], 10485760)
+    storage.createBucket({
+      bucketId: "certificates",
+      name: "Certificates",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.delete(Role.label("admin")),
+      ],
+      maximumFileSize: 10485760, // 10MB
+      allowedFileExtensions: ["png", "jpg", "jpeg", "pdf"],
+      compression: "gzip",
+      encryption: true,
+      antivirus: true,
+    })
   );
 
   await safe("Bucket: blog_images", () =>
-    storage.createBucket("blog_images", "Blog Images", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp", "image/gif"], 10485760)
+    storage.createBucket({
+      bucketId: "blog_images",
+      name: "Blog Images",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.delete(Role.label("admin")),
+      ],
+      maximumFileSize: 10485760, // 10MB
+      allowedFileExtensions: ["jpg", "jpeg", "png", "webp", "gif"],
+      compression: "gzip",
+      encryption: true,
+      antivirus: true,
+    })
   );
 
   console.log("\n\n✨ Setup complete!\n");
   console.log("📌 Next steps:");
   console.log("   1. Enable OAuth providers in Appwrite Console (Google)");
-  console.log("   2. Create your first admin user and assign the 'admin' label\n");
+  console.log("   2. Create your first admin user and assign the 'admin' label:");
+  console.log("      node -e \"const{Client,Users}=require('node-appwrite');require('dotenv').config();");
+  console.log("      const c=new Client().setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)");
+  console.log("        .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);");
+  console.log("      new Users(c).updateLabels({userId:'YOUR_USER_ID',labels:['admin']}).then(u=>console.log(u.labels))\"");
+  console.log("   3. Or assign labels in Appwrite Console → Users → Select user → Labels\n");
 }
 
 main().catch(console.error);
