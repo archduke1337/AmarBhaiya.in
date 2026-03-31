@@ -99,6 +99,8 @@ Source of truth: implementation_plan.md + current src/app tree
 - Added role route sets for instructor (7), moderator (4), and admin (8)
 - Added app-level `not-found.tsx` and `error.tsx` with user recovery actions
 - Added auth API contract tests for login/register/logout handlers
+- Replaced role dashboard placeholder arrays with Appwrite-backed live queries
+- Implemented server actions for forum thread creation, course draft creation, and live session scheduling
 
 ## Phase-Aligned Execution Checklist
 

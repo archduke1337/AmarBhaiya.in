@@ -1,10 +1,8 @@
-const REPORTS = [
-  { id: "rep-91", type: "Forum thread", severity: "high", status: "pending" },
-  { id: "rep-92", type: "Course comment", severity: "medium", status: "pending" },
-  { id: "rep-93", type: "Live chat", severity: "low", status: "reviewed" },
-];
+import { getModeratorReports } from "@/lib/appwrite/dashboard-data";
 
-export default function ModeratorReportsPage() {
+export default async function ModeratorReportsPage() {
+  const reports = await getModeratorReports();
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,13 +11,20 @@ export default function ModeratorReportsPage() {
       </div>
 
       <section className="space-y-3">
-        {REPORTS.map((report) => (
+        {reports.length === 0 ? (
+          <article className="border border-border p-5 text-sm text-muted-foreground">
+            No flagged moderation reports found.
+          </article>
+        ) : null}
+
+        {reports.map((report) => (
           <article key={report.id} className="border border-border p-5 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-lg">{report.id}</h2>
               <p className="text-sm text-muted-foreground">
-                {report.type} - severity: {report.severity}
+                {report.entityType} · entity: {report.entityId} · target: {report.target}
               </p>
+              <p className="text-sm text-muted-foreground mt-1">Reason: {report.reason}</p>
             </div>
             <p className="text-sm uppercase tracking-widest text-muted-foreground">{report.status}</p>
           </article>

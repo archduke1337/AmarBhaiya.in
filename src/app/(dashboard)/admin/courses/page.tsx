@@ -1,10 +1,8 @@
-const COURSE_ROWS = [
-  { title: "Complete Coding Bootcamp", state: "published", featured: "yes" },
-  { title: "Board Exam Domination", state: "published", featured: "no" },
-  { title: "Career Launchpad", state: "draft", featured: "no" },
-];
+import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
 
-export default function AdminCoursesPage() {
+export default async function AdminCoursesPage() {
+  const courses = await getAdminCourses();
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,11 +11,17 @@ export default function AdminCoursesPage() {
       </div>
 
       <section className="space-y-3">
-        {COURSE_ROWS.map((course) => (
-          <article key={course.title} className="border border-border p-5">
+        {courses.length === 0 ? (
+          <article className="border border-border p-5 text-sm text-muted-foreground">
+            No courses found.
+          </article>
+        ) : null}
+
+        {courses.map((course) => (
+          <article key={course.id} className="border border-border p-5">
             <h2 className="text-xl">{course.title}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              State: {course.state} - Featured: {course.featured}
+              State: {course.state} - Featured: {course.featured} - Category: {course.category}
             </p>
           </article>
         ))}

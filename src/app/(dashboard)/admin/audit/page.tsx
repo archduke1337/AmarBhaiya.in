@@ -1,10 +1,9 @@
-const AUDIT_EVENTS = [
-  "admin changed role: student -> moderator",
-  "instructor published course: complete-coding-bootcamp",
-  "moderator deleted flagged forum reply",
-];
+import { getAdminAuditLogs } from "@/lib/appwrite/dashboard-data";
+import { formatDateTime } from "@/lib/utils/format";
 
-export default function AdminAuditPage() {
+export default async function AdminAuditPage() {
+  const logs = await getAdminAuditLogs();
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,10 +12,22 @@ export default function AdminAuditPage() {
       </div>
 
       <section className="border border-border p-6 space-y-3">
-        {AUDIT_EVENTS.map((event) => (
-          <p key={event} className="text-sm text-muted-foreground border border-border px-3 py-2">
-            {event}
-          </p>
+        {logs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No audit events found.</p>
+        ) : null}
+
+        {logs.map((log) => (
+          <article key={log.id} className="text-sm text-muted-foreground border border-border px-3 py-2 space-y-1">
+            <p className="text-foreground">
+              {log.actor} · {log.action}
+            </p>
+            <p>
+              Entity: {log.entity} ({log.entityId})
+            </p>
+            <p>
+              {log.createdAt ? formatDateTime(log.createdAt) : "Unknown time"}
+            </p>
+          </article>
         ))}
       </section>
     </div>

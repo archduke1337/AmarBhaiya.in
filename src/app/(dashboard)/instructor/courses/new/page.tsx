@@ -1,4 +1,11 @@
-export default function InstructorNewCoursePage() {
+import { createCourseDraftAction } from "@/actions/dashboard";
+import { requireRole } from "@/lib/appwrite/auth";
+import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
+
+export default async function InstructorNewCoursePage() {
+  await requireRole(["admin", "instructor"]);
+  const categories = await getAdminCategories();
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
@@ -6,18 +13,53 @@ export default function InstructorNewCoursePage() {
         <h1 className="text-3xl mt-2">Course Creation Wizard</h1>
       </div>
 
-      <form className="border border-border p-6 space-y-4">
+      <form action={createCourseDraftAction} className="border border-border p-6 space-y-4">
         <label className="space-y-2 block text-sm">
           <span className="text-muted-foreground">Course title</span>
-          <input className="w-full h-11 border border-border bg-background px-3" placeholder="Enter course title" />
+          <input
+            name="title"
+            className="w-full h-11 border border-border bg-background px-3"
+            placeholder="Enter course title"
+            required
+            minLength={6}
+          />
         </label>
         <label className="space-y-2 block text-sm">
           <span className="text-muted-foreground">Category</span>
-          <input className="w-full h-11 border border-border bg-background px-3" placeholder="tech / academics / fitness / career" />
+          <select
+            name="categoryId"
+            className="w-full h-11 border border-border bg-background px-3"
+            defaultValue=""
+          >
+            <option value="">Uncategorized</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="space-y-2 block text-sm">
+          <span className="text-muted-foreground">Access model</span>
+          <select
+            name="accessModel"
+            className="w-full h-11 border border-border bg-background px-3"
+            defaultValue="free"
+          >
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+            <option value="subscription">Subscription</option>
+          </select>
         </label>
         <label className="space-y-2 block text-sm">
           <span className="text-muted-foreground">Short description</span>
-          <textarea className="w-full min-h-28 border border-border bg-background px-3 py-2" placeholder="What outcomes will students get?" />
+          <textarea
+            name="shortDescription"
+            className="w-full min-h-28 border border-border bg-background px-3 py-2"
+            placeholder="What outcomes will students get?"
+            required
+            minLength={12}
+          />
         </label>
         <button type="submit" className="h-10 px-4 bg-foreground text-background text-sm">Save draft</button>
       </form>

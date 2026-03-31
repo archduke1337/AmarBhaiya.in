@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-const COURSES = [
-  { id: "complete-coding-bootcamp", title: "Complete Coding Bootcamp", status: "Published" },
-  { id: "board-exam-domination", title: "Board Exam Domination", status: "Published" },
-  { id: "student-fitness-blueprint", title: "Student Fitness Blueprint", status: "Draft" },
-];
+import { requireRole } from "@/lib/appwrite/auth";
+import { getInstructorCourseList } from "@/lib/appwrite/dashboard-data";
 
-export default function InstructorCoursesPage() {
+export default async function InstructorCoursesPage() {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+  const courses = await getInstructorCourseList({ userId: user.$id, role });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -20,7 +20,13 @@ export default function InstructorCoursesPage() {
       </div>
 
       <section className="space-y-3">
-        {COURSES.map((course) => (
+        {courses.length === 0 ? (
+          <article className="border border-border p-5 text-sm text-muted-foreground">
+            No courses found for this instructor scope yet.
+          </article>
+        ) : null}
+
+        {courses.map((course) => (
           <article key={course.id} className="border border-border p-5 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl">{course.title}</h2>

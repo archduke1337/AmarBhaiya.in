@@ -1,4 +1,8 @@
-export default function AdminModerationPage() {
+import { getAdminModerationData } from "@/lib/appwrite/dashboard-data";
+
+export default async function AdminModerationPage() {
+  const data = await getAdminModerationData();
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
@@ -7,9 +11,9 @@ export default function AdminModerationPage() {
       </div>
 
       <section className="border border-border p-6 space-y-3 text-sm text-muted-foreground">
-        <p>- Moderator actions today: 21</p>
-        <p>- Escalations to admin: 3</p>
-        <p>- Pending policy reviews: 2</p>
+        <p>- Moderator actions today: {data.actionsToday}</p>
+        <p>- Open escalations: {data.openEscalations}</p>
+        <p>- Active timeouts: {data.activeTimeouts}</p>
       </section>
     </div>
   );

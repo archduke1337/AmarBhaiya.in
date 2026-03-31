@@ -1,10 +1,9 @@
-const PAYMENTS = [
-  { ref: "pay_101", method: "razorpay", amount: "INR 499", status: "completed" },
-  { ref: "pay_102", method: "phonepe", amount: "INR 799", status: "pending" },
-  { ref: "pay_103", method: "razorpay", amount: "INR 499", status: "refunded" },
-];
+import { getAdminPayments } from "@/lib/appwrite/dashboard-data";
+import { formatCurrency } from "@/lib/utils/format";
 
-export default function AdminPaymentsPage() {
+export default async function AdminPaymentsPage() {
+  const payments = await getAdminPayments();
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,11 +12,20 @@ export default function AdminPaymentsPage() {
       </div>
 
       <section className="space-y-3">
-        {PAYMENTS.map((payment) => (
-          <article key={payment.ref} className="border border-border p-5">
-            <h2 className="text-lg">{payment.ref}</h2>
+        {payments.length === 0 ? (
+          <article className="border border-border p-5 text-sm text-muted-foreground">
+            No payment records found.
+          </article>
+        ) : null}
+
+        {payments.map((payment) => (
+          <article key={payment.id} className="border border-border p-5">
+            <h2 className="text-lg">{payment.providerRef}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {payment.method} - {payment.amount} - {payment.status}
+              {payment.method} - {formatCurrency(payment.amount, payment.currency)} - {payment.status}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              User: {payment.userName} · Course: {payment.courseTitle}
             </p>
           </article>
         ))}

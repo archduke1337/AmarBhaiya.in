@@ -1,9 +1,22 @@
-export default function InstructorDashboardPage() {
-  const kpis = [
-    { label: "My courses", value: "4" },
-    { label: "Active students", value: "186" },
-    { label: "Live sessions", value: "2" },
-    { label: "Pending reviews", value: "7" },
+import { requireRole } from "@/lib/appwrite/auth";
+import { getInstructorDashboardStats } from "@/lib/appwrite/dashboard-data";
+import { formatCompactNumber } from "@/lib/utils/format";
+
+export default async function InstructorDashboardPage() {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+  const stats = await getInstructorDashboardStats({ userId: user.$id, role });
+
+  const cards = [
+    { label: "Courses", value: formatCompactNumber(stats.courses) },
+    {
+      label: "Active enrollments",
+      value: formatCompactNumber(stats.activeEnrollments),
+    },
+    { label: "Live sessions", value: formatCompactNumber(stats.liveSessions) },
+    {
+      label: "Pending reviews",
+      value: formatCompactNumber(stats.pendingReviews),
+    },
   ];
 
   return (
@@ -19,7 +32,7 @@ export default function InstructorDashboardPage() {
       </section>
 
       <section className="grid md:grid-cols-4 gap-4">
-        {kpis.map((item) => (
+        {cards.map((item) => (
           <article key={item.label} className="border border-border p-5">
             <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
               {item.label}

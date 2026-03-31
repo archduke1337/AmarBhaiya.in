@@ -1,9 +1,17 @@
-export default function ModeratorDashboardPage() {
+import { getModeratorDashboardStats } from "@/lib/appwrite/dashboard-data";
+import { formatCompactNumber } from "@/lib/utils/format";
+
+export default async function ModeratorDashboardPage() {
+  const stats = await getModeratorDashboardStats();
+
   const cards = [
-    { label: "Open reports", value: "13" },
-    { label: "Muted users", value: "4" },
-    { label: "Flagged threads", value: "9" },
-    { label: "Actions today", value: "21" },
+    { label: "Open reports", value: formatCompactNumber(stats.openReports) },
+    { label: "Muted users", value: formatCompactNumber(stats.mutedUsers) },
+    {
+      label: "Flagged threads",
+      value: formatCompactNumber(stats.flaggedThreads),
+    },
+    { label: "Actions today", value: formatCompactNumber(stats.actionsToday) },
   ];
 
   return (

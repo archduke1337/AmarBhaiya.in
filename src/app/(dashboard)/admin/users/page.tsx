@@ -1,10 +1,8 @@
-const USERS = [
-  { name: "Aman", role: "student", status: "active" },
-  { name: "Nisha", role: "instructor", status: "active" },
-  { name: "Rohit", role: "moderator", status: "suspended" },
-];
+import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
 
-export default function AdminUsersPage() {
+export default async function AdminUsersPage() {
+  const users = await getAdminUsers();
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,10 +11,17 @@ export default function AdminUsersPage() {
       </div>
 
       <section className="space-y-3">
-        {USERS.map((user) => (
-          <article key={user.name} className="border border-border p-5 flex items-center justify-between">
+        {users.length === 0 ? (
+          <article className="border border-border p-5 text-sm text-muted-foreground">
+            No users found.
+          </article>
+        ) : null}
+
+        {users.map((user) => (
+          <article key={user.id} className="border border-border p-5 flex items-center justify-between">
             <div>
               <h2 className="text-lg">{user.name}</h2>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
               <p className="text-sm text-muted-foreground">Role: {user.role}</p>
             </div>
             <p className="text-xs uppercase tracking-widest text-muted-foreground">{user.status}</p>
