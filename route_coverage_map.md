@@ -98,6 +98,7 @@ Source of truth: implementation_plan.md + current src/app tree
 - Added course player foundation components and actions for enrollment/progress
 - Added role route sets for instructor (7), moderator (4), and admin (8)
 - Added app-level `not-found.tsx` and `error.tsx` with user recovery actions
+- Added auth API contract tests for login/register/logout handlers
 
 ## Phase-Aligned Execution Checklist
 
@@ -106,7 +107,7 @@ Source of truth: implementation_plan.md + current src/app tree
 - [x] Implement `src/app/api/auth/register/route.ts`
 - [x] Implement `src/app/api/auth/login/route.ts`
 - [x] Implement `src/app/api/auth/logout/route.ts`
-- [ ] Add API contract tests for auth route handlers
+- [x] Add API contract tests for auth route handlers
 
 ### Phase B: Public Route Completion (High Priority)
 
