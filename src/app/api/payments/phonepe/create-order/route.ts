@@ -51,16 +51,24 @@ export async function POST(request: Request) {
   try {
     const requestUrl = new URL(request.url);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? requestUrl.origin;
+    const merchantTransactionId = `pp_${Date.now()}_${ID.unique().slice(0, 8)}`;
 
-    const response = await createPhonePeOrder({
+    const phonePeResult = await createPhonePeOrder({
       amount: parsed.data.amount,
+      merchantTransactionId,
       merchantUserId: user.$id,
       redirectUrl: `${appUrl}${getSafeRedirectPath(parsed.data.redirectPath)}`,
       callbackUrl: `${appUrl}/api/payments/phonepe/webhook`,
-      merchantOrderNote: `Course ${parsed.data.courseId}`,
     });
 
-    const providerRef = response.data.merchantTransactionId;
+    const providerRef = phonePeResult.merchantTransactionId;
+    const redirectUrl =
+      phonePeResult.response.data?.instrumentResponse?.redirectInfo?.url;
+
+    if (!redirectUrl) {
+      throw new Error("PhonePe redirect URL missing in order response.");
+    }
+
     const paymentId = ID.unique();
     const { tablesDB } = await createAdminClient();
 
@@ -83,7 +91,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       paymentId,
       providerRef,
-      redirectUrl: response.data.instrumentResponse.redirectInfo.url,
+      redirectUrl,
     });
   } catch (error) {
     const message =
