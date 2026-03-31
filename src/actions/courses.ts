@@ -3,8 +3,7 @@
 import { ID, Query } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createSessionClient } from "@/lib/appwrite/server";
-import { getCourseBySlug } from "@/lib/utils/content";
+import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 
 type ProgressResult = {
   success: boolean;
@@ -12,17 +11,35 @@ type ProgressResult = {
   percentComplete?: number;
 };
 
-function getEstimatedLessonCount(courseId: string): number {
-  const course = getCourseBySlug(courseId);
+async function getEstimatedLessonCount(courseId: string): Promise<number> {
+  const { tablesDB } = await createAdminClient();
 
-  if (!course) {
-    return 1;
+  try {
+    const courseRow = await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courses,
+      rowId: courseId,
+    });
+
+    const totalLessons = Number((courseRow as { totalLessons?: number }).totalLessons ?? 0);
+    if (Number.isFinite(totalLessons) && totalLessons > 0) {
+      return totalLessons;
+    }
+  } catch {
+    // Continue with lesson table fallback.
   }
 
-  return Math.max(
-    1,
-    course.curriculum.reduce((total, module) => total + module.lessons.length, 0)
-  );
+  try {
+    const lessons = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      queries: [Query.equal("courseId", [courseId]), Query.limit(2000)],
+    });
+
+    return Math.max(1, lessons.total);
+  } catch {
+    return 1;
+  }
 }
 
 export async function markLessonComplete(
@@ -90,9 +107,11 @@ export async function markLessonComplete(
         .filter((value): value is string => Boolean(value))
     );
 
+    const estimatedLessonCount = await getEstimatedLessonCount(courseId);
+
     const percentComplete = Math.min(
       100,
-      Math.round((uniqueLessons.size / getEstimatedLessonCount(courseId)) * 100)
+      Math.round((uniqueLessons.size / estimatedLessonCount) * 100)
     );
 
     return { success: true, percentComplete };
@@ -132,9 +151,11 @@ export async function getCourseProgress(courseId: string): Promise<ProgressResul
         .filter((value): value is string => Boolean(value))
     );
 
+    const estimatedLessonCount = await getEstimatedLessonCount(courseId);
+
     const percentComplete = Math.min(
       100,
-      Math.round((uniqueLessons.size / getEstimatedLessonCount(courseId)) * 100)
+      Math.round((uniqueLessons.size / estimatedLessonCount) * 100)
     );
 
     return { success: true, percentComplete };

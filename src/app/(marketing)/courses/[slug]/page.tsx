@@ -2,19 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { COURSE_CATALOG, getCourseBySlug } from "@/lib/utils/content";
+import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export async function generateStaticParams() {
-  return COURSE_CATALOG.map((course) => ({ slug: course.slug }));
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const course = getCourseBySlug(slug);
+  const course = await getPublicCourseBySlug(slug);
 
   if (!course) {
     return {
@@ -30,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CourseDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const course = getCourseBySlug(slug);
+  const course = await getPublicCourseBySlug(slug);
 
   if (!course) {
     notFound();
@@ -51,8 +47,8 @@ export default async function CourseDetailPage({ params }: PageProps) {
             <p>{course.category}</p>
           </div>
           <div className="border border-border p-3">
-            <p className="text-muted-foreground text-xs uppercase tracking-widest mb-1">Level</p>
-            <p>{course.level}</p>
+            <p className="text-muted-foreground text-xs uppercase tracking-widest mb-1">Access model</p>
+            <p className="capitalize">{course.accessModel}</p>
           </div>
           <div className="border border-border p-3">
             <p className="text-muted-foreground text-xs uppercase tracking-widest mb-1">Lessons</p>
@@ -84,6 +80,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
       <section className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-6">
         <article className="border border-border p-7 space-y-4">
           <h2 className="text-2xl">What you will learn</h2>
+          {course.whatYouLearn.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No learning outcomes configured yet.</p>
+          ) : null}
           <ul className="space-y-3">
             {course.whatYouLearn.map((item) => (
               <li key={item} className="text-muted-foreground leading-relaxed">
@@ -95,6 +94,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
         <article className="border border-border p-7 space-y-4">
           <h2 className="text-2xl">Requirements</h2>
+          {course.requirements.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No specific requirements listed.</p>
+          ) : null}
           <ul className="space-y-3">
             {course.requirements.map((item) => (
               <li key={item} className="text-muted-foreground leading-relaxed">
@@ -107,6 +109,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
       <section className="max-w-6xl mx-auto border border-border p-7 md:p-8 space-y-6">
         <h2 className="text-2xl">Curriculum</h2>
+        {course.curriculum.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Curriculum will appear once modules are published.</p>
+        ) : null}
         <div className="space-y-4">
           {course.curriculum.map((module, index) => (
             <article key={module.title} className="border border-border p-5 space-y-3">

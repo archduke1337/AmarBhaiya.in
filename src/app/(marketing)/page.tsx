@@ -8,6 +8,45 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useTheme } from "next-themes";
 
+type HomeStatItem = {
+  end: number;
+  suffix: string;
+  label: string;
+};
+
+type HomeDomainItem = {
+  title: string;
+  sub: string;
+};
+
+type HomeLearnItem = {
+  title: string;
+  who: string;
+  desc: string;
+};
+
+type HomeFeaturedCourseItem = {
+  title: string;
+  sub: string;
+  level: string;
+  students: string;
+  price: string;
+  note: string;
+};
+
+type HomeWhyItem = {
+  title: string;
+  body: string;
+};
+
+type HomePageContent = {
+  stats: HomeStatItem[];
+  domains: HomeDomainItem[];
+  learnItems: HomeLearnItem[];
+  featuredCourses: HomeFeaturedCourseItem[];
+  whyItems: HomeWhyItem[];
+};
+
 // ── Animated Counter ────────────────────────────────────────────────────
 
 function Counter({ end, suffix = "", label }: { end: number; suffix?: string; label: string }) {
@@ -65,6 +104,55 @@ export default function LandingPage() {
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const [homeContent, setHomeContent] = useState<HomePageContent>({
+    stats: [
+      { end: 0, suffix: "+", label: "Students" },
+      { end: 0, suffix: "+", label: "Courses" },
+      { end: 0, suffix: "+", label: "Hours" },
+      { end: 0, suffix: " yrs", label: "Teaching" },
+    ],
+    domains: [],
+    learnItems: [],
+    featuredCourses: [],
+    whyItems: [],
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHomeContent() {
+      try {
+        const response = await fetch("/api/content/home", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as Partial<HomePageContent>;
+        if (cancelled) {
+          return;
+        }
+
+        setHomeContent((prev) => ({
+          stats:
+            Array.isArray(data.stats) && data.stats.length > 0 ? data.stats : prev.stats,
+          domains: Array.isArray(data.domains) ? data.domains : prev.domains,
+          learnItems: Array.isArray(data.learnItems) ? data.learnItems : prev.learnItems,
+          featuredCourses: Array.isArray(data.featuredCourses)
+            ? data.featuredCourses
+            : prev.featuredCourses,
+          whyItems: Array.isArray(data.whyItems) ? data.whyItems : prev.whyItems,
+        }));
+      } catch {
+        // Non-blocking content load.
+      }
+    }
+
+    void loadHomeContent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <>
@@ -155,15 +243,15 @@ export default function LandingPage() {
         {/* Bottom domain strip */}
         <div className="relative z-10 border-t border-border px-6 md:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-            {[
-              ["Coding & Tech", "DSA, Web Dev, Projects"],
-              ["Board Exams", "Science, Maths, Strategy"],
-              ["Fitness", "Routine, Nutrition, Mindset"],
-              ["Career", "Placements, Business, Skills"],
-            ].map(([title, sub], i) => (
-              <TimelineAnimation key={title} once animationNum={4 + i} timelineRef={heroRef} className="py-5 px-4">
-                <p className="text-xs font-medium tracking-wide uppercase text-foreground/80">{title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+            {homeContent.domains.length === 0 ? (
+              <div className="col-span-2 md:col-span-4 py-5 px-4 text-xs text-muted-foreground uppercase tracking-widest">
+                Domain strip content is not configured yet.
+              </div>
+            ) : null}
+            {homeContent.domains.map((item, i) => (
+              <TimelineAnimation key={`${item.title}-${i}`} once animationNum={4 + i} timelineRef={heroRef} className="py-5 px-4">
+                <p className="text-xs font-medium tracking-wide uppercase text-foreground/80">{item.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.sub}</p>
               </TimelineAnimation>
             ))}
           </div>
@@ -175,10 +263,11 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       <section className="border-t border-border py-24 px-6 md:px-12">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12">
-          <Reveal><Counter end={2400} suffix="+" label="Students" /></Reveal>
-          <Reveal delay={0.1}><Counter end={15} suffix="+" label="Courses" /></Reveal>
-          <Reveal delay={0.2}><Counter end={50} suffix="+" label="Hours" /></Reveal>
-          <Reveal delay={0.3}><Counter end={4} suffix=" yrs" label="Teaching" /></Reveal>
+          {homeContent.stats.map((item, index) => (
+            <Reveal key={`${item.label}-${index}`} delay={index * 0.1}>
+              <Counter end={item.end} suffix={item.suffix} label={item.label} />
+            </Reveal>
+          ))}
         </div>
       </section>
 
@@ -241,14 +330,12 @@ export default function LandingPage() {
           </Reveal>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-            {[
-              { title: "Coding & Tech", who: "Class 9+", desc: "Mujhe kisi ne nahi sikhaya tha programming. Maine khud seekha. Yahan wahi milega — seedha, practical, kaam ka." },
-              { title: "Board Exam Prep", who: "Class 10 & 12", desc: "Ratta maarna koi strategy nahi hai. PYQs, smart notes, revision tricks — tested by real toppers." },
-              { title: "Fitness & Health", who: "Everyone", desc: "Jab tum subah 6 baje uthke exercise karte ho, din ka har kaam aasaan lagta hai. Student-friendly routines." },
-              { title: "Career Guidance", who: "Class 11+", desc: "Kaunsa stream? Kaunsa college? Job ya business? In sab ka jawab dunga apne experience se." },
-              { title: "Entrepreneurship", who: "College", desc: "Maine college mein hi apna kaam shuru kiya. Idea se pehle customer tak — sab sikhaunga." },
-              { title: "Life Skills", who: "Everyone", desc: "Time management, communication, confidence — ye subjects mein nahi milte lekin life mein sabse kaam aate hain." },
-            ].map((item, i) => (
+            {homeContent.learnItems.length === 0 ? (
+              <div className="bg-background p-8 md:p-10 text-sm text-muted-foreground lg:col-span-3">
+                Learning blocks are not configured yet.
+              </div>
+            ) : null}
+            {homeContent.learnItems.map((item, i) => (
               <Reveal key={item.title} delay={i * 0.05}>
                 <div className="bg-background p-8 md:p-10 h-full flex flex-col justify-between group hover:bg-accent transition-colors">
                   <div>
@@ -286,11 +373,12 @@ export default function LandingPage() {
           </Reveal>
 
           <div className="divide-y divide-border">
-            {[
-              { title: "Complete Coding Bootcamp", sub: "HTML → CSS → JS → React → Backend", level: "Class 9+", students: "1,200+", price: "Free", note: "First 5 modules free" },
-              { title: "Board Exam Domination", sub: "Science & Maths — Smart Notes, PYQ, Strategy", level: "10th & 12th", students: "680+", price: "₹499", note: "Full access" },
-              { title: "Student Fitness Blueprint", sub: "No gym needed. Hostel or home — works anywhere", level: "Everyone", students: "520+", price: "Free", note: "Always free" },
-            ].map((course, i) => (
+            {homeContent.featuredCourses.length === 0 ? (
+              <div className="py-8 md:py-10 text-sm text-muted-foreground">
+                Featured courses are not configured yet.
+              </div>
+            ) : null}
+            {homeContent.featuredCourses.map((course, i) => (
               <Reveal key={course.title} delay={i * 0.1}>
                 <div className="group py-8 md:py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer">
                   <div className="flex-1">
@@ -344,12 +432,12 @@ export default function LandingPage() {
           </Reveal>
 
           <div className="grid md:grid-cols-2 gap-x-16 gap-y-12">
-            {[
-              { title: "No boring lectures", body: "40 minute ki video mein 10 minute kaam ka? Nahi. Mere har course mein sirf woh content hai jo actually kaam aaye." },
-              { title: "Seedha bhaiya se baat", body: "Doubt hai? Community mein pucho. Main khud answer karunga. Koi customer care nahi, koi bot nahi." },
-              { title: "Karta nahi, karata hoon", body: "Sirf lectures nahi — har module ke baad assignments. Projects banao, submit karo, feedback lo." },
-              { title: "Itna sasta ki free jaisa", body: "Papa ke paise waste nahi honge. Bahut kuch free hai, aur jo paid hai woh doston ki party ka bill jitna hai." },
-            ].map((item, i) => (
+            {homeContent.whyItems.length === 0 ? (
+              <div className="text-sm text-muted-foreground md:col-span-2">
+                Why-section points are not configured yet.
+              </div>
+            ) : null}
+            {homeContent.whyItems.map((item, i) => (
               <Reveal key={item.title} delay={i * 0.08}>
                 <div>
                   <h3 className="text-sm font-medium tracking-tight mb-3">{item.title}</h3>

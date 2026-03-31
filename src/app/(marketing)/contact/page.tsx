@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { getContactChannelsContent } from "@/lib/appwrite/marketing-content";
 import { ContactForm } from "./contact-form";
 
 export const metadata: Metadata = {
@@ -8,22 +9,9 @@ export const metadata: Metadata = {
     "Send a message to the amarbhaiya.in team for collaborations, support, or enrollment queries.",
 };
 
-const CONTACT_CHANNELS = [
-  {
-    label: "General",
-    value: "contact@amarbhaiya.in",
-  },
-  {
-    label: "Collaborations",
-    value: "collab@amarbhaiya.in",
-  },
-  {
-    label: "Response window",
-    value: "Within 24-48 hours",
-  },
-];
+export default async function ContactPage() {
+  const channels = await getContactChannelsContent();
 
-export default function ContactPage() {
   return (
     <div className="px-6 md:px-12 py-20 md:py-28 space-y-12">
       <section className="max-w-6xl mx-auto grid lg:grid-cols-[1fr_1.2fr] gap-8 md:gap-10">
@@ -36,7 +24,12 @@ export default function ContactPage() {
           </p>
 
           <div className="border border-border divide-y divide-border">
-            {CONTACT_CHANNELS.map((item) => (
+            {channels.length === 0 ? (
+              <div className="px-5 py-4 text-sm text-muted-foreground">
+                Contact channels are not configured yet.
+              </div>
+            ) : null}
+            {channels.map((item) => (
               <div key={item.label} className="px-5 py-4">
                 <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
                   {item.label}

@@ -109,20 +109,26 @@ export function CoursePlayer({ courseTitle, modules, resources }: CoursePlayerPr
             </TabsContent>
 
             <TabsContent value="resources" className="border border-border p-5">
-              <ul className="space-y-2 text-sm">
-                {resources.map((resource) => (
-                  <li key={resource.label}>
-                    <a
-                      href={resource.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline underline-offset-4 text-muted-foreground hover:text-foreground"
-                    >
-                      {resource.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {resources.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No downloadable resources are available for this course yet.
+                </p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {resources.map((resource) => (
+                    <li key={resource.label}>
+                      <a
+                        href={resource.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                      >
+                        {resource.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </TabsContent>
 
             <TabsContent value="notes" className="border border-border p-5 space-y-3">
@@ -143,16 +149,7 @@ export function CoursePlayer({ courseTitle, modules, resources }: CoursePlayerPr
             </TabsContent>
 
             <TabsContent value="comments" className="border border-border p-5">
-              <CommentSection
-                initialComments={[
-                  {
-                    id: "seed-1",
-                    author: "Mentor",
-                    text: "Post your doubts with exact timestamp from the lesson for faster help.",
-                    postedAt: new Date().toISOString(),
-                  },
-                ]}
-              />
+              <CommentSection initialComments={[]} />
             </TabsContent>
           </Tabs>
         </div>

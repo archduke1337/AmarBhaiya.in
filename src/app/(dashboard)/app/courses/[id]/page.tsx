@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { CoursePlayer } from "@/components/course/course-player";
 import { enrollInFreeCourse } from "@/actions/enrollments";
 import { requireAuth } from "@/lib/appwrite/auth";
-import { getCourseBySlug } from "@/lib/utils/content";
+import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -13,12 +13,12 @@ export default async function CoursePlayerPage({ params }: PageProps) {
   await requireAuth();
   const { id } = await params;
 
-  const course = getCourseBySlug(id);
+  const course = await getPublicCourseBySlug(id);
   if (!course) {
     notFound();
   }
 
-  const courseId = course.slug;
+  const courseId = course.id;
 
   const modules = course.curriculum.map((module, moduleIndex) => ({
     id: `module-${moduleIndex + 1}`,
@@ -64,11 +64,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
       <CoursePlayer
         courseTitle={course.title}
         modules={modules}
-        resources={[
-          { label: "Course roadmap (PDF)", href: "#" },
-          { label: "Starter assets bundle", href: "#" },
-          { label: "Practice checklist", href: "#" },
-        ]}
+        resources={[]}
       />
     </div>
   );

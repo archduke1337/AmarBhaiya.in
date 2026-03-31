@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 import { requireAuth } from "@/lib/appwrite/auth";
-import { COURSE_CATALOG } from "@/lib/utils/content";
+import { getPublicCoursesPageData } from "@/lib/appwrite/marketing-content";
 
 export default async function StudentCoursesPage() {
   await requireAuth();
+  const { courses } = await getPublicCoursesPageData({ sort: "popular" });
 
   return (
     <div className="space-y-8">
@@ -16,7 +17,13 @@ export default async function StudentCoursesPage() {
       </section>
 
       <section className="grid md:grid-cols-2 gap-4">
-        {COURSE_CATALOG.map((course) => (
+        {courses.length === 0 ? (
+          <article className="border border-border p-5 text-sm text-muted-foreground">
+            No published courses are available yet.
+          </article>
+        ) : null}
+
+        {courses.map((course) => (
           <article key={course.slug} className="border border-border p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs uppercase tracking-widest text-muted-foreground border border-border px-2 py-1">

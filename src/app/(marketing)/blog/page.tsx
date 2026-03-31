@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { BLOG_POSTS } from "@/lib/utils/content";
+import { getPublicBlogPageData } from "@/lib/appwrite/marketing-content";
 
 type SearchParams = Promise<{
   category?: string;
@@ -17,12 +17,9 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
   const params = await searchParams;
   const activeCategory = typeof params.category === "string" ? params.category : "all";
 
-  const categories = Array.from(new Set(BLOG_POSTS.map((post) => post.category)));
-
-  const visiblePosts =
-    activeCategory === "all"
-      ? BLOG_POSTS
-      : BLOG_POSTS.filter((post) => post.category === activeCategory);
+  const { posts: visiblePosts, categories } = await getPublicBlogPageData({
+    category: activeCategory,
+  });
 
   return (
     <div className="px-6 md:px-12 py-20 md:py-28 space-y-12">

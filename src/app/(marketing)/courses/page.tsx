@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { COURSE_CATALOG } from "@/lib/utils/content";
+import { getPublicCoursesPageData } from "@/lib/appwrite/marketing-content";
 
 type SearchParams = Promise<{
   q?: string;
@@ -33,28 +33,10 @@ export default async function CoursesPage({
   const category = typeof params.category === "string" ? params.category : "all";
   const sort = normalizeSort(params.sort);
 
-  const categories = Array.from(new Set(COURSE_CATALOG.map((course) => course.category)));
-
-  const filtered = COURSE_CATALOG.filter((course) => {
-    const categoryMatch = category === "all" || course.category === category;
-    const queryMatch =
-      query.length === 0 ||
-      course.title.toLowerCase().includes(query) ||
-      course.shortDescription.toLowerCase().includes(query);
-
-    return categoryMatch && queryMatch;
-  });
-
-  const sorted = [...filtered].sort((left, right) => {
-    if (sort === "newest") {
-      return right.updatedAt.localeCompare(left.updatedAt);
-    }
-
-    if (sort === "price") {
-      return left.priceInr - right.priceInr;
-    }
-
-    return right.enrolledStudents - left.enrolledStudents;
+  const { courses, categories } = await getPublicCoursesPageData({
+    query,
+    category,
+    sort,
   });
 
   return (
@@ -113,7 +95,7 @@ export default async function CoursesPage({
       </section>
 
       <section className="max-w-6xl mx-auto grid md:grid-cols-2 gap-5">
-        {sorted.map((course) => (
+        {courses.map((course) => (
           <article key={course.slug} className="border border-border p-6 space-y-5">
             <div className="flex items-center justify-between gap-4">
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-border px-2 py-1">
@@ -161,7 +143,7 @@ export default async function CoursesPage({
         ))}
       </section>
 
-      {sorted.length === 0 && (
+      {courses.length === 0 && (
         <section className="max-w-6xl mx-auto border border-border p-10 text-center">
           <p className="text-muted-foreground">
             No courses matched your filters. Try resetting search or category.

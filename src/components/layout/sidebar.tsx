@@ -4,9 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
+  CreditCard,
+  FileText,
+  Folder,
+  Flag,
   LayoutDashboard,
   MessageSquare,
+  Shield,
   UserRound,
+  Users,
+  Video,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -23,14 +30,42 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-function getStudentNav(userId: string): NavItem[] {
+function getNavItems(role: Role, userId: string): NavItem[] {
+  if (role === "admin") {
+    return [
+      { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      { label: "Users", href: "/admin/users", icon: Users },
+      { label: "Courses", href: "/admin/courses", icon: BookOpen },
+      { label: "Categories", href: "/admin/categories", icon: Folder },
+      { label: "Payments", href: "/admin/payments", icon: CreditCard },
+      { label: "Live Sessions", href: "/admin/live", icon: Video },
+      { label: "Moderation", href: "/admin/moderation", icon: Shield },
+      { label: "Audit Logs", href: "/admin/audit", icon: FileText },
+    ];
+  }
+
+  if (role === "instructor") {
+    return [
+      { label: "Dashboard", href: "/instructor", icon: LayoutDashboard },
+      { label: "My Courses", href: "/instructor/courses", icon: BookOpen },
+      { label: "Students", href: "/instructor/students", icon: Users },
+      { label: "Live Sessions", href: "/instructor/live", icon: Video },
+      { label: "Community", href: "/instructor/community", icon: MessageSquare },
+    ];
+  }
+
+  if (role === "moderator") {
+    return [
+      { label: "Dashboard", href: "/moderator", icon: LayoutDashboard },
+      { label: "Reports", href: "/moderator/reports", icon: Flag },
+      { label: "Students", href: "/moderator/students", icon: Users },
+      { label: "Community", href: "/moderator/community", icon: MessageSquare },
+    ];
+  }
+
   return [
     { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
-    {
-      label: "Course Player",
-      href: "/app/courses/complete-coding-bootcamp",
-      icon: BookOpen,
-    },
+    { label: "Course Player", href: "/app/courses", icon: BookOpen },
     { label: "Community", href: "/app/community", icon: MessageSquare },
     { label: "Profile", href: `/app/profile/${userId}`, icon: UserRound },
   ];
@@ -38,7 +73,7 @@ function getStudentNav(userId: string): NavItem[] {
 
 export function Sidebar({ role, userId }: SidebarProps) {
   const pathname = usePathname();
-  const navItems = getStudentNav(userId);
+  const navItems = getNavItems(role, userId);
 
   return (
     <aside className="h-full border-r border-border bg-background">
