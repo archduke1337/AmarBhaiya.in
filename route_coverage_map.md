@@ -1,6 +1,6 @@
 # Route Coverage Map & Phase Checklist
 
-Generated on: 2026-03-31
+Generated on: 2026-04-01
 Source of truth: implementation_plan.md + current src/app tree
 
 ## Coverage Snapshot
@@ -9,8 +9,8 @@ Source of truth: implementation_plan.md + current src/app tree
 - Implemented page routes: 5
 - Missing page routes: 28
 - Planned API routes: 9
-- Implemented API routes: 6
-- Missing API routes: 3
+- Implemented API routes: 9
+- Missing API routes: 0
 - Planned framework routes (`not-found.tsx`, `error.tsx`): 2
 - Implemented framework routes: 0
 - Missing framework routes: 2
@@ -77,6 +77,9 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Implemented
 
+- `src/app/api/auth/login/route.ts`
+- `src/app/api/auth/register/route.ts`
+- `src/app/api/auth/logout/route.ts`
 - `src/app/api/auth/oauth/route.ts`
 - `src/app/api/payments/razorpay/create-order/route.ts`
 - `src/app/api/payments/razorpay/webhook/route.ts`
@@ -86,9 +89,7 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Missing
 
-- `src/app/api/auth/login/route.ts`
-- `src/app/api/auth/register/route.ts`
-- `src/app/api/auth/logout/route.ts`
+- None
 
 ## Completed In This Pass (Option 2)
 
@@ -99,14 +100,15 @@ Source of truth: implementation_plan.md + current src/app tree
 - Added Razorpay order/webhook API routes with Appwrite payment + enrollment sync
 - Added PhonePe order/webhook API routes with Appwrite payment + enrollment sync
 - Added Stream token API route using authenticated Appwrite session user
+- Added auth login/register/logout API routes with validation and session cookie lifecycle
 
 ## Phase-Aligned Execution Checklist
 
 ### Phase A: Close API Auth Gap (High Priority)
 
-- [ ] Implement `src/app/api/auth/register/route.ts`
-- [ ] Implement `src/app/api/auth/login/route.ts`
-- [ ] Implement `src/app/api/auth/logout/route.ts`
+- [x] Implement `src/app/api/auth/register/route.ts`
+- [x] Implement `src/app/api/auth/login/route.ts`
+- [x] Implement `src/app/api/auth/logout/route.ts`
 - [ ] Add API contract tests for auth route handlers
 
 ### Phase B: Public Route Completion (High Priority)
