@@ -44,6 +44,7 @@ export const DASHBOARD_NAV_ITEMS = {
   ],
   instructor: [
     { label: "Dashboard", href: "/instructor", icon: "layout-dashboard" },
+    { label: "Operations", href: "/instructor/operations", icon: "settings" },
     { label: "My Courses", href: "/instructor/courses", icon: "book-open" },
     { label: "Students", href: "/instructor/students", icon: "users" },
     { label: "Live Sessions", href: "/instructor/live", icon: "video" },
@@ -51,12 +52,15 @@ export const DASHBOARD_NAV_ITEMS = {
   ],
   moderator: [
     { label: "Dashboard", href: "/moderator", icon: "layout-dashboard" },
+    { label: "Actions", href: "/moderator/actions", icon: "gavel" },
     { label: "Reports", href: "/moderator/reports", icon: "flag" },
     { label: "Students", href: "/moderator/students", icon: "users" },
     { label: "Community", href: "/moderator/community", icon: "message-square" },
   ],
   admin: [
     { label: "Dashboard", href: "/admin", icon: "layout-dashboard" },
+    { label: "Operations", href: "/admin/operations", icon: "settings" },
+    { label: "Marketing", href: "/admin/marketing", icon: "megaphone" },
     { label: "Users", href: "/admin/users", icon: "users" },
     { label: "Courses", href: "/admin/courses", icon: "book-open" },
     { label: "Categories", href: "/admin/categories", icon: "folder" },

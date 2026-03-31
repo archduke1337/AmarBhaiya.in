@@ -1,0 +1,651 @@
+"use server";
+
+import { ID, Query } from "node-appwrite";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+import { assignRole, requireRole } from "@/lib/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { createAdminClient } from "@/lib/appwrite/server";
+import type { Role } from "@/lib/utils/constants";
+import { slugify } from "@/lib/utils/format";
+
+const roleEnum = z.enum(["admin", "instructor", "moderator", "student"]);
+
+const updateUserRoleSchema = z.object({
+  userId: z.string().min(1),
+  role: roleEnum,
+});
+
+const updateCourseVisibilitySchema = z.object({
+  courseId: z.string().min(1),
+  isPublished: z.boolean(),
+  isFeatured: z.boolean(),
+});
+
+const createCategorySchema = z.object({
+  name: z.string().trim().min(2),
+  slug: z.string().trim().optional(),
+  description: z.string().trim().optional(),
+  order: z.number().int().min(0).default(0),
+});
+
+const updateInstructorCourseSchema = z.object({
+  courseId: z.string().min(1),
+  title: z.string().trim().min(6),
+  shortDescription: z.string().trim().min(12),
+  accessModel: z.enum(["free", "paid", "subscription"]),
+  price: z.number().int().min(0),
+  isPublished: z.boolean(),
+});
+
+const createModuleSchema = z.object({
+  courseId: z.string().min(1),
+  title: z.string().trim().min(4),
+  description: z.string().trim().optional(),
+  order: z.number().int().min(0).default(0),
+});
+
+const createLessonSchema = z.object({
+  courseId: z.string().min(1),
+  moduleId: z.string().min(1),
+  title: z.string().trim().min(4),
+  description: z.string().trim().optional(),
+  durationSeconds: z.number().int().min(0).default(0),
+  order: z.number().int().min(0).default(0),
+  isFree: z.boolean(),
+});
+
+const applyModerationSchema = z.object({
+  targetUserId: z.string().trim().min(1),
+  targetUserName: z.string().trim().optional(),
+  action: z.enum([
+    "warn",
+    "mute",
+    "timeout",
+    "delete_post",
+    "pin",
+    "unpin",
+    "remove_from_chat",
+    "flag",
+  ]),
+  scope: z.enum(["course", "platform"]),
+  reason: z.string().trim().min(3),
+  duration: z.string().trim().optional(),
+  entityType: z.string().trim().optional(),
+  entityId: z.string().trim().optional(),
+});
+
+const resolveModerationSchema = z.object({
+  actionId: z.string().trim().min(1),
+});
+
+const upsertSiteCopySchema = z.object({
+  key: z.string().trim().min(3),
+  title: z.string().trim().optional(),
+  body: z.string().trim().optional(),
+  payload: z.string().trim().optional(),
+  isPublished: z.boolean(),
+});
+
+const createBlogPostSchema = z.object({
+  title: z.string().trim().min(6),
+  slug: z.string().trim().optional(),
+  excerpt: z.string().trim().min(12),
+  category: z.string().trim().min(2),
+  authorName: z.string().trim().optional(),
+  publishedAt: z.string().trim().optional(),
+  readMinutes: z.number().int().min(1).default(5),
+  content: z.string().trim().min(24),
+  isPublished: z.boolean(),
+});
+
+function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value.toLowerCase().trim();
+  return normalized === "true" || normalized === "1" || normalized === "on";
+}
+
+function parseInteger(value: FormDataEntryValue | null, fallback = 0): number {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+
+  return Math.round(numeric);
+}
+
+function normalizeDateTime(value: string | undefined): string {
+  if (!value) {
+    return new Date().toISOString();
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date().toISOString();
+  }
+
+  return parsed.toISOString();
+}
+
+type CourseRowLike = {
+  $id: string;
+  instructorId?: string;
+  slug?: string;
+};
+
+async function getCourseRow(courseId: string): Promise<CourseRowLike | null> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    return (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courses,
+      rowId: courseId,
+    })) as CourseRowLike;
+  } catch {
+    return null;
+  }
+}
+
+async function userCanManageCourse(courseId: string, role: Role, userId: string) {
+  const course = await getCourseRow(courseId);
+  if (!course) {
+    return null;
+  }
+
+  if (role === "admin") {
+    return course;
+  }
+
+  return course.instructorId === userId ? course : null;
+}
+
+export async function updateUserRoleAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+
+  const parsed = updateUserRoleSchema.safeParse({
+    userId: String(formData.get("userId") ?? ""),
+    role: String(formData.get("role") ?? ""),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await assignRole(parsed.data.userId, parsed.data.role);
+
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/operations");
+}
+
+export async function updateCourseVisibilityAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+
+  const parsed = updateCourseVisibilitySchema.safeParse({
+    courseId: String(formData.get("courseId") ?? ""),
+    isPublished: parseBoolean(formData.get("isPublished"), false),
+    isFeatured: parseBoolean(formData.get("isFeatured"), false),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.courses,
+    rowId: parsed.data.courseId,
+    data: {
+      isPublished: parsed.data.isPublished,
+      isFeatured: parsed.data.isFeatured,
+    },
+  });
+
+  revalidatePath("/admin/courses");
+  revalidatePath("/admin/operations");
+  revalidatePath("/courses");
+  revalidatePath("/");
+}
+
+export async function createCategoryAction(formData: FormData): Promise<void> {
+  const { user } = await requireRole(["admin"]);
+
+  const parsed = createCategorySchema.safeParse({
+    name: String(formData.get("name") ?? ""),
+    slug: String(formData.get("slug") ?? "") || undefined,
+    description: String(formData.get("description") ?? "") || undefined,
+    order: parseInteger(formData.get("order"), 0),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+  const baseSlug = slugify(parsed.data.slug || parsed.data.name) || `category-${Date.now()}`;
+
+  let created = false;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
+
+    try {
+      await tablesDB.createRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.categories,
+        rowId: ID.unique(),
+        data: {
+          name: parsed.data.name,
+          slug,
+          description: parsed.data.description,
+          order: parsed.data.order,
+          createdBy: user.$id,
+        },
+      });
+
+      created = true;
+      break;
+    } catch (error) {
+      const appwriteError = error as { code?: number };
+      if (appwriteError.code !== 409) {
+        throw error;
+      }
+    }
+  }
+
+  if (!created) {
+    return;
+  }
+
+  revalidatePath("/admin/categories");
+  revalidatePath("/admin/operations");
+  revalidatePath("/courses");
+}
+
+export async function updateInstructorCourseAction(formData: FormData): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const parsed = updateInstructorCourseSchema.safeParse({
+    courseId: String(formData.get("courseId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    shortDescription: String(formData.get("shortDescription") ?? ""),
+    accessModel: String(formData.get("accessModel") ?? "free"),
+    price: parseInteger(formData.get("price"), 0),
+    isPublished: parseBoolean(formData.get("isPublished"), false),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
+  if (!course) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.courses,
+    rowId: parsed.data.courseId,
+    data: {
+      title: parsed.data.title,
+      description: parsed.data.shortDescription,
+      shortDescription: parsed.data.shortDescription,
+      accessModel: parsed.data.accessModel,
+      price: parsed.data.accessModel === "free" ? 0 : parsed.data.price,
+      isPublished: parsed.data.isPublished,
+    },
+  });
+
+  revalidatePath("/instructor/courses");
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+  revalidatePath("/admin/courses");
+
+  if (typeof course.slug === "string" && course.slug.length > 0) {
+    revalidatePath(`/courses/${course.slug}`);
+    revalidatePath(`/app/courses/${course.slug}`);
+  }
+}
+
+export async function createCurriculumModuleAction(formData: FormData): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const parsed = createModuleSchema.safeParse({
+    courseId: String(formData.get("courseId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    description: String(formData.get("description") ?? "") || undefined,
+    order: parseInteger(formData.get("order"), 0),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
+  if (!course) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.createRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.modules,
+    rowId: ID.unique(),
+    data: {
+      courseId: parsed.data.courseId,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      order: parsed.data.order,
+    },
+  });
+
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+}
+
+export async function createCurriculumLessonAction(formData: FormData): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const parsed = createLessonSchema.safeParse({
+    courseId: String(formData.get("courseId") ?? ""),
+    moduleId: String(formData.get("moduleId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    description: String(formData.get("description") ?? "") || undefined,
+    durationSeconds: parseInteger(formData.get("durationSeconds"), 0),
+    order: parseInteger(formData.get("order"), 0),
+    isFree: parseBoolean(formData.get("isFree"), false),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
+  if (!course) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const moduleRow = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.modules,
+      rowId: parsed.data.moduleId,
+    })) as { courseId?: string };
+
+    if (moduleRow.courseId !== parsed.data.courseId) {
+      return;
+    }
+  } catch {
+    return;
+  }
+
+  await tablesDB.createRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.lessons,
+    rowId: ID.unique(),
+    data: {
+      moduleId: parsed.data.moduleId,
+      courseId: parsed.data.courseId,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      videoFileId: "",
+      duration: parsed.data.durationSeconds,
+      order: parsed.data.order,
+      isFree: parsed.data.isFree,
+    },
+  });
+
+  const lessons = await tablesDB.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.lessons,
+    queries: [Query.equal("courseId", [parsed.data.courseId]), Query.limit(2000)],
+  });
+
+  const totalDuration = lessons.rows.reduce((sum, row) => {
+    const duration = Number((row as { duration?: unknown }).duration ?? 0);
+    return sum + (Number.isFinite(duration) ? duration : 0);
+  }, 0);
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.courses,
+    rowId: parsed.data.courseId,
+    data: {
+      totalLessons: lessons.total,
+      totalDuration,
+    },
+  });
+
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+
+  if (typeof course.slug === "string" && course.slug.length > 0) {
+    revalidatePath(`/courses/${course.slug}`);
+    revalidatePath(`/app/courses/${course.slug}`);
+  }
+}
+
+export async function applyModerationActionAction(formData: FormData): Promise<void> {
+  const { user } = await requireRole(["admin", "moderator"]);
+
+  const parsed = applyModerationSchema.safeParse({
+    targetUserId: String(formData.get("targetUserId") ?? ""),
+    targetUserName: String(formData.get("targetUserName") ?? "") || undefined,
+    action: String(formData.get("action") ?? "warn"),
+    scope: String(formData.get("scope") ?? "platform"),
+    reason: String(formData.get("reason") ?? ""),
+    duration: String(formData.get("duration") ?? "") || undefined,
+    entityType: String(formData.get("entityType") ?? "") || undefined,
+    entityId: String(formData.get("entityId") ?? "") || undefined,
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.createRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.moderationActions,
+    rowId: ID.unique(),
+    data: {
+      moderatorId: user.$id,
+      moderatorName: user.name,
+      targetUserId: parsed.data.targetUserId,
+      targetUserName: parsed.data.targetUserName || parsed.data.targetUserId,
+      action: parsed.data.action,
+      scope: parsed.data.scope,
+      reason: parsed.data.reason,
+      duration: parsed.data.duration || "",
+      entityType: parsed.data.entityType || "",
+      entityId: parsed.data.entityId || "",
+      createdAt: new Date().toISOString(),
+      revertedBy: "",
+    },
+  });
+
+  const entityType = parsed.data.entityType;
+  const entityId = parsed.data.entityId;
+  const isThreadAction =
+    typeof entityType === "string" &&
+    entityType.toLowerCase().includes("thread") &&
+    typeof entityId === "string" &&
+    entityId.length > 0;
+
+  if (isThreadAction && (parsed.data.action === "pin" || parsed.data.action === "unpin")) {
+    try {
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.forumThreads,
+        rowId: entityId,
+        data: {
+          isPinned: parsed.data.action === "pin",
+        },
+      });
+    } catch {
+      // Ignore thread pin sync failures and keep moderation action record.
+    }
+  }
+
+  revalidatePath("/moderator/reports");
+  revalidatePath("/moderator/community");
+  revalidatePath("/moderator/students");
+  revalidatePath("/admin/moderation");
+}
+
+export async function resolveModerationActionAction(formData: FormData): Promise<void> {
+  const { user } = await requireRole(["admin", "moderator"]);
+
+  const parsed = resolveModerationSchema.safeParse({
+    actionId: String(formData.get("actionId") ?? ""),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.moderationActions,
+    rowId: parsed.data.actionId,
+    data: {
+      revertedBy: user.$id,
+      revertedAt: new Date().toISOString(),
+    },
+  });
+
+  revalidatePath("/moderator/reports");
+  revalidatePath("/moderator/students");
+  revalidatePath("/admin/moderation");
+}
+
+export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+
+  const parsed = upsertSiteCopySchema.safeParse({
+    key: String(formData.get("key") ?? ""),
+    title: String(formData.get("title") ?? "") || undefined,
+    body: String(formData.get("body") ?? "") || undefined,
+    payload: String(formData.get("payload") ?? "") || undefined,
+    isPublished: parseBoolean(formData.get("isPublished"), true),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+  const now = new Date().toISOString();
+
+  const existing = await tablesDB.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.siteCopy,
+    queries: [Query.equal("key", [parsed.data.key]), Query.limit(1)],
+  });
+
+  const row = existing.rows[0] as { $id: string } | undefined;
+
+  if (row) {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.siteCopy,
+      rowId: row.$id,
+      data: {
+        title: parsed.data.title,
+        body: parsed.data.body,
+        payload: parsed.data.payload,
+        updatedAt: now,
+        isPublished: parsed.data.isPublished,
+      },
+    });
+  } else {
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.siteCopy,
+      rowId: ID.unique(),
+      data: {
+        key: parsed.data.key,
+        title: parsed.data.title,
+        body: parsed.data.body,
+        payload: parsed.data.payload,
+        updatedAt: now,
+        isPublished: parsed.data.isPublished,
+      },
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/about");
+  revalidatePath("/contact");
+  revalidatePath("/courses");
+  revalidatePath("/blog");
+  revalidatePath("/admin/marketing");
+}
+
+export async function createBlogPostAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+
+  const parsed = createBlogPostSchema.safeParse({
+    title: String(formData.get("title") ?? ""),
+    slug: String(formData.get("slug") ?? "") || undefined,
+    excerpt: String(formData.get("excerpt") ?? ""),
+    category: String(formData.get("category") ?? ""),
+    authorName: String(formData.get("authorName") ?? "") || undefined,
+    publishedAt: String(formData.get("publishedAt") ?? "") || undefined,
+    readMinutes: parseInteger(formData.get("readMinutes"), 5),
+    content: String(formData.get("content") ?? ""),
+    isPublished: parseBoolean(formData.get("isPublished"), true),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+  const baseSlug = slugify(parsed.data.slug || parsed.data.title) || `post-${Date.now()}`;
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
+
+    try {
+      await tablesDB.createRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.blogPosts,
+        rowId: ID.unique(),
+        data: {
+          slug,
+          title: parsed.data.title,
+          excerpt: parsed.data.excerpt,
+          category: parsed.data.category,
+          authorName: parsed.data.authorName || "Team",
+          publishedAt: normalizeDateTime(parsed.data.publishedAt),
+          readMinutes: parsed.data.readMinutes,
+          content: parsed.data.content,
+          isPublished: parsed.data.isPublished,
+        },
+      });
+
+      revalidatePath("/blog");
+      revalidatePath("/admin/marketing");
+      return;
+    } catch (error) {
+      const appwriteError = error as { code?: number };
+      if (appwriteError.code !== 409) {
+        throw error;
+      }
+    }
+  }
+}

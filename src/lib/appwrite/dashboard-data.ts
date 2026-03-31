@@ -180,6 +180,7 @@ export type InstructorCourseSummary = {
   id: string;
   title: string;
   slug: string;
+  shortDescription: string;
   accessModel: string;
   isPublished: boolean;
   price: number;
@@ -710,6 +711,8 @@ export async function getInstructorCourseSummary(
     id: course.$id,
     title: typeof course.title === "string" ? course.title : "Untitled course",
     slug: typeof course.slug === "string" ? course.slug : course.$id,
+    shortDescription:
+      typeof course.shortDescription === "string" ? course.shortDescription : "",
     accessModel:
       typeof course.accessModel === "string" ? course.accessModel : "free",
     isPublished: Boolean(course.isPublished),
