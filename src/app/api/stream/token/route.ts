@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createSessionClient } from "@/lib/appwrite/server";
-import { generateStreamToken, upsertStreamUser } from "@/lib/stream/client";
+import { createStreamUserToken, ensureStreamUser } from "@/lib/stream/client";
 
 export const runtime = "nodejs";
 
@@ -22,13 +22,13 @@ export async function GET() {
   }
 
   try {
-    await upsertStreamUser({
+    await ensureStreamUser({
       id: user.$id,
       name: user.name,
       image: undefined,
     });
 
-    const token = generateStreamToken(user.$id);
+    const token = createStreamUserToken(user.$id);
 
     return NextResponse.json({
       userId: user.$id,
