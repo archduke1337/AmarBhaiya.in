@@ -6,8 +6,8 @@ Source of truth: implementation_plan.md + current src/app tree
 ## Coverage Snapshot
 
 - Planned page routes: 33
-- Implemented page routes: 5
-- Missing page routes: 28
+- Implemented page routes: 11
+- Missing page routes: 22
 - Planned API routes: 9
 - Implemented API routes: 9
 - Missing API routes: 0
@@ -18,6 +18,12 @@ Source of truth: implementation_plan.md + current src/app tree
 ## Implemented Page Routes
 
 - `src/app/(marketing)/page.tsx` -> `/`
+- `src/app/(marketing)/about/page.tsx` -> `/about`
+- `src/app/(marketing)/courses/page.tsx` -> `/courses`
+- `src/app/(marketing)/courses/[slug]/page.tsx` -> `/courses/[slug]`
+- `src/app/(marketing)/blog/page.tsx` -> `/blog`
+- `src/app/(marketing)/blog/[slug]/page.tsx` -> `/blog/[slug]`
+- `src/app/(marketing)/contact/page.tsx` -> `/contact`
 - `src/app/(auth)/login/page.tsx` -> `/login`
 - `src/app/(auth)/register/page.tsx` -> `/register`
 - `src/app/(auth)/forgot-password/page.tsx` -> `/forgot-password`
@@ -27,12 +33,7 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Public Group (`(marketing)` target)
 
-- `src/app/(marketing)/about/page.tsx` -> `/about`
-- `src/app/(marketing)/courses/page.tsx` -> `/courses`
-- `src/app/(marketing)/courses/[slug]/page.tsx` -> `/courses/[slug]`
-- `src/app/(marketing)/blog/page.tsx` -> `/blog`
-- `src/app/(marketing)/blog/[slug]/page.tsx` -> `/blog/[slug]`
-- `src/app/(marketing)/contact/page.tsx` -> `/contact`
+- None
 
 ### Student App Group (`(dashboard)/app`)
 
@@ -101,6 +102,8 @@ Source of truth: implementation_plan.md + current src/app tree
 - Added PhonePe order/webhook API routes with Appwrite payment + enrollment sync
 - Added Stream token API route using authenticated Appwrite session user
 - Added auth login/register/logout API routes with validation and session cookie lifecycle
+- Added public routes: about, courses list/detail, blog list/detail, and contact page
+- Added shared content module for course and blog route rendering
 
 ## Phase-Aligned Execution Checklist
 
@@ -113,10 +116,10 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Phase B: Public Route Completion (High Priority)
 
-- [ ] Build `/about`
-- [ ] Build `/courses` and `/courses/[slug]`
-- [ ] Build `/blog` and `/blog/[slug]`
-- [ ] Build `/contact`
+- [x] Build `/about`
+- [x] Build `/courses` and `/courses/[slug]`
+- [x] Build `/blog` and `/blog/[slug]`
+- [x] Build `/contact`
 
 ### Phase C: Core Student Experience (High Priority)
 

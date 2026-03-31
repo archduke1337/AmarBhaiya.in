@@ -7,9 +7,10 @@ import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
 const NAV_LINKS = [
-  { label: "About", href: "#about" },
-  { label: "Courses", href: "#courses" },
-  { label: "Contact", href: "#contact" },
+  { label: "About", href: "/about" },
+  { label: "Courses", href: "/courses" },
+  { label: "Blog", href: "/blog" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function Navbar() {
@@ -40,13 +41,13 @@ export function Navbar() {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-10">
             {NAV_LINKS.map((link) => (
-              <a
+              <Link
                 key={link.label}
                 href={link.href}
                 className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -92,14 +93,14 @@ export function Navbar() {
           >
             <nav className="flex flex-col items-start px-6 py-8 gap-6">
               {NAV_LINKS.map((link) => (
-                <a
+                <Link
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
                   className="text-2xl font-light tracking-tight text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <div className="border-t border-border w-full pt-6 mt-4 flex flex-col gap-4">
                 <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
