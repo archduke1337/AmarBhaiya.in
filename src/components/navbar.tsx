@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, X } from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
 
 const NAV_LINKS = [
   { label: "About", href: "#about" },
@@ -26,13 +27,13 @@ export function Navbar() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-black/80 backdrop-blur-md border-b border-neutral-800/50"
+            ? "bg-background/80 backdrop-blur-md border-b border-border"
             : "bg-transparent"
         }`}
       >
         <div className="flex items-center justify-between px-6 md:px-12 h-14">
           {/* Brand */}
-          <Link href="/" className="text-sm font-medium tracking-[0.2em] uppercase text-neutral-400 hover:text-white transition-colors">
+          <Link href="/" className="text-sm font-medium tracking-[0.2em] uppercase text-muted-foreground hover:text-foreground transition-colors">
             amarbhaiya
           </Link>
 
@@ -42,7 +43,7 @@ export function Navbar() {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors"
+                className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
               </a>
@@ -50,29 +51,33 @@ export function Navbar() {
           </nav>
 
           {/* Right */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-4">
+            <ThemeToggle />
             <Link
               href="/login"
-              className="text-xs tracking-widest uppercase text-neutral-500 hover:text-white transition-colors"
+              className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
             >
               Log in
             </Link>
             <Link
               href="/register"
-              className="text-xs tracking-widest uppercase bg-white text-black px-5 py-2 hover:bg-neutral-200 transition-colors"
+              className="text-xs tracking-widest uppercase bg-foreground text-background px-5 py-2 hover:bg-foreground/90 transition-colors"
             >
               Start Learning
             </Link>
           </div>
 
           {/* Mobile Toggle */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden text-neutral-400 hover:text-white transition-colors"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -83,7 +88,7 @@ export function Navbar() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 bg-black pt-14"
+            className="fixed inset-0 z-40 bg-background pt-14"
           >
             <nav className="flex flex-col items-start px-6 py-8 gap-6">
               {NAV_LINKS.map((link) => (
@@ -91,16 +96,16 @@ export function Navbar() {
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-2xl font-light tracking-tight text-neutral-300 hover:text-white transition-colors"
+                  className="text-2xl font-light tracking-tight text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="border-t border-neutral-800 w-full pt-6 mt-4 flex flex-col gap-4">
-                <Link href="/login" className="text-sm text-neutral-500 hover:text-white transition-colors">
+              <div className="border-t border-border w-full pt-6 mt-4 flex flex-col gap-4">
+                <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Log in
                 </Link>
-                <Link href="/register" className="inline-block bg-white text-black px-6 py-3 text-sm font-medium w-fit">
+                <Link href="/register" className="inline-block bg-foreground text-background px-6 py-3 text-sm font-medium w-fit">
                   Start Learning
                 </Link>
               </div>
