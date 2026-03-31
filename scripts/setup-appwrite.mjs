@@ -729,6 +729,57 @@ async function main() {
   await idx(T24, "idx_createdAt", ["createdAt"]);
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // 25. blog_posts
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T25 = "blog_posts";
+  console.log(`\n25. ${T25}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T25, name: T25,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.label("admin")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T25, "slug", 180, true);
+  await varchar(T25, "title", 240, true);
+  await text(T25, "excerpt", true);
+  await varchar(T25, "category", 80, true);
+  await varchar(T25, "authorName", 120);
+  await dt(T25, "publishedAt", true);
+  await int(T25, "readMinutes", false, 5);
+  await medtext(T25, "content", true);
+  await bool(T25, "isPublished", false, true);
+  await idx(T25, "idx_slug", ["slug"], "unique");
+  await idx(T25, "idx_category", ["category"]);
+  await idx(T25, "idx_isPublished", ["isPublished"]);
+  await idx(T25, "idx_publishedAt", ["publishedAt"]);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 26. site_copy
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T26 = "site_copy";
+  console.log(`\n26. ${T26}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T26, name: T26,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.label("admin")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T26, "key", 160, true);
+  await varchar(T26, "title", 220);
+  await medtext(T26, "body");
+  await medtext(T26, "payload");
+  await dt(T26, "updatedAt", true);
+  await bool(T26, "isPublished", false, true);
+  await idx(T26, "idx_key", ["key"], "unique");
+  await idx(T26, "idx_isPublished", ["isPublished"]);
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Storage Buckets
   // ═══════════════════════════════════════════════════════════════════════════
 

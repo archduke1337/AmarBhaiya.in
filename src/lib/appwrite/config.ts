@@ -34,6 +34,8 @@ export const APPWRITE_CONFIG = {
     moderationActions: "moderation_actions",
     auditLogs: "audit_logs",
     notifications: "notifications",
+    blogPosts: "blog_posts",
+    siteCopy: "site_copy",
   },
 
   // ── Storage Buckets ───────────────────────────────────────────────────────

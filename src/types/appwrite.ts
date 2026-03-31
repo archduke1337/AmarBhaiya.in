@@ -264,3 +264,26 @@ export interface Notification extends AppwriteRow {
   actionUrl: string;
   createdAt: string;
 }
+
+// ── Marketing & Editorial ─────────────────────────────────────────────────
+
+export interface BlogPostRecord extends AppwriteRow {
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  authorName: string;
+  publishedAt: string;
+  readMinutes: number;
+  content: string;
+  isPublished: boolean;
+}
+
+export interface SiteCopyRecord extends AppwriteRow {
+  key: string;
+  title: string;
+  body: string;
+  payload: string;
+  updatedAt: string;
+  isPublished: boolean;
+}
