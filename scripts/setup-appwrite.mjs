@@ -79,9 +79,6 @@ const enumCol = (t, key, elements, required = false, xdefault = undefined) =>
 const urlCol = (t, key, required = false) =>
   safe(`col: ${key}`, () => db.createUrlColumn({ databaseId: DB, tableId: t, key, required }));
 
-const emailCol = (t, key, required = false) =>
-  safe(`col: ${key}`, () => db.createEmailColumn({ databaseId: DB, tableId: t, key, required }));
-
 // Index creators — wait for columns to be available (Appwrite processes async)
 // Only sleep once per table, before the first index
 let _lastIndexTable = "";

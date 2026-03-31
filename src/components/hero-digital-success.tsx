@@ -3,7 +3,6 @@ import React, { Suspense, useRef } from 'react'
 import { ShaderGradient, ShaderGradientCanvas } from '@shadergradient/react'
 import { TimelineAnimation } from '@/components/timeline-animation'
 import { useMediaQuery } from '@/components/use-media-query'
-import { Component, Layout, Wallet } from 'lucide-react'
 import MotionDrawer from '@/components/motion-drawer'
 
 export const HeroDigitalSuccess = () => {
@@ -199,10 +198,9 @@ export const HeroDigitalSuccess = () => {
               timelineRef={timelineRef}
               className="cursor-pointer relative group overflow-hidden bg-white text-black px-8 py-4 rounded-full font-medium text-lg flex items-center gap-3 shadow-[0_0_20px_rgba(255,60,60,0.4)]"
             >
-              <img
-                src="https://picsum.photos/seed/ds/50"
-                className="w-6 h-6 rounded-full"
-                alt=""
+              <span
+                className="w-6 h-6 rounded-full bg-linear-to-br from-red-400 to-red-700"
+                aria-hidden="true"
               />
               Book a Consultation
             </TimelineAnimation>

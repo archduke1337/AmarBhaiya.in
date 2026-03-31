@@ -1,17 +1,13 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  const activeTheme = theme ?? resolvedTheme;
 
-  // Prevent hydration mismatch
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) {
+  if (!activeTheme) {
     return (
       <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer" aria-label="Toggle theme">
         <span className="h-4 w-4" />
@@ -19,7 +15,7 @@ export function ThemeToggle() {
     );
   }
 
-  const isDark = theme === "dark";
+  const isDark = activeTheme === "dark";
 
   return (
     <Button
