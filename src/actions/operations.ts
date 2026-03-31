@@ -30,6 +30,14 @@ const createCategorySchema = z.object({
   order: z.number().int().min(0).default(0),
 });
 
+const updateCategorySchema = z.object({
+  categoryId: z.string().trim().min(1),
+  name: z.string().trim().min(2),
+  slug: z.string().trim().optional(),
+  description: z.string().trim().optional(),
+  order: z.number().int().min(0).default(0),
+});
+
 const updateInstructorCourseSchema = z.object({
   courseId: z.string().min(1),
   title: z.string().trim().min(6),
@@ -49,6 +57,25 @@ const createModuleSchema = z.object({
 const createLessonSchema = z.object({
   courseId: z.string().min(1),
   moduleId: z.string().min(1),
+  title: z.string().trim().min(4),
+  description: z.string().trim().optional(),
+  durationSeconds: z.number().int().min(0).default(0),
+  order: z.number().int().min(0).default(0),
+  isFree: z.boolean(),
+});
+
+const updateModuleSchema = z.object({
+  moduleId: z.string().trim().min(1),
+  courseId: z.string().trim().min(1),
+  title: z.string().trim().min(4),
+  description: z.string().trim().optional(),
+  order: z.number().int().min(0).default(0),
+});
+
+const updateLessonSchema = z.object({
+  lessonId: z.string().trim().min(1),
+  moduleId: z.string().trim().min(1),
+  courseId: z.string().trim().min(1),
   title: z.string().trim().min(4),
   description: z.string().trim().optional(),
   durationSeconds: z.number().int().min(0).default(0),
@@ -179,7 +206,6 @@ export async function updateUserRoleAction(formData: FormData): Promise<void> {
   await assignRole(parsed.data.userId, parsed.data.role);
 
   revalidatePath("/admin/users");
-  revalidatePath("/admin/operations");
 }
 
 export async function updateCourseVisibilityAction(formData: FormData): Promise<void> {
@@ -208,13 +234,12 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
   });
 
   revalidatePath("/admin/courses");
-  revalidatePath("/admin/operations");
   revalidatePath("/courses");
   revalidatePath("/");
 }
 
 export async function createCategoryAction(formData: FormData): Promise<void> {
-  const { user } = await requireRole(["admin"]);
+  const { user } = await requireRole(["admin", "instructor"]);
 
   const parsed = createCategorySchema.safeParse({
     name: String(formData.get("name") ?? ""),
@@ -263,7 +288,44 @@ export async function createCategoryAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/admin/categories");
-  revalidatePath("/admin/operations");
+  revalidatePath("/instructor/categories");
+  revalidatePath("/courses");
+}
+
+export async function updateCategoryAction(formData: FormData): Promise<void> {
+  await requireRole(["admin", "instructor"]);
+
+  const parsed = updateCategorySchema.safeParse({
+    categoryId: String(formData.get("categoryId") ?? ""),
+    name: String(formData.get("name") ?? ""),
+    slug: String(formData.get("slug") ?? "") || undefined,
+    description: String(formData.get("description") ?? "") || undefined,
+    order: parseInteger(formData.get("order"), 0),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+  const normalizedSlug =
+    slugify(parsed.data.slug || parsed.data.name) ||
+    `category-${parsed.data.categoryId.slice(0, 8)}`;
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.categories,
+    rowId: parsed.data.categoryId,
+    data: {
+      name: parsed.data.name,
+      slug: normalizedSlug,
+      description: parsed.data.description,
+      order: parsed.data.order,
+    },
+  });
+
+  revalidatePath("/admin/categories");
+  revalidatePath("/instructor/categories");
   revalidatePath("/courses");
 }
 
@@ -399,6 +461,141 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
       title: parsed.data.title,
       description: parsed.data.description,
       videoFileId: "",
+      duration: parsed.data.durationSeconds,
+      order: parsed.data.order,
+      isFree: parsed.data.isFree,
+    },
+  });
+
+  const lessons = await tablesDB.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.lessons,
+    queries: [Query.equal("courseId", [parsed.data.courseId]), Query.limit(2000)],
+  });
+
+  const totalDuration = lessons.rows.reduce((sum, row) => {
+    const duration = Number((row as { duration?: unknown }).duration ?? 0);
+    return sum + (Number.isFinite(duration) ? duration : 0);
+  }, 0);
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.courses,
+    rowId: parsed.data.courseId,
+    data: {
+      totalLessons: lessons.total,
+      totalDuration,
+    },
+  });
+
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+
+  if (typeof course.slug === "string" && course.slug.length > 0) {
+    revalidatePath(`/courses/${course.slug}`);
+    revalidatePath(`/app/courses/${course.slug}`);
+  }
+}
+
+export async function updateCurriculumModuleAction(formData: FormData): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const parsed = updateModuleSchema.safeParse({
+    moduleId: String(formData.get("moduleId") ?? ""),
+    courseId: String(formData.get("courseId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    description: String(formData.get("description") ?? "") || undefined,
+    order: parseInteger(formData.get("order"), 0),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
+  if (!course) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const moduleRow = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.modules,
+      rowId: parsed.data.moduleId,
+    })) as { courseId?: string };
+
+    if (moduleRow.courseId !== parsed.data.courseId) {
+      return;
+    }
+  } catch {
+    return;
+  }
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.modules,
+    rowId: parsed.data.moduleId,
+    data: {
+      title: parsed.data.title,
+      description: parsed.data.description,
+      order: parsed.data.order,
+    },
+  });
+
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+}
+
+export async function updateCurriculumLessonAction(formData: FormData): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const parsed = updateLessonSchema.safeParse({
+    lessonId: String(formData.get("lessonId") ?? ""),
+    moduleId: String(formData.get("moduleId") ?? ""),
+    courseId: String(formData.get("courseId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    description: String(formData.get("description") ?? "") || undefined,
+    durationSeconds: parseInteger(formData.get("durationSeconds"), 0),
+    order: parseInteger(formData.get("order"), 0),
+    isFree: parseBoolean(formData.get("isFree"), false),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
+  if (!course) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const lessonRow = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      rowId: parsed.data.lessonId,
+    })) as { courseId?: string; moduleId?: string };
+
+    if (
+      lessonRow.courseId !== parsed.data.courseId ||
+      lessonRow.moduleId !== parsed.data.moduleId
+    ) {
+      return;
+    }
+  } catch {
+    return;
+  }
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.lessons,
+    rowId: parsed.data.lessonId,
+    data: {
+      title: parsed.data.title,
+      description: parsed.data.description,
       duration: parsed.data.durationSeconds,
       order: parsed.data.order,
       isFree: parsed.data.isFree,

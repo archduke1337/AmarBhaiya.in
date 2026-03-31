@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { updateInstructorCourseAction } from "@/actions/operations";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorCourseSummary } from "@/lib/appwrite/dashboard-data";
 import { formatCurrency, formatDuration } from "@/lib/utils/format";
@@ -25,29 +27,108 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
       </div>
 
       <section className="border border-border p-6 space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Course metadata below is loaded from Appwrite so you can verify publish
-          state, pricing model, and lesson volume before editing.
-        </p>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="border border-border p-4">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Publish state</p>
-            <p>{course.isPublished ? "Published" : "Draft"}</p>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl">Course metadata</h2>
+          <Link
+            href={`/instructor/courses/${course.id}/curriculum`}
+            className="text-sm underline underline-offset-4"
+          >
+            Manage curriculum
+          </Link>
+        </div>
+
+        <form action={updateInstructorCourseAction} className="grid gap-4">
+          <input type="hidden" name="courseId" value={course.id} />
+
+          <label className="space-y-1 text-sm">
+            <span>Title</span>
+            <input
+              name="title"
+              required
+              minLength={6}
+              defaultValue={course.title}
+              className="h-10 w-full border border-border bg-background px-3"
+            />
+          </label>
+
+          <label className="space-y-1 text-sm">
+            <span>Short description</span>
+            <textarea
+              name="shortDescription"
+              required
+              minLength={12}
+              rows={4}
+              defaultValue={course.shortDescription}
+              className="w-full border border-border bg-background px-3 py-2"
+            />
+          </label>
+
+          <div className="grid md:grid-cols-3 gap-3">
+            <label className="space-y-1 text-sm">
+              <span>Access model</span>
+              <select
+                name="accessModel"
+                defaultValue={course.accessModel}
+                className="h-10 w-full border border-border bg-background px-3"
+              >
+                <option value="free">Free</option>
+                <option value="paid">Paid</option>
+                <option value="subscription">Subscription</option>
+              </select>
+            </label>
+
+            <label className="space-y-1 text-sm">
+              <span>Price (INR)</span>
+              <input
+                name="price"
+                type="number"
+                min={0}
+                defaultValue={course.price}
+                className="h-10 w-full border border-border bg-background px-3"
+              />
+            </label>
+
+            <label className="space-y-1 text-sm flex items-end">
+              <span className="inline-flex items-center gap-2 h-10 px-3 border border-border w-full">
+                <input
+                  type="checkbox"
+                  name="isPublished"
+                  defaultChecked={course.isPublished}
+                />
+                Published
+              </span>
+            </label>
           </div>
-          <div className="border border-border p-4">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Access model</p>
-            <p className="capitalize">{course.accessModel}</p>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="h-10 px-4 bg-foreground text-background text-sm"
+            >
+              Save course details
+            </button>
           </div>
-          <div className="border border-border p-4">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Price</p>
-            <p>{course.price > 0 ? formatCurrency(course.price) : "Free"}</p>
-          </div>
-          <div className="border border-border p-4">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Lesson Stats</p>
-            <p>
-              {course.totalLessons} lessons · {formatDuration(course.totalDuration)}
-            </p>
-          </div>
+        </form>
+      </section>
+
+      <section className="grid md:grid-cols-2 gap-4">
+        <div className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Current publish state</p>
+          <p>{course.isPublished ? "Published" : "Draft"}</p>
+        </div>
+        <div className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Current access model</p>
+          <p className="capitalize">{course.accessModel}</p>
+        </div>
+        <div className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Current price</p>
+          <p>{course.price > 0 ? formatCurrency(course.price) : "Free"}</p>
+        </div>
+        <div className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Lesson Stats</p>
+          <p>
+            {course.totalLessons} lessons · {formatDuration(course.totalDuration)}
+          </p>
         </div>
       </section>
     </div>

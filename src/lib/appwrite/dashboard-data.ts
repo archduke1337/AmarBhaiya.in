@@ -44,6 +44,7 @@ type LessonRow = AnyRow & Partial<Lesson>;
 export type CommunityThreadItem = {
   id: string;
   title: string;
+  authorId: string;
   author: string;
   replies: number;
   pinned: boolean;
@@ -65,6 +66,7 @@ export type InstructorDashboardStats = {
 export type InstructorCourseListItem = {
   id: string;
   title: string;
+  shortDescription: string;
   status: "Published" | "Draft";
 };
 
@@ -95,6 +97,7 @@ export type ModeratorReportItem = {
   id: string;
   entityType: string;
   entityId: string;
+  targetUserId: string;
   target: string;
   reason: string;
   status: "pending" | "reviewed";
@@ -102,6 +105,7 @@ export type ModeratorReportItem = {
 
 export type ModeratorStudentItem = {
   id: string;
+  latestActionId: string;
   name: string;
   latestAction: string;
   latestReason: string;
@@ -140,6 +144,7 @@ export type AdminCategoryItem = {
   id: string;
   name: string;
   slug: string;
+  description: string;
   order: number;
 };
 
@@ -191,10 +196,12 @@ export type InstructorCourseSummary = {
 export type InstructorCurriculumModule = {
   id: string;
   title: string;
+  description: string;
   order: number;
   lessons: Array<{
     id: string;
     title: string;
+    description: string;
     order: number;
     duration: number;
     isFree: boolean;
@@ -429,6 +436,7 @@ export async function getCommunityThreadsData(): Promise<CommunityThreadItem[]> 
       .map((thread) => ({
         id: thread.$id,
         title: typeof thread.title === "string" ? thread.title : "Untitled thread",
+        authorId: typeof thread.userId === "string" ? thread.userId : "",
         author: typeof thread.userName === "string" ? thread.userName : "Unknown user",
         replies: typeof thread.replyCount === "number" ? thread.replyCount : 0,
         pinned: Boolean(thread.isPinned),
@@ -541,6 +549,8 @@ export async function getInstructorCourseList(
     .map((course) => ({
       id: course.$id,
       title: typeof course.title === "string" ? course.title : "Untitled course",
+      shortDescription:
+        typeof course.shortDescription === "string" ? course.shortDescription : "",
       status: course.isPublished ? "Published" : "Draft",
     }));
 }
@@ -753,10 +763,14 @@ export async function getInstructorCurriculum(
   return modulesResult.rows.map((module) => ({
     id: module.$id,
     title: typeof module.title === "string" ? module.title : "Untitled module",
+    description:
+      typeof module.description === "string" ? module.description : "",
     order: Number(module.order ?? 0),
     lessons: (lessonsByModule.get(module.$id) ?? []).map((lesson) => ({
       id: lesson.$id,
       title: typeof lesson.title === "string" ? lesson.title : "Untitled lesson",
+      description:
+        typeof lesson.description === "string" ? lesson.description : "",
       order: Number(lesson.order ?? 0),
       duration: Number(lesson.duration ?? 0),
       isFree: Boolean(lesson.isFree),
@@ -831,6 +845,8 @@ export async function getModeratorReports(): Promise<ModeratorReportItem[]> {
       entityType:
         typeof row.entityType === "string" ? row.entityType : "unknown",
       entityId: typeof row.entityId === "string" ? row.entityId : "n/a",
+      targetUserId:
+        typeof row.targetUserId === "string" ? row.targetUserId : "",
       target:
         typeof row.targetUserName === "string"
           ? row.targetUserName
@@ -868,6 +884,7 @@ export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
 
   return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => ({
     id: userId,
+    latestActionId: row.$id,
     name:
       typeof row.targetUserName === "string" && row.targetUserName.length > 0
         ? row.targetUserName
@@ -936,6 +953,7 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
     .map((thread) => ({
       id: thread.$id,
       title: typeof thread.title === "string" ? thread.title : "Untitled thread",
+      authorId: typeof thread.userId === "string" ? thread.userId : "",
       author: typeof thread.userName === "string" ? thread.userName : "Unknown user",
       replies: Number(thread.replyCount ?? 0),
       pinned: Boolean(thread.isPinned),
@@ -1067,6 +1085,8 @@ export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
     id: category.$id,
     name: typeof category.name === "string" ? category.name : "Unnamed",
     slug: typeof category.slug === "string" ? category.slug : "",
+    description:
+      typeof category.description === "string" ? category.description : "",
     order: Number(category.order ?? 0),
   }));
 }

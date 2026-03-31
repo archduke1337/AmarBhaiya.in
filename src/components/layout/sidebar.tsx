@@ -8,11 +8,9 @@ import {
   FileText,
   Folder,
   Flag,
-  Gavel,
   LayoutDashboard,
   Megaphone,
   MessageSquare,
-  Settings2,
   Shield,
   UserRound,
   Users,
@@ -37,7 +35,6 @@ function getNavItems(role: Role, userId: string): NavItem[] {
   if (role === "admin") {
     return [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-      { label: "Operations", href: "/admin/operations", icon: Settings2 },
       { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
       { label: "Users", href: "/admin/users", icon: Users },
       { label: "Courses", href: "/admin/courses", icon: BookOpen },
@@ -52,8 +49,8 @@ function getNavItems(role: Role, userId: string): NavItem[] {
   if (role === "instructor") {
     return [
       { label: "Dashboard", href: "/instructor", icon: LayoutDashboard },
-      { label: "Operations", href: "/instructor/operations", icon: Settings2 },
       { label: "My Courses", href: "/instructor/courses", icon: BookOpen },
+      { label: "Categories", href: "/instructor/categories", icon: Folder },
       { label: "Students", href: "/instructor/students", icon: Users },
       { label: "Live Sessions", href: "/instructor/live", icon: Video },
       { label: "Community", href: "/instructor/community", icon: MessageSquare },
@@ -63,7 +60,6 @@ function getNavItems(role: Role, userId: string): NavItem[] {
   if (role === "moderator") {
     return [
       { label: "Dashboard", href: "/moderator", icon: LayoutDashboard },
-      { label: "Actions", href: "/moderator/actions", icon: Gavel },
       { label: "Reports", href: "/moderator/reports", icon: Flag },
       { label: "Students", href: "/moderator/students", icon: Users },
       { label: "Community", href: "/moderator/community", icon: MessageSquare },
@@ -117,10 +113,10 @@ export function Sidebar({ role, userId }: SidebarProps) {
       <div className="px-4 pt-6 pb-8">
         <div className="border border-border p-4">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-            Operations
+            Workspace
           </p>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Use role-specific control panels to manage courses, moderation, and platform operations.
+            Use these pages to manage courses, curriculum, moderation, and platform content.
           </p>
         </div>
       </div>
