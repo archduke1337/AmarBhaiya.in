@@ -12,8 +12,8 @@ Source of truth: implementation_plan.md + current src/app tree
 - Implemented API routes: 9
 - Missing API routes: 0
 - Planned framework routes (`not-found.tsx`, `error.tsx`): 2
-- Implemented framework routes: 0
-- Missing framework routes: 2
+- Implemented framework routes: 2
+- Missing framework routes: 0
 
 ## Implemented Page Routes
 
@@ -61,8 +61,7 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Framework Routes
 
-- `src/app/not-found.tsx`
-- `src/app/error.tsx`
+- None
 
 ## API Route Coverage
 
@@ -98,6 +97,7 @@ Source of truth: implementation_plan.md + current src/app tree
 - Added student learning routes: /app/courses/[id], /app/community, /app/profile/[id]
 - Added course player foundation components and actions for enrollment/progress
 - Added role route sets for instructor (7), moderator (4), and admin (8)
+- Added app-level `not-found.tsx` and `error.tsx` with user recovery actions
 
 ## Phase-Aligned Execution Checklist
 
@@ -129,9 +129,9 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Phase E: Framework Safety Net (Medium Priority)
 
-- [ ] Add `src/app/not-found.tsx`
-- [ ] Add `src/app/error.tsx`
-- [ ] Ensure user-friendly fallback UI and route-safe recoverability
+- [x] Add `src/app/not-found.tsx`
+- [x] Add `src/app/error.tsx`
+- [x] Ensure user-friendly fallback UI and route-safe recoverability
 
 ## Validation Commands
 
