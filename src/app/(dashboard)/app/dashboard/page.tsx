@@ -1,5 +1,5 @@
 import { requireAuth } from "@/lib/appwrite/auth";
-import { getUserRole } from "@/lib/appwrite/auth";
+import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { logoutAction } from "@/lib/appwrite/actions";
 import { Button } from "@/components/ui/button";
 

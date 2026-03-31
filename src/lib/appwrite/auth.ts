@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createSessionClient, createAdminClient } from "./server";
 import type { Role } from "@/lib/utils/constants";
+import { getUserRole } from "./auth-utils";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -29,25 +30,6 @@ export async function getLoggedInUser(): Promise<AppwriteUser | null> {
   } catch {
     return null;
   }
-}
-
-// ── Get User Role ───────────────────────────────────────────────────────────
-// Priority: admin > instructor > moderator > student
-
-export function getUserRole(user: AppwriteUser | null): Role {
-  if (!user) return "student";
-  const labels = user.labels || [];
-  if (labels.includes("admin")) return "admin";
-  if (labels.includes("instructor")) return "instructor";
-  if (labels.includes("moderator")) return "moderator";
-  return "student";
-}
-
-// ── Check if User Has Role ──────────────────────────────────────────────────
-
-export function hasRole(user: AppwriteUser | null, role: Role): boolean {
-  if (!user) return role === "student";
-  return (user.labels || []).includes(role);
 }
 
 // ── Require Authentication ──────────────────────────────────────────────────
