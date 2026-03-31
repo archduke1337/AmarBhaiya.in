@@ -72,7 +72,7 @@ const dt = (t, key, required = false) =>
   safe(`col: ${key}`, () => db.createDatetimeColumn({ databaseId: DB, tableId: t, key, required }));
 
 const enumCol = (t, key, elements, required = false, xdefault = undefined) =>
-  safe(`col: ${key}`, () => db.createEnumColumn({ databaseId: DB, tableId: t, key, elements, required, ...(xdefault !== undefined && { xdefault }) }));
+  safe(`col: ${key}`, () => db.createEnumColumn({ databaseId: DB, tableId: t, key, elements, required, ...(!required && xdefault !== undefined && { xdefault }) }));
 
 const urlCol = (t, key, required = false) =>
   safe(`col: ${key}`, () => db.createUrlColumn({ databaseId: DB, tableId: t, key, required }));
@@ -81,8 +81,8 @@ const emailCol = (t, key, required = false) =>
   safe(`col: ${key}`, () => db.createEmailColumn({ databaseId: DB, tableId: t, key, required }));
 
 // Index creators
-const idx = (t, key, attributes, type = "key") =>
-  safe(`idx: ${key}`, () => db.createColumnIndex({ databaseId: DB, tableId: t, key, type, attributes }));
+const idx = (t, key, cols, type = "key") =>
+  safe(`idx: ${key}`, () => db.createIndex({ databaseId: DB, tableId: t, key, type, columns: cols }));
 
 
 // ── Main ────────────────────────────────────────────────────────────────────
