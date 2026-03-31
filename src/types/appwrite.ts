@@ -1,10 +1,25 @@
-// ── Appwrite Document Interfaces ────────────────────────────────────────────
-// These map to the collections defined in src/lib/appwrite/config.ts
+// ── Appwrite Row Interfaces ─────────────────────────────────────────────────
+// These map exactly to the tables defined in scripts/setup-appwrite.mjs
+// and configured in src/lib/appwrite/config.ts
 
-export interface Course {
-  $id: string;
-  $createdAt: string;
-  $updatedAt: string;
+import type { Models } from "appwrite";
+
+// ── Base ────────────────────────────────────────────────────────────────────
+
+/** Every Appwrite document/row has these system fields */
+export type AppwriteRow = Models.Document;
+
+// ── Core LMS ────────────────────────────────────────────────────────────────
+
+export interface Category extends AppwriteRow {
+  name: string;
+  slug: string;
+  description: string;
+  order: number;
+  createdBy: string;
+}
+
+export interface Course extends AppwriteRow {
   title: string;
   slug: string;
   description: string;
@@ -27,25 +42,14 @@ export interface Course {
   whatYouLearn: string[];
 }
 
-export interface Category {
-  $id: string;
-  name: string;
-  slug: string;
-  description: string;
-  order: number;
-  createdBy: string;
-}
-
-export interface Module {
-  $id: string;
+export interface Module extends AppwriteRow {
   courseId: string;
   title: string;
   description: string;
   order: number;
 }
 
-export interface Lesson {
-  $id: string;
+export interface Lesson extends AppwriteRow {
   moduleId: string;
   courseId: string;
   title: string;
@@ -56,8 +60,7 @@ export interface Lesson {
   isFree: boolean;
 }
 
-export interface Resource {
-  $id: string;
+export interface Resource extends AppwriteRow {
   lessonId: string;
   title: string;
   fileId: string;
@@ -65,8 +68,9 @@ export interface Resource {
   url: string;
 }
 
-export interface Enrollment {
-  $id: string;
+// ── Student Progress ────────────────────────────────────────────────────────
+
+export interface Enrollment extends AppwriteRow {
   userId: string;
   courseId: string;
   enrolledAt: string;
@@ -75,8 +79,7 @@ export interface Enrollment {
   isActive: boolean;
 }
 
-export interface Progress {
-  $id: string;
+export interface Progress extends AppwriteRow {
   userId: string;
   courseId: string;
   lessonId: string;
@@ -84,8 +87,9 @@ export interface Progress {
   percentComplete: number;
 }
 
-export interface Quiz {
-  $id: string;
+// ── Assessments ─────────────────────────────────────────────────────────────
+
+export interface Quiz extends AppwriteRow {
   lessonId: string;
   courseId: string;
   title: string;
@@ -93,8 +97,7 @@ export interface Quiz {
   timeLimit: number;
 }
 
-export interface QuizQuestion {
-  $id: string;
+export interface QuizQuestion extends AppwriteRow {
   quizId: string;
   text: string;
   type: "mcq" | "true_false" | "short_answer";
@@ -103,8 +106,7 @@ export interface QuizQuestion {
   order: number;
 }
 
-export interface QuizAttempt {
-  $id: string;
+export interface QuizAttempt extends AppwriteRow {
   userId: string;
   quizId: string;
   score: number;
@@ -113,8 +115,7 @@ export interface QuizAttempt {
   passed: boolean;
 }
 
-export interface Assignment {
-  $id: string;
+export interface Assignment extends AppwriteRow {
   lessonId: string;
   courseId: string;
   title: string;
@@ -122,8 +123,7 @@ export interface Assignment {
   dueDate: string;
 }
 
-export interface Submission {
-  $id: string;
+export interface Submission extends AppwriteRow {
   assignmentId: string;
   userId: string;
   fileId: string;
@@ -132,8 +132,7 @@ export interface Submission {
   feedback: string;
 }
 
-export interface Certificate {
-  $id: string;
+export interface Certificate extends AppwriteRow {
   userId: string;
   courseId: string;
   issuedAt: string;
@@ -141,8 +140,9 @@ export interface Certificate {
   shareUrl: string;
 }
 
-export interface LiveSession {
-  $id: string;
+// ── Live & Community ────────────────────────────────────────────────────────
+
+export interface LiveSession extends AppwriteRow {
   courseId: string;
   instructorId: string;
   title: string;
@@ -154,15 +154,13 @@ export interface LiveSession {
   duration: number;
 }
 
-export interface SessionRsvp {
-  $id: string;
+export interface SessionRsvp extends AppwriteRow {
   sessionId: string;
   userId: string;
   rsvpedAt: string;
 }
 
-export interface CourseComment {
-  $id: string;
+export interface CourseComment extends AppwriteRow {
   lessonId: string;
   courseId: string;
   userId: string;
@@ -176,8 +174,7 @@ export interface CourseComment {
   likes: number;
 }
 
-export interface ForumCategory {
-  $id: string;
+export interface ForumCategory extends AppwriteRow {
   name: string;
   description: string;
   slug: string;
@@ -186,8 +183,7 @@ export interface ForumCategory {
   threadCount: number;
 }
 
-export interface ForumThread {
-  $id: string;
+export interface ForumThread extends AppwriteRow {
   forumCatId: string;
   userId: string;
   userName: string;
@@ -201,8 +197,7 @@ export interface ForumThread {
   lastReplyAt: string;
 }
 
-export interface ForumReply {
-  $id: string;
+export interface ForumReply extends AppwriteRow {
   threadId: string;
   userId: string;
   userName: string;
@@ -212,8 +207,9 @@ export interface ForumReply {
   isDeleted: boolean;
 }
 
-export interface Payment {
-  $id: string;
+// ── Payments & Admin ────────────────────────────────────────────────────────
+
+export interface Payment extends AppwriteRow {
   userId: string;
   courseId: string;
   amount: number;
@@ -224,8 +220,7 @@ export interface Payment {
   createdAt: string;
 }
 
-export interface Subscription {
-  $id: string;
+export interface Subscription extends AppwriteRow {
   userId: string;
   planId: string;
   startDate: string;
@@ -234,8 +229,7 @@ export interface Subscription {
   paymentId: string;
 }
 
-export interface ModerationAction {
-  $id: string;
+export interface ModerationAction extends AppwriteRow {
   moderatorId: string;
   moderatorName: string;
   targetUserId: string;
@@ -251,8 +245,7 @@ export interface ModerationAction {
   revertedAt: string;
 }
 
-export interface AuditLog {
-  $id: string;
+export interface AuditLog extends AppwriteRow {
   actorId: string;
   actorName: string;
   action: string;
@@ -262,8 +255,7 @@ export interface AuditLog {
   createdAt: string;
 }
 
-export interface Notification {
-  $id: string;
+export interface Notification extends AppwriteRow {
   userId: string;
   type: string;
   title: string;

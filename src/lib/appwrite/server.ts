@@ -1,6 +1,6 @@
 "use server";
 
-import { Client, Account, Databases, Storage, Users } from "node-appwrite";
+import { Client, Account, TablesDB, Storage, Users } from "node-appwrite";
 import { cookies } from "next/headers";
 import { APPWRITE_CONFIG } from "./config";
 
@@ -26,8 +26,8 @@ export async function createSessionClient() {
     get account() {
       return new Account(client);
     },
-    get databases() {
-      return new Databases(client);
+    get tablesDB() {
+      return new TablesDB(client);
     },
     get storage() {
       return new Storage(client);
@@ -38,19 +38,29 @@ export async function createSessionClient() {
 // ── Admin Client ────────────────────────────────────────────────────────────
 // Used for privileged operations: creating accounts, managing labels, webhooks.
 // Uses API key — NEVER expose to client-side code.
+// Singleton pattern — reuse across calls.
+
+let _adminClient: Client | null = null;
+
+function getAdminClient(): Client {
+  if (!_adminClient) {
+    _adminClient = new Client()
+      .setEndpoint(APPWRITE_CONFIG.endpoint)
+      .setProject(APPWRITE_CONFIG.projectId)
+      .setKey(process.env.APPWRITE_API_KEY!);
+  }
+  return _adminClient;
+}
 
 export async function createAdminClient() {
-  const client = new Client()
-    .setEndpoint(APPWRITE_CONFIG.endpoint)
-    .setProject(APPWRITE_CONFIG.projectId)
-    .setKey(process.env.APPWRITE_API_KEY!);
+  const client = getAdminClient();
 
   return {
     get account() {
       return new Account(client);
     },
-    get databases() {
-      return new Databases(client);
+    get tablesDB() {
+      return new TablesDB(client);
     },
     get storage() {
       return new Storage(client);

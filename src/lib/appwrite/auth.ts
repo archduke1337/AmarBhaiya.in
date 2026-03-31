@@ -32,6 +32,7 @@ export async function getLoggedInUser(): Promise<AppwriteUser | null> {
 }
 
 // ── Get User Role ───────────────────────────────────────────────────────────
+// Priority: admin > instructor > moderator > student
 
 export function getUserRole(user: AppwriteUser | null): Role {
   if (!user) return "student";
@@ -40,6 +41,13 @@ export function getUserRole(user: AppwriteUser | null): Role {
   if (labels.includes("instructor")) return "instructor";
   if (labels.includes("moderator")) return "moderator";
   return "student";
+}
+
+// ── Check if User Has Role ──────────────────────────────────────────────────
+
+export function hasRole(user: AppwriteUser | null, role: Role): boolean {
+  if (!user) return role === "student";
+  return (user.labels || []).includes(role);
 }
 
 // ── Require Authentication ──────────────────────────────────────────────────
@@ -69,7 +77,7 @@ export async function requireRole(
 
 export async function assignRole(userId: string, role: Role): Promise<void> {
   const { users } = await createAdminClient();
-  const user = await users.get(userId);
+  const user = await users.get({ userId });
   const currentLabels = user.labels || [];
 
   // Remove existing role labels and add new one
@@ -79,5 +87,5 @@ export async function assignRole(userId: string, role: Role): Promise<void> {
   );
   cleanedLabels.push(role);
 
-  await users.updateLabels(userId, cleanedLabels);
+  await users.updateLabels({ userId, labels: cleanedLabels });
 }

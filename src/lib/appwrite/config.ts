@@ -1,13 +1,15 @@
 // ── Appwrite Configuration ──────────────────────────────────────────────────
 // All Appwrite IDs in one place. Update these after creating resources in Console.
 
+const PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
+
 export const APPWRITE_CONFIG = {
   endpoint: process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "",
-  projectId: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "",
+  projectId: PROJECT_ID,
   databaseId: process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "amarbhaiya_db",
 
-  // ── Collections ───────────────────────────────────────────────────────────
-  collections: {
+  // ── Tables (Collections) ──────────────────────────────────────────────────
+  tables: {
     courses: "courses",
     categories: "categories",
     modules: "modules",
@@ -45,9 +47,11 @@ export const APPWRITE_CONFIG = {
   },
 
   // ── Session Cookie ────────────────────────────────────────────────────────
-  sessionCookieName: "amarbhaiya-session",
+  // MUST be "a_session_<PROJECT_ID>" for Appwrite to recognize it.
+  // See: https://appwrite.io/docs — SSR Auth cookie naming
+  sessionCookieName: `a_session_${PROJECT_ID}`,
 } as const;
 
 // ── Type Shortcuts ──────────────────────────────────────────────────────────
-export type CollectionKey = keyof typeof APPWRITE_CONFIG.collections;
+export type TableKey = keyof typeof APPWRITE_CONFIG.tables;
 export type BucketKey = keyof typeof APPWRITE_CONFIG.buckets;

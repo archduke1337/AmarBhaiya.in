@@ -10,11 +10,11 @@ export const OWNER = {
   shortName: "Amar Bhaiya",
   email: "contact@amarbhaiya.in",
   roles: [
-    { title: "Tech Expert", icon: "code", color: "from-blue-500 to-cyan-400" },
-    { title: "Fitness Trainer", icon: "dumbbell", color: "from-emerald-500 to-green-400" },
-    { title: "Career Coach", icon: "compass", color: "from-violet-500 to-purple-400" },
-    { title: "Entrepreneur", icon: "rocket", color: "from-orange-500 to-amber-400" },
-    { title: "Life Mentor", icon: "heart", color: "from-rose-500 to-pink-400" },
+    { title: "Tech Expert", icon: "code" },
+    { title: "Fitness Trainer", icon: "dumbbell" },
+    { title: "Career Coach", icon: "compass" },
+    { title: "Entrepreneur", icon: "rocket" },
+    { title: "Life Mentor", icon: "heart" },
   ],
   social: {
     youtube: "https://youtube.com/@amarbhaiya",
@@ -70,18 +70,19 @@ export const DASHBOARD_NAV_ITEMS = {
 // ── Course Access Models ────────────────────────────────────────────────────
 
 export const ACCESS_MODELS = {
-  free: { label: "Free", color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-  paid: { label: "Paid", color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  subscription: { label: "Premium", color: "text-violet-500", bgColor: "bg-violet-500/10" },
+  free: { label: "Free" },
+  paid: { label: "Paid" },
+  subscription: { label: "Premium" },
 } as const;
 
 // ── Role Configuration ──────────────────────────────────────────────────────
+// Monochrome — no color badges, using border/text contrast instead.
 
 export const ROLES = {
-  admin: { label: "Admin", color: "text-red-500", bgColor: "bg-red-500/10", showBadge: false },
-  instructor: { label: "Instructor", color: "text-blue-500", bgColor: "bg-blue-500/10", showBadge: true },
-  moderator: { label: "Moderator", color: "text-purple-500", bgColor: "bg-purple-500/10", showBadge: true },
-  student: { label: "Student", color: "text-emerald-500", bgColor: "bg-emerald-500/10", showBadge: true },
+  admin: { label: "Admin", showBadge: false },
+  instructor: { label: "Instructor", showBadge: true },
+  moderator: { label: "Moderator", showBadge: true },
+  student: { label: "Student", showBadge: false },
 } as const;
 
 export type Role = keyof typeof ROLES;

@@ -2,28 +2,23 @@
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * amarbhaiya.in — Appwrite Database Setup Script
+ * amarbhaiya.in — Appwrite Database Setup Script (v2)
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * Run this AFTER your Appwrite instance is live and configured.
+ * Uses TablesDB (not deprecated Databases) with object-params style.
+ * Creates tables with inline columns + indexes in a single call.
  *
  * Prerequisites:
- *   1. Appwrite self-hosted instance running
+ *   1. Appwrite instance running (cloud or self-hosted)
  *   2. Project created in Appwrite Console
  *   3. API key generated with full scopes
- *   4. .env file populated with endpoint, project ID, and API key
+ *   4. .env file populated
  *
  * Usage:
  *   node scripts/setup-appwrite.mjs
- *
- * This script creates:
- *   - 1 Database
- *   - 24 Collections with all attributes
- *   - 5 Storage Buckets
- *   - No data is deleted — safe to re-run (will skip existing resources)
  */
 
-import { Client, Databases, Storage, ID, Permission, Role } from "node-appwrite";
+import { Client, TablesDB, Storage, Permission, Role } from "node-appwrite";
 import { config } from "dotenv";
 
 config();
@@ -33,10 +28,10 @@ config();
 const ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
 const PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 const API_KEY = process.env.APPWRITE_API_KEY;
-const DATABASE_ID = "amarbhaiya_db";
+const DB = "amarbhaiya_db";
 
 if (!ENDPOINT || !PROJECT_ID || !API_KEY) {
-  console.error("❌ Missing environment variables. Please set:");
+  console.error("❌ Missing environment variables. Set:");
   console.error("   NEXT_PUBLIC_APPWRITE_ENDPOINT");
   console.error("   NEXT_PUBLIC_APPWRITE_PROJECT_ID");
   console.error("   APPWRITE_API_KEY");
@@ -48,12 +43,12 @@ const client = new Client()
   .setProject(PROJECT_ID)
   .setKey(API_KEY);
 
-const databases = new Databases(client);
+const tablesDB = new TablesDB(client);
 const storage = new Storage(client);
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-async function safeCreate(name, fn) {
+async function safe(name, fn) {
   try {
     await fn();
     console.log(`  ✅ ${name}`);
@@ -66,576 +61,796 @@ async function safeCreate(name, fn) {
   }
 }
 
-async function createStringAttr(collId, key, size, required = false) {
-  await safeCreate(`  attr: ${key}`, () =>
-    databases.createStringAttribute(DATABASE_ID, collId, key, size, required)
-  );
-}
+// Column shorthand helpers
+const varchar = (key, size, required = false) => ({ key, type: "varchar", size, required });
+const text = (key, required = false) => ({ key, type: "text", required });
+const mediumtext = (key, required = false) => ({ key, type: "mediumtext", required });
+const integer = (key, required = false, xdefault = undefined) => ({ key, type: "integer", required, ...(xdefault !== undefined && { xdefault }) });
+const float = (key, required = false, xdefault = undefined) => ({ key, type: "float", required, ...(xdefault !== undefined && { xdefault }) });
+const boolean = (key, required = false, xdefault = undefined) => ({ key, type: "boolean", required, ...(xdefault !== undefined && { xdefault }) });
+const datetime = (key, required = false) => ({ key, type: "datetime", required });
+const enumCol = (key, elements, required = false, xdefault = undefined) => ({ key, type: "enum", elements, required, ...(xdefault !== undefined && { xdefault }) });
+const url = (key, required = false) => ({ key, type: "url", required });
+const email = (key, required = false) => ({ key, type: "email", required });
+const varcharArray = (key, size, required = false) => ({ key, type: "varchar", size, required, array: true });
 
-async function createIntAttr(collId, key, required = false, defaultVal = undefined) {
-  await safeCreate(`  attr: ${key}`, () =>
-    databases.createIntegerAttribute(DATABASE_ID, collId, key, required, undefined, undefined, defaultVal)
-  );
-}
-
-async function createFloatAttr(collId, key, required = false, defaultVal = undefined) {
-  await safeCreate(`  attr: ${key}`, () =>
-    databases.createFloatAttribute(DATABASE_ID, collId, key, required, undefined, undefined, defaultVal)
-  );
-}
-
-async function createBoolAttr(collId, key, required = false, defaultVal = undefined) {
-  await safeCreate(`  attr: ${key}`, () =>
-    databases.createBooleanAttribute(DATABASE_ID, collId, key, required, defaultVal)
-  );
-}
-
-async function createEmailAttr(collId, key, required = false) {
-  await safeCreate(`  attr: ${key}`, () =>
-    databases.createEmailAttribute(DATABASE_ID, collId, key, required)
-  );
-}
-
-async function createEnumAttr(collId, key, elements, required = false, defaultVal = undefined) {
-  await safeCreate(`  attr: ${key}`, () =>
-    databases.createEnumAttribute(DATABASE_ID, collId, key, elements, required, defaultVal)
-  );
-}
-
-async function createDatetimeAttr(collId, key, required = false) {
-  await safeCreate(`  attr: ${key}`, () =>
-    databases.createDatetimeAttribute(DATABASE_ID, collId, key, required)
-  );
-}
+// Index shorthand
+const idx = (key, attributes, type = "key") => ({ key, type, attributes });
+const unique = (key, attributes) => ({ key, type: "unique", attributes });
+const fulltext = (key, attributes) => ({ key, type: "fulltext", attributes });
 
 // ── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log("\n🚀 amarbhaiya.in — Appwrite Setup\n");
+  console.log("\n🚀 amarbhaiya.in — Appwrite Setup (v2 — TablesDB)\n");
   console.log(`   Endpoint: ${ENDPOINT}`);
   console.log(`   Project:  ${PROJECT_ID}\n`);
 
   // ── Create Database ─────────────────────────────────────────────────────
   console.log("📦 Creating database...");
-  await safeCreate("Database: amarbhaiya_db", () =>
-    databases.create(DATABASE_ID, "amarbhaiya.in")
+  await safe("Database: amarbhaiya_db", () =>
+    tablesDB.create({ databaseId: DB, name: "amarbhaiya.in" })
   );
 
-  // ── Collections ─────────────────────────────────────────────────────────
+  // ── Tables ──────────────────────────────────────────────────────────────
 
-  // 1. Categories
-  console.log("\n📁 Creating collections...\n");
+  console.log("\n📁 Creating tables...\n");
 
+  // 1. categories
   console.log("1. categories");
-  await safeCreate("Collection: categories", () =>
-    databases.createCollection(DATABASE_ID, "categories", "categories", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.update(Role.label("admin")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: categories", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "categories", name: "categories",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.update(Role.label("admin")),
+        Permission.delete(Role.label("admin")),
+      ],
+      columns: [
+        varchar("name", 100, true),
+        varchar("slug", 100, true),
+        text("description"),
+        integer("order", false, 0),
+        varchar("createdBy", 50),
+      ],
+      indexes: [
+        unique("idx_slug", ["slug"]),
+        idx("idx_order", ["order"]),
+      ],
+    })
   );
-  await createStringAttr("categories", "name", 100, true);
-  await createStringAttr("categories", "slug", 100, true);
-  await createStringAttr("categories", "description", 500);
-  await createIntAttr("categories", "order", false, 0);
-  await createStringAttr("categories", "createdBy", 50);
 
-  // 2. Courses
+  // 2. courses
   console.log("\n2. courses");
-  await safeCreate("Collection: courses", () =>
-    databases.createCollection(DATABASE_ID, "courses", "courses", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.update(Role.label("admin")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: courses", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "courses", name: "courses",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.update(Role.label("admin")),
+        Permission.delete(Role.label("admin")),
+      ],
+      columns: [
+        varchar("title", 200, true),
+        varchar("slug", 200, true),
+        mediumtext("description", true),
+        text("shortDescription"),
+        varchar("instructorId", 50, true),
+        varchar("instructorName", 200),
+        varchar("categoryId", 50),
+        integer("price", false, 0),
+        enumCol("accessModel", ["free", "paid", "subscription"], true, "free"),
+        boolean("isPublished", false, false),
+        boolean("isFeatured", false, false),
+        varchar("thumbnailId", 100),
+        integer("totalDuration", false, 0),
+        integer("totalLessons", false, 0),
+        integer("enrollmentCount", false, 0),
+        float("rating", false, 0),
+        integer("ratingCount", false, 0),
+        varcharArray("tags", 50),
+        varcharArray("requirements", 200),
+        varcharArray("whatYouLearn", 200),
+      ],
+      indexes: [
+        unique("idx_slug", ["slug"]),
+        idx("idx_categoryId", ["categoryId"]),
+        idx("idx_instructorId", ["instructorId"]),
+        idx("idx_isPublished", ["isPublished"]),
+        idx("idx_isFeatured", ["isFeatured"]),
+        fulltext("idx_title_ft", ["title"]),
+      ],
+    })
   );
-  await createStringAttr("courses", "title", 200, true);
-  await createStringAttr("courses", "slug", 200, true);
-  await createStringAttr("courses", "description", 5000, true);
-  await createStringAttr("courses", "shortDescription", 500);
-  await createStringAttr("courses", "instructorId", 50, true);
-  await createStringAttr("courses", "instructorName", 200);
-  await createStringAttr("courses", "categoryId", 50);
-  await createIntAttr("courses", "price", false, 0);
-  await createEnumAttr("courses", "accessModel", ["free", "paid", "subscription"], true, "free");
-  await createBoolAttr("courses", "isPublished", false, false);
-  await createBoolAttr("courses", "isFeatured", false, false);
-  await createStringAttr("courses", "thumbnailId", 100);
-  await createIntAttr("courses", "totalDuration", false, 0);
-  await createIntAttr("courses", "totalLessons", false, 0);
-  await createIntAttr("courses", "enrollmentCount", false, 0);
-  await createFloatAttr("courses", "rating", false, 0);
-  await createIntAttr("courses", "ratingCount", false, 0);
 
-  // 3. Modules
+  // 3. modules
   console.log("\n3. modules");
-  await safeCreate("Collection: modules", () =>
-    databases.createCollection(DATABASE_ID, "modules", "modules", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-      Permission.delete(Role.label("instructor")),
-    ])
+  await safe("Table: modules", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "modules", name: "modules",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+        Permission.delete(Role.label("instructor")),
+      ],
+      columns: [
+        varchar("courseId", 50, true),
+        varchar("title", 200, true),
+        text("description"),
+        integer("order", false, 0),
+      ],
+      indexes: [
+        idx("idx_courseId", ["courseId"]),
+      ],
+    })
   );
-  await createStringAttr("modules", "courseId", 50, true);
-  await createStringAttr("modules", "title", 200, true);
-  await createStringAttr("modules", "description", 1000);
-  await createIntAttr("modules", "order", false, 0);
 
-  // 4. Lessons
+  // 4. lessons
   console.log("\n4. lessons");
-  await safeCreate("Collection: lessons", () =>
-    databases.createCollection(DATABASE_ID, "lessons", "lessons", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-      Permission.delete(Role.label("instructor")),
-    ])
+  await safe("Table: lessons", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "lessons", name: "lessons",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+        Permission.delete(Role.label("instructor")),
+      ],
+      columns: [
+        varchar("moduleId", 50, true),
+        varchar("courseId", 50, true),
+        varchar("title", 200, true),
+        text("description"),
+        varchar("videoFileId", 100),
+        integer("duration", false, 0),
+        integer("order", false, 0),
+        boolean("isFree", false, false),
+      ],
+      indexes: [
+        idx("idx_moduleId", ["moduleId"]),
+        idx("idx_courseId", ["courseId"]),
+        idx("idx_order", ["order"]),
+      ],
+    })
   );
-  await createStringAttr("lessons", "moduleId", 50, true);
-  await createStringAttr("lessons", "courseId", 50, true);
-  await createStringAttr("lessons", "title", 200, true);
-  await createStringAttr("lessons", "description", 2000);
-  await createStringAttr("lessons", "videoFileId", 100);
-  await createIntAttr("lessons", "duration", false, 0);
-  await createIntAttr("lessons", "order", false, 0);
-  await createBoolAttr("lessons", "isFree", false, false);
 
-  // 5. Resources
+  // 5. resources
   console.log("\n5. resources");
-  await safeCreate("Collection: resources", () =>
-    databases.createCollection(DATABASE_ID, "resources", "resources", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-      Permission.delete(Role.label("instructor")),
-    ])
+  await safe("Table: resources", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "resources", name: "resources",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+        Permission.delete(Role.label("instructor")),
+      ],
+      columns: [
+        varchar("lessonId", 50, true),
+        varchar("title", 200, true),
+        varchar("fileId", 100),
+        enumCol("type", ["pdf", "link", "file"], true, "file"),
+        url("url"),
+      ],
+      indexes: [
+        idx("idx_lessonId", ["lessonId"]),
+      ],
+    })
   );
-  await createStringAttr("resources", "lessonId", 50, true);
-  await createStringAttr("resources", "title", 200, true);
-  await createStringAttr("resources", "fileId", 100);
-  await createEnumAttr("resources", "type", ["pdf", "link", "file"], true, "file");
-  await createStringAttr("resources", "url", 500);
 
-  // 6. Enrollments
+  // 6. enrollments
   console.log("\n6. enrollments");
-  await safeCreate("Collection: enrollments", () =>
-    databases.createCollection(DATABASE_ID, "enrollments", "enrollments", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.update(Role.label("admin")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: enrollments", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "enrollments", name: "enrollments",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.update(Role.label("admin")),
+        Permission.delete(Role.label("admin")),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("userId", 50, true),
+        varchar("courseId", 50, true),
+        datetime("enrolledAt", true),
+        varchar("paymentId", 50),
+        enumCol("accessModel", ["free", "paid", "subscription"], true, "free"),
+        boolean("isActive", false, true),
+      ],
+      indexes: [
+        idx("idx_userId", ["userId"]),
+        idx("idx_courseId", ["courseId"]),
+        unique("idx_user_course", ["userId", "courseId"]),
+      ],
+    })
   );
-  await createStringAttr("enrollments", "userId", 50, true);
-  await createStringAttr("enrollments", "courseId", 50, true);
-  await createDatetimeAttr("enrollments", "enrolledAt", true);
-  await createStringAttr("enrollments", "paymentId", 50);
-  await createEnumAttr("enrollments", "accessModel", ["free", "paid", "subscription"], true, "free");
-  await createBoolAttr("enrollments", "isActive", false, true);
 
-  // 7. Progress
+  // 7. progress
   console.log("\n7. progress");
-  await safeCreate("Collection: progress", () =>
-    databases.createCollection(DATABASE_ID, "progress", "progress", [
-      Permission.read(Role.users()),
-      Permission.create(Role.users()),
-      Permission.update(Role.users()),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: progress", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "progress", name: "progress",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.users()),
+        Permission.update(Role.users()),
+        Permission.delete(Role.label("admin")),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("userId", 50, true),
+        varchar("courseId", 50, true),
+        varchar("lessonId", 50, true),
+        datetime("completedAt"),
+        float("percentComplete", false, 0),
+      ],
+      indexes: [
+        idx("idx_userId", ["userId"]),
+        idx("idx_courseId", ["courseId"]),
+        unique("idx_user_lesson", ["userId", "lessonId"]),
+      ],
+    })
   );
-  await createStringAttr("progress", "userId", 50, true);
-  await createStringAttr("progress", "courseId", 50, true);
-  await createStringAttr("progress", "lessonId", 50, true);
-  await createDatetimeAttr("progress", "completedAt");
-  await createFloatAttr("progress", "percentComplete", false, 0);
 
-  // 8. Quizzes
+  // 8. quizzes
   console.log("\n8. quizzes");
-  await safeCreate("Collection: quizzes", () =>
-    databases.createCollection(DATABASE_ID, "quizzes", "quizzes", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: quizzes", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "quizzes", name: "quizzes",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+      ],
+      columns: [
+        varchar("lessonId", 50),
+        varchar("courseId", 50, true),
+        varchar("title", 200, true),
+        integer("passMark", false, 60),
+        integer("timeLimit", false, 0),
+      ],
+      indexes: [
+        idx("idx_courseId", ["courseId"]),
+        idx("idx_lessonId", ["lessonId"]),
+      ],
+    })
   );
-  await createStringAttr("quizzes", "lessonId", 50);
-  await createStringAttr("quizzes", "courseId", 50, true);
-  await createStringAttr("quizzes", "title", 200, true);
-  await createIntAttr("quizzes", "passMark", false, 60);
-  await createIntAttr("quizzes", "timeLimit", false, 0);
 
-  // 9. Quiz Questions
+  // 9. quiz_questions
   console.log("\n9. quiz_questions");
-  await safeCreate("Collection: quiz_questions", () =>
-    databases.createCollection(DATABASE_ID, "quiz_questions", "quiz_questions", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: quiz_questions", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "quiz_questions", name: "quiz_questions",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+      ],
+      columns: [
+        varchar("quizId", 50, true),
+        text("text", true),
+        enumCol("type", ["mcq", "true_false", "short_answer"], true, "mcq"),
+        varcharArray("options", 500),
+        varchar("correctAnswer", 500, true),
+        integer("order", false, 0),
+      ],
+      indexes: [
+        idx("idx_quizId", ["quizId"]),
+      ],
+    })
   );
-  await createStringAttr("quiz_questions", "quizId", 50, true);
-  await createStringAttr("quiz_questions", "text", 2000, true);
-  await createEnumAttr("quiz_questions", "type", ["mcq", "true_false", "short_answer"], true, "mcq");
-  await createStringAttr("quiz_questions", "correctAnswer", 500, true);
-  await createIntAttr("quiz_questions", "order", false, 0);
 
-  // 10. Quiz Attempts
+  // 10. quiz_attempts
   console.log("\n10. quiz_attempts");
-  await safeCreate("Collection: quiz_attempts", () =>
-    databases.createCollection(DATABASE_ID, "quiz_attempts", "quiz_attempts", [
-      Permission.read(Role.users()),
-      Permission.create(Role.users()),
-      Permission.update(Role.label("admin")),
-    ])
+  await safe("Table: quiz_attempts", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "quiz_attempts", name: "quiz_attempts",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.users()),
+        Permission.update(Role.label("admin")),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("userId", 50, true),
+        varchar("quizId", 50, true),
+        integer("score", false, 0),
+        varcharArray("answers", 500),
+        datetime("completedAt"),
+        boolean("passed", false, false),
+      ],
+      indexes: [
+        idx("idx_userId", ["userId"]),
+        idx("idx_quizId", ["quizId"]),
+      ],
+    })
   );
-  await createStringAttr("quiz_attempts", "userId", 50, true);
-  await createStringAttr("quiz_attempts", "quizId", 50, true);
-  await createIntAttr("quiz_attempts", "score", false, 0);
-  await createDatetimeAttr("quiz_attempts", "completedAt");
-  await createBoolAttr("quiz_attempts", "passed", false, false);
 
-  // 11. Assignments
+  // 11. assignments
   console.log("\n11. assignments");
-  await safeCreate("Collection: assignments", () =>
-    databases.createCollection(DATABASE_ID, "assignments", "assignments", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: assignments", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "assignments", name: "assignments",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+      ],
+      columns: [
+        varchar("lessonId", 50),
+        varchar("courseId", 50, true),
+        varchar("title", 200, true),
+        mediumtext("description"),
+        datetime("dueDate"),
+      ],
+      indexes: [
+        idx("idx_courseId", ["courseId"]),
+        idx("idx_lessonId", ["lessonId"]),
+      ],
+    })
   );
-  await createStringAttr("assignments", "lessonId", 50);
-  await createStringAttr("assignments", "courseId", 50, true);
-  await createStringAttr("assignments", "title", 200, true);
-  await createStringAttr("assignments", "description", 3000);
-  await createDatetimeAttr("assignments", "dueDate");
 
-  // 12. Submissions
+  // 12. submissions
   console.log("\n12. submissions");
-  await safeCreate("Collection: submissions", () =>
-    databases.createCollection(DATABASE_ID, "submissions", "submissions", [
-      Permission.read(Role.users()),
-      Permission.create(Role.users()),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("instructor")),
-    ])
+  await safe("Table: submissions", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "submissions", name: "submissions",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.users()),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("instructor")),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("assignmentId", 50, true),
+        varchar("userId", 50, true),
+        varchar("fileId", 100),
+        datetime("submittedAt"),
+        integer("grade", false, 0),
+        text("feedback"),
+      ],
+      indexes: [
+        idx("idx_assignmentId", ["assignmentId"]),
+        idx("idx_userId", ["userId"]),
+      ],
+    })
   );
-  await createStringAttr("submissions", "assignmentId", 50, true);
-  await createStringAttr("submissions", "userId", 50, true);
-  await createStringAttr("submissions", "fileId", 100);
-  await createDatetimeAttr("submissions", "submittedAt");
-  await createIntAttr("submissions", "grade", false, 0);
-  await createStringAttr("submissions", "feedback", 2000);
 
-  // 13. Certificates
+  // 13. certificates
   console.log("\n13. certificates");
-  await safeCreate("Collection: certificates", () =>
-    databases.createCollection(DATABASE_ID, "certificates", "certificates", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.update(Role.label("admin")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: certificates", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "certificates", name: "certificates",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.update(Role.label("admin")),
+        Permission.delete(Role.label("admin")),
+      ],
+      columns: [
+        varchar("userId", 50, true),
+        varchar("courseId", 50, true),
+        datetime("issuedAt", true),
+        varchar("fileId", 100),
+        url("shareUrl"),
+      ],
+      indexes: [
+        idx("idx_userId", ["userId"]),
+        idx("idx_courseId", ["courseId"]),
+        unique("idx_user_course", ["userId", "courseId"]),
+      ],
+    })
   );
-  await createStringAttr("certificates", "userId", 50, true);
-  await createStringAttr("certificates", "courseId", 50, true);
-  await createDatetimeAttr("certificates", "issuedAt", true);
-  await createStringAttr("certificates", "fileId", 100);
-  await createStringAttr("certificates", "shareUrl", 200);
 
-  // 14. Live Sessions
+  // 14. live_sessions
   console.log("\n14. live_sessions");
-  await safeCreate("Collection: live_sessions", () =>
-    databases.createCollection(DATABASE_ID, "live_sessions", "live_sessions", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("instructor")),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("instructor")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: live_sessions", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "live_sessions", name: "live_sessions",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+      ],
+      columns: [
+        varchar("courseId", 50, true),
+        varchar("instructorId", 50, true),
+        varchar("title", 200, true),
+        text("description"),
+        datetime("scheduledAt", true),
+        varchar("streamId", 100),
+        enumCol("status", ["scheduled", "live", "ended"], true, "scheduled"),
+        url("recordingUrl"),
+        integer("duration", false, 0),
+      ],
+      indexes: [
+        idx("idx_courseId", ["courseId"]),
+        idx("idx_instructorId", ["instructorId"]),
+        idx("idx_scheduledAt", ["scheduledAt"]),
+        idx("idx_status", ["status"]),
+      ],
+    })
   );
-  await createStringAttr("live_sessions", "courseId", 50, true);
-  await createStringAttr("live_sessions", "instructorId", 50, true);
-  await createStringAttr("live_sessions", "title", 200, true);
-  await createStringAttr("live_sessions", "description", 1000);
-  await createDatetimeAttr("live_sessions", "scheduledAt", true);
-  await createStringAttr("live_sessions", "streamId", 100);
-  await createEnumAttr("live_sessions", "status", ["scheduled", "live", "ended"], true, "scheduled");
-  await createStringAttr("live_sessions", "recordingUrl", 500);
-  await createIntAttr("live_sessions", "duration", false, 0);
 
-  // 15. Session RSVPs
+  // 15. session_rsvps
   console.log("\n15. session_rsvps");
-  await safeCreate("Collection: session_rsvps", () =>
-    databases.createCollection(DATABASE_ID, "session_rsvps", "session_rsvps", [
-      Permission.read(Role.users()),
-      Permission.create(Role.users()),
-      Permission.delete(Role.users()),
-    ])
+  await safe("Table: session_rsvps", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "session_rsvps", name: "session_rsvps",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.users()),
+        Permission.delete(Role.users()),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("sessionId", 50, true),
+        varchar("userId", 50, true),
+        datetime("rsvpedAt", true),
+      ],
+      indexes: [
+        idx("idx_sessionId", ["sessionId"]),
+        unique("idx_session_user", ["sessionId", "userId"]),
+      ],
+    })
   );
-  await createStringAttr("session_rsvps", "sessionId", 50, true);
-  await createStringAttr("session_rsvps", "userId", 50, true);
-  await createDatetimeAttr("session_rsvps", "rsvpedAt", true);
 
-  // 16. Course Comments
+  // 16. course_comments
   console.log("\n16. course_comments");
-  await safeCreate("Collection: course_comments", () =>
-    databases.createCollection(DATABASE_ID, "course_comments", "course_comments", [
-      Permission.read(Role.users()),
-      Permission.create(Role.users()),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("moderator")),
-      Permission.delete(Role.label("admin")),
-      Permission.delete(Role.label("moderator")),
-    ])
+  await safe("Table: course_comments", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "course_comments", name: "course_comments",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.users()),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("moderator")),
+        Permission.delete(Role.label("admin")),
+        Permission.delete(Role.label("moderator")),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("lessonId", 50, true),
+        varchar("courseId", 50, true),
+        varchar("userId", 50, true),
+        varchar("userName", 200),
+        varchar("userRole", 50),
+        text("text", true),
+        varchar("parentId", 50),
+        datetime("createdAt"),
+        boolean("isPinned", false, false),
+        boolean("isDeleted", false, false),
+        integer("likes", false, 0),
+      ],
+      indexes: [
+        idx("idx_lessonId", ["lessonId"]),
+        idx("idx_courseId", ["courseId"]),
+        idx("idx_userId", ["userId"]),
+        idx("idx_parentId", ["parentId"]),
+      ],
+    })
   );
-  await createStringAttr("course_comments", "lessonId", 50, true);
-  await createStringAttr("course_comments", "courseId", 50, true);
-  await createStringAttr("course_comments", "userId", 50, true);
-  await createStringAttr("course_comments", "userName", 200);
-  await createStringAttr("course_comments", "userRole", 50);
-  await createStringAttr("course_comments", "text", 3000, true);
-  await createStringAttr("course_comments", "parentId", 50);
-  await createDatetimeAttr("course_comments", "createdAt");
-  await createBoolAttr("course_comments", "isPinned", false, false);
-  await createBoolAttr("course_comments", "isDeleted", false, false);
-  await createIntAttr("course_comments", "likes", false, 0);
 
-  // 17. Forum Categories
+  // 17. forum_categories
   console.log("\n17. forum_categories");
-  await safeCreate("Collection: forum_categories", () =>
-    databases.createCollection(DATABASE_ID, "forum_categories", "forum_categories", [
-      Permission.read(Role.any()),
-      Permission.create(Role.label("admin")),
-      Permission.update(Role.label("admin")),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: forum_categories", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "forum_categories", name: "forum_categories",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.update(Role.label("admin")),
+        Permission.delete(Role.label("admin")),
+      ],
+      columns: [
+        varchar("name", 100, true),
+        text("description"),
+        varchar("slug", 100, true),
+        integer("order", false, 0),
+        varchar("createdBy", 50),
+        integer("threadCount", false, 0),
+      ],
+      indexes: [
+        unique("idx_slug", ["slug"]),
+        idx("idx_order", ["order"]),
+      ],
+    })
   );
-  await createStringAttr("forum_categories", "name", 100, true);
-  await createStringAttr("forum_categories", "description", 500);
-  await createStringAttr("forum_categories", "slug", 100, true);
-  await createIntAttr("forum_categories", "order", false, 0);
-  await createStringAttr("forum_categories", "createdBy", 50);
-  await createIntAttr("forum_categories", "threadCount", false, 0);
 
-  // 18. Forum Threads
+  // 18. forum_threads
   console.log("\n18. forum_threads");
-  await safeCreate("Collection: forum_threads", () =>
-    databases.createCollection(DATABASE_ID, "forum_threads", "forum_threads", [
-      Permission.read(Role.users()),
-      Permission.create(Role.users()),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("moderator")),
-      Permission.delete(Role.label("admin")),
-      Permission.delete(Role.label("moderator")),
-    ])
+  await safe("Table: forum_threads", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "forum_threads", name: "forum_threads",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.users()),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("moderator")),
+        Permission.delete(Role.label("admin")),
+        Permission.delete(Role.label("moderator")),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("forumCatId", 50, true),
+        varchar("userId", 50, true),
+        varchar("userName", 200),
+        varchar("userRole", 50),
+        varchar("title", 300, true),
+        mediumtext("body", true),
+        datetime("createdAt"),
+        boolean("isPinned", false, false),
+        boolean("isLocked", false, false),
+        integer("replyCount", false, 0),
+        datetime("lastReplyAt"),
+      ],
+      indexes: [
+        idx("idx_forumCatId", ["forumCatId"]),
+        idx("idx_userId", ["userId"]),
+        fulltext("idx_title_ft", ["title"]),
+      ],
+    })
   );
-  await createStringAttr("forum_threads", "forumCatId", 50, true);
-  await createStringAttr("forum_threads", "userId", 50, true);
-  await createStringAttr("forum_threads", "userName", 200);
-  await createStringAttr("forum_threads", "userRole", 50);
-  await createStringAttr("forum_threads", "title", 300, true);
-  await createStringAttr("forum_threads", "body", 10000, true);
-  await createDatetimeAttr("forum_threads", "createdAt");
-  await createBoolAttr("forum_threads", "isPinned", false, false);
-  await createBoolAttr("forum_threads", "isLocked", false, false);
-  await createIntAttr("forum_threads", "replyCount", false, 0);
-  await createDatetimeAttr("forum_threads", "lastReplyAt");
 
-  // 19. Forum Replies
+  // 19. forum_replies
   console.log("\n19. forum_replies");
-  await safeCreate("Collection: forum_replies", () =>
-    databases.createCollection(DATABASE_ID, "forum_replies", "forum_replies", [
-      Permission.read(Role.users()),
-      Permission.create(Role.users()),
-      Permission.update(Role.label("admin")),
-      Permission.update(Role.label("moderator")),
-      Permission.delete(Role.label("admin")),
-      Permission.delete(Role.label("moderator")),
-    ])
+  await safe("Table: forum_replies", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "forum_replies", name: "forum_replies",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.users()),
+        Permission.update(Role.label("admin")),
+        Permission.update(Role.label("moderator")),
+        Permission.delete(Role.label("admin")),
+        Permission.delete(Role.label("moderator")),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("threadId", 50, true),
+        varchar("userId", 50, true),
+        varchar("userName", 200),
+        varchar("userRole", 50),
+        mediumtext("body", true),
+        datetime("createdAt"),
+        boolean("isDeleted", false, false),
+      ],
+      indexes: [
+        idx("idx_threadId", ["threadId"]),
+        idx("idx_userId", ["userId"]),
+      ],
+    })
   );
-  await createStringAttr("forum_replies", "threadId", 50, true);
-  await createStringAttr("forum_replies", "userId", 50, true);
-  await createStringAttr("forum_replies", "userName", 200);
-  await createStringAttr("forum_replies", "userRole", 50);
-  await createStringAttr("forum_replies", "body", 5000, true);
-  await createDatetimeAttr("forum_replies", "createdAt");
-  await createBoolAttr("forum_replies", "isDeleted", false, false);
 
-  // 20. Payments
+  // 20. payments
   console.log("\n20. payments");
-  await safeCreate("Collection: payments", () =>
-    databases.createCollection(DATABASE_ID, "payments", "payments", [
-      Permission.read(Role.label("admin")),
-      Permission.create(Role.label("admin")),
-      Permission.update(Role.label("admin")),
-    ])
+  await safe("Table: payments", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "payments", name: "payments",
+      permissions: [
+        Permission.read(Role.label("admin")),
+        Permission.create(Role.label("admin")),
+        Permission.update(Role.label("admin")),
+      ],
+      columns: [
+        varchar("userId", 50, true),
+        varchar("courseId", 50, true),
+        integer("amount", true),
+        varchar("currency", 10),
+        enumCol("method", ["razorpay", "phonepe"], true),
+        enumCol("status", ["pending", "completed", "failed", "refunded"], true, "pending"),
+        varchar("providerRef", 200),
+        datetime("createdAt", true),
+      ],
+      indexes: [
+        idx("idx_userId", ["userId"]),
+        idx("idx_courseId", ["courseId"]),
+        idx("idx_status", ["status"]),
+      ],
+    })
   );
-  await createStringAttr("payments", "userId", 50, true);
-  await createStringAttr("payments", "courseId", 50, true);
-  await createIntAttr("payments", "amount", true);
-  await createStringAttr("payments", "currency", 10, false);
-  await createEnumAttr("payments", "method", ["razorpay", "phonepe"], true);
-  await createEnumAttr("payments", "status", ["pending", "completed", "failed", "refunded"], true, "pending");
-  await createStringAttr("payments", "providerRef", 200);
-  await createDatetimeAttr("payments", "createdAt", true);
 
-  // 21. Subscriptions
+  // 21. subscriptions
   console.log("\n21. subscriptions");
-  await safeCreate("Collection: subscriptions", () =>
-    databases.createCollection(DATABASE_ID, "subscriptions", "subscriptions", [
-      Permission.read(Role.label("admin")),
-      Permission.create(Role.label("admin")),
-      Permission.update(Role.label("admin")),
-    ])
+  await safe("Table: subscriptions", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "subscriptions", name: "subscriptions",
+      permissions: [
+        Permission.read(Role.label("admin")),
+        Permission.create(Role.label("admin")),
+        Permission.update(Role.label("admin")),
+      ],
+      columns: [
+        varchar("userId", 50, true),
+        varchar("planId", 50, true),
+        datetime("startDate", true),
+        datetime("endDate"),
+        enumCol("status", ["active", "expired", "cancelled"], true, "active"),
+        varchar("paymentId", 50),
+      ],
+      indexes: [
+        idx("idx_userId", ["userId"]),
+        idx("idx_status", ["status"]),
+      ],
+    })
   );
-  await createStringAttr("subscriptions", "userId", 50, true);
-  await createStringAttr("subscriptions", "planId", 50, true);
-  await createDatetimeAttr("subscriptions", "startDate", true);
-  await createDatetimeAttr("subscriptions", "endDate");
-  await createEnumAttr("subscriptions", "status", ["active", "expired", "cancelled"], true, "active");
-  await createStringAttr("subscriptions", "paymentId", 50);
 
-  // 22. Moderation Actions
+  // 22. moderation_actions
   console.log("\n22. moderation_actions");
-  await safeCreate("Collection: moderation_actions", () =>
-    databases.createCollection(DATABASE_ID, "moderation_actions", "moderation_actions", [
-      Permission.read(Role.label("admin")),
-      Permission.read(Role.label("moderator")),
-      Permission.create(Role.label("admin")),
-      Permission.create(Role.label("moderator")),
-      Permission.update(Role.label("admin")),
-    ])
+  await safe("Table: moderation_actions", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "moderation_actions", name: "moderation_actions",
+      permissions: [
+        Permission.read(Role.label("admin")),
+        Permission.read(Role.label("moderator")),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("moderator")),
+        Permission.update(Role.label("admin")),
+      ],
+      columns: [
+        varchar("moderatorId", 50, true),
+        varchar("moderatorName", 200),
+        varchar("targetUserId", 50, true),
+        varchar("targetUserName", 200),
+        enumCol("action", ["warn", "mute", "timeout", "delete_post", "pin", "unpin", "remove_from_chat", "flag"], true),
+        enumCol("scope", ["course", "platform"], true, "platform"),
+        text("reason", true),
+        varchar("duration", 50),
+        varchar("entityType", 50),
+        varchar("entityId", 50),
+        datetime("createdAt"),
+        varchar("revertedBy", 50),
+        datetime("revertedAt"),
+      ],
+      indexes: [
+        idx("idx_targetUserId", ["targetUserId"]),
+        idx("idx_moderatorId", ["moderatorId"]),
+        idx("idx_action", ["action"]),
+      ],
+    })
   );
-  await createStringAttr("moderation_actions", "moderatorId", 50, true);
-  await createStringAttr("moderation_actions", "moderatorName", 200);
-  await createStringAttr("moderation_actions", "targetUserId", 50, true);
-  await createStringAttr("moderation_actions", "targetUserName", 200);
-  await createEnumAttr("moderation_actions", "action", ["warn", "mute", "timeout", "delete_post", "pin", "unpin", "remove_from_chat", "flag"], true);
-  await createEnumAttr("moderation_actions", "scope", ["course", "platform"], true, "platform");
-  await createStringAttr("moderation_actions", "reason", 1000, true);
-  await createStringAttr("moderation_actions", "duration", 50);
-  await createStringAttr("moderation_actions", "entityType", 50);
-  await createStringAttr("moderation_actions", "entityId", 50);
-  await createDatetimeAttr("moderation_actions", "createdAt");
-  await createStringAttr("moderation_actions", "revertedBy", 50);
-  await createDatetimeAttr("moderation_actions", "revertedAt");
 
-  // 23. Audit Logs
+  // 23. audit_logs
   console.log("\n23. audit_logs");
-  await safeCreate("Collection: audit_logs", () =>
-    databases.createCollection(DATABASE_ID, "audit_logs", "audit_logs", [
-      Permission.read(Role.label("admin")),
-      Permission.create(Role.label("admin")),
-    ])
+  await safe("Table: audit_logs", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "audit_logs", name: "audit_logs",
+      permissions: [
+        Permission.read(Role.label("admin")),
+        Permission.create(Role.label("admin")),
+      ],
+      columns: [
+        varchar("actorId", 50, true),
+        varchar("actorName", 200),
+        varchar("action", 200, true),
+        varchar("entity", 100, true),
+        varchar("entityId", 50, true),
+        mediumtext("metadata"),
+        datetime("createdAt", true),
+      ],
+      indexes: [
+        idx("idx_actorId", ["actorId"]),
+        idx("idx_entity", ["entity"]),
+        idx("idx_createdAt", ["createdAt"]),
+      ],
+    })
   );
-  await createStringAttr("audit_logs", "actorId", 50, true);
-  await createStringAttr("audit_logs", "actorName", 200);
-  await createStringAttr("audit_logs", "action", 200, true);
-  await createStringAttr("audit_logs", "entity", 100, true);
-  await createStringAttr("audit_logs", "entityId", 50, true);
-  await createStringAttr("audit_logs", "metadata", 5000);
-  await createDatetimeAttr("audit_logs", "createdAt", true);
 
-  // 24. Notifications
+  // 24. notifications
   console.log("\n24. notifications");
-  await safeCreate("Collection: notifications", () =>
-    databases.createCollection(DATABASE_ID, "notifications", "notifications", [
-      Permission.read(Role.users()),
-      Permission.create(Role.label("admin")),
-      Permission.update(Role.users()),
-      Permission.delete(Role.label("admin")),
-    ])
+  await safe("Table: notifications", () =>
+    tablesDB.createTable({
+      databaseId: DB, tableId: "notifications", name: "notifications",
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.create(Role.label("admin")),
+        Permission.update(Role.users()),
+        Permission.delete(Role.label("admin")),
+      ],
+      rowSecurity: true,
+      columns: [
+        varchar("userId", 50, true),
+        varchar("type", 50, true),
+        varchar("title", 200, true),
+        text("message", true),
+        boolean("isRead", false, false),
+        url("actionUrl"),
+        datetime("createdAt", true),
+      ],
+      indexes: [
+        idx("idx_userId", ["userId"]),
+        idx("idx_isRead", ["isRead"]),
+        idx("idx_createdAt", ["createdAt"]),
+      ],
+    })
   );
-  await createStringAttr("notifications", "userId", 50, true);
-  await createStringAttr("notifications", "type", 50, true);
-  await createStringAttr("notifications", "title", 200, true);
-  await createStringAttr("notifications", "message", 1000, true);
-  await createBoolAttr("notifications", "isRead", false, false);
-  await createStringAttr("notifications", "actionUrl", 500);
-  await createDatetimeAttr("notifications", "createdAt", true);
 
   // ── Storage Buckets ─────────────────────────────────────────────────────
 
   console.log("\n\n🪣 Creating storage buckets...\n");
 
-  await safeCreate("Bucket: course_videos", () =>
+  await safe("Bucket: course_videos", () =>
     storage.createBucket("course_videos", "Course Videos", [
       Permission.read(Role.users()),
       Permission.create(Role.label("admin")),
       Permission.create(Role.label("instructor")),
       Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["video/mp4", "video/webm", "video/quicktime"], 524288000) // 500MB max
+    ], false, true, undefined, ["video/mp4", "video/webm", "video/quicktime"], 524288000)
   );
 
-  await safeCreate("Bucket: course_thumbnails", () =>
+  await safe("Bucket: course_thumbnails", () =>
     storage.createBucket("course_thumbnails", "Course Thumbnails", [
       Permission.read(Role.any()),
       Permission.create(Role.label("admin")),
       Permission.create(Role.label("instructor")),
       Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp"], 5242880) // 5MB max
+    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp"], 5242880)
   );
 
-  await safeCreate("Bucket: course_resources", () =>
+  await safe("Bucket: course_resources", () =>
     storage.createBucket("course_resources", "Course Resources", [
       Permission.read(Role.users()),
       Permission.create(Role.label("admin")),
       Permission.create(Role.label("instructor")),
       Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["application/pdf", "application/zip", "text/plain"], 52428800) // 50MB max
+    ], false, true, undefined, ["application/pdf", "application/zip", "text/plain"], 52428800)
   );
 
-  await safeCreate("Bucket: user_avatars", () =>
+  await safe("Bucket: user_avatars", () =>
     storage.createBucket("user_avatars", "User Avatars", [
       Permission.read(Role.any()),
       Permission.create(Role.users()),
       Permission.update(Role.users()),
       Permission.delete(Role.users()),
-    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp"], 2097152) // 2MB max
+    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp"], 2097152)
   );
 
-  await safeCreate("Bucket: certificates", () =>
+  await safe("Bucket: certificates", () =>
     storage.createBucket("certificates", "Certificates", [
       Permission.read(Role.any()),
       Permission.create(Role.label("admin")),
       Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["image/png", "image/jpeg", "application/pdf"], 10485760) // 10MB max
+    ], false, true, undefined, ["image/png", "image/jpeg", "application/pdf"], 10485760)
   );
 
-  await safeCreate("Bucket: blog_images", () =>
+  await safe("Bucket: blog_images", () =>
     storage.createBucket("blog_images", "Blog Images", [
       Permission.read(Role.any()),
       Permission.create(Role.label("admin")),
       Permission.delete(Role.label("admin")),
-    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp", "image/gif"], 10485760) // 10MB max
+    ], false, true, undefined, ["image/jpeg", "image/png", "image/webp", "image/gif"], 10485760)
   );
 
   console.log("\n\n✨ Setup complete! Your Appwrite backend is ready.\n");
   console.log("📌 Next steps:");
-  console.log("   1. Add NEXT_PUBLIC_APPWRITE_DATABASE_ID=amarbhaiya_db to .env");
+  console.log("   1. Run: appwrite generate --language typescript --output ./src/generated");
   console.log("   2. Enable OAuth providers in Appwrite Console (Google)");
   console.log("   3. Create your first admin user and assign the 'admin' label\n");
 }
