@@ -6,8 +6,8 @@ Source of truth: implementation_plan.md + current src/app tree
 ## Coverage Snapshot
 
 - Planned page routes: 33
-- Implemented page routes: 11
-- Missing page routes: 22
+- Implemented page routes: 14
+- Missing page routes: 19
 - Planned API routes: 9
 - Implemented API routes: 9
 - Missing API routes: 0
@@ -28,6 +28,13 @@ Source of truth: implementation_plan.md + current src/app tree
 - `src/app/(auth)/register/page.tsx` -> `/register`
 - `src/app/(auth)/forgot-password/page.tsx` -> `/forgot-password`
 - `src/app/(dashboard)/app/dashboard/page.tsx` -> `/app/dashboard`
+- `src/app/(dashboard)/app/courses/[id]/page.tsx` -> `/app/courses/[id]`
+- `src/app/(dashboard)/app/community/page.tsx` -> `/app/community`
+- `src/app/(dashboard)/app/profile/[id]/page.tsx` -> `/app/profile/[id]`
+
+### Additional Implemented (Not in original target table)
+
+- `src/app/(dashboard)/app/courses/page.tsx` -> `/app/courses`
 
 ## Missing Page Routes
 
@@ -37,9 +44,7 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Student App Group (`(dashboard)/app`)
 
-- `src/app/(dashboard)/app/courses/[id]/page.tsx` -> `/app/courses/[id]`
-- `src/app/(dashboard)/app/community/page.tsx` -> `/app/community`
-- `src/app/(dashboard)/app/profile/[id]/page.tsx` -> `/app/profile/[id]`
+- None
 
 ### Instructor Group (`(dashboard)/instructor`)
 
@@ -104,6 +109,9 @@ Source of truth: implementation_plan.md + current src/app tree
 - Added auth login/register/logout API routes with validation and session cookie lifecycle
 - Added public routes: about, courses list/detail, blog list/detail, and contact page
 - Added shared content module for course and blog route rendering
+- Added dashboard shell with authenticated sidebar/header layout
+- Added student learning routes: /app/courses/[id], /app/community, /app/profile/[id]
+- Added course player foundation components and actions for enrollment/progress
 
 ## Phase-Aligned Execution Checklist
 
@@ -123,9 +131,9 @@ Source of truth: implementation_plan.md + current src/app tree
 
 ### Phase C: Core Student Experience (High Priority)
 
-- [ ] Build `/app/courses/[id]`
-- [ ] Build `/app/community`
-- [ ] Build `/app/profile/[id]`
+- [x] Build `/app/courses/[id]`
+- [x] Build `/app/community`
+- [x] Build `/app/profile/[id]`
 
 ### Phase D: Role Dashboards (Medium Priority)
 
