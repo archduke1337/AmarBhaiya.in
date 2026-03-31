@@ -6,6 +6,7 @@ import { TimelineAnimation } from "@/components/timeline-animation";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useTheme } from "next-themes";
 
 // ── Animated Counter ────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ function Counter({ end, suffix = "", label }: { end: number; suffix?: string; la
       <div className="text-4xl md:text-6xl font-light tracking-tight">
         {count.toLocaleString("en-IN")}{suffix}
       </div>
-      <div className="text-sm text-neutral-500 mt-2 tracking-wide uppercase">{label}</div>
+      <div className="text-sm text-muted-foreground mt-2 tracking-wide uppercase">{label}</div>
     </div>
   );
 }
@@ -62,6 +63,8 @@ export default function LandingPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   return (
     <>
@@ -73,7 +76,7 @@ export default function LandingPage() {
         style={{ opacity: heroOpacity, scale: heroScale }}
         className="relative min-h-screen flex flex-col justify-between overflow-hidden pt-14"
       >
-        {/* Shader Background — Monochrome */}
+        {/* Shader Background — Responds to theme */}
         <Suspense>
           <ShaderGradientCanvas
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
@@ -98,16 +101,16 @@ export default function LandingPage() {
               rotationX={0}
               rotationY={130}
               rotationZ={70}
-              color1="#1a1a1a"
-              color2="#333333"
-              color3="#0a0a0a"
+              color1={isDark ? "#1a1a1a" : "#e5e5e5"}
+              color2={isDark ? "#333333" : "#d4d4d4"}
+              color3={isDark ? "#0a0a0a" : "#f5f5f5"}
               reflection={0.4}
               cAzimuthAngle={270}
               cPolarAngle={180}
               cDistance={0.5}
               cameraZoom={15.1}
               lightType="env"
-              brightness={0.8}
+              brightness={isDark ? 0.8 : 1.2}
               envPreset="city"
               grain="on"
               toggleAxis={false}
@@ -125,11 +128,11 @@ export default function LandingPage() {
           >
             Padhai karo
             <br />
-            <span className="text-neutral-500">apne tareeke se.</span>
+            <span className="text-muted-foreground">apne tareeke se.</span>
           </TimelineAnimation>
 
           <TimelineAnimation once animationNum={2} timelineRef={heroRef}
-            className="mt-8 max-w-lg text-neutral-400 text-lg leading-relaxed font-light"
+            className="mt-8 max-w-lg text-muted-foreground text-lg leading-relaxed font-light"
           >
             Class 8 se college tak — coding, fitness, career, aur life skills.
             Sab kuch ek jagah. No bakwaas.
@@ -137,12 +140,12 @@ export default function LandingPage() {
 
           <TimelineAnimation once animationNum={3} timelineRef={heroRef} className="mt-10 flex items-center gap-6">
             <Link href="/register"
-              className="inline-flex items-center gap-3 bg-white text-black px-8 py-4 text-sm font-medium tracking-wide hover:bg-neutral-200 transition-colors"
+              className="inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm font-medium tracking-wide hover:bg-foreground/90 transition-colors"
             >
               Start learning <ArrowRight className="size-4" />
             </Link>
             <a href="#courses"
-              className="text-sm text-neutral-400 hover:text-white transition-colors underline underline-offset-4 decoration-neutral-700"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 decoration-border"
             >
               Browse courses
             </a>
@@ -150,8 +153,8 @@ export default function LandingPage() {
         </div>
 
         {/* Bottom domain strip */}
-        <div className="relative z-10 border-t border-neutral-800 px-6 md:px-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-neutral-800">
+        <div className="relative z-10 border-t border-border px-6 md:px-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
             {[
               ["Coding & Tech", "DSA, Web Dev, Projects"],
               ["Board Exams", "Science, Maths, Strategy"],
@@ -159,8 +162,8 @@ export default function LandingPage() {
               ["Career", "Placements, Business, Skills"],
             ].map(([title, sub], i) => (
               <TimelineAnimation key={title} once animationNum={4 + i} timelineRef={heroRef} className="py-5 px-4">
-                <p className="text-xs font-medium tracking-wide uppercase text-neutral-300">{title}</p>
-                <p className="text-xs text-neutral-600 mt-0.5">{sub}</p>
+                <p className="text-xs font-medium tracking-wide uppercase text-foreground/80">{title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
               </TimelineAnimation>
             ))}
           </div>
@@ -170,7 +173,7 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* NUMBERS                                                    */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="border-t border-neutral-800 py-24 px-6 md:px-12">
+      <section className="border-t border-border py-24 px-6 md:px-12">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12">
           <Reveal><Counter end={2400} suffix="+" label="Students" /></Reveal>
           <Reveal delay={0.1}><Counter end={15} suffix="+" label="Courses" /></Reveal>
@@ -182,19 +185,19 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* ABOUT                                                      */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section id="about" className="border-t border-neutral-800 py-32 px-6 md:px-12">
+      <section id="about" className="border-t border-border py-32 px-6 md:px-12">
         <div className="max-w-4xl mx-auto">
           <Reveal>
-            <p className="text-xs tracking-widest uppercase text-neutral-500 mb-6">Ye kaun hai?</p>
+            <p className="text-xs tracking-widest uppercase text-muted-foreground mb-6">Ye kaun hai?</p>
           </Reveal>
           <Reveal delay={0.1}>
             <h2 className="text-3xl md:text-5xl font-light leading-tight tracking-tight">
               Main woh banda hoon jo tumhari galtiyan{" "}
-              <span className="text-neutral-500">pehle kar chuka hai.</span>
+              <span className="text-muted-foreground">pehle kar chuka hai.</span>
             </h2>
           </Reveal>
           <Reveal delay={0.2}>
-            <div className="mt-12 grid md:grid-cols-2 gap-12 text-neutral-400 leading-relaxed">
+            <div className="mt-12 grid md:grid-cols-2 gap-12 text-muted-foreground leading-relaxed">
               <div className="space-y-6">
                 <p>
                   School mein teachers ne sirf syllabus padhaya. College mein seniors ne sirf ragging ki.
@@ -202,7 +205,7 @@ export default function LandingPage() {
                 </p>
                 <p>
                   Ye meri kahani hai. Koi guide nahi tha. Koi shortcut nahi tha.
-                  <strong className="text-white">
+                  <strong className="text-foreground">
                     {" "}Par main har cheez khud figure out karta gaya.
                   </strong>
                 </p>
@@ -213,7 +216,7 @@ export default function LandingPage() {
                   Ab main ye sab tumhe sikha raha hoon.
                 </p>
                 <p>
-                  Taaki tumhe woh <strong className="text-white">2 saal waste na karne pade</strong> jo maine kiye.
+                  Taaki tumhe woh <strong className="text-foreground">2 saal waste na karne pade</strong> jo maine kiye.
                   School mein ho ya college mein — yahan tumhare kaam ka zaroor milega.
                 </p>
               </div>
@@ -225,19 +228,19 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* WHAT YOU'LL LEARN                                          */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="border-t border-neutral-800 py-32 px-6 md:px-12">
+      <section className="border-t border-border py-32 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <p className="text-xs tracking-widest uppercase text-neutral-500 mb-6">Kya milega?</p>
+            <p className="text-xs tracking-widest uppercase text-muted-foreground mb-6">Kya milega?</p>
           </Reveal>
           <Reveal delay={0.1}>
             <h2 className="text-3xl md:text-5xl font-light tracking-tight mb-20">
               Sirf padhai nahi.{" "}
-              <span className="text-neutral-500">Poori life ka syllabus.</span>
+              <span className="text-muted-foreground">Poori life ka syllabus.</span>
             </h2>
           </Reveal>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-neutral-800">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
             {[
               { title: "Coding & Tech", who: "Class 9+", desc: "Mujhe kisi ne nahi sikhaya tha programming. Maine khud seekha. Yahan wahi milega — seedha, practical, kaam ka." },
               { title: "Board Exam Prep", who: "Class 10 & 12", desc: "Ratta maarna koi strategy nahi hai. PYQs, smart notes, revision tricks — tested by real toppers." },
@@ -247,18 +250,18 @@ export default function LandingPage() {
               { title: "Life Skills", who: "Everyone", desc: "Time management, communication, confidence — ye subjects mein nahi milte lekin life mein sabse kaam aate hain." },
             ].map((item, i) => (
               <Reveal key={item.title} delay={i * 0.05}>
-                <div className="bg-black p-8 md:p-10 h-full flex flex-col justify-between group hover:bg-neutral-950 transition-colors">
+                <div className="bg-background p-8 md:p-10 h-full flex flex-col justify-between group hover:bg-accent transition-colors">
                   <div>
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-base font-medium tracking-tight">{item.title}</h3>
-                      <span className="text-[10px] tracking-widest uppercase text-neutral-600 border border-neutral-800 px-2 py-0.5">
+                      <span className="text-[10px] tracking-widest uppercase text-muted-foreground border border-border px-2 py-0.5">
                         {item.who}
                       </span>
                     </div>
-                    <p className="text-sm text-neutral-500 leading-relaxed">{item.desc}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                   </div>
                   <div className="mt-8">
-                    <ArrowRight className="size-4 text-neutral-700 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="size-4 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
               </Reveal>
@@ -270,19 +273,19 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* COURSES                                                    */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section id="courses" className="border-t border-neutral-800 py-32 px-6 md:px-12">
+      <section id="courses" className="border-t border-border py-32 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <p className="text-xs tracking-widest uppercase text-neutral-500 mb-6">Courses</p>
+            <p className="text-xs tracking-widest uppercase text-muted-foreground mb-6">Courses</p>
           </Reveal>
           <Reveal delay={0.1}>
             <h2 className="text-3xl md:text-5xl font-light tracking-tight mb-20">
               Seekho woh jo school{" "}
-              <span className="text-neutral-500">kabhi nahi sikhata.</span>
+              <span className="text-muted-foreground">kabhi nahi sikhata.</span>
             </h2>
           </Reveal>
 
-          <div className="divide-y divide-neutral-800">
+          <div className="divide-y divide-border">
             {[
               { title: "Complete Coding Bootcamp", sub: "HTML → CSS → JS → React → Backend", level: "Class 9+", students: "1,200+", price: "Free", note: "First 5 modules free" },
               { title: "Board Exam Domination", sub: "Science & Maths — Smart Notes, PYQ, Strategy", level: "10th & 12th", students: "680+", price: "₹499", note: "Full access" },
@@ -292,22 +295,22 @@ export default function LandingPage() {
                 <div className="group py-8 md:py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer">
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-2">
-                      <h3 className="text-xl md:text-2xl font-light tracking-tight group-hover:text-neutral-300 transition-colors">
+                      <h3 className="text-xl md:text-2xl font-light tracking-tight group-hover:text-muted-foreground transition-colors">
                         {course.title}
                       </h3>
-                      <span className="text-[10px] tracking-widest uppercase text-neutral-600 border border-neutral-800 px-2 py-0.5 shrink-0">
+                      <span className="text-[10px] tracking-widest uppercase text-muted-foreground border border-border px-2 py-0.5 shrink-0">
                         {course.level}
                       </span>
                     </div>
-                    <p className="text-sm text-neutral-500">{course.sub}</p>
-                    <p className="text-xs text-neutral-600 mt-1">{course.students} students enrolled</p>
+                    <p className="text-sm text-muted-foreground">{course.sub}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">{course.students} students enrolled</p>
                   </div>
                   <div className="flex items-center gap-8 shrink-0">
                     <div className="text-right">
                       <div className="text-lg font-light">{course.price}</div>
-                      <div className="text-xs text-neutral-600">{course.note}</div>
+                      <div className="text-xs text-muted-foreground/60">{course.note}</div>
                     </div>
-                    <ArrowRight className="size-5 text-neutral-700 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="size-5 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
               </Reveal>
@@ -316,7 +319,7 @@ export default function LandingPage() {
 
           <Reveal delay={0.3}>
             <div className="mt-12">
-              <Link href="/courses" className="text-sm text-neutral-500 hover:text-white transition-colors underline underline-offset-4 decoration-neutral-700">
+              <Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 decoration-border">
                 View all courses →
               </Link>
             </div>
@@ -327,16 +330,16 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* WHY                                                        */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="border-t border-neutral-800 py-32 px-6 md:px-12">
+      <section className="border-t border-border py-32 px-6 md:px-12">
         <div className="max-w-4xl mx-auto">
           <Reveal>
-            <p className="text-xs tracking-widest uppercase text-neutral-500 mb-6">Toh bhaiya hi kyun?</p>
+            <p className="text-xs tracking-widest uppercase text-muted-foreground mb-6">Toh bhaiya hi kyun?</p>
           </Reveal>
           <Reveal delay={0.1}>
             <h2 className="text-3xl md:text-5xl font-light tracking-tight mb-16">
               Kyunki baaki sab sirf padhate hain.
               <br />
-              <span className="text-neutral-500">Main samjhata hoon.</span>
+              <span className="text-muted-foreground">Main samjhata hoon.</span>
             </h2>
           </Reveal>
 
@@ -350,7 +353,7 @@ export default function LandingPage() {
               <Reveal key={item.title} delay={i * 0.08}>
                 <div>
                   <h3 className="text-sm font-medium tracking-tight mb-3">{item.title}</h3>
-                  <p className="text-sm text-neutral-500 leading-relaxed">{item.body}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
                 </div>
               </Reveal>
             ))}
@@ -361,7 +364,7 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* CTA                                                        */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <section className="border-t border-neutral-800 py-32 px-6 md:px-12">
+      <section className="border-t border-border py-32 px-6 md:px-12">
         <div className="max-w-3xl mx-auto text-center">
           <Reveal>
             <h2 className="text-4xl md:text-6xl font-light tracking-tight leading-tight">
@@ -369,26 +372,26 @@ export default function LandingPage() {
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="text-neutral-500 mt-6 text-lg font-light max-w-md mx-auto leading-relaxed">
+            <p className="text-muted-foreground mt-6 text-lg font-light max-w-md mx-auto leading-relaxed">
               Sochte reh jaoge toh woh banda aage nikal jayega jo aaj shuru kar raha hai.
             </p>
           </Reveal>
           <Reveal delay={0.2}>
             <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/register"
-                className="inline-flex items-center gap-3 bg-white text-black px-10 py-4 text-sm font-medium tracking-wide hover:bg-neutral-200 transition-colors"
+                className="inline-flex items-center gap-3 bg-foreground text-background px-10 py-4 text-sm font-medium tracking-wide hover:bg-foreground/90 transition-colors"
               >
                 Free account banao <ArrowRight className="size-4" />
               </Link>
               <a href="#courses"
-                className="text-sm text-neutral-500 hover:text-white transition-colors underline underline-offset-4 decoration-neutral-700"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 decoration-border"
               >
                 Pehle courses dekho
               </a>
             </div>
           </Reveal>
           <Reveal delay={0.3}>
-            <p className="text-xs text-neutral-600 mt-6">
+            <p className="text-xs text-muted-foreground/60 mt-6">
               Free hai. No credit card. No hidden charges.
             </p>
           </Reveal>
