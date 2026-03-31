@@ -6,13 +6,8 @@
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * Uses TablesDB (not deprecated Databases) with object-params style.
- * Creates tables with inline columns + indexes in a single call.
- *
- * Prerequisites:
- *   1. Appwrite instance running (cloud or self-hosted)
- *   2. Project created in Appwrite Console
- *   3. API key generated with full scopes
- *   4. .env file populated
+ * Creates tables, then adds columns individually for proper type support
+ * (varchar, text, mediumtext, url, email, enum), then adds indexes.
  *
  * Usage:
  *   node scripts/setup-appwrite.mjs
@@ -31,19 +26,12 @@ const API_KEY = process.env.APPWRITE_API_KEY;
 const DB = "amarbhaiya_db";
 
 if (!ENDPOINT || !PROJECT_ID || !API_KEY) {
-  console.error("❌ Missing environment variables. Set:");
-  console.error("   NEXT_PUBLIC_APPWRITE_ENDPOINT");
-  console.error("   NEXT_PUBLIC_APPWRITE_PROJECT_ID");
-  console.error("   APPWRITE_API_KEY");
+  console.error("❌ Missing environment variables.");
   process.exit(1);
 }
 
-const client = new Client()
-  .setEndpoint(ENDPOINT)
-  .setProject(PROJECT_ID)
-  .setKey(API_KEY);
-
-const tablesDB = new TablesDB(client);
+const client = new Client().setEndpoint(ENDPOINT).setProject(PROJECT_ID).setKey(API_KEY);
+const db = new TablesDB(client);
 const storage = new Storage(client);
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -53,31 +41,49 @@ async function safe(name, fn) {
     await fn();
     console.log(`  ✅ ${name}`);
   } catch (err) {
-    if (err.code === 409) {
-      console.log(`  ⏭️  ${name} (already exists)`);
-    } else {
-      console.error(`  ❌ ${name}: ${err.message}`);
-    }
+    if (err.code === 409) console.log(`  ⏭️  ${name} (exists)`);
+    else console.error(`  ❌ ${name}: ${err.message}`);
   }
 }
 
-// Column shorthand helpers
-const varchar = (key, size, required = false) => ({ key, type: "varchar", size, required });
-const text = (key, required = false) => ({ key, type: "text", required });
-const mediumtext = (key, required = false) => ({ key, type: "mediumtext", required });
-const integer = (key, required = false, xdefault = undefined) => ({ key, type: "integer", required, ...(xdefault !== undefined && { xdefault }) });
-const float = (key, required = false, xdefault = undefined) => ({ key, type: "float", required, ...(xdefault !== undefined && { xdefault }) });
-const boolean = (key, required = false, xdefault = undefined) => ({ key, type: "boolean", required, ...(xdefault !== undefined && { xdefault }) });
-const datetime = (key, required = false) => ({ key, type: "datetime", required });
-const enumCol = (key, elements, required = false, xdefault = undefined) => ({ key, type: "enum", elements, required, ...(xdefault !== undefined && { xdefault }) });
-const url = (key, required = false) => ({ key, type: "url", required });
-const email = (key, required = false) => ({ key, type: "email", required });
-const varcharArray = (key, size, required = false) => ({ key, type: "varchar", size, required, array: true });
+// Column creators — all use object-params style
+const varchar = (t, key, size, required = false) =>
+  safe(`col: ${key}`, () => db.createVarcharColumn({ databaseId: DB, tableId: t, key, size, required }));
 
-// Index shorthand
-const idx = (key, attributes, type = "key") => ({ key, type, attributes });
-const unique = (key, attributes) => ({ key, type: "unique", attributes });
-const fulltext = (key, attributes) => ({ key, type: "fulltext", attributes });
+const varcharArr = (t, key, size, required = false) =>
+  safe(`col: ${key}[]`, () => db.createVarcharColumn({ databaseId: DB, tableId: t, key, size, required, array: true }));
+
+const text = (t, key, required = false) =>
+  safe(`col: ${key}`, () => db.createTextColumn({ databaseId: DB, tableId: t, key, required }));
+
+const medtext = (t, key, required = false) =>
+  safe(`col: ${key}`, () => db.createMediumtextColumn({ databaseId: DB, tableId: t, key, required }));
+
+const int = (t, key, required = false, xdefault = undefined) =>
+  safe(`col: ${key}`, () => db.createIntegerColumn({ databaseId: DB, tableId: t, key, required, ...(xdefault !== undefined && { xdefault }) }));
+
+const float = (t, key, required = false, xdefault = undefined) =>
+  safe(`col: ${key}`, () => db.createFloatColumn({ databaseId: DB, tableId: t, key, required, ...(xdefault !== undefined && { xdefault }) }));
+
+const bool = (t, key, required = false, xdefault = undefined) =>
+  safe(`col: ${key}`, () => db.createBooleanColumn({ databaseId: DB, tableId: t, key, required, ...(xdefault !== undefined && { xdefault }) }));
+
+const dt = (t, key, required = false) =>
+  safe(`col: ${key}`, () => db.createDatetimeColumn({ databaseId: DB, tableId: t, key, required }));
+
+const enumCol = (t, key, elements, required = false, xdefault = undefined) =>
+  safe(`col: ${key}`, () => db.createEnumColumn({ databaseId: DB, tableId: t, key, elements, required, ...(xdefault !== undefined && { xdefault }) }));
+
+const urlCol = (t, key, required = false) =>
+  safe(`col: ${key}`, () => db.createUrlColumn({ databaseId: DB, tableId: t, key, required }));
+
+const emailCol = (t, key, required = false) =>
+  safe(`col: ${key}`, () => db.createEmailColumn({ databaseId: DB, tableId: t, key, required }));
+
+// Index creators
+const idx = (t, key, attributes, type = "key") =>
+  safe(`idx: ${key}`, () => db.createColumnIndex({ databaseId: DB, tableId: t, key, type, attributes }));
+
 
 // ── Main ────────────────────────────────────────────────────────────────────
 
@@ -86,713 +92,639 @@ async function main() {
   console.log(`   Endpoint: ${ENDPOINT}`);
   console.log(`   Project:  ${PROJECT_ID}\n`);
 
-  // ── Create Database ─────────────────────────────────────────────────────
+  // ── Database ──────────────────────────────────────────────────────────────
   console.log("📦 Creating database...");
   await safe("Database: amarbhaiya_db", () =>
-    tablesDB.create({ databaseId: DB, name: "amarbhaiya.in" })
+    db.create({ databaseId: DB, name: "amarbhaiya.in" })
   );
 
-  // ── Tables ──────────────────────────────────────────────────────────────
+  console.log("\n📁 Creating tables + columns + indexes...\n");
 
-  console.log("\n📁 Creating tables...\n");
-
+  // ═══════════════════════════════════════════════════════════════════════════
   // 1. categories
-  console.log("1. categories");
-  await safe("Table: categories", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "categories", name: "categories",
-      permissions: [
-        Permission.read(Role.any()),
-        Permission.create(Role.label("admin")),
-        Permission.update(Role.label("admin")),
-        Permission.delete(Role.label("admin")),
-      ],
-      columns: [
-        varchar("name", 100, true),
-        varchar("slug", 100, true),
-        text("description"),
-        integer("order", false, 0),
-        varchar("createdBy", 50),
-      ],
-      indexes: [
-        unique("idx_slug", ["slug"]),
-        idx("idx_order", ["order"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T1 = "categories";
+  console.log(`1. ${T1}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T1, name: T1,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.label("admin")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T1, "name", 100, true);
+  await varchar(T1, "slug", 100, true);
+  await text(T1, "description");
+  await int(T1, "order", false, 0);
+  await varchar(T1, "createdBy", 50);
+  await idx(T1, "idx_slug", ["slug"], "unique");
+  await idx(T1, "idx_order", ["order"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 2. courses
-  console.log("\n2. courses");
-  await safe("Table: courses", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "courses", name: "courses",
-      permissions: [
-        Permission.read(Role.any()),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("instructor")),
-        Permission.update(Role.label("admin")),
-        Permission.delete(Role.label("admin")),
-      ],
-      columns: [
-        varchar("title", 200, true),
-        varchar("slug", 200, true),
-        mediumtext("description", true),
-        text("shortDescription"),
-        varchar("instructorId", 50, true),
-        varchar("instructorName", 200),
-        varchar("categoryId", 50),
-        integer("price", false, 0),
-        enumCol("accessModel", ["free", "paid", "subscription"], true, "free"),
-        boolean("isPublished", false, false),
-        boolean("isFeatured", false, false),
-        varchar("thumbnailId", 100),
-        integer("totalDuration", false, 0),
-        integer("totalLessons", false, 0),
-        integer("enrollmentCount", false, 0),
-        float("rating", false, 0),
-        integer("ratingCount", false, 0),
-        varcharArray("tags", 50),
-        varcharArray("requirements", 200),
-        varcharArray("whatYouLearn", 200),
-      ],
-      indexes: [
-        unique("idx_slug", ["slug"]),
-        idx("idx_categoryId", ["categoryId"]),
-        idx("idx_instructorId", ["instructorId"]),
-        idx("idx_isPublished", ["isPublished"]),
-        idx("idx_isFeatured", ["isFeatured"]),
-        fulltext("idx_title_ft", ["title"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T2 = "courses";
+  console.log(`\n2. ${T2}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T2, name: T2,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T2, "title", 200, true);
+  await varchar(T2, "slug", 200, true);
+  await medtext(T2, "description", true);
+  await text(T2, "shortDescription");
+  await varchar(T2, "instructorId", 50, true);
+  await varchar(T2, "instructorName", 200);
+  await varchar(T2, "categoryId", 50);
+  await int(T2, "price", false, 0);
+  await enumCol(T2, "accessModel", ["free", "paid", "subscription"], true, "free");
+  await bool(T2, "isPublished", false, false);
+  await bool(T2, "isFeatured", false, false);
+  await varchar(T2, "thumbnailId", 100);
+  await int(T2, "totalDuration", false, 0);
+  await int(T2, "totalLessons", false, 0);
+  await int(T2, "enrollmentCount", false, 0);
+  await float(T2, "rating", false, 0);
+  await int(T2, "ratingCount", false, 0);
+  await varcharArr(T2, "tags", 50);
+  await varcharArr(T2, "requirements", 200);
+  await varcharArr(T2, "whatYouLearn", 200);
+  await idx(T2, "idx_slug", ["slug"], "unique");
+  await idx(T2, "idx_categoryId", ["categoryId"]);
+  await idx(T2, "idx_instructorId", ["instructorId"]);
+  await idx(T2, "idx_isPublished", ["isPublished"]);
+  await idx(T2, "idx_isFeatured", ["isFeatured"]);
+  await idx(T2, "idx_title_ft", ["title"], "fulltext");
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 3. modules
-  console.log("\n3. modules");
-  await safe("Table: modules", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "modules", name: "modules",
-      permissions: [
-        Permission.read(Role.any()),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("instructor")),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("instructor")),
-        Permission.delete(Role.label("admin")),
-        Permission.delete(Role.label("instructor")),
-      ],
-      columns: [
-        varchar("courseId", 50, true),
-        varchar("title", 200, true),
-        text("description"),
-        integer("order", false, 0),
-      ],
-      indexes: [
-        idx("idx_courseId", ["courseId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T3 = "modules";
+  console.log(`\n3. ${T3}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T3, name: T3,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+      Permission.delete(Role.label("instructor")),
+    ],
+  }));
+  await varchar(T3, "courseId", 50, true);
+  await varchar(T3, "title", 200, true);
+  await text(T3, "description");
+  await int(T3, "order", false, 0);
+  await idx(T3, "idx_courseId", ["courseId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 4. lessons
-  console.log("\n4. lessons");
-  await safe("Table: lessons", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "lessons", name: "lessons",
-      permissions: [
-        Permission.read(Role.any()),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("instructor")),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("instructor")),
-        Permission.delete(Role.label("admin")),
-        Permission.delete(Role.label("instructor")),
-      ],
-      columns: [
-        varchar("moduleId", 50, true),
-        varchar("courseId", 50, true),
-        varchar("title", 200, true),
-        text("description"),
-        varchar("videoFileId", 100),
-        integer("duration", false, 0),
-        integer("order", false, 0),
-        boolean("isFree", false, false),
-      ],
-      indexes: [
-        idx("idx_moduleId", ["moduleId"]),
-        idx("idx_courseId", ["courseId"]),
-        idx("idx_order", ["order"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T4 = "lessons";
+  console.log(`\n4. ${T4}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T4, name: T4,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+      Permission.delete(Role.label("instructor")),
+    ],
+  }));
+  await varchar(T4, "moduleId", 50, true);
+  await varchar(T4, "courseId", 50, true);
+  await varchar(T4, "title", 200, true);
+  await text(T4, "description");
+  await varchar(T4, "videoFileId", 100);
+  await int(T4, "duration", false, 0);
+  await int(T4, "order", false, 0);
+  await bool(T4, "isFree", false, false);
+  await idx(T4, "idx_moduleId", ["moduleId"]);
+  await idx(T4, "idx_courseId", ["courseId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 5. resources
-  console.log("\n5. resources");
-  await safe("Table: resources", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "resources", name: "resources",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("instructor")),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("instructor")),
-        Permission.delete(Role.label("admin")),
-        Permission.delete(Role.label("instructor")),
-      ],
-      columns: [
-        varchar("lessonId", 50, true),
-        varchar("title", 200, true),
-        varchar("fileId", 100),
-        enumCol("type", ["pdf", "link", "file"], true, "file"),
-        url("url"),
-      ],
-      indexes: [
-        idx("idx_lessonId", ["lessonId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T5 = "resources";
+  console.log(`\n5. ${T5}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T5, name: T5,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+      Permission.delete(Role.label("instructor")),
+    ],
+  }));
+  await varchar(T5, "lessonId", 50, true);
+  await varchar(T5, "title", 200, true);
+  await varchar(T5, "fileId", 100);
+  await enumCol(T5, "type", ["pdf", "link", "file"], true, "file");
+  await urlCol(T5, "url");
+  await idx(T5, "idx_lessonId", ["lessonId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 6. enrollments
-  console.log("\n6. enrollments");
-  await safe("Table: enrollments", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "enrollments", name: "enrollments",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.label("admin")),
-        Permission.update(Role.label("admin")),
-        Permission.delete(Role.label("admin")),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("userId", 50, true),
-        varchar("courseId", 50, true),
-        datetime("enrolledAt", true),
-        varchar("paymentId", 50),
-        enumCol("accessModel", ["free", "paid", "subscription"], true, "free"),
-        boolean("isActive", false, true),
-      ],
-      indexes: [
-        idx("idx_userId", ["userId"]),
-        idx("idx_courseId", ["courseId"]),
-        unique("idx_user_course", ["userId", "courseId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T6 = "enrollments";
+  console.log(`\n6. ${T6}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T6, name: T6,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.label("admin")),
+      Permission.delete(Role.label("admin")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T6, "userId", 50, true);
+  await varchar(T6, "courseId", 50, true);
+  await dt(T6, "enrolledAt", true);
+  await varchar(T6, "paymentId", 50);
+  await enumCol(T6, "accessModel", ["free", "paid", "subscription"], true, "free");
+  await bool(T6, "isActive", false, true);
+  await idx(T6, "idx_userId", ["userId"]);
+  await idx(T6, "idx_courseId", ["courseId"]);
+  await idx(T6, "idx_user_course", ["userId", "courseId"], "unique");
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 7. progress
-  console.log("\n7. progress");
-  await safe("Table: progress", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "progress", name: "progress",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.users()),
-        Permission.update(Role.users()),
-        Permission.delete(Role.label("admin")),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("userId", 50, true),
-        varchar("courseId", 50, true),
-        varchar("lessonId", 50, true),
-        datetime("completedAt"),
-        float("percentComplete", false, 0),
-      ],
-      indexes: [
-        idx("idx_userId", ["userId"]),
-        idx("idx_courseId", ["courseId"]),
-        unique("idx_user_lesson", ["userId", "lessonId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T7 = "progress";
+  console.log(`\n7. ${T7}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T7, name: T7,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.label("admin")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T7, "userId", 50, true);
+  await varchar(T7, "courseId", 50, true);
+  await varchar(T7, "lessonId", 50, true);
+  await dt(T7, "completedAt");
+  await float(T7, "percentComplete", false, 0);
+  await idx(T7, "idx_userId", ["userId"]);
+  await idx(T7, "idx_courseId", ["courseId"]);
+  await idx(T7, "idx_user_lesson", ["userId", "lessonId"], "unique");
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 8. quizzes
-  console.log("\n8. quizzes");
-  await safe("Table: quizzes", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "quizzes", name: "quizzes",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("instructor")),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("instructor")),
-        Permission.delete(Role.label("admin")),
-      ],
-      columns: [
-        varchar("lessonId", 50),
-        varchar("courseId", 50, true),
-        varchar("title", 200, true),
-        integer("passMark", false, 60),
-        integer("timeLimit", false, 0),
-      ],
-      indexes: [
-        idx("idx_courseId", ["courseId"]),
-        idx("idx_lessonId", ["lessonId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T8 = "quizzes";
+  console.log(`\n8. ${T8}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T8, name: T8,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T8, "lessonId", 50);
+  await varchar(T8, "courseId", 50, true);
+  await varchar(T8, "title", 200, true);
+  await int(T8, "passMark", false, 60);
+  await int(T8, "timeLimit", false, 0);
+  await idx(T8, "idx_courseId", ["courseId"]);
+  await idx(T8, "idx_lessonId", ["lessonId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 9. quiz_questions
-  console.log("\n9. quiz_questions");
-  await safe("Table: quiz_questions", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "quiz_questions", name: "quiz_questions",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("instructor")),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("instructor")),
-        Permission.delete(Role.label("admin")),
-      ],
-      columns: [
-        varchar("quizId", 50, true),
-        text("text", true),
-        enumCol("type", ["mcq", "true_false", "short_answer"], true, "mcq"),
-        varcharArray("options", 500),
-        varchar("correctAnswer", 500, true),
-        integer("order", false, 0),
-      ],
-      indexes: [
-        idx("idx_quizId", ["quizId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T9 = "quiz_questions";
+  console.log(`\n9. ${T9}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T9, name: T9,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T9, "quizId", 50, true);
+  await text(T9, "text", true);
+  await enumCol(T9, "type", ["mcq", "true_false", "short_answer"], true, "mcq");
+  await varcharArr(T9, "options", 500);
+  await varchar(T9, "correctAnswer", 500, true);
+  await int(T9, "order", false, 0);
+  await idx(T9, "idx_quizId", ["quizId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 10. quiz_attempts
-  console.log("\n10. quiz_attempts");
-  await safe("Table: quiz_attempts", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "quiz_attempts", name: "quiz_attempts",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.users()),
-        Permission.update(Role.label("admin")),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("userId", 50, true),
-        varchar("quizId", 50, true),
-        integer("score", false, 0),
-        varcharArray("answers", 500),
-        datetime("completedAt"),
-        boolean("passed", false, false),
-      ],
-      indexes: [
-        idx("idx_userId", ["userId"]),
-        idx("idx_quizId", ["quizId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T10 = "quiz_attempts";
+  console.log(`\n10. ${T10}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T10, name: T10,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.label("admin")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T10, "userId", 50, true);
+  await varchar(T10, "quizId", 50, true);
+  await int(T10, "score", false, 0);
+  await varcharArr(T10, "answers", 500);
+  await dt(T10, "completedAt");
+  await bool(T10, "passed", false, false);
+  await idx(T10, "idx_userId", ["userId"]);
+  await idx(T10, "idx_quizId", ["quizId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 11. assignments
-  console.log("\n11. assignments");
-  await safe("Table: assignments", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "assignments", name: "assignments",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("instructor")),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("instructor")),
-        Permission.delete(Role.label("admin")),
-      ],
-      columns: [
-        varchar("lessonId", 50),
-        varchar("courseId", 50, true),
-        varchar("title", 200, true),
-        mediumtext("description"),
-        datetime("dueDate"),
-      ],
-      indexes: [
-        idx("idx_courseId", ["courseId"]),
-        idx("idx_lessonId", ["lessonId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T11 = "assignments";
+  console.log(`\n11. ${T11}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T11, name: T11,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T11, "lessonId", 50);
+  await varchar(T11, "courseId", 50, true);
+  await varchar(T11, "title", 200, true);
+  await medtext(T11, "description");
+  await dt(T11, "dueDate");
+  await idx(T11, "idx_courseId", ["courseId"]);
+  await idx(T11, "idx_lessonId", ["lessonId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 12. submissions
-  console.log("\n12. submissions");
-  await safe("Table: submissions", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "submissions", name: "submissions",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.users()),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("instructor")),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("assignmentId", 50, true),
-        varchar("userId", 50, true),
-        varchar("fileId", 100),
-        datetime("submittedAt"),
-        integer("grade", false, 0),
-        text("feedback"),
-      ],
-      indexes: [
-        idx("idx_assignmentId", ["assignmentId"]),
-        idx("idx_userId", ["userId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T12 = "submissions";
+  console.log(`\n12. ${T12}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T12, name: T12,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T12, "assignmentId", 50, true);
+  await varchar(T12, "userId", 50, true);
+  await varchar(T12, "fileId", 100);
+  await dt(T12, "submittedAt");
+  await int(T12, "grade", false, 0);
+  await text(T12, "feedback");
+  await idx(T12, "idx_assignmentId", ["assignmentId"]);
+  await idx(T12, "idx_userId", ["userId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 13. certificates
-  console.log("\n13. certificates");
-  await safe("Table: certificates", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "certificates", name: "certificates",
-      permissions: [
-        Permission.read(Role.any()),
-        Permission.create(Role.label("admin")),
-        Permission.update(Role.label("admin")),
-        Permission.delete(Role.label("admin")),
-      ],
-      columns: [
-        varchar("userId", 50, true),
-        varchar("courseId", 50, true),
-        datetime("issuedAt", true),
-        varchar("fileId", 100),
-        url("shareUrl"),
-      ],
-      indexes: [
-        idx("idx_userId", ["userId"]),
-        idx("idx_courseId", ["courseId"]),
-        unique("idx_user_course", ["userId", "courseId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T13 = "certificates";
+  console.log(`\n13. ${T13}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T13, name: T13,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.label("admin")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T13, "userId", 50, true);
+  await varchar(T13, "courseId", 50, true);
+  await dt(T13, "issuedAt", true);
+  await varchar(T13, "fileId", 100);
+  await urlCol(T13, "shareUrl");
+  await idx(T13, "idx_userId", ["userId"]);
+  await idx(T13, "idx_courseId", ["courseId"]);
+  await idx(T13, "idx_user_course", ["userId", "courseId"], "unique");
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 14. live_sessions
-  console.log("\n14. live_sessions");
-  await safe("Table: live_sessions", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "live_sessions", name: "live_sessions",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("instructor")),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("instructor")),
-        Permission.delete(Role.label("admin")),
-      ],
-      columns: [
-        varchar("courseId", 50, true),
-        varchar("instructorId", 50, true),
-        varchar("title", 200, true),
-        text("description"),
-        datetime("scheduledAt", true),
-        varchar("streamId", 100),
-        enumCol("status", ["scheduled", "live", "ended"], true, "scheduled"),
-        url("recordingUrl"),
-        integer("duration", false, 0),
-      ],
-      indexes: [
-        idx("idx_courseId", ["courseId"]),
-        idx("idx_instructorId", ["instructorId"]),
-        idx("idx_scheduledAt", ["scheduledAt"]),
-        idx("idx_status", ["status"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T14 = "live_sessions";
+  console.log(`\n14. ${T14}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T14, name: T14,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T14, "courseId", 50, true);
+  await varchar(T14, "instructorId", 50, true);
+  await varchar(T14, "title", 200, true);
+  await text(T14, "description");
+  await dt(T14, "scheduledAt", true);
+  await varchar(T14, "streamId", 100);
+  await enumCol(T14, "status", ["scheduled", "live", "ended"], true, "scheduled");
+  await urlCol(T14, "recordingUrl");
+  await int(T14, "duration", false, 0);
+  await idx(T14, "idx_courseId", ["courseId"]);
+  await idx(T14, "idx_instructorId", ["instructorId"]);
+  await idx(T14, "idx_scheduledAt", ["scheduledAt"]);
+  await idx(T14, "idx_status", ["status"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 15. session_rsvps
-  console.log("\n15. session_rsvps");
-  await safe("Table: session_rsvps", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "session_rsvps", name: "session_rsvps",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.users()),
-        Permission.delete(Role.users()),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("sessionId", 50, true),
-        varchar("userId", 50, true),
-        datetime("rsvpedAt", true),
-      ],
-      indexes: [
-        idx("idx_sessionId", ["sessionId"]),
-        unique("idx_session_user", ["sessionId", "userId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T15 = "session_rsvps";
+  console.log(`\n15. ${T15}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T15, name: T15,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.delete(Role.users()),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T15, "sessionId", 50, true);
+  await varchar(T15, "userId", 50, true);
+  await dt(T15, "rsvpedAt", true);
+  await idx(T15, "idx_sessionId", ["sessionId"]);
+  await idx(T15, "idx_session_user", ["sessionId", "userId"], "unique");
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 16. course_comments
-  console.log("\n16. course_comments");
-  await safe("Table: course_comments", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "course_comments", name: "course_comments",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.users()),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("moderator")),
-        Permission.delete(Role.label("admin")),
-        Permission.delete(Role.label("moderator")),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("lessonId", 50, true),
-        varchar("courseId", 50, true),
-        varchar("userId", 50, true),
-        varchar("userName", 200),
-        varchar("userRole", 50),
-        text("text", true),
-        varchar("parentId", 50),
-        datetime("createdAt"),
-        boolean("isPinned", false, false),
-        boolean("isDeleted", false, false),
-        integer("likes", false, 0),
-      ],
-      indexes: [
-        idx("idx_lessonId", ["lessonId"]),
-        idx("idx_courseId", ["courseId"]),
-        idx("idx_userId", ["userId"]),
-        idx("idx_parentId", ["parentId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T16 = "course_comments";
+  console.log(`\n16. ${T16}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T16, name: T16,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("moderator")),
+      Permission.delete(Role.label("admin")),
+      Permission.delete(Role.label("moderator")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T16, "lessonId", 50, true);
+  await varchar(T16, "courseId", 50, true);
+  await varchar(T16, "userId", 50, true);
+  await varchar(T16, "userName", 200);
+  await varchar(T16, "userRole", 50);
+  await text(T16, "text", true);
+  await varchar(T16, "parentId", 50);
+  await dt(T16, "createdAt");
+  await bool(T16, "isPinned", false, false);
+  await bool(T16, "isDeleted", false, false);
+  await int(T16, "likes", false, 0);
+  await idx(T16, "idx_lessonId", ["lessonId"]);
+  await idx(T16, "idx_courseId", ["courseId"]);
+  await idx(T16, "idx_userId", ["userId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 17. forum_categories
-  console.log("\n17. forum_categories");
-  await safe("Table: forum_categories", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "forum_categories", name: "forum_categories",
-      permissions: [
-        Permission.read(Role.any()),
-        Permission.create(Role.label("admin")),
-        Permission.update(Role.label("admin")),
-        Permission.delete(Role.label("admin")),
-      ],
-      columns: [
-        varchar("name", 100, true),
-        text("description"),
-        varchar("slug", 100, true),
-        integer("order", false, 0),
-        varchar("createdBy", 50),
-        integer("threadCount", false, 0),
-      ],
-      indexes: [
-        unique("idx_slug", ["slug"]),
-        idx("idx_order", ["order"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T17 = "forum_categories";
+  console.log(`\n17. ${T17}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T17, name: T17,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.label("admin")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T17, "name", 100, true);
+  await text(T17, "description");
+  await varchar(T17, "slug", 100, true);
+  await int(T17, "order", false, 0);
+  await varchar(T17, "createdBy", 50);
+  await int(T17, "threadCount", false, 0);
+  await idx(T17, "idx_slug", ["slug"], "unique");
+  await idx(T17, "idx_order", ["order"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 18. forum_threads
-  console.log("\n18. forum_threads");
-  await safe("Table: forum_threads", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "forum_threads", name: "forum_threads",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.users()),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("moderator")),
-        Permission.delete(Role.label("admin")),
-        Permission.delete(Role.label("moderator")),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("forumCatId", 50, true),
-        varchar("userId", 50, true),
-        varchar("userName", 200),
-        varchar("userRole", 50),
-        varchar("title", 300, true),
-        mediumtext("body", true),
-        datetime("createdAt"),
-        boolean("isPinned", false, false),
-        boolean("isLocked", false, false),
-        integer("replyCount", false, 0),
-        datetime("lastReplyAt"),
-      ],
-      indexes: [
-        idx("idx_forumCatId", ["forumCatId"]),
-        idx("idx_userId", ["userId"]),
-        fulltext("idx_title_ft", ["title"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T18 = "forum_threads";
+  console.log(`\n18. ${T18}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T18, name: T18,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("moderator")),
+      Permission.delete(Role.label("admin")),
+      Permission.delete(Role.label("moderator")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T18, "forumCatId", 50, true);
+  await varchar(T18, "userId", 50, true);
+  await varchar(T18, "userName", 200);
+  await varchar(T18, "userRole", 50);
+  await varchar(T18, "title", 300, true);
+  await medtext(T18, "body", true);
+  await dt(T18, "createdAt");
+  await bool(T18, "isPinned", false, false);
+  await bool(T18, "isLocked", false, false);
+  await int(T18, "replyCount", false, 0);
+  await dt(T18, "lastReplyAt");
+  await idx(T18, "idx_forumCatId", ["forumCatId"]);
+  await idx(T18, "idx_userId", ["userId"]);
+  await idx(T18, "idx_title_ft", ["title"], "fulltext");
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 19. forum_replies
-  console.log("\n19. forum_replies");
-  await safe("Table: forum_replies", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "forum_replies", name: "forum_replies",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.users()),
-        Permission.update(Role.label("admin")),
-        Permission.update(Role.label("moderator")),
-        Permission.delete(Role.label("admin")),
-        Permission.delete(Role.label("moderator")),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("threadId", 50, true),
-        varchar("userId", 50, true),
-        varchar("userName", 200),
-        varchar("userRole", 50),
-        mediumtext("body", true),
-        datetime("createdAt"),
-        boolean("isDeleted", false, false),
-      ],
-      indexes: [
-        idx("idx_threadId", ["threadId"]),
-        idx("idx_userId", ["userId"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T19 = "forum_replies";
+  console.log(`\n19. ${T19}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T19, name: T19,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.users()),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("moderator")),
+      Permission.delete(Role.label("admin")),
+      Permission.delete(Role.label("moderator")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T19, "threadId", 50, true);
+  await varchar(T19, "userId", 50, true);
+  await varchar(T19, "userName", 200);
+  await varchar(T19, "userRole", 50);
+  await medtext(T19, "body", true);
+  await dt(T19, "createdAt");
+  await bool(T19, "isDeleted", false, false);
+  await idx(T19, "idx_threadId", ["threadId"]);
+  await idx(T19, "idx_userId", ["userId"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 20. payments
-  console.log("\n20. payments");
-  await safe("Table: payments", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "payments", name: "payments",
-      permissions: [
-        Permission.read(Role.label("admin")),
-        Permission.create(Role.label("admin")),
-        Permission.update(Role.label("admin")),
-      ],
-      columns: [
-        varchar("userId", 50, true),
-        varchar("courseId", 50, true),
-        integer("amount", true),
-        varchar("currency", 10),
-        enumCol("method", ["razorpay", "phonepe"], true),
-        enumCol("status", ["pending", "completed", "failed", "refunded"], true, "pending"),
-        varchar("providerRef", 200),
-        datetime("createdAt", true),
-      ],
-      indexes: [
-        idx("idx_userId", ["userId"]),
-        idx("idx_courseId", ["courseId"]),
-        idx("idx_status", ["status"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T20 = "payments";
+  console.log(`\n20. ${T20}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T20, name: T20,
+    permissions: [
+      Permission.read(Role.label("admin")),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.label("admin")),
+    ],
+  }));
+  await varchar(T20, "userId", 50, true);
+  await varchar(T20, "courseId", 50, true);
+  await int(T20, "amount", true);
+  await varchar(T20, "currency", 10);
+  await enumCol(T20, "method", ["razorpay", "phonepe"], true);
+  await enumCol(T20, "status", ["pending", "completed", "failed", "refunded"], true, "pending");
+  await varchar(T20, "providerRef", 200);
+  await dt(T20, "createdAt", true);
+  await idx(T20, "idx_userId", ["userId"]);
+  await idx(T20, "idx_courseId", ["courseId"]);
+  await idx(T20, "idx_status", ["status"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 21. subscriptions
-  console.log("\n21. subscriptions");
-  await safe("Table: subscriptions", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "subscriptions", name: "subscriptions",
-      permissions: [
-        Permission.read(Role.label("admin")),
-        Permission.create(Role.label("admin")),
-        Permission.update(Role.label("admin")),
-      ],
-      columns: [
-        varchar("userId", 50, true),
-        varchar("planId", 50, true),
-        datetime("startDate", true),
-        datetime("endDate"),
-        enumCol("status", ["active", "expired", "cancelled"], true, "active"),
-        varchar("paymentId", 50),
-      ],
-      indexes: [
-        idx("idx_userId", ["userId"]),
-        idx("idx_status", ["status"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T21 = "subscriptions";
+  console.log(`\n21. ${T21}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T21, name: T21,
+    permissions: [
+      Permission.read(Role.label("admin")),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.label("admin")),
+    ],
+  }));
+  await varchar(T21, "userId", 50, true);
+  await varchar(T21, "planId", 50, true);
+  await dt(T21, "startDate", true);
+  await dt(T21, "endDate");
+  await enumCol(T21, "status", ["active", "expired", "cancelled"], true, "active");
+  await varchar(T21, "paymentId", 50);
+  await idx(T21, "idx_userId", ["userId"]);
+  await idx(T21, "idx_status", ["status"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 22. moderation_actions
-  console.log("\n22. moderation_actions");
-  await safe("Table: moderation_actions", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "moderation_actions", name: "moderation_actions",
-      permissions: [
-        Permission.read(Role.label("admin")),
-        Permission.read(Role.label("moderator")),
-        Permission.create(Role.label("admin")),
-        Permission.create(Role.label("moderator")),
-        Permission.update(Role.label("admin")),
-      ],
-      columns: [
-        varchar("moderatorId", 50, true),
-        varchar("moderatorName", 200),
-        varchar("targetUserId", 50, true),
-        varchar("targetUserName", 200),
-        enumCol("action", ["warn", "mute", "timeout", "delete_post", "pin", "unpin", "remove_from_chat", "flag"], true),
-        enumCol("scope", ["course", "platform"], true, "platform"),
-        text("reason", true),
-        varchar("duration", 50),
-        varchar("entityType", 50),
-        varchar("entityId", 50),
-        datetime("createdAt"),
-        varchar("revertedBy", 50),
-        datetime("revertedAt"),
-      ],
-      indexes: [
-        idx("idx_targetUserId", ["targetUserId"]),
-        idx("idx_moderatorId", ["moderatorId"]),
-        idx("idx_action", ["action"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T22 = "moderation_actions";
+  console.log(`\n22. ${T22}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T22, name: T22,
+    permissions: [
+      Permission.read(Role.label("admin")),
+      Permission.read(Role.label("moderator")),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("moderator")),
+      Permission.update(Role.label("admin")),
+    ],
+  }));
+  await varchar(T22, "moderatorId", 50, true);
+  await varchar(T22, "moderatorName", 200);
+  await varchar(T22, "targetUserId", 50, true);
+  await varchar(T22, "targetUserName", 200);
+  await enumCol(T22, "action", ["warn", "mute", "timeout", "delete_post", "pin", "unpin", "remove_from_chat", "flag"], true);
+  await enumCol(T22, "scope", ["course", "platform"], true, "platform");
+  await text(T22, "reason", true);
+  await varchar(T22, "duration", 50);
+  await varchar(T22, "entityType", 50);
+  await varchar(T22, "entityId", 50);
+  await dt(T22, "createdAt");
+  await varchar(T22, "revertedBy", 50);
+  await dt(T22, "revertedAt");
+  await idx(T22, "idx_targetUserId", ["targetUserId"]);
+  await idx(T22, "idx_moderatorId", ["moderatorId"]);
+  await idx(T22, "idx_action", ["action"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 23. audit_logs
-  console.log("\n23. audit_logs");
-  await safe("Table: audit_logs", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "audit_logs", name: "audit_logs",
-      permissions: [
-        Permission.read(Role.label("admin")),
-        Permission.create(Role.label("admin")),
-      ],
-      columns: [
-        varchar("actorId", 50, true),
-        varchar("actorName", 200),
-        varchar("action", 200, true),
-        varchar("entity", 100, true),
-        varchar("entityId", 50, true),
-        mediumtext("metadata"),
-        datetime("createdAt", true),
-      ],
-      indexes: [
-        idx("idx_actorId", ["actorId"]),
-        idx("idx_entity", ["entity"]),
-        idx("idx_createdAt", ["createdAt"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T23 = "audit_logs";
+  console.log(`\n23. ${T23}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T23, name: T23,
+    permissions: [
+      Permission.read(Role.label("admin")),
+      Permission.create(Role.label("admin")),
+    ],
+  }));
+  await varchar(T23, "actorId", 50, true);
+  await varchar(T23, "actorName", 200);
+  await varchar(T23, "action", 200, true);
+  await varchar(T23, "entity", 100, true);
+  await varchar(T23, "entityId", 50, true);
+  await medtext(T23, "metadata");
+  await dt(T23, "createdAt", true);
+  await idx(T23, "idx_actorId", ["actorId"]);
+  await idx(T23, "idx_entity", ["entity"]);
+  await idx(T23, "idx_createdAt", ["createdAt"]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
   // 24. notifications
-  console.log("\n24. notifications");
-  await safe("Table: notifications", () =>
-    tablesDB.createTable({
-      databaseId: DB, tableId: "notifications", name: "notifications",
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.create(Role.label("admin")),
-        Permission.update(Role.users()),
-        Permission.delete(Role.label("admin")),
-      ],
-      rowSecurity: true,
-      columns: [
-        varchar("userId", 50, true),
-        varchar("type", 50, true),
-        varchar("title", 200, true),
-        text("message", true),
-        boolean("isRead", false, false),
-        url("actionUrl"),
-        datetime("createdAt", true),
-      ],
-      indexes: [
-        idx("idx_userId", ["userId"]),
-        idx("idx_isRead", ["isRead"]),
-        idx("idx_createdAt", ["createdAt"]),
-      ],
-    })
-  );
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T24 = "notifications";
+  console.log(`\n24. ${T24}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T24, name: T24,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.label("admin")),
+      Permission.update(Role.users()),
+      Permission.delete(Role.label("admin")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T24, "userId", 50, true);
+  await varchar(T24, "type", 50, true);
+  await varchar(T24, "title", 200, true);
+  await text(T24, "message", true);
+  await bool(T24, "isRead", false, false);
+  await urlCol(T24, "actionUrl");
+  await dt(T24, "createdAt", true);
+  await idx(T24, "idx_userId", ["userId"]);
+  await idx(T24, "idx_isRead", ["isRead"]);
+  await idx(T24, "idx_createdAt", ["createdAt"]);
 
-  // ── Storage Buckets ─────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Storage Buckets
+  // ═══════════════════════════════════════════════════════════════════════════
 
   console.log("\n\n🪣 Creating storage buckets...\n");
 
@@ -848,11 +780,10 @@ async function main() {
     ], false, true, undefined, ["image/jpeg", "image/png", "image/webp", "image/gif"], 10485760)
   );
 
-  console.log("\n\n✨ Setup complete! Your Appwrite backend is ready.\n");
+  console.log("\n\n✨ Setup complete!\n");
   console.log("📌 Next steps:");
-  console.log("   1. Run: appwrite generate --language typescript --output ./src/generated");
-  console.log("   2. Enable OAuth providers in Appwrite Console (Google)");
-  console.log("   3. Create your first admin user and assign the 'admin' label\n");
+  console.log("   1. Enable OAuth providers in Appwrite Console (Google)");
+  console.log("   2. Create your first admin user and assign the 'admin' label\n");
 }
 
 main().catch(console.error);
