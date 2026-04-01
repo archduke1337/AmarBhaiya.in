@@ -62,13 +62,13 @@ export default async function AdminDashboardPage() {
           label="Active Enrollments"
           value={formatCompactNumber(stats.activeEnrollments)}
           icon={BookOpen}
-          description="Currently active"
+          description={`${stats.completionRate}% completion rate`}
         />
         <StatCard
           label="Monthly Revenue"
           value={formatCurrency(stats.monthlyRevenue)}
           icon={CreditCard}
-          description="Current billing month"
+          description={`Total: ${formatCurrency(stats.totalRevenue)}`}
         />
         <StatCard
           label="Live Sessions"
@@ -77,6 +77,30 @@ export default async function AdminDashboardPage() {
           description="Scheduled or active"
         />
       </StatGrid>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Courses</p>
+          <p className="text-2xl tabular-nums">{stats.totalCourses}</p>
+          <p className="text-[10px] text-muted-foreground">{stats.publishedCourses} published</p>
+        </div>
+        <div className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Published</p>
+          <p className="text-2xl tabular-nums">{stats.publishedCourses}</p>
+          <p className="text-[10px] text-muted-foreground">of {stats.totalCourses} total</p>
+        </div>
+        <div className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Completion Rate</p>
+          <p className="text-2xl tabular-nums">{stats.completionRate}%</p>
+          <p className="text-[10px] text-muted-foreground">enrolled → completed</p>
+        </div>
+        <div className="border border-border p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Revenue</p>
+          <p className="text-2xl tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
+          <p className="text-[10px] text-muted-foreground">all time</p>
+        </div>
+      </div>
 
       {/* Alerts & Quick Navigation */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -138,7 +162,7 @@ export default async function AdminDashboardPage() {
   );
 }
 
-function buildAlerts(stats: { totalUsers: number; activeEnrollments: number; monthlyRevenue: number; liveSessions: number }) {
+function buildAlerts(stats: { totalUsers: number; activeEnrollments: number; monthlyRevenue: number; liveSessions: number; totalCourses: number; publishedCourses: number; completionRate: number; totalRevenue: number }) {
   const alerts: Array<{ id: string; label: string; description: string; badge?: string }> = [];
 
   if (stats.totalUsers === 0) {

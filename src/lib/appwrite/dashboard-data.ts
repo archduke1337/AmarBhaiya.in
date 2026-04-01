@@ -121,7 +121,11 @@ export type AdminDashboardStats = {
   totalUsers: number;
   activeEnrollments: number;
   monthlyRevenue: number;
+  totalRevenue: number;
   liveSessions: number;
+  totalCourses: number;
+  publishedCourses: number;
+  completionRate: number;
 };
 
 export type AdminUserItem = {
@@ -984,7 +988,7 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const { tablesDB, users } = await createAdminClient();
 
-  const [usersTotal, activeEnrollments, completedPayments, liveSessions] =
+  const [usersTotal, activeEnrollmentsResult, completedPayments, liveSessions, coursesResult] =
     await Promise.all([
       users
         .list({
@@ -994,7 +998,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
         .catch(() => 0),
       safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
         Query.limit(500),
-      ]).then((result) => result.rows.filter((row) => row.isActive !== false).length),
+      ]),
       safeListRows<PaymentRow>(tablesDB, APPWRITE_CONFIG.tables.payments, [
         Query.equal("status", ["completed"]),
         Query.limit(500),
@@ -1002,7 +1006,24 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       safeCountRows(tablesDB, APPWRITE_CONFIG.tables.liveSessions, [
         Query.equal("status", ["scheduled", "live"]),
       ]),
+      safeListRows(tablesDB, APPWRITE_CONFIG.tables.courses, [
+        Query.limit(500),
+      ]),
     ]);
+
+  const activeEnrollments = activeEnrollmentsResult.rows.filter((row) => row.isActive !== false).length;
+  const completedEnrollments = activeEnrollmentsResult.rows.filter(
+    (row) => Number((row as AnyRow).progress ?? 0) >= 100
+  ).length;
+  const completionRate =
+    activeEnrollmentsResult.total > 0
+      ? Math.round((completedEnrollments / activeEnrollmentsResult.total) * 100)
+      : 0;
+
+  const totalCourses = coursesResult.total;
+  const publishedCourses = coursesResult.rows.filter(
+    (r) => Boolean((r as AnyRow).isPublished)
+  ).length;
 
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
@@ -1019,11 +1040,20 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     })
     .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0);
 
+  const totalRevenue = completedPayments.rows.reduce(
+    (sum, payment) => sum + Number(payment.amount ?? 0),
+    0
+  );
+
   return {
     totalUsers: usersTotal,
     activeEnrollments,
     monthlyRevenue,
+    totalRevenue,
     liveSessions,
+    totalCourses,
+    publishedCourses,
+    completionRate,
   };
 }
 
