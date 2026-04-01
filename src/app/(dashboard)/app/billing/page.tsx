@@ -1,10 +1,14 @@
 import { requireAuth } from "@/lib/appwrite/auth";
 import { upsertBillingInfoAction, getBillingInfo } from "@/actions/profile";
+import { getUserSubscription, cancelSubscriptionAction } from "@/actions/subscriptions";
 import { PageHeader } from "@/components/dashboard";
 
 export default async function BillingInfoPage() {
   const user = await requireAuth();
-  const billing = await getBillingInfo(user.$id);
+  const [billing, subscription] = await Promise.all([
+    getBillingInfo(user.$id),
+    getUserSubscription(),
+  ]);
 
   return (
     <div className="flex flex-col gap-8 max-w-3xl">
@@ -13,6 +17,42 @@ export default async function BillingInfoPage() {
         title="Billing Information"
         description="This information is used when purchasing courses. It will appear on your invoices and receipts."
       />
+
+      {/* Active Subscription */}
+      {subscription && (
+        <section className="border border-border">
+          <div className="border-b border-border px-5 py-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium">Active Subscription</h2>
+            <span className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${
+              subscription.status === "active"
+                ? "border-emerald-500/30 text-emerald-600"
+                : "border-border text-muted-foreground"
+            }`}>
+              {subscription.status}
+            </span>
+          </div>
+          <div className="p-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">{subscription.planName}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {new Date(subscription.startDate).toLocaleDateString("en-IN")} → {new Date(subscription.endDate).toLocaleDateString("en-IN")}
+              </p>
+            </div>
+            {subscription.status === "active" && (
+              <form action={cancelSubscriptionAction}>
+                <input type="hidden" name="subscriptionId" value={subscription.id} />
+                <button
+                  type="submit"
+                  className="h-8 border border-destructive/30 px-3 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  Cancel Subscription
+                </button>
+              </form>
+            )}
+          </div>
+        </section>
+      )}
+
 
       <form action={upsertBillingInfoAction} className="flex flex-col gap-6">
         {/* Name */}

@@ -66,6 +66,7 @@ export const DASHBOARD_NAV_ITEMS = {
     { label: "Courses", href: "/admin/courses", icon: "book-open" },
     { label: "Categories", href: "/admin/categories", icon: "folder" },
     { label: "Payments", href: "/admin/payments", icon: "credit-card" },
+    { label: "Subscriptions", href: "/admin/subscriptions", icon: "repeat" },
     { label: "Live Sessions", href: "/admin/live", icon: "video" },
     { label: "Moderation", href: "/admin/moderation", icon: "shield" },
     { label: "Notifications", href: "/admin/notifications", icon: "bell" },
