@@ -5,9 +5,11 @@ import { ArrowLeft, Pin, Lock, MessageSquare } from "lucide-react";
 import { requireAuth } from "@/lib/appwrite/auth";
 import {
   createForumReplyAction,
+  deleteForumReplyAction,
   getForumThreadDetail,
   getForumThreadReplies,
 } from "@/actions/community";
+import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +20,8 @@ type PageProps = {
 
 export default async function ThreadDetailPage({ params }: PageProps) {
   const user = await requireAuth();
+  const role = getUserRole(user);
+  const isMod = role === "admin" || role === "moderator";
   const { threadId } = await params;
 
   const [thread, replies] = await Promise.all([
@@ -127,9 +131,23 @@ export default async function ThreadDetailPage({ params }: PageProps) {
                     [This reply has been removed by a moderator]
                   </p>
                 ) : (
-                  <p className="whitespace-pre-wrap text-sm">
-                    {reply.body}
-                  </p>
+                  <>
+                    <p className="whitespace-pre-wrap text-sm">
+                      {reply.body}
+                    </p>
+                    {isMod && (
+                      <form action={deleteForumReplyAction} className="mt-2">
+                        <input type="hidden" name="replyId" value={reply.id} />
+                        <input type="hidden" name="threadId" value={thread.id} />
+                        <button
+                          type="submit"
+                          className="text-[10px] text-destructive hover:underline"
+                        >
+                          Remove reply
+                        </button>
+                      </form>
+                    )}
+                  </>
                 )}
               </article>
             ))}

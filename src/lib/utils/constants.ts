@@ -53,6 +53,7 @@ export const DASHBOARD_NAV_ITEMS = {
     { label: "Students", href: "/instructor/students", icon: "users" },
     { label: "Submissions", href: "/instructor/submissions", icon: "clipboard-check" },
     { label: "Live Sessions", href: "/instructor/live", icon: "video" },
+    { label: "Earnings", href: "/instructor/earnings", icon: "trending-up" },
   ],
   moderator: [
     { label: "Dashboard", href: "/moderator", icon: "layout-dashboard" },
@@ -65,6 +66,7 @@ export const DASHBOARD_NAV_ITEMS = {
     { label: "Marketing", href: "/admin/marketing", icon: "megaphone" },
     { label: "Users", href: "/admin/users", icon: "users" },
     { label: "Student Data", href: "/admin/students", icon: "graduation-cap" },
+    { label: "Instructors", href: "/admin/instructors", icon: "user-check" },
     { label: "Courses", href: "/admin/courses", icon: "book-open" },
     { label: "Categories", href: "/admin/categories", icon: "folder" },
     { label: "Payments", href: "/admin/payments", icon: "credit-card" },
