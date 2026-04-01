@@ -6,6 +6,7 @@ import { BookOpen, Clock, Lock, Play, Users } from "lucide-react";
 import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 import { getLoggedInUser } from "@/lib/appwrite/auth";
 import { enrollInCourseAction, isEnrolled } from "@/actions/enrollment";
+import { RazorpayCheckout } from "@/components/razorpay-checkout";
 import { formatDuration } from "@/lib/utils/format";
 
 type PageProps = {
@@ -97,12 +98,13 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 </button>
               </form>
             ) : (
-              <Link
-                href={`/app/billing?courseId=${course.id}`}
-                className="bg-foreground text-background px-6 py-3 text-sm font-medium"
-              >
-                Enroll — INR {course.priceInr}
-              </Link>
+              <RazorpayCheckout
+                courseId={course.id}
+                courseTitle={course.title}
+                priceInr={course.priceInr}
+                userName={user.name || ""}
+                userEmail={user.email}
+              />
             )
           ) : !user ? (
             <Link
