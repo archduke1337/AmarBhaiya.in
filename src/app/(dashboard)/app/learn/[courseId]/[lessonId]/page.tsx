@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/appwrite/server";
 import { getFileViewUrl } from "@/lib/utils/file-urls";
 import { VideoPlayer } from "@/components/video-player";
 import { markLessonCompleteAction, getCourseProgress } from "@/actions/enrollment";
+import { postLessonCommentAction, getLessonComments } from "@/actions/comments";
 import { Query } from "node-appwrite";
 
 type AnyRow = Record<string, unknown> & { $id: string };
@@ -250,6 +251,65 @@ export default async function LessonViewerPage({ params }: PageProps) {
           </ul>
         </section>
       )}
+
+      {/* Comments section */}
+      <section className="border border-border">
+        <div className="border-b border-border px-5 py-3">
+          <h2 className="text-sm font-medium">Discussion ({comments.length})</h2>
+        </div>
+
+        <form action={postLessonCommentAction} className="p-5 space-y-3 border-b border-border">
+          <input type="hidden" name="courseId" value={courseId} />
+          <input type="hidden" name="lessonId" value={lessonId} />
+          <textarea
+            name="text"
+            required
+            minLength={2}
+            placeholder="Ask a doubt or share an insight from this lesson..."
+            className="w-full min-h-20 border border-border bg-background px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            className="h-9 px-4 bg-foreground text-background text-xs transition-opacity hover:opacity-90"
+          >
+            Post comment
+          </button>
+        </form>
+
+        <div className="divide-y divide-border">
+          {comments.length === 0 && (
+            <p className="px-5 py-4 text-sm text-muted-foreground">
+              No comments yet. Be the first to start the discussion.
+            </p>
+          )}
+          {comments.map((c) => (
+            <div key={c.id} className="px-5 py-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-medium">{c.userName}</span>
+                {c.userRole !== "student" && (
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border px-1.5 py-0.5">
+                    {c.userRole}
+                  </span>
+                )}
+                {c.isPinned && (
+                  <span className="text-[10px] text-amber-600">📌 Pinned</span>
+                )}
+                <span className="text-[10px] text-muted-foreground ml-auto">
+                  {new Date(c.createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {c.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

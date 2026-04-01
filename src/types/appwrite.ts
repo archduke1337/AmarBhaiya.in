@@ -58,6 +58,7 @@ export interface Lesson extends AppwriteRow {
   duration: number;
   order: number;
   isFree: boolean;
+  isFreePreview: boolean;
 }
 
 export interface Resource extends AppwriteRow {

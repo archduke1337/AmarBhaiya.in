@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { CoursePlayer } from "@/components/course/course-player";
-import { enrollInFreeCourse } from "@/actions/enrollments";
+import { enrollInCourseAction } from "@/actions/enrollment";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 
@@ -18,8 +18,6 @@ export default async function CoursePlayerPage({ params }: PageProps) {
     notFound();
   }
 
-  const courseId = course.id;
-
   const modules = course.curriculum.map((module) => ({
     id: module.id,
     title: module.title,
@@ -29,11 +27,6 @@ export default async function CoursePlayerPage({ params }: PageProps) {
       durationMinutes: lesson.durationMinutes,
     })),
   }));
-
-  async function enrollAction() {
-    "use server";
-    await enrollInFreeCourse(courseId);
-  }
 
   return (
     <div className="space-y-6">
@@ -50,7 +43,8 @@ export default async function CoursePlayerPage({ params }: PageProps) {
         </div>
 
         {course.priceInr === 0 && (
-          <form action={enrollAction}>
+          <form action={enrollInCourseAction}>
+            <input type="hidden" name="courseId" value={course.id} />
             <button
               type="submit"
               className="h-10 px-4 border border-border text-sm hover:bg-accent"
