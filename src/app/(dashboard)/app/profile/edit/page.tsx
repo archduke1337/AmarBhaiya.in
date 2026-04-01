@@ -3,6 +3,7 @@ import {
   upsertStudentProfileAction,
   getStudentProfile,
 } from "@/actions/profile";
+import { updateDisplayNameAction, changePasswordAction } from "@/actions/account";
 import { PageHeader } from "@/components/dashboard";
 
 export default async function StudentProfileEditPage() {
@@ -154,6 +155,81 @@ export default async function StudentProfileEditPage() {
           </button>
         </div>
       </form>
+
+      {/* Account Settings */}
+      <section className="border border-border">
+        <div className="border-b border-border px-5 py-3">
+          <h2 className="text-sm font-medium">Account Settings</h2>
+        </div>
+
+        {/* Update Name */}
+        <form action={updateDisplayNameAction} className="border-b border-border p-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-muted-foreground">Display Name</span>
+              <input
+                name="name"
+                required
+                minLength={2}
+                defaultValue={user.name}
+                className="h-10 border border-border bg-background px-3 text-sm"
+              />
+            </label>
+            <div className="flex items-end">
+              <button
+                type="submit"
+                className="h-10 border border-border px-4 text-sm transition-colors hover:bg-muted"
+              >
+                Update Name
+              </button>
+            </div>
+          </div>
+        </form>
+
+        {/* Change Password */}
+        <form action={changePasswordAction} className="p-5">
+          <h3 className="mb-3 text-sm font-medium">Change Password</h3>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-muted-foreground">Current Password</span>
+              <input
+                name="currentPassword"
+                type="password"
+                required
+                className="h-10 border border-border bg-background px-3 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-muted-foreground">New Password</span>
+              <input
+                name="newPassword"
+                type="password"
+                required
+                minLength={8}
+                className="h-10 border border-border bg-background px-3 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-muted-foreground">Confirm Password</span>
+              <input
+                name="confirmPassword"
+                type="password"
+                required
+                minLength={8}
+                className="h-10 border border-border bg-background px-3 text-sm"
+              />
+            </label>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              type="submit"
+              className="h-10 border border-border px-4 text-sm transition-colors hover:bg-muted"
+            >
+              Change Password
+            </button>
+          </div>
+        </form>
+      </section>
     </div>
   );
 }
