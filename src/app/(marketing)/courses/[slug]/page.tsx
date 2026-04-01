@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookOpen, Clock, Lock, Play, Users } from "lucide-react";
 
 import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
+import { getLoggedInUser } from "@/lib/appwrite/auth";
+import { enrollInCourseAction, isEnrolled } from "@/actions/enrollment";
+import { formatDuration } from "@/lib/utils/format";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -31,6 +35,13 @@ export default async function CourseDetailPage({ params }: PageProps) {
   if (!course) {
     notFound();
   }
+
+  // Check if user is logged in and enrolled
+  const user = await getLoggedInUser();
+  const enrolled = user ? await isEnrolled(course.id, user.$id) : false;
+
+  // Find first lesson for "Start learning" button
+  const firstLesson = course.curriculum?.[0]?.lessons?.[0];
 
   return (
     <div className="px-6 md:px-12 py-20 md:py-28 space-y-14">
@@ -64,17 +75,54 @@ export default async function CourseDetailPage({ params }: PageProps) {
           </div>
         </div>
 
+        {/* Enrollment CTA */}
         <div className="pt-2 flex items-center gap-5">
-          <Link
-            href="/register"
-            className="bg-foreground text-background px-6 py-3 text-sm font-medium"
-          >
-            Enroll now
-          </Link>
+          {enrolled && firstLesson ? (
+            <Link
+              href={`/app/learn/${course.id}/${firstLesson.id}`}
+              className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-sm font-medium transition-opacity hover:opacity-90"
+            >
+              <Play className="size-4" />
+              Start Learning
+            </Link>
+          ) : user && !enrolled ? (
+            course.accessModel === "free" ? (
+              <form action={enrollInCourseAction}>
+                <input type="hidden" name="courseId" value={course.id} />
+                <button
+                  type="submit"
+                  className="bg-foreground text-background px-6 py-3 text-sm font-medium transition-opacity hover:opacity-90"
+                >
+                  Enroll for Free
+                </button>
+              </form>
+            ) : (
+              <Link
+                href={`/app/billing?courseId=${course.id}`}
+                className="bg-foreground text-background px-6 py-3 text-sm font-medium"
+              >
+                Enroll — INR {course.priceInr}
+              </Link>
+            )
+          ) : !user ? (
+            <Link
+              href={`/register?redirect=/courses/${slug}`}
+              className="bg-foreground text-background px-6 py-3 text-sm font-medium"
+            >
+              Sign up to enroll
+            </Link>
+          ) : null}
+
           <Link href="/courses" className="text-sm underline underline-offset-4">
             Back to courses
           </Link>
         </div>
+
+        {enrolled && (
+          <p className="text-xs text-emerald-600 flex items-center gap-1.5">
+            <span>✓</span> You are enrolled in this course
+          </p>
+        )}
       </section>
 
       <section className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-6">
@@ -120,12 +168,47 @@ export default async function CourseDetailPage({ params }: PageProps) {
               </p>
               <h3 className="text-xl">{module.title}</h3>
               <ul className="space-y-2">
-                {module.lessons.map((lesson) => (
-                  <li key={lesson.id} className="text-muted-foreground text-sm">
-                    - {lesson.title}
-                    {lesson.durationMinutes > 0 ? ` (${lesson.durationMinutes}m)` : ""}
-                  </li>
-                ))}
+                {module.lessons.map((lesson) => {
+                  const isAccessible =
+                    enrolled ||
+                    lesson.isFreePreview ||
+                    course.accessModel === "free";
+
+                  return (
+                    <li
+                      key={lesson.id}
+                      className="flex items-center gap-2 text-sm text-muted-foreground"
+                    >
+                      {isAccessible ? (
+                        enrolled ? (
+                          <Link
+                            href={`/app/learn/${course.id}/${lesson.id}`}
+                            className="hover:text-foreground transition-colors underline underline-offset-4"
+                          >
+                            {lesson.title}
+                          </Link>
+                        ) : (
+                          <span>
+                            {lesson.title}
+                            {lesson.isFreePreview && (
+                              <span className="text-[10px] ml-1 text-emerald-600">FREE PREVIEW</span>
+                            )}
+                          </span>
+                        )
+                      ) : (
+                        <span className="flex items-center gap-1.5">
+                          <Lock className="size-3" />
+                          {lesson.title}
+                        </span>
+                      )}
+                      {lesson.durationMinutes > 0 && (
+                        <span className="text-[10px] text-muted-foreground/60">
+                          ({lesson.durationMinutes}m)
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </article>
           ))}

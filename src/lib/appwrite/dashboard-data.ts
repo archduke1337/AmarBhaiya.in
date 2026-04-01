@@ -1434,3 +1434,160 @@ export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> 
     scheduledAt: typeof s.scheduledAt === "string" ? s.scheduledAt : null,
   }));
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PUBLIC COURSE DATA (no auth required)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type PublicCourseCard = {
+  id: string;
+  title: string;
+  slug: string;
+  shortDescription: string;
+  accessModel: string;
+  price: number;
+  thumbnailId: string;
+  instructorName: string;
+  totalLessons: number;
+  totalDuration: number;
+  enrolledCount: number;
+  categoryId: string;
+};
+
+export async function getPublicCourses(): Promise<PublicCourseCard[]> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const result = await safeListRows<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      [Query.equal("isPublished", [true]), Query.orderDesc("$createdAt"), Query.limit(100)]
+    );
+
+    return result.rows.map((c) => ({
+      id: c.$id,
+      title: typeof c.title === "string" ? c.title : "Untitled",
+      slug: typeof c.slug === "string" ? c.slug : c.$id,
+      shortDescription:
+        typeof c.shortDescription === "string" ? c.shortDescription : "",
+      accessModel: typeof c.accessModel === "string" ? c.accessModel : "free",
+      price: Number(c.price ?? 0),
+      thumbnailId: typeof c.thumbnailId === "string" ? c.thumbnailId : "",
+      instructorName:
+        typeof c.instructorName === "string" ? c.instructorName : "",
+      totalLessons: Number(c.totalLessons ?? 0),
+      totalDuration: Number(c.totalDuration ?? 0),
+      enrolledCount: Number(c.enrolledCount ?? 0),
+      categoryId: typeof c.categoryId === "string" ? c.categoryId : "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export type PublicCourseDetail = {
+  id: string;
+  title: string;
+  slug: string;
+  shortDescription: string;
+  accessModel: string;
+  price: number;
+  thumbnailId: string;
+  instructorId: string;
+  instructorName: string;
+  totalLessons: number;
+  totalDuration: number;
+  enrolledCount: number;
+  isPublished: boolean;
+  modules: Array<{
+    id: string;
+    title: string;
+    order: number;
+    lessons: Array<{
+      id: string;
+      title: string;
+      order: number;
+      duration: number;
+      isFree: boolean;
+      isFreePreview: boolean;
+    }>;
+  }>;
+};
+
+export async function getPublicCourseBySlug(
+  slugOrId: string
+): Promise<PublicCourseDetail | null> {
+  const { tablesDB } = await createAdminClient();
+
+  // Try by ID first
+  let course = await safeGetRow<CourseRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.courses,
+    slugOrId
+  );
+
+  // Try by slug
+  if (!course) {
+    const bySlug = await safeListRows<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      [Query.equal("slug", [slugOrId]), Query.limit(1)]
+    );
+    course = bySlug.rows[0] ?? null;
+  }
+
+  if (!course || !course.isPublished) return null;
+
+  // Fetch modules
+  const modulesResult = await safeListRows(
+    tablesDB,
+    APPWRITE_CONFIG.tables.modules,
+    [Query.equal("courseId", [course.$id]), Query.orderAsc("order"), Query.limit(100)]
+  );
+
+  const modules = [];
+  for (const mod of modulesResult.rows) {
+    const m = mod as AnyRow;
+    const lessonsResult = await safeListRows(
+      tablesDB,
+      APPWRITE_CONFIG.tables.lessons,
+      [Query.equal("moduleId", [m.$id]), Query.orderAsc("order"), Query.limit(100)]
+    );
+
+    modules.push({
+      id: m.$id,
+      title: typeof m.title === "string" ? m.title : "Untitled Module",
+      order: Number(m.order ?? 0),
+      lessons: lessonsResult.rows.map((l) => {
+        const lesson = l as AnyRow;
+        return {
+          id: lesson.$id,
+          title: typeof lesson.title === "string" ? lesson.title : "Untitled Lesson",
+          order: Number(lesson.order ?? 0),
+          duration: Number(lesson.duration ?? 0),
+          isFree: Boolean(lesson.isFree),
+          isFreePreview: Boolean(lesson.isFreePreview),
+        };
+      }),
+    });
+  }
+
+  return {
+    id: course.$id,
+    title: typeof course.title === "string" ? course.title : "Untitled",
+    slug: typeof course.slug === "string" ? course.slug : course.$id,
+    shortDescription:
+      typeof course.shortDescription === "string" ? course.shortDescription : "",
+    accessModel: typeof course.accessModel === "string" ? course.accessModel : "free",
+    price: Number(course.price ?? 0),
+    thumbnailId: typeof course.thumbnailId === "string" ? course.thumbnailId : "",
+    instructorId: typeof course.instructorId === "string" ? course.instructorId : "",
+    instructorName:
+      typeof course.instructorName === "string" ? course.instructorName : "",
+    totalLessons: Number(course.totalLessons ?? 0),
+    totalDuration: Number(course.totalDuration ?? 0),
+    enrolledCount: Number(course.enrolledCount ?? 0),
+    isPublished: Boolean(course.isPublished),
+    modules,
+  };
+}

@@ -52,6 +52,7 @@ export type PublicCourseDetail = PublicCourseListItem & {
       id: string;
       title: string;
       durationMinutes: number;
+      isFreePreview: boolean;
     }>;
   }>;
 };
@@ -435,6 +436,7 @@ export async function getPublicCourseBySlug(
               ? lesson.title
               : "Untitled lesson",
           durationMinutes: toDurationMinutes(lesson.duration),
+          isFreePreview: Boolean(lesson.isFreePreview),
         })),
     }));
 

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, CheckCircle } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getFileViewUrl } from "@/lib/utils/file-urls";
 import { VideoPlayer } from "@/components/video-player";
+import { markLessonCompleteAction, getCourseProgress } from "@/actions/enrollment";
 import { Query } from "node-appwrite";
 
 type AnyRow = Record<string, unknown> & { $id: string };
@@ -121,6 +122,9 @@ export default async function LessonViewerPage({ params }: PageProps) {
     ? getFileViewUrl(APPWRITE_CONFIG.buckets.courseVideos, videoFileId)
     : "";
 
+  // Get progress
+  const { completedLessonIds } = await getCourseProgress(courseId, user.$id);
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
       {/* Back to course */}
@@ -138,11 +142,30 @@ export default async function LessonViewerPage({ params }: PageProps) {
         title={String(lesson.title ?? "Lesson")}
       />
 
-      {/* Lesson info */}
+      {/* Lesson info + mark complete */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-medium">
-          {String(lesson.title ?? "Lesson")}
-        </h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-2xl font-medium">
+            {String(lesson.title ?? "Lesson")}
+          </h1>
+          {completedLessonIds.includes(lessonId) ? (
+            <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 shrink-0 pt-1">
+              <CheckCircle className="size-4" />
+              Completed
+            </span>
+          ) : (
+            <form action={markLessonCompleteAction} className="shrink-0">
+              <input type="hidden" name="courseId" value={courseId} />
+              <input type="hidden" name="lessonId" value={lessonId} />
+              <button
+                type="submit"
+                className="h-9 border border-border px-4 text-xs transition-colors hover:bg-muted"
+              >
+                Mark as complete
+              </button>
+            </form>
+          )}
+        </div>
         {typeof lesson.description === "string" && lesson.description.length > 0 && (
           <p className="text-sm text-muted-foreground">
             {lesson.description}
@@ -208,7 +231,11 @@ export default async function LessonViewerPage({ params }: PageProps) {
                     }`}
                   >
                     <span className="text-xs text-muted-foreground w-6">
-                      {i + 1}
+                      {completedLessonIds.includes(l.$id) ? (
+                        <CheckCircle className="size-3.5 text-emerald-600" />
+                      ) : (
+                        i + 1
+                      )}
                     </span>
                     <span className="flex-1 truncate">
                       {String(l.title ?? `Lesson ${i + 1}`)}
