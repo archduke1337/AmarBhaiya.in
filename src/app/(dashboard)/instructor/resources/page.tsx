@@ -7,6 +7,8 @@ import {
   getInstructorResources,
   updateStandaloneResourceAction,
 } from "@/actions/resources";
+import { uploadResourceFileAction } from "@/actions/upload";
+import { deleteStandaloneResourceAction } from "@/actions/resources";
 import { formatCurrency } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -234,6 +236,43 @@ export default async function InstructorResourcesPage() {
                     </button>
                   </div>
                 </div>
+              </form>
+
+              {/* File upload */}
+              <form
+                action={uploadResourceFileAction}
+                encType="multipart/form-data"
+                className="flex items-center gap-3 border-t border-border px-5 py-3"
+              >
+                <input type="hidden" name="resourceId" value={resource.id} />
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {resource.fileId ? "✓ File attached" : "No file"}
+                </span>
+                <input
+                  type="file"
+                  name="file"
+                  className="flex-1 text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
+                />
+                <button
+                  type="submit"
+                  className="h-8 shrink-0 border border-border px-3 text-xs hover:bg-muted transition-colors"
+                >
+                  Upload
+                </button>
+              </form>
+
+              {/* Delete */}
+              <form
+                action={deleteStandaloneResourceAction}
+                className="flex justify-end border-t border-border px-5 py-2"
+              >
+                <input type="hidden" name="resourceId" value={resource.id} />
+                <button
+                  type="submit"
+                  className="h-8 px-3 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  Delete resource
+                </button>
               </form>
             </article>
           ))

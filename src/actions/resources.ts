@@ -149,13 +149,24 @@ export async function updateStandaloneResourceAction(
 export async function deleteStandaloneResourceAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   if (!resourceId) return;
 
   try {
     const { tablesDB } = await createAdminClient();
+
+    // Instructors can only delete their own resources
+    if (role === "instructor") {
+      const resource = (await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.standaloneResources,
+        rowId: resourceId,
+      })) as AnyRow;
+
+      if (String(resource.instructorId) !== user.$id) return;
+    }
 
     await tablesDB.deleteRow({
       databaseId: APPWRITE_CONFIG.databaseId,
