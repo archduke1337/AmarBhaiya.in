@@ -40,15 +40,16 @@ export const DASHBOARD_NAV_ITEMS = {
     { label: "My Courses", href: "/app/courses", icon: "book-open" },
     { label: "Community", href: "/app/community", icon: "users" },
     { label: "Live Sessions", href: "/app/live", icon: "video" },
-    { label: "Profile", href: "/app/profile", icon: "user" },
+    { label: "Profile", href: "/app/profile/edit", icon: "user" },
+    { label: "Billing", href: "/app/billing", icon: "credit-card" },
   ],
   instructor: [
     { label: "Dashboard", href: "/instructor", icon: "layout-dashboard" },
     { label: "My Courses", href: "/instructor/courses", icon: "book-open" },
+    { label: "Resources", href: "/instructor/resources", icon: "file-text" },
     { label: "Categories", href: "/instructor/categories", icon: "folder" },
     { label: "Students", href: "/instructor/students", icon: "users" },
     { label: "Live Sessions", href: "/instructor/live", icon: "video" },
-    { label: "Community", href: "/instructor/community", icon: "message-square" },
   ],
   moderator: [
     { label: "Dashboard", href: "/moderator", icon: "layout-dashboard" },
