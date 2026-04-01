@@ -15,6 +15,11 @@ import {
   getCourseQuizzes,
   deleteQuizAction,
 } from "@/actions/quiz";
+import {
+  createAssignmentAction,
+  getCourseAssignments,
+  deleteAssignmentAction,
+} from "@/actions/assignments";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getInstructorCourseSummary,
@@ -35,9 +40,10 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
     notFound();
   }
 
-  const [modules, quizzes] = await Promise.all([
+  const [modules, quizzes, assignments] = await Promise.all([
     getInstructorCurriculum(course.id),
     getCourseQuizzes(course.id),
+    getCourseAssignments(course.id),
   ]);
 
   return (
@@ -485,6 +491,81 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 </button>
               </div>
             </form>
+          </article>
+        ))}
+      </section>
+
+      {/* Assignment Management */}
+      <section className="border border-border p-6 space-y-6">
+        <h2 className="text-xl">Assignments ({assignments.length})</h2>
+
+        <form action={createAssignmentAction} className="grid gap-3 md:grid-cols-2 border border-border p-4">
+          <input type="hidden" name="courseId" value={course.id} />
+
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Title</span>
+            <input
+              name="title"
+              required
+              minLength={3}
+              placeholder="e.g. Build a REST API"
+              className="h-10 w-full border border-border bg-background px-3 text-sm"
+            />
+          </label>
+
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Due date (optional)</span>
+            <input
+              name="dueDate"
+              type="date"
+              className="h-10 w-full border border-border bg-background px-3 text-sm"
+            />
+          </label>
+
+          <label className="space-y-1 text-sm md:col-span-2">
+            <span className="text-muted-foreground">Description / Instructions</span>
+            <textarea
+              name="description"
+              rows={3}
+              placeholder="What should the student do? Include requirements and deliverables."
+              className="w-full border border-border bg-background px-3 py-2 text-sm"
+            />
+          </label>
+
+          <div className="flex items-end md:col-span-2 justify-end">
+            <button
+              type="submit"
+              className="h-10 bg-foreground text-background px-6 text-sm transition-opacity hover:opacity-90"
+            >
+              Create Assignment
+            </button>
+          </div>
+        </form>
+
+        {assignments.map((a) => (
+          <article key={a.id} className="border border-border">
+            <div className="flex items-center justify-between px-5 py-3">
+              <div>
+                <h3 className="text-sm font-medium">{a.title}</h3>
+                <p className="text-[10px] text-muted-foreground">
+                  {a.dueDate ? `Due: ${a.dueDate}` : "No deadline"}
+                </p>
+              </div>
+              <form action={deleteAssignmentAction}>
+                <input type="hidden" name="assignmentId" value={a.id} />
+                <button
+                  type="submit"
+                  className="text-xs text-destructive hover:underline"
+                >
+                  Delete
+                </button>
+              </form>
+            </div>
+            {a.description && (
+              <div className="px-5 pb-3">
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{a.description}</p>
+              </div>
+            )}
           </article>
         ))}
       </section>
