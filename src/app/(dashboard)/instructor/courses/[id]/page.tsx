@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { updateInstructorCourseAction } from "@/actions/operations";
+import { uploadCourseThumbnailAction } from "@/actions/upload";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorCourseSummary } from "@/lib/appwrite/dashboard-data";
 import { formatCurrency, formatDuration } from "@/lib/utils/format";
@@ -108,6 +109,37 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
               Save course details
             </button>
           </div>
+        </form>
+      </section>
+
+      {/* Thumbnail upload */}
+      <section className="border border-border p-6 space-y-4">
+        <h2 className="text-xl">Course Thumbnail</h2>
+        <p className="text-sm text-muted-foreground">
+          Upload a cover image for this course. Recommended: 1280×720px, max 5MB.
+          {course.thumbnailId
+            ? " Current thumbnail: ✓ uploaded"
+            : " No thumbnail uploaded yet."}
+        </p>
+        <form
+          action={uploadCourseThumbnailAction}
+          encType="multipart/form-data"
+          className="flex items-center gap-3"
+        >
+          <input type="hidden" name="courseId" value={course.id} />
+          <input
+            type="file"
+            name="file"
+            accept=".jpg,.jpeg,.png,.webp"
+            required
+            className="text-sm file:mr-2 file:h-9 file:border file:border-border file:bg-background file:px-4 file:text-sm"
+          />
+          <button
+            type="submit"
+            className="h-9 shrink-0 border border-border px-4 text-sm hover:bg-muted transition-colors"
+          >
+            Upload Thumbnail
+          </button>
         </form>
       </section>
 

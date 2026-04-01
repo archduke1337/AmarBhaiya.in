@@ -8,6 +8,7 @@ import {
   updateCurriculumModuleAction,
 } from "@/actions/operations";
 import { deleteModuleAction, deleteLessonAction } from "@/actions/delete";
+import { uploadLessonVideoAction } from "@/actions/upload";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getInstructorCourseSummary,
@@ -242,7 +243,33 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   <p className="text-xs uppercase tracking-widest">
                     Lesson {lesson.order} · {formatDuration(lesson.duration)}
                     {lesson.isFree ? " · Free" : ""}
+                    {lesson.isFreePreview ? " · Preview" : ""}
+                    {lesson.videoFileId
+                      ? " · ✓ Video"
+                      : " · No video"}
                   </p>
+
+                  {/* Video upload */}
+                  <form
+                    action={uploadLessonVideoAction}
+                    encType="multipart/form-data"
+                    className="flex items-center gap-2"
+                  >
+                    <input type="hidden" name="courseId" value={course.id} />
+                    <input type="hidden" name="lessonId" value={lesson.id} />
+                    <input
+                      type="file"
+                      name="file"
+                      accept=".mp4,.webm,.mov,.mkv"
+                      className="text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
+                    />
+                    <button
+                      type="submit"
+                      className="h-8 shrink-0 border border-border px-3 text-xs hover:bg-muted transition-colors"
+                    >
+                      Upload
+                    </button>
+                  </form>
 
                   <form action={updateCurriculumLessonAction} className="grid gap-3">
                     <input type="hidden" name="courseId" value={course.id} />

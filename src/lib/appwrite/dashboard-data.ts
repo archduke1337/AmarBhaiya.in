@@ -191,6 +191,7 @@ export type InstructorCourseSummary = {
   price: number;
   totalLessons: number;
   totalDuration: number;
+  thumbnailId: string;
 };
 
 export type InstructorCurriculumModule = {
@@ -206,6 +207,7 @@ export type InstructorCurriculumModule = {
     duration: number;
     isFree: boolean;
     isFreePreview: boolean;
+    videoFileId: string;
   }>;
 };
 
@@ -730,6 +732,7 @@ export async function getInstructorCourseSummary(
     price: Number(course.price ?? 0),
     totalLessons: Number(course.totalLessons ?? 0),
     totalDuration: Number(course.totalDuration ?? 0),
+    thumbnailId: typeof course.thumbnailId === "string" ? course.thumbnailId : "",
   };
 }
 
@@ -776,6 +779,7 @@ export async function getInstructorCurriculum(
       duration: Number(lesson.duration ?? 0),
       isFree: Boolean(lesson.isFree),
       isFreePreview: Boolean(lesson.isFreePreview),
+      videoFileId: typeof lesson.videoFileId === "string" ? lesson.videoFileId : "",
     })),
   }));
 }
