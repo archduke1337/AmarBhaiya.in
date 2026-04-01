@@ -62,6 +62,7 @@ const createLessonSchema = z.object({
   durationSeconds: z.number().int().min(0).default(0),
   order: z.number().int().min(0).default(0),
   isFree: z.boolean(),
+  isFreePreview: z.boolean(),
 });
 
 const updateModuleSchema = z.object({
@@ -81,6 +82,7 @@ const updateLessonSchema = z.object({
   durationSeconds: z.number().int().min(0).default(0),
   order: z.number().int().min(0).default(0),
   isFree: z.boolean(),
+  isFreePreview: z.boolean(),
 });
 
 const applyModerationSchema = z.object({
@@ -424,6 +426,7 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
     durationSeconds: parseInteger(formData.get("durationSeconds"), 0),
     order: parseInteger(formData.get("order"), 0),
     isFree: parseBoolean(formData.get("isFree"), false),
+    isFreePreview: parseBoolean(formData.get("isFreePreview"), false),
   });
 
   if (!parsed.success) {
@@ -464,6 +467,7 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
       duration: parsed.data.durationSeconds,
       order: parsed.data.order,
       isFree: parsed.data.isFree,
+      isFreePreview: parsed.data.isFreePreview,
     },
   });
 
@@ -559,6 +563,7 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
     durationSeconds: parseInteger(formData.get("durationSeconds"), 0),
     order: parseInteger(formData.get("order"), 0),
     isFree: parseBoolean(formData.get("isFree"), false),
+    isFreePreview: parseBoolean(formData.get("isFreePreview"), false),
   });
 
   if (!parsed.success) {
@@ -599,6 +604,7 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
       duration: parsed.data.durationSeconds,
       order: parsed.data.order,
       isFree: parsed.data.isFree,
+      isFreePreview: parsed.data.isFreePreview,
     },
   });
 

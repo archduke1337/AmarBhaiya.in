@@ -205,6 +205,7 @@ export type InstructorCurriculumModule = {
     order: number;
     duration: number;
     isFree: boolean;
+    isFreePreview: boolean;
   }>;
 };
 
@@ -774,6 +775,7 @@ export async function getInstructorCurriculum(
       order: Number(lesson.order ?? 0),
       duration: Number(lesson.duration ?? 0),
       isFree: Boolean(lesson.isFree),
+      isFreePreview: Boolean(lesson.isFreePreview),
     })),
   }));
 }
