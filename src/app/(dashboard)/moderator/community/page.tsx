@@ -1,7 +1,8 @@
-import { MessageSquare, Pin } from "lucide-react";
+import { MessageSquare, Pin, Lock } from "lucide-react";
 
 import { applyModerationActionAction } from "@/actions/operations";
 import { getModeratorCommunityData } from "@/lib/appwrite/dashboard-data";
+import { lockThreadAction, unlockThreadAction } from "@/actions/community";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 
@@ -69,6 +70,23 @@ export default async function ModeratorCommunityPage() {
                       </Badge>
                     </p>
                   </div>
+                  <div className="flex items-center gap-2">
+                    {thread.locked && (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Lock className="size-3" />
+                        Locked
+                      </span>
+                    )}
+                    <form action={thread.locked ? unlockThreadAction : lockThreadAction}>
+                      <input type="hidden" name="threadId" value={thread.id} />
+                      <button
+                        type="submit"
+                        className="text-[10px] border border-border px-2 py-0.5 hover:bg-muted transition-colors"
+                      >
+                        {thread.locked ? "Unlock" : "Lock"}
+                      </button>
+                    </form>
+                  </div>
                 </div>
 
                 {/* Moderation form */}
@@ -94,7 +112,10 @@ export default async function ModeratorCommunityPage() {
                           <option value="pin">Pin thread</option>
                           <option value="unpin">Unpin thread</option>
                           <option value="flag">Flag thread</option>
-                          <option value="delete_post">Delete post</option>
+                          <option value="delete_post">Delete thread</option>
+                          <option value="warn">Warn author</option>
+                          <option value="timeout">Timeout author</option>
+                          <option value="ban">Ban author</option>
                         </select>
                       </label>
 

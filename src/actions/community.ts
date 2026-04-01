@@ -4,7 +4,7 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { requireAuth } from "@/lib/appwrite/auth";
+import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
@@ -194,5 +194,91 @@ export async function getForumThreadReplies(
     });
   } catch {
     return [];
+  }
+}
+
+// ── Delete Reply (Moderator) ────────────────────────────────────────────────
+
+export async function deleteForumReplyAction(
+  formData: FormData
+): Promise<void> {
+  await requireRole(["admin", "moderator"]);
+
+  const replyId = String(formData.get("replyId") ?? "").trim();
+  const threadId = String(formData.get("threadId") ?? "").trim();
+  if (!replyId) return;
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.forumReplies,
+      rowId: replyId,
+      data: {
+        isDeleted: true,
+        body: "[Removed by moderator]",
+      },
+    });
+
+    if (threadId) {
+      revalidatePath(`/app/community/${threadId}`);
+    }
+    revalidatePath("/app/community");
+    revalidatePath("/moderator/community");
+  } catch (error) {
+    console.error("[Mod] Reply delete failed:", error instanceof Error ? error.message : error);
+  }
+}
+
+// ── Lock Thread (Moderator) ─────────────────────────────────────────────────
+
+export async function lockThreadAction(formData: FormData): Promise<void> {
+  await requireRole(["admin", "moderator"]);
+
+  const threadId = String(formData.get("threadId") ?? "").trim();
+  if (!threadId) return;
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.forumThreads,
+      rowId: threadId,
+      data: { isLocked: true },
+    });
+
+    revalidatePath(`/app/community/${threadId}`);
+    revalidatePath("/app/community");
+    revalidatePath("/moderator/community");
+  } catch (error) {
+    console.error("[Mod] Lock thread failed:", error instanceof Error ? error.message : error);
+  }
+}
+
+// ── Unlock Thread (Moderator) ───────────────────────────────────────────────
+
+export async function unlockThreadAction(formData: FormData): Promise<void> {
+  await requireRole(["admin", "moderator"]);
+
+  const threadId = String(formData.get("threadId") ?? "").trim();
+  if (!threadId) return;
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.forumThreads,
+      rowId: threadId,
+      data: { isLocked: false },
+    });
+
+    revalidatePath(`/app/community/${threadId}`);
+    revalidatePath("/app/community");
+    revalidatePath("/moderator/community");
+  } catch (error) {
+    console.error("[Mod] Unlock thread failed:", error instanceof Error ? error.message : error);
   }
 }

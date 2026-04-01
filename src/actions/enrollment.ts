@@ -3,7 +3,7 @@
 import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
-import { requireAuth } from "@/lib/appwrite/auth";
+import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
@@ -336,5 +336,80 @@ export async function getStudentEnrollments(
     return enrollments;
   } catch {
     return [];
+  }
+}
+
+// ── Admin: Manual Enroll ──────────────────────────────────────────────────
+
+export async function adminEnrollAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+
+  const userId = String(formData.get("userId") ?? "").trim();
+  const courseId = String(formData.get("courseId") ?? "").trim();
+  if (!userId || !courseId) return;
+
+  const { tablesDB } = await createAdminClient();
+
+  // Check if already enrolled
+  try {
+    const existing = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      queries: [
+        Query.equal("courseId", [courseId]),
+        Query.equal("userId", [userId]),
+        Query.limit(1),
+      ],
+    });
+    if (existing.rows.length > 0) return;
+  } catch {
+    // continue
+  }
+
+  try {
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      rowId: ID.unique(),
+      data: {
+        courseId,
+        userId,
+        enrolledAt: new Date().toISOString(),
+        status: "active",
+        completedAt: "",
+        progress: 0,
+        paymentId: "",
+        accessModel: "free",
+      },
+    });
+
+    revalidatePath("/admin/students");
+    revalidatePath("/admin/courses");
+  } catch (error) {
+    console.error("[Admin Enroll]", error instanceof Error ? error.message : error);
+  }
+}
+
+// ── Admin: Unenroll ───────────────────────────────────────────────────────
+
+export async function adminUnenrollAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+
+  const enrollmentId = String(formData.get("enrollmentId") ?? "").trim();
+  if (!enrollmentId) return;
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    await tablesDB.deleteRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      rowId: enrollmentId,
+    });
+
+    revalidatePath("/admin/students");
+    revalidatePath("/admin/courses");
+  } catch (error) {
+    console.error("[Admin Unenroll]", error instanceof Error ? error.message : error);
   }
 }

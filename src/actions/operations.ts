@@ -852,3 +852,118 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
     }
   }
 }
+
+// ── Update Blog Post ──────────────────────────────────────────────────────
+
+export async function updateBlogPostAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+
+  const postId = String(formData.get("postId") ?? "");
+  if (!postId) return;
+
+  const { tablesDB } = await createAdminClient();
+
+  const data: Record<string, unknown> = {};
+
+  const title = String(formData.get("title") ?? "").trim();
+  if (title) data.title = title;
+
+  const excerpt = String(formData.get("excerpt") ?? "").trim();
+  if (excerpt) data.excerpt = excerpt;
+
+  const content = String(formData.get("content") ?? "").trim();
+  if (content) data.content = content;
+
+  const category = String(formData.get("category") ?? "").trim();
+  if (category) data.category = category;
+
+  const isPublishedRaw = formData.get("isPublished");
+  if (isPublishedRaw !== null) {
+    data.isPublished = parseBoolean(isPublishedRaw, true);
+  }
+
+  if (Object.keys(data).length === 0) return;
+
+  try {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.blogPosts,
+      rowId: postId,
+      data,
+    });
+
+    revalidatePath("/blog");
+    revalidatePath("/admin/marketing");
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : "Failed to update blog post.");
+  }
+}
+
+// ── Delete Blog Post ──────────────────────────────────────────────────────
+
+export async function deleteBlogPostAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+
+  const postId = String(formData.get("postId") ?? "");
+  if (!postId) return;
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    await tablesDB.deleteRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.blogPosts,
+      rowId: postId,
+    });
+
+    revalidatePath("/blog");
+    revalidatePath("/admin/marketing");
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : "Failed to delete blog post.");
+  }
+}
+
+// ── Get Blog Posts for Admin ──────────────────────────────────────────────
+
+type AdminBlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  category: string;
+  content: string;
+  isPublished: boolean;
+  publishedAt: string;
+};
+
+export async function getAdminBlogPosts(): Promise<AdminBlogPost[]> {
+  await requireRole(["admin"]);
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const result = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.blogPosts,
+      queries: [
+        Query.orderDesc("$createdAt"),
+        Query.limit(100),
+      ],
+    });
+
+    return result.rows.map((r) => {
+      const row = r as Record<string, unknown> & { $id: string };
+      return {
+        id: row.$id,
+        title: String(row.title ?? ""),
+        slug: String(row.slug ?? ""),
+        excerpt: String(row.excerpt ?? ""),
+        category: String(row.category ?? ""),
+        content: String(row.content ?? ""),
+        isPublished: Boolean(row.isPublished),
+        publishedAt: String(row.publishedAt ?? ""),
+      };
+    });
+  } catch {
+    return [];
+  }
+}

@@ -48,6 +48,7 @@ export type CommunityThreadItem = {
   author: string;
   replies: number;
   pinned: boolean;
+  locked: boolean;
   category: string;
 };
 
@@ -447,6 +448,7 @@ export async function getCommunityThreadsData(): Promise<CommunityThreadItem[]> 
         author: typeof thread.userName === "string" ? thread.userName : "Unknown user",
         replies: typeof thread.replyCount === "number" ? thread.replyCount : 0,
         pinned: Boolean(thread.isPinned),
+        locked: Boolean(thread.isLocked),
         category:
           (typeof thread.forumCatId === "string" &&
             categoryNameById.get(thread.forumCatId)) ||
@@ -967,6 +969,7 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
       author: typeof thread.userName === "string" ? thread.userName : "Unknown user",
       replies: Number(thread.replyCount ?? 0),
       pinned: Boolean(thread.isPinned),
+      locked: Boolean(thread.isLocked),
       category:
         (typeof thread.forumCatId === "string" &&
           categoryNameById.get(thread.forumCatId)) ||

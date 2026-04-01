@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, Upload, Clock } from "lucide-react";
+import { FileText, Upload, Clock, Download } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getStudentEnrolledCourses } from "@/lib/appwrite/dashboard-data";
@@ -8,6 +8,7 @@ import { submitAssignmentAction } from "@/actions/assignments";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { Query } from "node-appwrite";
+import { getFileViewUrl } from "@/lib/utils/file-urls";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
@@ -22,6 +23,7 @@ type StudentAssignment = {
   submittedAt: string;
   grade: number;
   feedback: string;
+  fileId: string;
 };
 
 async function getStudentAssignments(
@@ -80,6 +82,7 @@ async function getStudentAssignments(
         let submittedAt = "";
         let grade = 0;
         let feedback = "";
+        let fileId = "";
 
         try {
           const subs = await tablesDB.listRows({
@@ -98,6 +101,7 @@ async function getStudentAssignments(
             submittedAt = String(sub.submittedAt ?? "");
             grade = Number(sub.grade ?? 0);
             feedback = String(sub.feedback ?? "");
+            fileId = String(sub.fileId ?? "");
           }
         } catch {
           // skip
@@ -114,6 +118,7 @@ async function getStudentAssignments(
           submittedAt,
           grade,
           feedback,
+          fileId,
         });
       }
     } catch {
@@ -237,6 +242,23 @@ export default async function StudentAssignmentsPage() {
                         </span>
                       )}
                     </div>
+
+                    {a.fileId && (
+                      <div className="mt-2">
+                        <a
+                          href={getFileViewUrl(
+                            APPWRITE_CONFIG.buckets.courseResources,
+                            a.fileId
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs border border-border px-2 py-1 hover:bg-muted transition-colors"
+                        >
+                          <Download className="size-3" />
+                          View your submission
+                        </a>
+                      </div>
+                    )}
 
                     {a.feedback && (
                       <div className="mt-3 border-t border-border pt-3">

@@ -658,6 +658,10 @@ export async function getHomePageContent(): Promise<HomePageContent> {
           typeof course.title === "string" && course.title.length > 0
             ? course.title
             : "Untitled course",
+        slug:
+          typeof course.slug === "string" && course.slug.length > 0
+            ? course.slug
+            : "",
         sub:
           typeof course.shortDescription === "string" &&
           course.shortDescription.length > 0
@@ -676,11 +680,38 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       };
     });
 
+  const DEFAULT_DOMAINS = [
+    { title: "Coding", sub: "Web, App, DSA" },
+    { title: "Fitness", sub: "Home workouts & nutrition" },
+    { title: "Career", sub: "Interviews & growth" },
+    { title: "Life Skills", sub: "Money, habits, mindset" },
+  ];
+
+  const DEFAULT_LEARN_ITEMS = [
+    { title: "Full-Stack Web Dev", who: "Class 10+", desc: "HTML, CSS, JS, React, Node — build real projects, not toy apps." },
+    { title: "DSA for Placements", who: "College", desc: "200+ problems solved step-by-step. Crack any coding round." },
+    { title: "Fitness at Home", who: "Everyone", desc: "No gym needed. Bodyweight routines, diet plans, transformation roadmaps." },
+    { title: "Career Guidance", who: "Class 8–12", desc: "Which stream, which college, which skills — sorted." },
+    { title: "Money & Investing", who: "18+", desc: "Mutual funds, taxes, budgeting — what school never taught." },
+    { title: "Communication", who: "Everyone", desc: "Speak confidently in English, Hindi, or Hinglish. No judgement." },
+  ];
+
+  const DEFAULT_WHY_ITEMS = [
+    { title: "No Filler Content", body: "Every lesson is picked because it matters. No 40-hour filler courses." },
+    { title: "Real Experience", body: "I teach what I've done — not what I read in a textbook." },
+    { title: "Hindi + English", body: "Learn in the language you think in. Code comments in English, explanations in Hindi." },
+    { title: "Affordable", body: "Most content is free. Paid courses are priced for students, not corporates." },
+  ];
+
+  const resolvedDomains = Array.isArray(domains) && domains.length > 0 ? domains : DEFAULT_DOMAINS;
+  const resolvedLearnItems = Array.isArray(learnItems) && learnItems.length > 0 ? learnItems : DEFAULT_LEARN_ITEMS;
+  const resolvedWhyItems = Array.isArray(whyItems) && whyItems.length > 0 ? whyItems : DEFAULT_WHY_ITEMS;
+
   return {
     stats,
-    domains: Array.isArray(domains) ? domains : [],
-    learnItems: Array.isArray(learnItems) ? learnItems : [],
+    domains: resolvedDomains,
+    learnItems: resolvedLearnItems,
     featuredCourses,
-    whyItems: Array.isArray(whyItems) ? whyItems : [],
+    whyItems: resolvedWhyItems,
   };
 }

@@ -51,6 +51,7 @@ export const DASHBOARD_NAV_ITEMS = {
     { label: "Resources", href: "/instructor/resources", icon: "file-text" },
     { label: "Categories", href: "/instructor/categories", icon: "folder" },
     { label: "Students", href: "/instructor/students", icon: "users" },
+    { label: "Submissions", href: "/instructor/submissions", icon: "clipboard-check" },
     { label: "Live Sessions", href: "/instructor/live", icon: "video" },
   ],
   moderator: [

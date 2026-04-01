@@ -32,6 +32,7 @@ type HomeFeaturedCourseItem = {
   students: string;
   price: string;
   note: string;
+  slug?: string;
 };
 
 type HomeWhyItem = {
@@ -380,7 +381,10 @@ export default function LandingPage() {
             ) : null}
             {homeContent.featuredCourses.map((course, i) => (
               <Reveal key={course.title} delay={i * 0.1}>
-                <div className="group py-8 md:py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer">
+                <Link
+                  href={course.slug ? `/courses/${course.slug}` : "/courses"}
+                  className="group py-8 md:py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer block"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-2">
                       <h3 className="text-xl md:text-2xl font-light tracking-tight group-hover:text-muted-foreground transition-colors">
@@ -400,7 +404,7 @@ export default function LandingPage() {
                     </div>
                     <ArrowRight className="size-5 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                   </div>
-                </div>
+                </Link>
               </Reveal>
             ))}
           </div>
