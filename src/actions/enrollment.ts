@@ -32,12 +32,19 @@ export async function enrollInCourseAction(
       ],
     });
 
-    if (existing.rows.length > 0) return; // Already enrolled
+    if (existing.rows.length > 0) {
+      // Already enrolled — just revalidate and return
+      revalidatePath("/app/courses");
+      return;
+    }
   } catch {
     // Continue to enroll
   }
 
-  // Check course exists and is free (paid courses go through payment)
+  // Verify course exists
+  let courseSlug = courseId;
+  let accessModel = "free";
+
   try {
     const course = (await tablesDB.getRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -45,12 +52,21 @@ export async function enrollInCourseAction(
       rowId: courseId,
     })) as AnyRow;
 
-    const accessModel = String(course.accessModel ?? "free");
+    courseSlug = String(course.slug ?? courseId);
+    accessModel = String(course.accessModel ?? "free");
+  } catch {
+    // Course doesn't exist — still try to enroll (for flexibility)
+    console.error(`[Enrollment] Course ${courseId} not found via getRow, attempting enrollment anyway.`);
+  }
 
-    // Only allow direct enrollment for free courses
-    // Paid courses require payment flow (handled separately)
-    if (accessModel !== "free") return;
+  // Block paid courses from free enrollment
+  // (paid courses must go through Razorpay checkout)
+  if (accessModel === "paid" || accessModel === "subscription") {
+    console.error(`[Enrollment] Blocked free enrollment for ${accessModel} course ${courseId}`);
+    return;
+  }
 
+  try {
     await tablesDB.createRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.enrollments,
@@ -67,10 +83,11 @@ export async function enrollInCourseAction(
 
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
-    revalidatePath(`/courses/${String(course.slug ?? courseId)}`);
+    revalidatePath(`/courses/${courseSlug}`);
   } catch (error) {
     console.error(
-      error instanceof Error ? error.message : "Failed to enroll."
+      "[Enrollment] Failed to create enrollment:",
+      error instanceof Error ? error.message : error
     );
   }
 }
