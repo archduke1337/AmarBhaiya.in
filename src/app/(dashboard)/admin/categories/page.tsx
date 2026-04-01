@@ -1,63 +1,71 @@
+import { Folder, Plus } from "lucide-react";
+
 import {
   createCategoryAction,
   updateCategoryAction,
 } from "@/actions/operations";
 import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
+import { PageHeader, EmptyState } from "@/components/dashboard";
 
 export default async function AdminCategoriesPage() {
   const categories = await getAdminCategories();
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Admin Categories</p>
-        <h1 className="text-3xl mt-2">Category Management</h1>
-      </div>
+    <div className="flex flex-col gap-8 max-w-5xl">
+      <PageHeader
+        eyebrow="Admin · Categories"
+        title="Category Management"
+        description={`${categories.length} categories define how courses are organized across the platform.`}
+      />
 
-      <section className="border border-border p-6 space-y-4">
-        <h2 className="text-xl">Create category</h2>
-        <form action={createCategoryAction} className="grid gap-3 md:grid-cols-2">
-          <label className="space-y-1 text-sm">
-            <span>Name</span>
+      {/* Create category form */}
+      <section className="border border-border">
+        <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+          <Plus className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-medium">Create Category</h2>
+        </div>
+        <form action={createCategoryAction} className="grid gap-4 p-5 md:grid-cols-2">
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-muted-foreground">Name</span>
             <input
               name="name"
               required
               minLength={2}
               placeholder="Career Growth"
-              className="h-10 w-full border border-border bg-background px-3"
+              className="h-10 border border-border bg-background px-3 text-sm"
             />
           </label>
-          <label className="space-y-1 text-sm">
-            <span>Slug (optional)</span>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-muted-foreground">Slug (optional)</span>
             <input
               name="slug"
               placeholder="career-growth"
-              className="h-10 w-full border border-border bg-background px-3"
+              className="h-10 border border-border bg-background px-3 text-sm"
             />
           </label>
-          <label className="space-y-1 text-sm md:col-span-2">
-            <span>Description</span>
+          <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
+            <span className="text-muted-foreground">Description</span>
             <textarea
               name="description"
-              rows={3}
+              rows={2}
               placeholder="Used for upskilling and placement-focused programs."
-              className="w-full border border-border bg-background px-3 py-2"
+              className="border border-border bg-background px-3 py-2 text-sm"
             />
           </label>
-          <label className="space-y-1 text-sm md:max-w-xs">
-            <span>Order</span>
+          <label className="flex flex-col gap-1.5 text-sm md:max-w-[200px]">
+            <span className="text-muted-foreground">Display Order</span>
             <input
               name="order"
               type="number"
               min={0}
               defaultValue={0}
-              className="h-10 w-full border border-border bg-background px-3"
+              className="h-10 border border-border bg-background px-3 text-sm"
             />
           </label>
-          <div className="md:col-span-2 flex justify-end">
+          <div className="flex items-end md:col-span-2">
             <button
               type="submit"
-              className="h-10 px-4 bg-foreground text-background text-sm"
+              className="h-10 bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
             >
               Create category
             </button>
@@ -65,69 +73,79 @@ export default async function AdminCategoriesPage() {
         </form>
       </section>
 
-      <section className="border border-border p-6 space-y-4">
-        <h2 className="text-xl">Existing categories</h2>
+      {/* Existing categories */}
+      <section className="flex flex-col gap-4">
+        <h2 className="text-lg font-medium">
+          Existing Categories ({categories.length})
+        </h2>
+
         {categories.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No categories found.</p>
-        ) : null}
+          <EmptyState
+            icon={Folder}
+            title="No categories yet"
+            description="Create your first category above to start organizing courses."
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {categories.map((category) => (
+              <article key={category.id} className="border border-border">
+                <form action={updateCategoryAction} className="grid gap-4 p-5 md:grid-cols-2">
+                  <input type="hidden" name="categoryId" value={category.id} />
 
-        {categories.map((category) => (
-          <article key={category.id} className="border border-border p-4">
-            <form action={updateCategoryAction} className="grid gap-3 md:grid-cols-2">
-              <input type="hidden" name="categoryId" value={category.id} />
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-muted-foreground">Name</span>
+                    <input
+                      name="name"
+                      required
+                      minLength={2}
+                      defaultValue={category.name}
+                      className="h-10 border border-border bg-background px-3 text-sm"
+                    />
+                  </label>
 
-              <label className="space-y-1 text-sm">
-                <span>Name</span>
-                <input
-                  name="name"
-                  required
-                  minLength={2}
-                  defaultValue={category.name}
-                  className="h-10 w-full border border-border bg-background px-3"
-                />
-              </label>
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-muted-foreground">Slug</span>
+                    <input
+                      name="slug"
+                      defaultValue={category.slug}
+                      className="h-10 border border-border bg-background px-3 text-sm"
+                    />
+                  </label>
 
-              <label className="space-y-1 text-sm">
-                <span>Slug</span>
-                <input
-                  name="slug"
-                  defaultValue={category.slug}
-                  className="h-10 w-full border border-border bg-background px-3"
-                />
-              </label>
+                  <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
+                    <span className="text-muted-foreground">Description</span>
+                    <textarea
+                      name="description"
+                      rows={2}
+                      defaultValue={category.description}
+                      className="border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
 
-              <label className="space-y-1 text-sm md:col-span-2">
-                <span>Description</span>
-                <textarea
-                  name="description"
-                  rows={2}
-                  defaultValue={category.description}
-                  className="w-full border border-border bg-background px-3 py-2"
-                />
-              </label>
+                  <label className="flex flex-col gap-1.5 text-sm md:max-w-[200px]">
+                    <span className="text-muted-foreground">Order</span>
+                    <input
+                      name="order"
+                      type="number"
+                      min={0}
+                      defaultValue={category.order}
+                      className="h-10 border border-border bg-background px-3 text-sm"
+                    />
+                  </label>
 
-              <label className="space-y-1 text-sm md:max-w-xs">
-                <span>Order</span>
-                <input
-                  name="order"
-                  type="number"
-                  min={0}
-                  defaultValue={category.order}
-                  className="h-10 w-full border border-border bg-background px-3"
-                />
-              </label>
-
-              <div className="md:col-span-2 flex justify-end">
-                <button
-                  type="submit"
-                  className="h-10 px-4 border border-border text-sm hover:bg-muted"
-                >
-                  Save changes
-                </button>
-              </div>
-            </form>
-          </article>
-        ))}
+                  <div className="flex items-end justify-end md:col-span-2">
+                    <button
+                      type="submit"
+                      className="h-9 border border-border px-4 text-sm transition-colors hover:bg-muted"
+                    >
+                      Save changes
+                    </button>
+                  </div>
+                </form>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

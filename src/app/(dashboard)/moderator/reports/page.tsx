@@ -1,112 +1,150 @@
+import { Flag } from "lucide-react";
+
 import {
   applyModerationActionAction,
   resolveModerationActionAction,
 } from "@/actions/operations";
 import { getModeratorReports } from "@/lib/appwrite/dashboard-data";
+import { PageHeader, EmptyState } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 
 export default async function ModeratorReportsPage() {
   const reports = await getModeratorReports();
 
+  const pending = reports.filter((r) => r.status === "pending").length;
+  const reviewed = reports.filter((r) => r.status === "reviewed").length;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Reports</p>
-        <h1 className="text-3xl mt-2">Flagged Content Queue</h1>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        eyebrow="Moderator · Reports"
+        title="Flagged Content Queue"
+        description={`${reports.length} total reports — ${pending} pending review, ${reviewed} resolved`}
+      />
 
-      <section className="space-y-3">
-        {reports.length === 0 ? (
-          <article className="border border-border p-5 text-sm text-muted-foreground">
-            No flagged moderation reports found.
-          </article>
-        ) : null}
-
-        {reports.map((report) => (
-          <article key={report.id} className="border border-border p-5 space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg">{report.id}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {report.entityType} · entity: {report.entityId} · target: {report.target}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">Reason: {report.reason}</p>
-              </div>
-              <p className="text-sm uppercase tracking-widest text-muted-foreground">{report.status}</p>
-            </div>
-
-            {report.targetUserId ? (
-              <form action={applyModerationActionAction} className="border border-border p-4 grid gap-3 md:grid-cols-3">
-                <input type="hidden" name="targetUserId" value={report.targetUserId} />
-                <input type="hidden" name="targetUserName" value={report.target} />
-                <input type="hidden" name="entityType" value={report.entityType} />
-                <input type="hidden" name="entityId" value={report.entityId} />
-                <input type="hidden" name="scope" value="platform" />
-
-                <label className="space-y-1 text-sm">
-                  <span>Action</span>
-                  <select
-                    name="action"
-                    defaultValue="warn"
-                    className="h-10 w-full border border-border bg-background px-3"
-                  >
-                    <option value="warn">Warn</option>
-                    <option value="mute">Mute</option>
-                    <option value="timeout">Timeout</option>
-                    <option value="remove_from_chat">Remove from chat</option>
-                    <option value="flag">Flag only</option>
-                  </select>
-                </label>
-
-                <label className="space-y-1 text-sm">
-                  <span>Duration (optional)</span>
-                  <input
-                    name="duration"
-                    placeholder="24h"
-                    className="h-10 w-full border border-border bg-background px-3"
-                  />
-                </label>
-
-                <label className="space-y-1 text-sm md:col-span-3">
-                  <span>Moderator note</span>
-                  <textarea
-                    name="reason"
-                    required
-                    minLength={3}
-                    defaultValue={report.reason}
-                    rows={2}
-                    className="w-full border border-border bg-background px-3 py-2"
-                  />
-                </label>
-
-                <div className="md:col-span-3 flex justify-end">
-                  <button
-                    type="submit"
-                    className="h-9 px-3 border border-border text-sm hover:bg-muted"
-                  >
-                    Apply moderation action
-                  </button>
+      {reports.length === 0 ? (
+        <EmptyState
+          icon={Flag}
+          title="No flagged reports"
+          description="The content queue is clear. Reports from the community will appear here when flagged."
+        />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {reports.map((report) => (
+            <article
+              key={report.id}
+              className="border border-border"
+            >
+              {/* Report header */}
+              <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {report.entityType}
+                    </span>
+                    <Badge
+                      variant={report.status === "pending" ? "default" : "outline"}
+                    >
+                      {report.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Target: {report.target} · Entity: {report.entityId}
+                  </p>
                 </div>
-              </form>
-            ) : (
-              <p className="text-sm text-muted-foreground border border-border p-3">
-                This report has no target user ID, so user-level actions are unavailable.
-              </p>
-            )}
 
-            {report.status === "pending" ? (
-              <form action={resolveModerationActionAction} className="flex justify-end">
-                <input type="hidden" name="actionId" value={report.id} />
-                <button
-                  type="submit"
-                  className="h-9 px-3 bg-foreground text-background text-sm"
+                {report.status === "pending" && (
+                  <form
+                    action={resolveModerationActionAction}
+                    className="shrink-0"
+                  >
+                    <input type="hidden" name="actionId" value={report.id} />
+                    <button
+                      type="submit"
+                      className="h-8 bg-foreground px-3 text-xs text-background transition-opacity hover:opacity-90"
+                    >
+                      Mark reviewed
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              {/* Report reason */}
+              <div className="px-5 py-3">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Reason:</span>{" "}
+                  {report.reason}
+                </p>
+              </div>
+
+              {/* Quick action form */}
+              {report.targetUserId && (
+                <form
+                  action={applyModerationActionAction}
+                  className="border-t border-border bg-muted/20 px-5 py-4"
                 >
-                  Mark report reviewed
-                </button>
-              </form>
-            ) : null}
-          </article>
-        ))}
-      </section>
+                  <input type="hidden" name="targetUserId" value={report.targetUserId} />
+                  <input type="hidden" name="targetUserName" value={report.target} />
+                  <input type="hidden" name="entityType" value={report.entityType} />
+                  <input type="hidden" name="entityId" value={report.entityId} />
+                  <input type="hidden" name="scope" value="platform" />
+
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <label className="flex flex-col gap-1.5 text-sm">
+                      <span className="text-muted-foreground">Action</span>
+                      <select
+                        name="action"
+                        defaultValue="warn"
+                        className="h-9 border border-border bg-background px-3 text-sm"
+                      >
+                        <option value="warn">Warn</option>
+                        <option value="mute">Mute</option>
+                        <option value="timeout">Timeout</option>
+                        <option value="remove_from_chat">Remove from chat</option>
+                        <option value="flag">Flag only</option>
+                      </select>
+                    </label>
+
+                    <label className="flex flex-col gap-1.5 text-sm">
+                      <span className="text-muted-foreground">
+                        Duration (optional)
+                      </span>
+                      <input
+                        name="duration"
+                        placeholder="24h"
+                        className="h-9 border border-border bg-background px-3 text-sm"
+                      />
+                    </label>
+
+                    <label className="flex flex-col gap-1.5 text-sm md:col-span-3">
+                      <span className="text-muted-foreground">
+                        Moderator note
+                      </span>
+                      <textarea
+                        name="reason"
+                        required
+                        minLength={3}
+                        defaultValue={report.reason}
+                        rows={2}
+                        className="border border-border bg-background px-3 py-2 text-sm"
+                      />
+                    </label>
+
+                    <div className="flex justify-end md:col-span-3">
+                      <button
+                        type="submit"
+                        className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
+                      >
+                        Apply action
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

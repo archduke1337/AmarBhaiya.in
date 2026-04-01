@@ -1,63 +1,107 @@
+import Link from "next/link";
+import { BookOpen, Eye, Star, Layers } from "lucide-react";
+
 import { updateCourseVisibilityAction } from "@/actions/operations";
 import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
+import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 
 export default async function AdminCoursesPage() {
   const courses = await getAdminCourses();
 
+  const published = courses.filter((c) => c.state === "published").length;
+  const drafts = courses.filter((c) => c.state === "draft").length;
+  const featured = courses.filter((c) => c.featured === "yes").length;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Admin Courses</p>
-        <h1 className="text-3xl mt-2">Course Oversight</h1>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        eyebrow="Admin · Courses"
+        title="Course Oversight"
+        description="Manage publication status, featuring, and visibility across the catalogue."
+      />
 
-      <section className="space-y-3">
-        {courses.length === 0 ? (
-          <article className="border border-border p-5 text-sm text-muted-foreground">
-            No courses found.
-          </article>
-        ) : null}
+      <StatGrid columns={3}>
+        <StatCard label="Total Courses" value={courses.length} icon={BookOpen} />
+        <StatCard
+          label="Published"
+          value={published}
+          icon={Eye}
+          description={`${drafts} in draft`}
+        />
+        <StatCard
+          label="Featured"
+          value={featured}
+          icon={Star}
+          description="Shown on homepage"
+        />
+      </StatGrid>
 
-        {courses.map((course) => (
-          <article key={course.id} className="border border-border p-5 space-y-3">
-            <div>
-              <h2 className="text-xl">{course.title}</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Category: {course.category}
-              </p>
-            </div>
+      {courses.length === 0 ? (
+        <EmptyState
+          icon={Layers}
+          title="No courses found"
+          description="Instructors can create courses from their dashboard. They will appear here for admin review."
+        />
+      ) : (
+        <section className="border border-border">
+          {/* Table header */}
+          <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_100px_100px_160px]">
+            <span>Course</span>
+            <span>Category</span>
+            <span>Status</span>
+            <span>Featured</span>
+            <span>Actions</span>
+          </div>
 
-            <form action={updateCourseVisibilityAction} className="flex flex-wrap items-center gap-4">
-              <input type="hidden" name="courseId" value={course.id} />
-
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="isPublished"
-                  defaultChecked={course.state === "published"}
-                />
-                Published
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="isFeatured"
-                  defaultChecked={course.featured === "yes"}
-                />
-                Featured
-              </label>
-
-              <button
-                type="submit"
-                className="h-9 px-3 border border-border text-sm hover:bg-muted"
+          <div className="divide-y divide-border">
+            {courses.map((course) => (
+              <form
+                key={course.id}
+                action={updateCourseVisibilityAction}
+                className="flex flex-col gap-3 px-5 py-4 md:grid md:grid-cols-[1fr_120px_100px_100px_160px] md:items-center md:gap-4"
               >
-                Save visibility
-              </button>
-            </form>
-          </article>
-        ))}
-      </section>
+                <input type="hidden" name="courseId" value={course.id} />
+
+                <div>
+                  <h3 className="text-sm font-medium">{course.title}</h3>
+                </div>
+
+                <Badge variant="outline" className="w-fit text-xs">
+                  {course.category}
+                </Badge>
+
+                <label className="inline-flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="isPublished"
+                    defaultChecked={course.state === "published"}
+                    className="size-4 accent-foreground"
+                  />
+                  <span className="text-xs text-muted-foreground">Published</span>
+                </label>
+
+                <label className="inline-flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="isFeatured"
+                    defaultChecked={course.featured === "yes"}
+                    className="size-4 accent-foreground"
+                  />
+                  <span className="text-xs text-muted-foreground">Featured</span>
+                </label>
+
+                <button
+                  type="submit"
+                  className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
+                >
+                  Save
+                </button>
+              </form>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

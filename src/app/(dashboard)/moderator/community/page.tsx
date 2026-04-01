@@ -1,106 +1,145 @@
+import { MessageSquare, Pin } from "lucide-react";
+
 import { applyModerationActionAction } from "@/actions/operations";
 import { getModeratorCommunityData } from "@/lib/appwrite/dashboard-data";
+import { PageHeader, EmptyState } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 
 export default async function ModeratorCommunityPage() {
   const data = await getModeratorCommunityData();
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Community Moderation</p>
-        <h1 className="text-3xl mt-2">Tools and Actions</h1>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        eyebrow="Moderator · Community"
+        title="Community Moderation Tools"
+        description="Manage threads, enforce community guidelines, and track moderation action usage."
+      />
 
-      <section className="border border-border p-6 space-y-3">
-        <p className="text-sm text-muted-foreground">
-          This panel consolidates high-frequency moderation workflows directly
-          on community content and keeps action totals visible for the team.
-        </p>
-        <ul className="space-y-2 text-sm">
-          {data.actionCounts.map((action) => (
-            <li key={action.label} className="border border-border px-3 py-2 flex items-center justify-between">
-              <span>{action.label}</span>
-              <span className="text-muted-foreground">{action.value}</span>
-            </li>
-          ))}
-        </ul>
+      {/* Action counts breakdown */}
+      <section className="grid gap-3 sm:grid-cols-5">
+        {data.actionCounts.map((action) => (
+          <div
+            key={action.label}
+            className="flex items-center justify-between border border-border px-4 py-3"
+          >
+            <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+              {action.label}
+            </span>
+            <span className="text-lg font-medium tabular-nums">
+              {action.value}
+            </span>
+          </div>
+        ))}
       </section>
 
-      <section className="border border-border p-6 space-y-3">
-        <h2 className="text-xl">Recent community threads</h2>
+      {/* Thread list */}
+      <section className="flex flex-col gap-4">
+        <h2 className="text-lg font-medium">
+          Recent Threads ({data.recentThreads.length})
+        </h2>
+
         {data.recentThreads.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No threads available yet.</p>
-        ) : null}
-        {data.recentThreads.map((thread) => (
-          <article key={thread.id} className="border border-border p-4 space-y-3">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-              {thread.category}
-              {thread.pinned ? " · pinned" : ""}
-            </p>
-            <h3>{thread.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {thread.author} · {thread.replies} replies
-            </p>
-
-            {thread.authorId ? (
-              <form action={applyModerationActionAction} className="border border-border p-3 grid gap-3 md:grid-cols-3">
-                <input type="hidden" name="targetUserId" value={thread.authorId} />
-                <input type="hidden" name="targetUserName" value={thread.author} />
-                <input type="hidden" name="scope" value="platform" />
-                <input type="hidden" name="entityType" value="forum_thread" />
-                <input type="hidden" name="entityId" value={thread.id} />
-
-                <label className="space-y-1 text-sm">
-                  <span>Action</span>
-                  <select
-                    name="action"
-                    defaultValue={thread.pinned ? "unpin" : "pin"}
-                    className="h-10 w-full border border-border bg-background px-3"
-                  >
-                    <option value="pin">Pin thread</option>
-                    <option value="unpin">Unpin thread</option>
-                    <option value="flag">Flag thread</option>
-                    <option value="delete_post">Delete post</option>
-                  </select>
-                </label>
-
-                <label className="space-y-1 text-sm">
-                  <span>Duration (optional)</span>
-                  <input
-                    name="duration"
-                    placeholder="24h"
-                    className="h-10 w-full border border-border bg-background px-3"
-                  />
-                </label>
-
-                <label className="space-y-1 text-sm md:col-span-3">
-                  <span>Reason</span>
-                  <textarea
-                    name="reason"
-                    required
-                    minLength={3}
-                    defaultValue={`Thread moderation: ${thread.title}`}
-                    rows={2}
-                    className="w-full border border-border bg-background px-3 py-2"
-                  />
-                </label>
-
-                <div className="md:col-span-3 flex justify-end">
-                  <button
-                    type="submit"
-                    className="h-9 px-3 border border-border text-sm hover:bg-muted"
-                  >
-                    Apply thread action
-                  </button>
+          <EmptyState
+            icon={MessageSquare}
+            title="No community threads"
+            description="Threads will appear here once students and mentors begin posting."
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {data.recentThreads.map((thread) => (
+              <article key={thread.id} className="border border-border">
+                {/* Thread header */}
+                <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium">{thread.title}</h3>
+                      {thread.pinned && (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <Pin className="size-3" />
+                          Pinned
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      by {thread.author} ·{" "}
+                      {thread.replies} replies ·{" "}
+                      <Badge variant="outline" className="text-[10px]">
+                        {thread.category}
+                      </Badge>
+                    </p>
+                  </div>
                 </div>
-              </form>
-            ) : (
-              <p className="text-sm text-muted-foreground border border-border p-3">
-                Author ID unavailable for this thread, so direct user actions are disabled.
-              </p>
-            )}
-          </article>
-        ))}
+
+                {/* Moderation form */}
+                {thread.authorId ? (
+                  <form
+                    action={applyModerationActionAction}
+                    className="bg-muted/20 px-5 py-4"
+                  >
+                    <input type="hidden" name="targetUserId" value={thread.authorId} />
+                    <input type="hidden" name="targetUserName" value={thread.author} />
+                    <input type="hidden" name="scope" value="platform" />
+                    <input type="hidden" name="entityType" value="forum_thread" />
+                    <input type="hidden" name="entityId" value={thread.id} />
+
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <label className="flex flex-col gap-1.5 text-sm">
+                        <span className="text-muted-foreground">Action</span>
+                        <select
+                          name="action"
+                          defaultValue={thread.pinned ? "unpin" : "pin"}
+                          className="h-9 border border-border bg-background px-3 text-sm"
+                        >
+                          <option value="pin">Pin thread</option>
+                          <option value="unpin">Unpin thread</option>
+                          <option value="flag">Flag thread</option>
+                          <option value="delete_post">Delete post</option>
+                        </select>
+                      </label>
+
+                      <label className="flex flex-col gap-1.5 text-sm">
+                        <span className="text-muted-foreground">
+                          Duration (optional)
+                        </span>
+                        <input
+                          name="duration"
+                          placeholder="24h"
+                          className="h-9 border border-border bg-background px-3 text-sm"
+                        />
+                      </label>
+
+                      <label className="flex flex-col gap-1.5 text-sm md:col-span-3">
+                        <span className="text-muted-foreground">Reason</span>
+                        <textarea
+                          name="reason"
+                          required
+                          minLength={3}
+                          defaultValue={`Thread moderation: ${thread.title}`}
+                          rows={2}
+                          className="border border-border bg-background px-3 py-2 text-sm"
+                        />
+                      </label>
+
+                      <div className="flex justify-end md:col-span-3">
+                        <button
+                          type="submit"
+                          className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
+                        >
+                          Apply thread action
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="bg-muted/20 px-5 py-3 text-xs text-muted-foreground">
+                    Author ID unavailable — user-level actions disabled for this thread.
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

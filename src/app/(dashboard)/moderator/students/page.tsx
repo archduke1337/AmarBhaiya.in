@@ -1,102 +1,129 @@
+import { UserX } from "lucide-react";
+
 import {
   applyModerationActionAction,
   resolveModerationActionAction,
 } from "@/actions/operations";
 import { getModeratorStudents } from "@/lib/appwrite/dashboard-data";
+import { PageHeader, EmptyState } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 
 export default async function ModeratorStudentsPage() {
   const students = await getModeratorStudents();
 
+  const openCases = students.filter((s) => s.status === "open").length;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Students</p>
-        <h1 className="text-3xl mt-2">Student Activity Lookup</h1>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        eyebrow="Moderator · Students"
+        title="Student Activity Lookup"
+        description={`${students.length} users with moderation history — ${openCases} open cases`}
+      />
 
-      <section className="space-y-3">
-        {students.length === 0 ? (
-          <article className="border border-border p-5 text-sm text-muted-foreground">
-            No student moderation activity found yet.
-          </article>
-        ) : null}
+      {students.length === 0 ? (
+        <EmptyState
+          icon={UserX}
+          title="No moderation activity"
+          description="No students have been moderated yet. Actions taken against users will appear here."
+        />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {students.map((student) => (
+            <article key={student.id} className="border border-border">
+              {/* User header */}
+              <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-medium">{student.name}</h2>
+                    <Badge
+                      variant={student.status === "open" ? "default" : "outline"}
+                    >
+                      {student.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Last action: <span className="capitalize">{student.latestAction}</span> — {student.latestReason}
+                  </p>
+                </div>
 
-        {students.map((student) => (
-          <article key={student.id} className="border border-border p-5 space-y-4">
-            <div>
-              <h2 className="text-lg">{student.name}</h2>
-              <p className="text-sm text-muted-foreground mt-1">ID: {student.id}</p>
-              <p className="text-sm text-muted-foreground mt-1">Last action: {student.latestAction}</p>
-              <p className="text-sm text-muted-foreground mt-1">Reason: {student.latestReason}</p>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">
-                {student.status}
-              </p>
-            </div>
-
-            <form action={applyModerationActionAction} className="grid gap-3 md:grid-cols-3 border border-border p-4">
-              <input type="hidden" name="targetUserId" value={student.id} />
-              <input type="hidden" name="targetUserName" value={student.name} />
-              <input type="hidden" name="scope" value="platform" />
-
-              <label className="space-y-1 text-sm">
-                <span>Action</span>
-                <select
-                  name="action"
-                  defaultValue="warn"
-                  className="h-10 w-full border border-border bg-background px-3"
-                >
-                  <option value="warn">Warn</option>
-                  <option value="mute">Mute</option>
-                  <option value="timeout">Timeout</option>
-                  <option value="remove_from_chat">Remove from chat</option>
-                </select>
-              </label>
-
-              <label className="space-y-1 text-sm">
-                <span>Duration (optional)</span>
-                <input
-                  name="duration"
-                  placeholder="48h"
-                  className="h-10 w-full border border-border bg-background px-3"
-                />
-              </label>
-
-              <label className="space-y-1 text-sm md:col-span-3">
-                <span>Reason</span>
-                <textarea
-                  name="reason"
-                  required
-                  minLength={3}
-                  rows={2}
-                  defaultValue={student.latestReason}
-                  className="w-full border border-border bg-background px-3 py-2"
-                />
-              </label>
-
-              <div className="md:col-span-3 flex justify-end">
-                <button
-                  type="submit"
-                  className="h-9 px-3 border border-border text-sm hover:bg-muted"
-                >
-                  Apply user action
-                </button>
+                {student.status === "open" && (
+                  <form
+                    action={resolveModerationActionAction}
+                    className="shrink-0"
+                  >
+                    <input type="hidden" name="actionId" value={student.latestActionId} />
+                    <button
+                      type="submit"
+                      className="h-8 bg-foreground px-3 text-xs text-background transition-opacity hover:opacity-90"
+                    >
+                      Resolve
+                    </button>
+                  </form>
+                )}
               </div>
-            </form>
 
-            {student.status === "open" ? (
-              <form action={resolveModerationActionAction} className="flex justify-end">
-                <input type="hidden" name="actionId" value={student.latestActionId} />
-                <button
-                  type="submit"
-                  className="h-9 px-3 bg-foreground text-background text-sm"
-                >
-                  Resolve latest action
-                </button>
+              {/* Quick action form */}
+              <form
+                action={applyModerationActionAction}
+                className="bg-muted/20 px-5 py-4"
+              >
+                <input type="hidden" name="targetUserId" value={student.id} />
+                <input type="hidden" name="targetUserName" value={student.name} />
+                <input type="hidden" name="scope" value="platform" />
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-muted-foreground">Action</span>
+                    <select
+                      name="action"
+                      defaultValue="warn"
+                      className="h-9 border border-border bg-background px-3 text-sm"
+                    >
+                      <option value="warn">Warn</option>
+                      <option value="mute">Mute</option>
+                      <option value="timeout">Timeout</option>
+                      <option value="remove_from_chat">Remove from chat</option>
+                    </select>
+                  </label>
+
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-muted-foreground">
+                      Duration (optional)
+                    </span>
+                    <input
+                      name="duration"
+                      placeholder="48h"
+                      className="h-9 border border-border bg-background px-3 text-sm"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1.5 text-sm md:col-span-3">
+                    <span className="text-muted-foreground">Reason</span>
+                    <textarea
+                      name="reason"
+                      required
+                      minLength={3}
+                      rows={2}
+                      defaultValue={student.latestReason}
+                      className="border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
+
+                  <div className="flex justify-end md:col-span-3">
+                    <button
+                      type="submit"
+                      className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
+                    >
+                      Apply action
+                    </button>
+                  </div>
+                </div>
               </form>
-            ) : null}
-          </article>
-        ))}
-      </section>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

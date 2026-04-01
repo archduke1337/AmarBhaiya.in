@@ -1,38 +1,84 @@
+import { Video, Radio, Clock, AlertTriangle } from "lucide-react";
+
 import { getAdminLiveData } from "@/lib/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
+import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 
 export default async function AdminLivePage() {
   const data = await getAdminLiveData();
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Admin Live</p>
-        <h1 className="text-3xl mt-2">Live Session Monitoring</h1>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        eyebrow="Admin · Live"
+        title="Live Session Monitoring"
+        description="Overview of all active, scheduled, and recently ended live sessions across the platform."
+      />
 
-      <section className="border border-border p-6 space-y-2 text-sm text-muted-foreground">
-        <p>- Active sessions: {data.activeSessions}</p>
-        <p>- Scheduled sessions: {data.scheduledSessions}</p>
-        <p>- Recording upload failures: {data.recordingFailures}</p>
-      </section>
+      <StatGrid columns={3}>
+        <StatCard
+          label="Active Now"
+          value={data.activeSessions}
+          icon={Radio}
+          description={data.activeSessions > 0 ? "Sessions in progress" : "No live sessions"}
+        />
+        <StatCard
+          label="Scheduled"
+          value={data.scheduledSessions}
+          icon={Clock}
+          description="Upcoming sessions"
+        />
+        <StatCard
+          label="Recording Failures"
+          value={data.recordingFailures}
+          icon={AlertTriangle}
+          description={data.recordingFailures > 0 ? "Missing recordings" : "All recordings OK"}
+        />
+      </StatGrid>
 
-      <section className="border border-border p-6 space-y-3">
-        <h2 className="text-xl">Upcoming sessions</h2>
+      <section className="flex flex-col gap-4">
+        <h2 className="text-lg font-medium">Upcoming Sessions</h2>
+
         {data.upcoming.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No upcoming sessions found.</p>
-        ) : null}
+          <EmptyState
+            icon={Video}
+            title="No upcoming sessions"
+            description="Instructors can schedule live sessions from their dashboard."
+          />
+        ) : (
+          <div className="border border-border">
+            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_200px]">
+              <span>Session</span>
+              <span>Status</span>
+              <span>Scheduled At</span>
+            </div>
 
-        {data.upcoming.map((session) => (
-          <article key={session.id} className="border border-border p-4 text-sm text-muted-foreground">
-            <p className="text-foreground">{session.title}</p>
-            <p className="mt-1 capitalize">
-              {session.status}
-              {" · "}
-              {session.scheduledAt ? formatDateTime(session.scheduledAt) : "No schedule set"}
-            </p>
-          </article>
-        ))}
+            <div className="divide-y divide-border">
+              {data.upcoming.map((session) => (
+                <div
+                  key={session.id}
+                  className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_200px] md:items-center md:gap-4"
+                >
+                  <span className="text-sm font-medium">{session.title}</span>
+
+                  <Badge
+                    variant={session.status === "live" ? "default" : "outline"}
+                    className="w-fit capitalize"
+                  >
+                    {session.status}
+                  </Badge>
+
+                  <span className="text-sm tabular-nums text-muted-foreground">
+                    {session.scheduledAt
+                      ? formatDateTime(session.scheduledAt)
+                      : "Not scheduled"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
