@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+.kiro
+
 
 # next.js
 /.next/
