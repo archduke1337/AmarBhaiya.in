@@ -68,6 +68,7 @@ export const DASHBOARD_NAV_ITEMS = {
     { label: "Payments", href: "/admin/payments", icon: "credit-card" },
     { label: "Live Sessions", href: "/admin/live", icon: "video" },
     { label: "Moderation", href: "/admin/moderation", icon: "shield" },
+    { label: "Notifications", href: "/admin/notifications", icon: "bell" },
     { label: "Audit Logs", href: "/admin/audit", icon: "file-text" },
   ],
 } as const;
