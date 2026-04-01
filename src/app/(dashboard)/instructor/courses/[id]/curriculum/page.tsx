@@ -9,6 +9,12 @@ import {
 } from "@/actions/operations";
 import { deleteModuleAction, deleteLessonAction } from "@/actions/delete";
 import { uploadLessonVideoAction } from "@/actions/upload";
+import {
+  createQuizAction,
+  addQuizQuestionAction,
+  getCourseQuizzes,
+  deleteQuizAction,
+} from "@/actions/quiz";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getInstructorCourseSummary,
@@ -29,7 +35,10 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
     notFound();
   }
 
-  const modules = await getInstructorCurriculum(course.id);
+  const [modules, quizzes] = await Promise.all([
+    getInstructorCurriculum(course.id),
+    getCourseQuizzes(course.id),
+  ]);
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -353,6 +362,129 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 </li>
               ))}
             </ul>
+          </article>
+        ))}
+      </section>
+
+      {/* Quiz Management */}
+      <section className="border border-border p-6 space-y-6">
+        <h2 className="text-xl">Course Quizzes ({quizzes.length})</h2>
+
+        {/* Create quiz form */}
+        <form action={createQuizAction} className="grid gap-3 md:grid-cols-4 border border-border p-4">
+          <input type="hidden" name="courseId" value={course.id} />
+
+          <label className="space-y-1 text-sm md:col-span-2">
+            <span className="text-muted-foreground">Quiz title</span>
+            <input
+              name="title"
+              required
+              minLength={3}
+              placeholder="e.g. Module 1 Assessment"
+              className="h-10 w-full border border-border bg-background px-3 text-sm"
+            />
+          </label>
+
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Pass mark (%)</span>
+            <input
+              name="passMark"
+              type="number"
+              min={0}
+              max={100}
+              defaultValue={60}
+              className="h-10 w-full border border-border bg-background px-3 text-sm"
+            />
+          </label>
+
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="h-10 w-full bg-foreground text-background text-sm transition-opacity hover:opacity-90"
+            >
+              Create Quiz
+            </button>
+          </div>
+        </form>
+
+        {/* Existing quizzes */}
+        {quizzes.map((quiz) => (
+          <article key={quiz.id} className="border border-border">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <div>
+                <h3 className="text-sm font-medium">{quiz.title}</h3>
+                <p className="text-[10px] text-muted-foreground">
+                  Pass mark: {quiz.passMark}% · Time limit: {quiz.timeLimit || "None"}
+                </p>
+              </div>
+              <form action={deleteQuizAction}>
+                <input type="hidden" name="quizId" value={quiz.id} />
+                <button
+                  type="submit"
+                  className="text-xs text-destructive hover:underline"
+                >
+                  Delete
+                </button>
+              </form>
+            </div>
+
+            {/* Add question form */}
+            <form
+              action={addQuizQuestionAction}
+              className="grid gap-3 p-5 md:grid-cols-2"
+            >
+              <input type="hidden" name="quizId" value={quiz.id} />
+
+              <label className="space-y-1 text-sm md:col-span-2">
+                <span className="text-muted-foreground">Question text</span>
+                <input
+                  name="text"
+                  required
+                  placeholder="What is...?"
+                  className="h-9 w-full border border-border bg-background px-3 text-xs"
+                />
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-muted-foreground">Type</span>
+                <select
+                  name="type"
+                  className="h-9 w-full border border-border bg-background px-3 text-xs"
+                >
+                  <option value="mcq">Multiple Choice</option>
+                  <option value="true_false">True / False</option>
+                  <option value="short_answer">Short Answer</option>
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span className="text-muted-foreground">Correct answer</span>
+                <input
+                  name="correctAnswer"
+                  required
+                  placeholder="The correct option text"
+                  className="h-9 w-full border border-border bg-background px-3 text-xs"
+                />
+              </label>
+
+              <label className="space-y-1 text-sm md:col-span-2">
+                <span className="text-muted-foreground">Options (comma-separated, for MCQ)</span>
+                <input
+                  name="options"
+                  placeholder="Option A, Option B, Option C, Option D"
+                  className="h-9 w-full border border-border bg-background px-3 text-xs"
+                />
+              </label>
+
+              <div className="flex items-end md:col-span-2 justify-end">
+                <button
+                  type="submit"
+                  className="h-9 border border-border px-4 text-xs hover:bg-muted transition-colors"
+                >
+                  Add Question
+                </button>
+              </div>
+            </form>
           </article>
         ))}
       </section>
