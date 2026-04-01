@@ -218,6 +218,7 @@ async function main() {
   await int(T4, "duration", false, 0);
   await int(T4, "order", false, 0);
   await bool(T4, "isFree", false, false);
+  await bool(T4, "isFreePreview", false, false);
   await idx(T4, "idx_moduleId", ["moduleId"]);
   await idx(T4, "idx_courseId", ["courseId"]);
 
@@ -780,6 +781,100 @@ async function main() {
   await idx(T26, "idx_isPublished", ["isPublished"]);
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // 27. student_profiles
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T27 = "student_profiles";
+  console.log(`\n27. ${T27}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T27, name: T27,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.read(Role.label("admin")),
+      Permission.read(Role.label("instructor")),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.label("admin")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T27, "userId", 50, true);
+  await varchar(T27, "dateOfBirth", 20);
+  await varchar(T27, "grade", 50);
+  await varchar(T27, "school", 200);
+  await varchar(T27, "hobby", 300);
+  await text(T27, "bio");
+  await varchar(T27, "guardianName", 200);
+  await varchar(T27, "guardianPhone", 20);
+  await varchar(T27, "city", 100);
+  await varchar(T27, "state", 100);
+  await idx(T27, "idx_userId", ["userId"], "unique");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 28. billing_info
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T28 = "billing_info";
+  console.log(`\n28. ${T28}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T28, name: T28,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.read(Role.label("admin")),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.label("admin")),
+    ],
+    rowSecurity: true,
+  }));
+  await varchar(T28, "userId", 50, true);
+  await varchar(T28, "firstName", 100, true);
+  await varchar(T28, "lastName", 100, true);
+  await varchar(T28, "phone", 20, true);
+  await varchar(T28, "addressLine1", 300, true);
+  await varchar(T28, "addressLine2", 300);
+  await varchar(T28, "city", 100, true);
+  await varchar(T28, "state", 100, true);
+  await varchar(T28, "country", 100, true);
+  await varchar(T28, "zipcode", 20, true);
+  await dt(T28, "createdAt", true);
+  await dt(T28, "updatedAt");
+  await idx(T28, "idx_userId", ["userId"], "unique");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 29. standalone_resources
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T29 = "standalone_resources";
+  console.log(`\n29. ${T29}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T29, name: T29,
+    permissions: [
+      Permission.read(Role.any()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T29, "instructorId", 50, true);
+  await varchar(T29, "instructorName", 200);
+  await varchar(T29, "title", 300, true);
+  await medtext(T29, "description");
+  await enumCol(T29, "type", ["notes", "worksheet", "test_paper", "video", "other"], true, "notes");
+  await enumCol(T29, "accessModel", ["free", "paid"], false, "free");
+  await int(T29, "price", false, 0);
+  await varchar(T29, "fileId", 100);
+  await varchar(T29, "thumbnailId", 100);
+  await int(T29, "downloadCount", false, 0);
+  await bool(T29, "isPublished", false, false);
+  await varcharArr(T29, "tags", 50);
+  await dt(T29, "createdAt", true);
+  await idx(T29, "idx_instructorId", ["instructorId"]);
+  await idx(T29, "idx_type", ["type"]);
+  await idx(T29, "idx_accessModel", ["accessModel"]);
+  await idx(T29, "idx_isPublished", ["isPublished"]);
+  await idx(T29, "idx_title_ft", ["title"], "fulltext");
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Storage Buckets
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -886,6 +981,24 @@ async function main() {
       ],
       maximumFileSize: 10485760, // 10MB
       allowedFileExtensions: ["jpg", "jpeg", "png", "webp", "gif"],
+      compression: "gzip",
+      encryption: true,
+      antivirus: true,
+    })
+  );
+
+  await safe("Bucket: resource_files", () =>
+    storage.createBucket({
+      bucketId: "resource_files",
+      name: "Resource Files",
+      permissions: [
+        Permission.read(Role.any()),
+        Permission.create(Role.label("admin")),
+        Permission.create(Role.label("instructor")),
+        Permission.delete(Role.label("admin")),
+      ],
+      maximumFileSize: 209715200, // 200MB
+      allowedFileExtensions: ["pdf", "doc", "docx", "pptx", "mp4", "webm", "zip", "txt", "jpg", "png"],
       compression: "gzip",
       encryption: true,
       antivirus: true,

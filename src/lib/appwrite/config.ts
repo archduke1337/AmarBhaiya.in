@@ -36,6 +36,9 @@ export const APPWRITE_CONFIG = {
     notifications: "notifications",
     blogPosts: "blog_posts",
     siteCopy: "site_copy",
+    studentProfiles: "student_profiles",
+    billingInfo: "billing_info",
+    standaloneResources: "standalone_resources",
   },
 
   // ── Storage Buckets ───────────────────────────────────────────────────────
@@ -46,6 +49,7 @@ export const APPWRITE_CONFIG = {
     userAvatars: "user_avatars",
     certificates: "certificates",
     blogImages: "blog_images",
+    resourceFiles: "resource_files",
   },
 
   // ── Session Cookie ────────────────────────────────────────────────────────
