@@ -4,6 +4,7 @@ import {
   getStudentProfile,
 } from "@/actions/profile";
 import { updateDisplayNameAction, changePasswordAction } from "@/actions/account";
+import { sendVerificationEmailAction } from "@/actions/verification";
 import { PageHeader } from "@/components/dashboard";
 
 export default async function StudentProfileEditPage() {
@@ -17,6 +18,33 @@ export default async function StudentProfileEditPage() {
         title="Your Personal Information"
         description="This information helps your instructors and the admin understand you better. Fields marked with * are optional."
       />
+
+      {/* Email verification banner */}
+      {!user.emailVerification && (
+        <div className="flex items-center justify-between border border-amber-500/30 bg-amber-500/5 px-5 py-3">
+          <div>
+            <p className="text-sm font-medium">Email not verified</p>
+            <p className="text-xs text-muted-foreground">
+              Verify your email ({user.email}) to unlock all features.
+            </p>
+          </div>
+          <form action={sendVerificationEmailAction}>
+            <button
+              type="submit"
+              className="h-9 border border-border px-4 text-xs transition-colors hover:bg-muted"
+            >
+              Send Verification Email
+            </button>
+          </form>
+        </div>
+      )}
+
+      {user.emailVerification && (
+        <div className="flex items-center gap-2 border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 text-sm">
+          <span>✓</span>
+          <span>Email verified — {user.email}</span>
+        </div>
+      )}
 
       <form
         action={upsertStudentProfileAction}
