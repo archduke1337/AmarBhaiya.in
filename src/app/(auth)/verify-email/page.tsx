@@ -8,7 +8,10 @@ type PageProps = {
 export default async function VerifyEmailPage({ searchParams }: PageProps) {
   const { userId, secret } = await searchParams;
 
-  let result = { success: false, error: "Missing verification parameters." };
+  let result: { success: boolean; error?: string } = {
+    success: false,
+    error: "Missing verification parameters.",
+  };
 
   if (userId && secret) {
     result = await confirmEmailVerificationAction(userId, secret);

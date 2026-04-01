@@ -1,19 +1,13 @@
 "use server";
 
-import { ID, InputFile } from "node-appwrite";
+import { ID } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
-// ── Type helpers ────────────────────────────────────────────────────────────
 
-type UploadResult = {
-  success: boolean;
-  fileId?: string;
-  error?: string;
-};
 
 // ── Upload Course Thumbnail ─────────────────────────────────────────────────
 
@@ -38,13 +32,10 @@ export async function uploadCourseThumbnailAction(
     const { storage, tablesDB } = await createAdminClient();
 
     // Upload to bucket
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const inputFile = InputFile.fromBuffer(buffer, file.name);
-
     const uploaded = await storage.createFile({
       bucketId: APPWRITE_CONFIG.buckets.courseThumbnails,
       fileId: ID.unique(),
-      file: inputFile,
+      file,
     });
 
     // Update course record
@@ -87,13 +78,10 @@ export async function uploadLessonVideoAction(
   try {
     const { storage, tablesDB } = await createAdminClient();
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const inputFile = InputFile.fromBuffer(buffer, file.name);
-
     const uploaded = await storage.createFile({
       bucketId: APPWRITE_CONFIG.buckets.courseVideos,
       fileId: ID.unique(),
-      file: inputFile,
+      file,
     });
 
     // Update lesson record
@@ -131,13 +119,10 @@ export async function uploadResourceFileAction(
   try {
     const { storage, tablesDB } = await createAdminClient();
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const inputFile = InputFile.fromBuffer(buffer, file.name);
-
     const uploaded = await storage.createFile({
       bucketId: APPWRITE_CONFIG.buckets.resourceFiles,
       fileId: ID.unique(),
-      file: inputFile,
+      file,
     });
 
     // Update resource record
@@ -175,13 +160,10 @@ export async function uploadAvatarAction(
   try {
     const { storage } = await createAdminClient();
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const inputFile = InputFile.fromBuffer(buffer, file.name);
-
     await storage.createFile({
       bucketId: APPWRITE_CONFIG.buckets.userAvatars,
       fileId: ID.unique(),
-      file: inputFile,
+      file,
     });
 
     revalidatePath("/app/profile/edit");
