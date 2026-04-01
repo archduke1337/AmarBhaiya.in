@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { getFileViewUrl } from "@/actions/upload";
+import { getFileViewUrl } from "@/lib/utils/file-urls";
 import { VideoPlayer } from "@/components/video-player";
 import { Query } from "node-appwrite";
 
