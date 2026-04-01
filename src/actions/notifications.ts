@@ -3,8 +3,7 @@
 import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
-import { requireAuth } from "@/lib/appwrite/auth";
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 

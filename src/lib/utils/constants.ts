@@ -40,6 +40,7 @@ export const DASHBOARD_NAV_ITEMS = {
     { label: "My Courses", href: "/app/courses", icon: "book-open" },
     { label: "Community", href: "/app/community", icon: "users" },
     { label: "Live Sessions", href: "/app/live", icon: "video" },
+    { label: "Notifications", href: "/app/notifications", icon: "bell" },
     { label: "Profile", href: "/app/profile/edit", icon: "user" },
     { label: "Billing", href: "/app/billing", icon: "credit-card" },
   ],
