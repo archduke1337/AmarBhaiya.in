@@ -1,60 +1,201 @@
+import Link from "next/link";
+import {
+  BookOpen,
+  Flame,
+  GraduationCap,
+  Trophy,
+  Video,
+  ArrowRight,
+} from "lucide-react";
+
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
-import { logoutAction } from "@/lib/appwrite/actions";
-import { Button } from "@/components/ui/button";
+import {
+  getStudentProfileStats,
+  getStudentEnrolledCourses,
+  getUpcomingLiveSessions,
+} from "@/lib/appwrite/dashboard-data";
+import { formatRelativeTime } from "@/lib/utils/format";
+import {
+  PageHeader,
+  StatCard,
+  StatGrid,
+  EmptyState,
+  ActivityFeed,
+} from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 
-export default async function DashboardPage() {
+export default async function StudentDashboardPage() {
   const user = await requireAuth();
   const role = getUserRole(user);
 
+  const [stats, enrolledCourses, upcomingSessions] = await Promise.all([
+    getStudentProfileStats(user.$id),
+    getStudentEnrolledCourses(user.$id),
+    getUpcomingLiveSessions(),
+  ]);
+
+  const inProgressCourses = enrolledCourses.filter(
+    (c) => c.progressPercent < 100
+  );
+  const completedCourses = enrolledCourses.filter(
+    (c) => c.progressPercent >= 100
+  );
+
+  const greeting = getGreeting();
+
   return (
-    <div className="max-w-3xl mx-auto px-6 py-16">
-      <div className="space-y-8">
-        {/* Welcome */}
-        <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-            Dashboard
-          </p>
-          <h1 className="text-4xl mb-1">
-            Welcome, {user.name.split(" ")[0]}
-          </h1>
-          <p className="text-muted-foreground">
-            Signed in as{" "}
-            <span className="text-foreground">{user.email}</span>
-            {" · "}
-            <span className="border border-border px-2 py-0.5 text-xs uppercase tracking-wider">
-              {role}
-            </span>
-          </p>
-        </div>
+    <div className="flex flex-col gap-8">
+      {/* Header */}
+      <PageHeader
+        eyebrow={role === "student" ? "Dashboard" : `Dashboard · ${role}`}
+        title={`${greeting}, ${user.name.split(" ")[0]}`}
+        description="Pick up where you left off or explore something new."
+      />
 
-        {/* Quick Info */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { label: "User ID", value: user.$id },
-            { label: "Role", value: role },
-            { label: "Verified", value: user.emailVerification ? "Yes" : "No" },
-          ].map((item) => (
-            <div key={item.label} className="border border-border p-4">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
-                {item.label}
-              </p>
-              <p className="text-sm font-mono truncate">{item.value}</p>
+      {/* Stats */}
+      <StatGrid columns={4}>
+        <StatCard
+          label="Current Streak"
+          value={`${stats.currentStreakDays}d`}
+          icon={Flame}
+          description={
+            stats.currentStreakDays > 0
+              ? "Keep it going!"
+              : "Complete a lesson to start"
+          }
+        />
+        <StatCard
+          label="Active Courses"
+          value={stats.activeCourses}
+          icon={BookOpen}
+          description={`${completedCourses.length} completed`}
+        />
+        <StatCard
+          label="Certificates"
+          value={stats.certificates}
+          icon={Trophy}
+        />
+        <StatCard
+          label="Upcoming Sessions"
+          value={upcomingSessions.length}
+          icon={Video}
+          description={
+            upcomingSessions[0]
+              ? `Next: ${upcomingSessions[0].title}`
+              : "None scheduled"
+          }
+        />
+      </StatGrid>
+
+      {/* Main content grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Continue Learning — takes 2 cols */}
+        <section className="flex flex-col gap-4 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium">Continue Learning</h2>
+            <Link
+              href="/app/courses"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              View all →
+            </Link>
+          </div>
+
+          {inProgressCourses.length === 0 ? (
+            <EmptyState
+              icon={GraduationCap}
+              title="No courses in progress"
+              description="Browse the course catalogue and enroll in a course to get started."
+              action={{ label: "Browse courses", href: "/courses" }}
+            />
+          ) : (
+            <div className="flex flex-col gap-3">
+              {inProgressCourses.slice(0, 3).map((course) => (
+                <Link
+                  key={course.id}
+                  href={`/app/courses/${course.slug || course.id}`}
+                  className="group border border-border p-5 transition-colors hover:border-foreground/20"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="font-medium group-hover:underline">
+                        {course.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {course.completedLessons} of {course.totalLessons}{" "}
+                        lessons complete
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="shrink-0">
+                      {course.category || "General"}
+                    </Badge>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="h-1.5 flex-1 overflow-hidden bg-muted">
+                      <div
+                        className="h-full bg-foreground transition-all duration-500"
+                        style={{
+                          width: `${Math.max(2, course.progressPercent)}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {course.progressPercent}%
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <ArrowRight className="size-3" />
+                    <span>Continue learning</span>
+                  </div>
+                </Link>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </section>
 
-        {/* Logout */}
-        <form action={logoutAction}>
-          <Button
-            type="submit"
-            variant="outline"
-            className="border-border hover:bg-card transition-colors cursor-pointer"
-          >
-            Sign out
-          </Button>
-        </form>
+        {/* Sidebar — upcoming sessions + achievements */}
+        <aside className="flex flex-col gap-6">
+          {/* Upcoming Live Sessions */}
+          <ActivityFeed
+            title="Upcoming Sessions"
+            viewAllHref="/app/live"
+            emptyText="No upcoming live sessions."
+            items={upcomingSessions.slice(0, 4).map((session) => ({
+              id: session.id,
+              label: session.title,
+              description: session.scheduledAt
+                ? formatRelativeTime(session.scheduledAt)
+                : "Date TBD",
+              badge: session.status === "live" ? "LIVE" : undefined,
+            }))}
+          />
+
+          {/* Recent Completions */}
+          {completedCourses.length > 0 && (
+            <ActivityFeed
+              title="Completed Courses"
+              items={completedCourses.slice(0, 3).map((course) => ({
+                id: course.id,
+                label: course.title,
+                description: `${course.totalLessons} lessons`,
+                badge: "Done",
+                href: `/app/courses/${course.slug || course.id}`,
+              }))}
+            />
+          )}
+        </aside>
       </div>
     </div>
   );
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }

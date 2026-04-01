@@ -1,53 +1,132 @@
 import Link from "next/link";
+import { BookOpen, ArrowRight } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
-import { getPublicCoursesPageData } from "@/lib/appwrite/marketing-content";
+import { getStudentEnrolledCourses } from "@/lib/appwrite/dashboard-data";
+import { PageHeader, EmptyState } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 
 export default async function StudentCoursesPage() {
-  await requireAuth();
-  const { courses } = await getPublicCoursesPageData({ sort: "popular" });
+  const user = await requireAuth();
+  const courses = await getStudentEnrolledCourses(user.$id);
+
+  const inProgress = courses.filter((c) => c.progressPercent < 100);
+  const completed = courses.filter((c) => c.progressPercent >= 100);
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-3">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          My Courses
-        </p>
-        <h1 className="text-3xl md:text-4xl">Continue your learning streak.</h1>
-      </section>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        eyebrow="My Courses"
+        title="Continue your learning streak."
+        description={`${courses.length} enrolled course${courses.length !== 1 ? "s" : ""} · ${completed.length} completed`}
+        actions={
+          <Link
+            href="/courses"
+            className="inline-flex h-9 items-center gap-2 border border-border px-4 text-sm transition-colors hover:bg-muted"
+          >
+            Browse catalogue
+          </Link>
+        }
+      />
 
-      <section className="grid md:grid-cols-2 gap-4">
-        {courses.length === 0 ? (
-          <article className="border border-border p-5 text-sm text-muted-foreground">
-            No published courses are available yet.
-          </article>
-        ) : null}
+      {courses.length === 0 ? (
+        <EmptyState
+          icon={BookOpen}
+          title="You haven't enrolled in any courses yet"
+          description="Browse the course catalogue and find something that interests you."
+          action={{ label: "Explore courses", href: "/courses" }}
+        />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {/* In Progress */}
+          {inProgress.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <h2 className="text-sm font-medium text-muted-foreground">
+                In Progress ({inProgress.length})
+              </h2>
+              <div className="grid gap-3 md:grid-cols-2">
+                {inProgress.map((course) => (
+                  <CourseCard key={course.id} course={course} />
+                ))}
+              </div>
+            </section>
+          )}
 
-        {courses.map((course) => (
-          <article key={course.slug} className="border border-border p-5 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground border border-border px-2 py-1">
-                {course.category}
-              </p>
-              <p className="text-sm text-muted-foreground">{course.totalLessons} lessons</p>
-            </div>
-
-            <h2 className="text-2xl leading-tight">{course.title}</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {course.shortDescription}
-            </p>
-
-            <div className="pt-2">
-              <Link
-                href={`/app/courses/${course.slug}`}
-                className="inline-flex h-9 items-center px-4 bg-foreground text-background text-sm"
-              >
-                Open player
-              </Link>
-            </div>
-          </article>
-        ))}
-      </section>
+          {/* Completed */}
+          {completed.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <h2 className="text-sm font-medium text-muted-foreground">
+                Completed ({completed.length})
+              </h2>
+              <div className="grid gap-3 md:grid-cols-2">
+                {completed.map((course) => (
+                  <CourseCard key={course.id} course={course} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+function CourseCard({
+  course,
+}: {
+  course: {
+    id: string;
+    title: string;
+    slug: string;
+    category: string;
+    totalLessons: number;
+    completedLessons: number;
+    progressPercent: number;
+  };
+}) {
+  const isComplete = course.progressPercent >= 100;
+
+  return (
+    <Link
+      href={`/app/courses/${course.slug || course.id}`}
+      className="group flex flex-col gap-4 border border-border p-5 transition-colors hover:border-foreground/20"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <Badge variant="outline">{course.category}</Badge>
+        <span className="text-xs text-muted-foreground">
+          {course.totalLessons} lessons
+        </span>
+      </div>
+
+      <h3 className="text-lg font-medium leading-tight group-hover:underline">
+        {course.title}
+      </h3>
+
+      <div className="flex items-center gap-3">
+        <div className="h-1.5 flex-1 overflow-hidden bg-muted">
+          <div
+            className={`h-full transition-all duration-500 ${
+              isComplete
+                ? "bg-emerald-500 dark:bg-emerald-400"
+                : "bg-foreground"
+            }`}
+            style={{ width: `${Math.max(2, course.progressPercent)}%` }}
+          />
+        </div>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {course.progressPercent}%
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          {course.completedLessons}/{course.totalLessons} lessons
+        </span>
+        <span className="flex items-center gap-1 transition-colors group-hover:text-foreground">
+          <ArrowRight className="size-3" />
+          {isComplete ? "Review" : "Continue"}
+        </span>
+      </div>
+    </Link>
   );
 }

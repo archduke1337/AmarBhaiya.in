@@ -1300,3 +1300,131 @@ export async function getStudentProfileStats(
     certificates: certificatesResult.total,
   };
 }
+
+// ── Student Enrolled Courses ──────────────────────────────────────────────
+
+export type StudentEnrolledCourse = {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  totalLessons: number;
+  completedLessons: number;
+  progressPercent: number;
+};
+
+export async function getStudentEnrolledCourses(
+  userId: string
+): Promise<StudentEnrolledCourse[]> {
+  if (!userId) return [];
+
+  const { tablesDB } = await createAdminClient();
+
+  const enrollmentsResult = await safeListRows<EnrollmentRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.enrollments,
+    [Query.equal("userId", [userId]), Query.equal("isActive", [true]), Query.limit(100)]
+  );
+
+  if (enrollmentsResult.rows.length === 0) return [];
+
+  const courseIds = enrollmentsResult.rows
+    .map((e) => (typeof e.courseId === "string" ? e.courseId : ""))
+    .filter(Boolean);
+
+  const courses = await listRowsByFieldValues<CourseRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.courses,
+    "$id",
+    courseIds
+  );
+
+  const courseMap = new Map(courses.map((c) => [c.$id, c]));
+
+  const categoriesResult = await safeListRows<AnyRow & Partial<Category>>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.categories,
+    [Query.limit(100)]
+  );
+  const categoryNameById = new Map<string, string>(
+    categoriesResult.rows.map((cat) => [
+      cat.$id,
+      typeof cat.name === "string" ? cat.name : "General",
+    ])
+  );
+
+  const progressResult = await safeListRows<AnyRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.progress,
+    [Query.equal("userId", [userId]), Query.limit(2000)]
+  );
+
+  const completedByCourse = new Map<string, number>();
+  for (const row of progressResult.rows) {
+    const cid = typeof row.courseId === "string" ? row.courseId : "";
+    if (cid) {
+      completedByCourse.set(cid, (completedByCourse.get(cid) ?? 0) + 1);
+    }
+  }
+
+  return courseIds
+    .map((courseId) => {
+      const course = courseMap.get(courseId);
+      if (!course) return null;
+      const totalLessons = Number(course.totalLessons ?? 0);
+      const completedLessons = completedByCourse.get(courseId) ?? 0;
+      const progressPercent =
+        totalLessons > 0
+          ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
+          : 0;
+
+      return {
+        id: courseId,
+        title: typeof course.title === "string" ? course.title : "Untitled",
+        slug: typeof course.slug === "string" ? course.slug : courseId,
+        category:
+          (typeof course.categoryId === "string" &&
+            categoryNameById.get(course.categoryId)) ||
+          "General",
+        totalLessons,
+        completedLessons,
+        progressPercent,
+      };
+    })
+    .filter((c): c is StudentEnrolledCourse => c !== null)
+    .sort((a, b) => {
+      if (a.progressPercent >= 100 && b.progressPercent < 100) return 1;
+      if (b.progressPercent >= 100 && a.progressPercent < 100) return -1;
+      return b.progressPercent - a.progressPercent;
+    });
+}
+
+// ── Upcoming Live Sessions (for students) ─────────────────────────────────
+
+export type UpcomingSessionItem = {
+  id: string;
+  title: string;
+  status: string;
+  scheduledAt: string | null;
+};
+
+export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> {
+  const { tablesDB } = await createAdminClient();
+
+  const result = await safeListRows<LiveSessionRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.liveSessions,
+    [
+      Query.equal("status", ["scheduled", "live"]),
+      Query.orderAsc("scheduledAt"),
+      Query.limit(10),
+    ]
+  );
+
+  return result.rows.map((s) => ({
+    id: s.$id,
+    title: typeof s.title === "string" ? s.title : "Untitled session",
+    status: typeof s.status === "string" ? s.status : "scheduled",
+    scheduledAt: typeof s.scheduledAt === "string" ? s.scheduledAt : null,
+  }));
+}
