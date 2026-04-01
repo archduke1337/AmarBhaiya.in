@@ -4,6 +4,7 @@ import {
   createCategoryAction,
   updateCategoryAction,
 } from "@/actions/operations";
+import { deleteCategoryAction } from "@/actions/delete";
 import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 
@@ -133,7 +134,16 @@ export default async function AdminCategoriesPage() {
                     />
                   </label>
 
-                  <div className="flex items-end justify-end md:col-span-2">
+                  <div className="flex items-end justify-between md:col-span-2">
+                    <form action={deleteCategoryAction}>
+                      <input type="hidden" name="categoryId" value={category.id} />
+                      <button
+                        type="submit"
+                        className="h-9 border border-destructive/30 px-4 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                      >
+                        Delete
+                      </button>
+                    </form>
                     <button
                       type="submit"
                       className="h-9 border border-border px-4 text-sm transition-colors hover:bg-muted"
