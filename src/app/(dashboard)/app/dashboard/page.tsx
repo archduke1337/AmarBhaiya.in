@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   BookOpen,
+  Bell,
   Flame,
   GraduationCap,
   Trophy,
@@ -17,6 +18,10 @@ import {
 } from "@/lib/appwrite/dashboard-data";
 import { formatRelativeTime } from "@/lib/utils/format";
 import {
+  getUserNotifications,
+  getUnreadNotificationCount,
+} from "@/actions/notifications";
+import {
   PageHeader,
   StatCard,
   StatGrid,
@@ -29,10 +34,12 @@ export default async function StudentDashboardPage() {
   const user = await requireAuth();
   const role = getUserRole(user);
 
-  const [stats, enrolledCourses, upcomingSessions] = await Promise.all([
+  const [stats, enrolledCourses, upcomingSessions, unreadCount, notifications] = await Promise.all([
     getStudentProfileStats(user.$id),
     getStudentEnrolledCourses(user.$id),
     getUpcomingLiveSessions(),
+    getUnreadNotificationCount(),
+    getUserNotifications(),
   ]);
 
   const inProgressCourses = enrolledCourses.filter(
@@ -187,6 +194,20 @@ export default async function StudentDashboardPage() {
               }))}
             />
           )}
+
+          {/* Recent Notifications */}
+          <ActivityFeed
+            title={`Notifications${unreadCount > 0 ? ` (${unreadCount})` : ""}`}
+            viewAllHref="/app/notifications"
+            emptyText="No recent notifications."
+            items={notifications.slice(0, 4).map((n) => ({
+              id: n.id,
+              label: n.title,
+              description: n.body || n.type,
+              badge: n.isRead ? undefined : "NEW",
+              href: n.link || "/app/notifications",
+            }))}
+          />
         </aside>
       </div>
     </div>
