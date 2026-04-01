@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MessageSquare, Pin, ExternalLink } from "lucide-react";
 
 import { createForumThreadAction } from "@/actions/dashboard";
@@ -118,7 +119,12 @@ export default async function CommunityPage() {
               </div>
 
               <h3 className="text-lg font-medium leading-tight">
-                {thread.title}
+                <Link
+                  href={`/app/community/${thread.id}`}
+                  className="hover:underline underline-offset-4"
+                >
+                  {thread.title}
+                </Link>
               </h3>
 
               <div className="mt-3 flex items-center gap-5 text-sm text-muted-foreground">
