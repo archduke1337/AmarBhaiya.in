@@ -123,8 +123,11 @@ export default async function LessonViewerPage({ params }: PageProps) {
     ? getFileViewUrl(APPWRITE_CONFIG.buckets.courseVideos, videoFileId)
     : "";
 
-  // Get progress
-  const { completedLessonIds } = await getCourseProgress(courseId, user.$id);
+  // Get progress + comments
+  const [{ completedLessonIds }, comments] = await Promise.all([
+    getCourseProgress(courseId, user.$id),
+    getLessonComments(lessonId),
+  ]);
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
