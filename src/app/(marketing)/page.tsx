@@ -6,7 +6,6 @@ import { TimelineAnimation } from "@/components/timeline-animation";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useTheme } from "next-themes";
 
 type HomeStatItem = {
   end: number;
@@ -103,8 +102,28 @@ export default function LandingPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const heroMeshBackground = [
+    "radial-gradient(140% 128% at 9% 96%, rgba(255,198,36,0.82) 0%, rgba(255,198,36,0) 54%)",
+    "radial-gradient(128% 124% at 34% 75%, rgba(255,132,67,0.76) 0%, rgba(255,132,67,0) 57%)",
+    "radial-gradient(136% 128% at 52% 55%, rgba(253,78,98,0.8) 0%, rgba(253,78,98,0) 60%)",
+    "radial-gradient(124% 120% at 77% 33%, rgba(150,121,255,0.72) 0%, rgba(150,121,255,0) 60%)",
+    "radial-gradient(122% 116% at 100% 3%, rgba(82,164,255,0.84) 0%, rgba(82,164,255,0) 52%)",
+    "linear-gradient(128deg, rgba(22,8,20,0.62) 6%, rgba(14,22,55,0.58) 56%, rgba(8,9,18,0.64) 100%)",
+    "#070a12",
+  ].join(",");
+  const heroMeshBlendMode = "screen,screen,screen,screen,screen,overlay,normal";
+  const heroMeshFilter = "saturate(1.3) contrast(1.08)";
+  const heroContrastOverlay =
+    "radial-gradient(130% 120% at 50% -12%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 54%), linear-gradient(180deg, rgba(3,4,12,0.2) 0%, rgba(3,4,12,0.4) 54%, rgba(3,4,12,0.62) 100%)";
+  const heroPalette = {
+    color1: "#579dff",
+    color2: "#ff4f68",
+    color3: "#ffc538",
+    brightness: 0.94,
+    reflection: 0.42,
+    speed: 0.24,
+    strength: 0.28,
+  };
   const [homeContent, setHomeContent] = useState<HomePageContent>({
     stats: [
       { end: 0, suffix: "+", label: "Students" },
@@ -185,12 +204,12 @@ export default function LandingPage() {
   return (
     <>
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* HERO — Full screen, monochrome shader gradient            */}
+      {/* HERO — Full screen mesh gradient + theme-aware shader     */}
       {/* ═══════════════════════════════════════════════════════════ */}
       <motion.section
         ref={heroRef}
         style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative min-h-screen flex flex-col justify-between overflow-hidden pt-14"
+        className="relative min-h-screen flex flex-col justify-between overflow-hidden pt-14 text-white"
       >
         {/* Shader Background — Responds to theme */}
         <Suspense>
@@ -206,27 +225,27 @@ export default function LandingPage() {
               wireframe={false}
               shader="defaults"
               uTime={0}
-              uSpeed={0.2}
-              uStrength={0.3}
-              uDensity={0.8}
-              uFrequency={5.5}
-              uAmplitude={3.2}
+              uSpeed={heroPalette.speed}
+              uStrength={heroPalette.strength}
+              uDensity={0.84}
+              uFrequency={5.8}
+              uAmplitude={3.6}
               positionX={-0.1}
               positionY={0}
               positionZ={0}
               rotationX={0}
               rotationY={130}
               rotationZ={70}
-              color1={isDark ? "#1a1a1a" : "#e5e5e5"}
-              color2={isDark ? "#333333" : "#d4d4d4"}
-              color3={isDark ? "#0a0a0a" : "#f5f5f5"}
-              reflection={0.4}
+              color1={heroPalette.color1}
+              color2={heroPalette.color2}
+              color3={heroPalette.color3}
+              reflection={heroPalette.reflection}
               cAzimuthAngle={270}
               cPolarAngle={180}
               cDistance={0.5}
               cameraZoom={15.1}
               lightType="env"
-              brightness={isDark ? 0.8 : 1.2}
+              brightness={heroPalette.brightness}
               envPreset="city"
               grain="on"
               toggleAxis={false}
@@ -237,18 +256,34 @@ export default function LandingPage() {
           </ShaderGradientCanvas>
         </Suspense>
 
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-1"
+          style={{
+            background: heroMeshBackground,
+            backgroundBlendMode: heroMeshBlendMode,
+            filter: heroMeshFilter,
+            transform: "scale(1.04)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-2"
+          style={{ background: heroContrastOverlay }}
+        />
+
         {/* Hero Content */}
         <div className="relative z-10 flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-24">
           <TimelineAnimation once as="h1" animationNum={1} timelineRef={heroRef}
-            className="text-[12vw] md:text-[8vw] lg:text-[6vw] font-light leading-[1.05] tracking-tight max-w-5xl"
+            className="text-[12vw] md:text-[8vw] lg:text-[6vw] font-light leading-[1.05] tracking-tight max-w-5xl text-white"
           >
             Padhai karo
             <br />
-            <span className="text-muted-foreground">apne tareeke se.</span>
+            <span className="text-white/85">apne tareeke se.</span>
           </TimelineAnimation>
 
           <TimelineAnimation once animationNum={2} timelineRef={heroRef}
-            className="mt-8 max-w-lg text-muted-foreground text-lg leading-relaxed font-light"
+            className="mt-8 max-w-lg text-white/80 text-lg leading-relaxed font-light"
           >
             Class 8 se college tak — coding, fitness, career, aur life skills.
             Sab kuch ek jagah. No bakwaas.
@@ -256,12 +291,12 @@ export default function LandingPage() {
 
           <TimelineAnimation once animationNum={3} timelineRef={heroRef} className="mt-10 flex items-center gap-6">
             <Link href="/register"
-              className="inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm font-medium tracking-wide hover:bg-foreground/90 transition-colors"
+              className="inline-flex items-center gap-3 bg-white text-black px-8 py-4 text-sm font-medium tracking-wide hover:bg-white/90 transition-colors"
             >
               Start learning <ArrowRight className="size-4" />
             </Link>
             <a href="#courses"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4 decoration-border"
+              className="text-sm text-white/80 hover:text-white transition-colors underline underline-offset-4 decoration-white/40"
             >
               Browse courses
             </a>
@@ -269,17 +304,17 @@ export default function LandingPage() {
         </div>
 
         {/* Bottom domain strip */}
-        <div className="relative z-10 border-t border-border px-6 md:px-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
+        <div className="relative z-10 border-t border-white/25 bg-black/22 backdrop-blur-[3px] px-6 md:px-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/20">
             {homeContent.domains.length === 0 ? (
-              <div className="col-span-2 md:col-span-4 py-5 px-4 text-xs text-muted-foreground uppercase tracking-widest">
+              <div className="col-span-2 md:col-span-4 py-5 px-4 text-xs text-white/70 uppercase tracking-widest">
                 Domain strip content is not configured yet.
               </div>
             ) : null}
             {homeContent.domains.map((item, i) => (
               <TimelineAnimation key={`${item.title}-${i}`} once animationNum={4 + i} timelineRef={heroRef} className="py-5 px-4">
-                <p className="text-xs font-medium tracking-wide uppercase text-foreground/80">{item.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{item.sub}</p>
+                <p className="text-xs font-medium tracking-wide uppercase text-white/90">{item.title}</p>
+                <p className="text-xs text-white/70 mt-0.5">{item.sub}</p>
               </TimelineAnimation>
             ))}
           </div>

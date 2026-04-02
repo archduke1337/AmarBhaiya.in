@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -48,9 +49,17 @@ export function NavbarClient({
         <div className="flex items-center justify-between px-6 md:px-12 h-14">
           <Link
             href="/"
-            className="text-sm font-medium tracking-[0.2em] uppercase text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center"
+            aria-label="Amar Bhaiya home"
           >
-            amarbhaiya
+            <Image
+              src="/AMAR%20BHAIYA.png"
+              alt="Amar Bhaiya"
+              width={180}
+              height={60}
+              priority
+              className="h-10 w-auto object-contain"
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-10">

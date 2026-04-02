@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { OWNER } from "@/lib/utils/constants";
@@ -24,8 +25,14 @@ export function Footer() {
         <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="md:col-span-2 space-y-4">
-            <Link href="/" className="text-sm font-medium tracking-[0.2em] uppercase text-neutral-400">
-              amarbhaiya
+            <Link href="/" className="inline-flex items-center" aria-label="Amar Bhaiya home">
+              <Image
+                src="/AMAR%20BHAIYA.png"
+                alt="Amar Bhaiya"
+                width={220}
+                height={74}
+                className="h-12 w-auto object-contain"
+              />
             </Link>
             <p className="text-sm text-neutral-600 max-w-sm leading-relaxed mt-4">
               School se college tak — coding, fitness, career, aur life skills.
