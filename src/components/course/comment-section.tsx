@@ -17,6 +17,14 @@ export function CommentSection({ initialComments = [] }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [text, setText] = useState("");
 
+  function createTempCommentId(): string {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
   function handlePostComment(event: React.FormEvent) {
     event.preventDefault();
 
@@ -27,7 +35,7 @@ export function CommentSection({ initialComments = [] }: CommentSectionProps) {
 
     setComments((prev) => [
       {
-        id: `${Date.now()}`,
+        id: createTempCommentId(),
         author: "You",
         text: trimmed,
         postedAt: new Date().toISOString(),

@@ -9,7 +9,7 @@ export async function GET() {
     const content = await getHomePageContent();
     return NextResponse.json(content, {
       headers: {
-        "cache-control": "no-store",
+        "cache-control": "public, max-age=60, s-maxage=300, stale-while-revalidate=900",
       },
     });
   } catch (error) {

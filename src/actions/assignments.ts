@@ -238,30 +238,30 @@ export async function getAssignmentSubmissions(
       ],
     });
 
-    const submissions: SubmissionItem[] = [];
+    const submissions = await Promise.all(
+      result.rows.map(async (entry) => {
+        const row = entry as AnyRow;
+        let userName = "Student";
 
-    for (const r of result.rows) {
-      const row = r as AnyRow;
-      let userName = "Student";
+        try {
+          const u = await users.get(String(row.userId ?? ""));
+          userName = u.name || u.email;
+        } catch {
+          // User may not exist.
+        }
 
-      try {
-        const u = await users.get(String(row.userId ?? ""));
-        userName = u.name || u.email;
-      } catch {
-        // User may not exist
-      }
-
-      submissions.push({
-        id: row.$id,
-        assignmentId: String(row.assignmentId ?? ""),
-        userId: String(row.userId ?? ""),
-        userName,
-        fileId: String(row.fileId ?? ""),
-        submittedAt: String(row.submittedAt ?? ""),
-        grade: Number(row.grade ?? 0),
-        feedback: String(row.feedback ?? ""),
-      });
-    }
+        return {
+          id: row.$id,
+          assignmentId: String(row.assignmentId ?? ""),
+          userId: String(row.userId ?? ""),
+          userName,
+          fileId: String(row.fileId ?? ""),
+          submittedAt: String(row.submittedAt ?? ""),
+          grade: Number(row.grade ?? 0),
+          feedback: String(row.feedback ?? ""),
+        } satisfies SubmissionItem;
+      })
+    );
 
     return submissions;
   } catch {

@@ -116,7 +116,7 @@ export function CoursePlayer({ courseTitle, modules, resources }: CoursePlayerPr
               ) : (
                 <ul className="space-y-2 text-sm">
                   {resources.map((resource) => (
-                    <li key={resource.label}>
+                    <li key={`${resource.href}-${resource.label}`}>
                       <a
                         href={resource.href}
                         target="_blank"

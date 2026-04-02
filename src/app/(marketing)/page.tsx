@@ -120,10 +120,35 @@ export default function LandingPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+
+    function applyHomeContent(data: Partial<HomePageContent>) {
+      setHomeContent((prev) => ({
+        stats:
+          Array.isArray(data.stats) && data.stats.length > 0 ? data.stats : prev.stats,
+        domains: Array.isArray(data.domains) ? data.domains : prev.domains,
+        learnItems: Array.isArray(data.learnItems) ? data.learnItems : prev.learnItems,
+        featuredCourses: Array.isArray(data.featuredCourses)
+          ? data.featuredCourses
+          : prev.featuredCourses,
+        whyItems: Array.isArray(data.whyItems) ? data.whyItems : prev.whyItems,
+      }));
+    }
+
+    try {
+      const cached = window.sessionStorage.getItem("home-content:v1");
+      if (cached) {
+        applyHomeContent(JSON.parse(cached) as Partial<HomePageContent>);
+      }
+    } catch {
+      // Ignore invalid session cache.
+    }
 
     async function loadHomeContent() {
       try {
-        const response = await fetch("/api/content/home", { cache: "no-store" });
+        const response = await fetch("/api/content/home", {
+          signal: controller.signal,
+        });
         if (!response.ok) {
           return;
         }
@@ -133,17 +158,18 @@ export default function LandingPage() {
           return;
         }
 
-        setHomeContent((prev) => ({
-          stats:
-            Array.isArray(data.stats) && data.stats.length > 0 ? data.stats : prev.stats,
-          domains: Array.isArray(data.domains) ? data.domains : prev.domains,
-          learnItems: Array.isArray(data.learnItems) ? data.learnItems : prev.learnItems,
-          featuredCourses: Array.isArray(data.featuredCourses)
-            ? data.featuredCourses
-            : prev.featuredCourses,
-          whyItems: Array.isArray(data.whyItems) ? data.whyItems : prev.whyItems,
-        }));
-      } catch {
+        applyHomeContent(data);
+
+        try {
+          window.sessionStorage.setItem("home-content:v1", JSON.stringify(data));
+        } catch {
+          // Ignore storage quota/runtime errors.
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
         // Non-blocking content load.
       }
     }
@@ -152,6 +178,7 @@ export default function LandingPage() {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 
@@ -383,7 +410,7 @@ export default function LandingPage() {
               <Reveal key={course.title} delay={i * 0.1}>
                 <Link
                   href={course.slug ? `/courses/${course.slug}` : "/courses"}
-                  className="group py-8 md:py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer block"
+                  className="group py-8 md:py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-2">

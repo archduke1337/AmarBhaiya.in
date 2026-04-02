@@ -212,28 +212,29 @@ export async function getCourseProgress(
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.progress,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.equal("userId", [userId]),
-        Query.limit(500),
-      ],
-    });
+    const [result, totalLessons] = await Promise.all([
+      tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.progress,
+        queries: [
+          Query.equal("courseId", [courseId]),
+          Query.equal("userId", [userId]),
+          Query.limit(500),
+        ],
+      }),
+      tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.lessons,
+        queries: [
+          Query.equal("courseId", [courseId]),
+          Query.limit(500),
+        ],
+      }),
+    ]);
 
     const completedLessonIds = result.rows.map((r) =>
       String((r as AnyRow).lessonId ?? "")
     );
-
-    const totalLessons = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.limit(500),
-      ],
-    });
 
     const percent =
       totalLessons.total > 0
@@ -299,41 +300,57 @@ export async function getStudentEnrollments(
       ],
     });
 
-    const enrollments: EnrolledCourse[] = [];
+    const enrollmentRows = result.rows as AnyRow[];
+    const courseIds = Array.from(
+      new Set(
+        enrollmentRows
+          .map((row) => String(row.courseId ?? ""))
+          .filter((id) => id.length > 0)
+      )
+    );
 
-    for (const row of result.rows) {
-      const r = row as AnyRow;
-      const cId = String(r.courseId ?? "");
-
-      // Fetch course details
-      let courseTitle = "Unknown Course";
-      let courseSlug = cId;
-
-      try {
+    const courseEntries = await Promise.allSettled(
+      courseIds.map(async (courseId) => {
         const course = (await tablesDB.getRow({
           databaseId: APPWRITE_CONFIG.databaseId,
           tableId: APPWRITE_CONFIG.tables.courses,
-          rowId: cId,
+          rowId: courseId,
         })) as AnyRow;
 
-        courseTitle = String(course.title ?? "Unknown Course");
-        courseSlug = String(course.slug ?? cId);
-      } catch {
-        // Course may have been deleted
+        return {
+          courseId,
+          title: String(course.title ?? "Unknown Course"),
+          slug: String(course.slug ?? courseId),
+        };
+      })
+    );
+
+    const courseById = new Map<string, { title: string; slug: string }>();
+    for (const entry of courseEntries) {
+      if (entry.status !== "fulfilled") {
+        continue;
       }
 
-      enrollments.push({
-        enrollmentId: r.$id,
-        courseId: cId,
-        courseTitle,
-        courseSlug,
-        progress: Number(r.progress ?? 0),
-        status: String(r.status ?? "active"),
-        enrolledAt: String(r.enrolledAt ?? ""),
+      courseById.set(entry.value.courseId, {
+        title: entry.value.title,
+        slug: entry.value.slug,
       });
     }
 
-    return enrollments;
+    return enrollmentRows.map((row) => {
+      const courseId = String(row.courseId ?? "");
+      const courseMeta = courseById.get(courseId);
+
+      return {
+        enrollmentId: row.$id,
+        courseId,
+        courseTitle: courseMeta?.title ?? "Unknown Course",
+        courseSlug: courseMeta?.slug ?? courseId,
+        progress: Number(row.progress ?? 0),
+        status: String(row.status ?? "active"),
+        enrolledAt: String(row.enrolledAt ?? ""),
+      };
+    });
   } catch {
     return [];
   }

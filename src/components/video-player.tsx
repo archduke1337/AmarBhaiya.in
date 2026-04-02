@@ -11,6 +11,7 @@ type VideoPlayerProps = {
 
 export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lastUiSyncRef = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -42,8 +43,18 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
     const video = videoRef.current;
     if (!video || !video.duration) return;
 
-    setCurrentTime(video.currentTime);
-    setProgress((video.currentTime / video.duration) * 100);
+    const now = video.currentTime;
+    const shouldSync =
+      now - lastUiSyncRef.current >= 0.25 || now >= video.duration;
+
+    if (!shouldSync) {
+      return;
+    }
+
+    lastUiSyncRef.current = now;
+
+    setCurrentTime(now);
+    setProgress((now / video.duration) * 100);
   }
 
   function handleLoadedMetadata() {
@@ -59,7 +70,12 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percent = x / rect.width;
-    video.currentTime = percent * video.duration;
+    const targetTime = percent * video.duration;
+
+    video.currentTime = targetTime;
+    lastUiSyncRef.current = targetTime;
+    setCurrentTime(targetTime);
+    setProgress(percent * 100);
   }
 
   function toggleFullscreen() {
@@ -99,12 +115,19 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
         onClick={togglePlay}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={() => {
+          const video = videoRef.current;
+          setIsPlaying(false);
+          if (!video || !video.duration) return;
+          lastUiSyncRef.current = video.duration;
+          setCurrentTime(video.duration);
+          setProgress(100);
+        }}
         preload="metadata"
       />
 
       {/* Controls overlay */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-4 py-3 opacity-0 transition-opacity group-hover:opacity-100">
         {/* Progress bar */}
         <div
           className="mb-3 h-1 w-full cursor-pointer bg-white/20"

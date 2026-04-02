@@ -57,8 +57,9 @@ export default async function LessonViewerPage({ params }: PageProps) {
   const isFree = Boolean(lesson.isFree) || Boolean(lesson.isFreePreview);
   const courseIsFree = String(course.accessModel) === "free";
 
-  if (!isFree && !courseIsFree) {
-    // Check enrollment
+  let hasAccess = isFree || courseIsFree;
+
+  if (!hasAccess) {
     try {
       const enrollment = await tablesDB.listRows({
         databaseId: APPWRITE_CONFIG.databaseId,
@@ -70,27 +71,30 @@ export default async function LessonViewerPage({ params }: PageProps) {
         ],
       });
 
-      if (enrollment.rows.length === 0) {
-        return (
-          <div className="flex flex-col items-center justify-center gap-4 py-20">
-            <Lock className="size-10 text-muted-foreground" />
-            <h1 className="text-xl font-medium">Lesson Locked</h1>
-            <p className="text-sm text-muted-foreground max-w-md text-center">
-              This lesson is part of a paid course. Enroll to get access to all
-              lessons and course materials.
-            </p>
-            <Link
-              href={`/courses/${String(course.slug ?? courseId)}`}
-              className="h-10 inline-flex items-center bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90"
-            >
-              View Course
-            </Link>
-          </div>
-        );
-      }
+      hasAccess = enrollment.rows.length > 0;
     } catch {
-      // If enrollment check fails, still allow for safety
+      // If enrollment check fails, still allow for safety.
+      hasAccess = true;
     }
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-20">
+        <Lock className="size-10 text-muted-foreground" />
+        <h1 className="text-xl font-medium">Lesson Locked</h1>
+        <p className="text-sm text-muted-foreground max-w-md text-center">
+          This lesson is part of a paid course. Enroll to get access to all
+          lessons and course materials.
+        </p>
+        <Link
+          href={`/courses/${String(course.slug ?? courseId)}`}
+          className="h-10 inline-flex items-center bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90"
+        >
+          View Course
+        </Link>
+      </div>
+    );
   }
 
   // Get all lessons for navigation
