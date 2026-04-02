@@ -1,5 +1,6 @@
 import { Video, Radio, Clock, AlertTriangle } from "lucide-react";
 
+import { deleteLiveSessionAction } from "@/actions/delete";
 import { getAdminLiveData } from "@/lib/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
@@ -48,17 +49,18 @@ export default async function AdminLivePage() {
           />
         ) : (
           <div className="border border-border">
-            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_200px]">
+            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_200px_80px]">
               <span>Session</span>
               <span>Status</span>
               <span>Scheduled At</span>
+              <span>Actions</span>
             </div>
 
             <div className="divide-y divide-border">
               {data.upcoming.map((session) => (
                 <div
                   key={session.id}
-                  className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_200px] md:items-center md:gap-4"
+                  className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_200px_80px] md:items-center md:gap-4"
                 >
                   <span className="text-sm font-medium">{session.title}</span>
 
@@ -74,6 +76,16 @@ export default async function AdminLivePage() {
                       ? formatDateTime(session.scheduledAt)
                       : "Not scheduled"}
                   </span>
+
+                  <form action={deleteLiveSessionAction}>
+                    <input type="hidden" name="sessionId" value={session.id} />
+                    <button
+                      type="submit"
+                      className="text-xs text-destructive hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </form>
                 </div>
               ))}
             </div>
