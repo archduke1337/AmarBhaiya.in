@@ -44,9 +44,9 @@ export const HeroDigitalSuccess = () => {
             rotationX={0}
             rotationY={130}
             rotationZ={70}
-            color1="#92dbe0"
-            color2="#0b7bff"
-            color3="#3865cf"
+            color1="#FFCC00"
+            color2="#FF3333"
+            color3="#0066FF"
             reflection={0.4}
             // View (camera) props
             cAzimuthAngle={270}
