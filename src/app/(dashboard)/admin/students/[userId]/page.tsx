@@ -58,23 +58,49 @@ async function getStudentDetail(userId: string) {
       queries: [Query.equal("userId", [userId]), Query.limit(50)],
     });
 
-    for (const r of enrollResult.rows) {
-      const row = r as AnyRow;
-      let courseTitle = "Unknown Course";
-      try {
-        const course = (await tablesDB.getRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.courses,
-          rowId: String(row.courseId ?? ""),
-        })) as AnyRow;
-        courseTitle = String(course.title ?? "Unknown Course");
-      } catch {
-        // skip
+    const enrollmentRows = enrollResult.rows as AnyRow[];
+    const courseIds = Array.from(
+      new Set(
+        enrollmentRows
+          .map((row) => String(row.courseId ?? ""))
+          .filter((courseId) => courseId.length > 0)
+      )
+    );
+
+    const courseTitleById = new Map<string, string>();
+    if (courseIds.length > 0) {
+      const chunks: string[][] = [];
+      for (let index = 0; index < courseIds.length; index += 20) {
+        chunks.push(courseIds.slice(index, index + 20));
       }
+
+      const courseResults = await Promise.all(
+        chunks.map(async (chunk) => {
+          try {
+            const result = await tablesDB.listRows({
+              databaseId: APPWRITE_CONFIG.databaseId,
+              tableId: APPWRITE_CONFIG.tables.courses,
+              queries: [Query.equal("$id", chunk), Query.limit(100)],
+            });
+
+            return result.rows as AnyRow[];
+          } catch {
+            return [] as AnyRow[];
+          }
+        })
+      );
+
+      for (const row of courseResults.flat()) {
+        courseTitleById.set(row.$id, String(row.title ?? row.$id));
+      }
+    }
+
+    for (const row of enrollmentRows) {
+      const courseId = String(row.courseId ?? "");
       enrollments.push({
         id: row.$id,
-        courseId: String(row.courseId ?? ""),
-        courseTitle,
+        courseId,
+        courseTitle: courseTitleById.get(courseId) ?? "Unknown Course",
         enrolledAt: String(row.enrolledAt ?? ""),
         progress: Number(row.progress ?? 0),
         status: String(row.status ?? "active"),

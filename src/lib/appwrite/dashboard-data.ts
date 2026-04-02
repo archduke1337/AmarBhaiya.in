@@ -622,37 +622,27 @@ export async function getInstructorStudents(
     })
   );
 
-  const studentRows = await Promise.all(
-    activeEnrollmentRows.map(async (enrollment) => {
-      const userId = String(enrollment.userId);
-      const courseId = typeof enrollment.courseId === "string" ? enrollment.courseId : "";
+  return activeEnrollmentRows.map((enrollment) => {
+    const userId = String(enrollment.userId);
+    const courseId = typeof enrollment.courseId === "string" ? enrollment.courseId : "";
+    const course = courseById.get(courseId);
 
-      const course = courseById.get(courseId);
-      const totalLessons = Number(course?.totalLessons ?? 0);
-      const completedLessons = await safeCountRows(tablesDB, APPWRITE_CONFIG.tables.progress, [
-        Query.equal("userId", [userId]),
-        Query.equal("courseId", [courseId]),
-      ]);
+    const rawProgress = Number(enrollment.progress ?? 0);
+    const progressPercent = Number.isFinite(rawProgress)
+      ? Math.min(100, Math.max(0, Math.round(rawProgress)))
+      : 0;
 
-      const progressPercent =
-        totalLessons > 0
-          ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
-          : 0;
+    const user = userMap.get(userId) ?? { name: userId, email: "No email" };
 
-      const user = userMap.get(userId) ?? { name: userId, email: "No email" };
-
-      return {
-        id: userId,
-        name: user.name,
-        email: user.email,
-        courseTitle:
-          typeof course?.title === "string" ? course.title : "Unknown course",
-        progressPercent,
-      };
-    })
-  );
-
-  return studentRows;
+    return {
+      id: userId,
+      name: user.name,
+      email: user.email,
+      courseTitle:
+        typeof course?.title === "string" ? course.title : "Unknown course",
+      progressPercent,
+    };
+  });
 }
 
 export async function getInstructorLiveSessions(
@@ -671,21 +661,34 @@ export async function getInstructorLiveSessions(
     queries
   );
 
-  const rsvpCounts = await Promise.all(
-    sessionsResult.rows.map((session) =>
-      safeCountRows(tablesDB, APPWRITE_CONFIG.tables.sessionRsvps, [
-        Query.equal("sessionId", [session.$id]),
-      ])
-    )
+  const sessionIds = sessionsResult.rows.map((session) => session.$id);
+  const rsvpRows = await listRowsByFieldValues<AnyRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.sessionRsvps,
+    "sessionId",
+    sessionIds
   );
 
-  return sessionsResult.rows.map((session, index) => ({
+  const rsvpCountBySessionId = new Map<string, number>();
+  for (const row of rsvpRows) {
+    const sessionId = typeof row.sessionId === "string" ? row.sessionId : "";
+    if (!sessionId) {
+      continue;
+    }
+
+    rsvpCountBySessionId.set(
+      sessionId,
+      (rsvpCountBySessionId.get(sessionId) ?? 0) + 1
+    );
+  }
+
+  return sessionsResult.rows.map((session) => ({
     id: session.$id,
     title: typeof session.title === "string" ? session.title : "Untitled session",
     status: typeof session.status === "string" ? session.status : "scheduled",
     scheduledAt:
       typeof session.scheduledAt === "string" ? session.scheduledAt : null,
-    rsvpCount: rsvpCounts[index] ?? 0,
+    rsvpCount: rsvpCountBySessionId.get(session.$id) ?? 0,
   }));
 }
 
@@ -754,21 +757,21 @@ export async function getInstructorCurriculum(
   );
 
   const lessonsByModule = new Map<string, LessonRow[]>();
-  await Promise.all(
-    modulesResult.rows.map(async (module) => {
-      const lessonsResult = await safeListRows<LessonRow>(
-        tablesDB,
-        APPWRITE_CONFIG.tables.lessons,
-        [
-          Query.equal("moduleId", [module.$id]),
-          Query.orderAsc("order"),
-          Query.limit(200),
-        ]
-      );
-
-      lessonsByModule.set(module.$id, lessonsResult.rows);
-    })
+  const lessonsResult = await safeListRows<LessonRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.lessons,
+    [Query.equal("courseId", [courseId]), Query.orderAsc("order"), Query.limit(1000)]
   );
+
+  for (const lesson of lessonsResult.rows) {
+    if (typeof lesson.moduleId !== "string") {
+      continue;
+    }
+
+    const current = lessonsByModule.get(lesson.moduleId) ?? [];
+    current.push(lesson);
+    lessonsByModule.set(lesson.moduleId, current);
+  }
 
   return modulesResult.rows.map((module) => ({
     id: module.$id,
@@ -1041,12 +1044,12 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
 
       return createdAt >= startOfMonth;
     })
-    .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0);
+    .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0) / 100;
 
   const totalRevenue = completedPayments.rows.reduce(
     (sum, payment) => sum + Number(payment.amount ?? 0),
     0
-  );
+  ) / 100;
 
   return {
     totalUsers: usersTotal,
@@ -1162,19 +1165,23 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
   ];
 
   const courseMap = new Map<string, string>();
-  await Promise.all(
-    courseIds.map(async (courseId) => {
-      const row = await safeGetRow<CourseRow>(
-        tablesDB,
-        APPWRITE_CONFIG.tables.courses,
-        courseId
-      );
-      courseMap.set(
-        courseId,
-        row && typeof row.title === "string" ? row.title : courseId
-      );
-    })
+  const courseRows = await listRowsByFieldValues<CourseRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.courses,
+    "$id",
+    courseIds
   );
+  for (const row of courseRows) {
+    courseMap.set(
+      row.$id,
+      typeof row.title === "string" ? row.title : row.$id
+    );
+  }
+  for (const courseId of courseIds) {
+    if (!courseMap.has(courseId)) {
+      courseMap.set(courseId, courseId);
+    }
+  }
 
   const userMap = new Map<string, string>();
   await Promise.all(
@@ -1193,7 +1200,7 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
     providerRef:
       typeof payment.providerRef === "string" ? payment.providerRef : payment.$id,
     method: typeof payment.method === "string" ? payment.method : "unknown",
-    amount: Number(payment.amount ?? 0),
+    amount: Number(payment.amount ?? 0) / 100,
     currency: typeof payment.currency === "string" ? payment.currency : "INR",
     status: typeof payment.status === "string" ? payment.status : "pending",
     userName:

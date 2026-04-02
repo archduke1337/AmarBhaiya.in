@@ -29,102 +29,133 @@ async function getStudentAssignments(
 ): Promise<StudentAssignment[]> {
   const { tablesDB } = await createAdminClient();
 
+  const chunkValues = (values: string[], chunkSize = 20): string[][] => {
+    if (values.length <= chunkSize) {
+      return [values];
+    }
+
+    const chunks: string[][] = [];
+    for (let index = 0; index < values.length; index += chunkSize) {
+      chunks.push(values.slice(index, index + chunkSize));
+    }
+
+    return chunks;
+  };
+
+  const listRowsByFieldValues = async (
+    tableId: string,
+    field: string,
+    values: string[],
+    extraQueries: string[] = []
+  ): Promise<AnyRow[]> => {
+    if (values.length === 0) {
+      return [];
+    }
+
+    const chunks = chunkValues(values, 20);
+    const results = await Promise.all(
+      chunks.map(async (chunk) => {
+        try {
+          const result = await tablesDB.listRows({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId,
+            queries: [
+              Query.equal(field, chunk),
+              Query.limit(500),
+              ...extraQueries,
+            ],
+          });
+
+          return result.rows as AnyRow[];
+        } catch {
+          return [] as AnyRow[];
+        }
+      })
+    );
+
+    return results.flat();
+  };
+
   // Get enrolled course IDs
   const enrollments = await tablesDB.listRows({
     databaseId: APPWRITE_CONFIG.databaseId,
     tableId: APPWRITE_CONFIG.tables.enrollments,
-    queries: [
-      Query.equal("userId", [userId]),
-      Query.limit(100),
-    ],
+    queries: [Query.equal("userId", [userId]), Query.limit(100)],
   });
 
-  const courseIds = enrollments.rows.map((r) =>
-    String((r as AnyRow).courseId ?? "")
+  const courseIds = Array.from(
+    new Set(
+      enrollments.rows
+        .map((r) => String((r as AnyRow).courseId ?? ""))
+        .filter((id) => id.length > 0)
+    )
   );
 
   if (courseIds.length === 0) return [];
 
-  // Get assignments for enrolled courses
-  const assignments: StudentAssignment[] = [];
-
-  for (const courseId of courseIds) {
-    try {
-      const result = await tablesDB.listRows({
+  const [courseRows, assignmentRows, submissionsResult] = await Promise.all([
+    listRowsByFieldValues(APPWRITE_CONFIG.tables.courses, "$id", courseIds),
+    listRowsByFieldValues(
+      APPWRITE_CONFIG.tables.assignments,
+      "courseId",
+      courseIds,
+      [Query.orderDesc("$createdAt")]
+    ),
+    tablesDB
+      .listRows({
         databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.assignments,
+        tableId: APPWRITE_CONFIG.tables.submissions,
         queries: [
-          Query.equal("courseId", [courseId]),
-          Query.limit(50),
+          Query.equal("userId", [userId]),
+          Query.orderDesc("$createdAt"),
+          Query.limit(2000),
         ],
-      });
+      })
+      .catch(() => ({ rows: [] as AnyRow[] })),
+  ]);
 
-      // Get course title
-      let courseTitle = "Course";
-      try {
-        const course = (await tablesDB.getRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.courses,
-          rowId: courseId,
-        })) as AnyRow;
-        courseTitle = String(course.title ?? "Course");
-      } catch {
-        // skip
-      }
+  const courseTitleById = new Map<string, string>(
+    courseRows.map((row) => [row.$id, String(row.title ?? "Course")])
+  );
 
-      for (const r of result.rows) {
-        const row = r as AnyRow;
+  const assignmentIds = new Set(assignmentRows.map((row) => row.$id));
+  const latestSubmissionByAssignmentId = new Map<string, AnyRow>();
 
-        // Check if student has submitted
-        let submitted = false;
-        let submittedAt = "";
-        let grade = 0;
-        let feedback = "";
-        let fileId = "";
+  for (const row of submissionsResult.rows as AnyRow[]) {
+    const assignmentId = String(row.assignmentId ?? "");
+    if (!assignmentIds.has(assignmentId)) {
+      continue;
+    }
 
-        try {
-          const subs = await tablesDB.listRows({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId: APPWRITE_CONFIG.tables.submissions,
-            queries: [
-              Query.equal("assignmentId", [row.$id]),
-              Query.equal("userId", [userId]),
-              Query.limit(1),
-            ],
-          });
+    const previous = latestSubmissionByAssignmentId.get(assignmentId);
+    const currentTime = new Date(String(row.submittedAt ?? row.$createdAt ?? "")).getTime();
+    const previousTime = previous
+      ? new Date(String(previous.submittedAt ?? previous.$createdAt ?? "")).getTime()
+      : -1;
 
-          if (subs.rows.length > 0) {
-            const sub = subs.rows[0] as AnyRow;
-            submitted = true;
-            submittedAt = String(sub.submittedAt ?? "");
-            grade = Number(sub.grade ?? 0);
-            feedback = String(sub.feedback ?? "");
-            fileId = String(sub.fileId ?? "");
-          }
-        } catch {
-          // skip
-        }
-
-        assignments.push({
-          id: row.$id,
-          courseId,
-          courseTitle,
-          title: String(row.title ?? "Assignment"),
-          description: String(row.description ?? ""),
-          dueDate: String(row.dueDate ?? ""),
-          submitted,
-          submittedAt,
-          grade,
-          feedback,
-          fileId,
-        });
-      }
-    } catch {
-      // skip
+    if (!previous || currentTime >= previousTime) {
+      latestSubmissionByAssignmentId.set(assignmentId, row);
     }
   }
 
-  return assignments;
+  return assignmentRows.map((row) => {
+    const submission = latestSubmissionByAssignmentId.get(row.$id);
+
+    return {
+      id: row.$id,
+      courseId: String(row.courseId ?? ""),
+      courseTitle:
+        courseTitleById.get(String(row.courseId ?? "")) ?? "Course",
+      title: String(row.title ?? "Assignment"),
+      description: String(row.description ?? ""),
+      dueDate: String(row.dueDate ?? ""),
+      submitted: Boolean(submission),
+      submittedAt: String(submission?.submittedAt ?? ""),
+      grade: Number(submission?.grade ?? 0),
+      feedback: String(submission?.feedback ?? ""),
+      fileId: String(submission?.fileId ?? ""),
+    } satisfies StudentAssignment;
+  });
 }
 
 export default async function StudentAssignmentsPage() {
