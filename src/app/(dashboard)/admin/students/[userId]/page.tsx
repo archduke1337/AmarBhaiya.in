@@ -17,12 +17,14 @@ async function getStudentDetail(userId: string) {
   const { tablesDB, users } = await createAdminClient();
 
   // Get user
-  let userName = "Unknown";
+  let userName = "";
   let userEmail = "";
+  let userFound = false;
   try {
     const u = await users.get(userId);
-    userName = u.name || u.email;
+    userName = u.name || u.email || "Unknown";
     userEmail = u.email;
+    userFound = true;
   } catch {
     // user may not exist
   }
@@ -143,7 +145,7 @@ async function getStudentDetail(userId: string) {
     // skip
   }
 
-  return { userName, userEmail, profile, enrollments, payments };
+  return { userName: userName || "Unknown", userEmail, userFound, profile, enrollments, payments };
 }
 
 export default async function AdminStudentDetailPage({ params }: PageProps) {
@@ -151,7 +153,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
   const { userId } = await params;
   const data = await getStudentDetail(userId);
 
-  if (!data.userName && !data.userEmail) {
+  if (!data.userFound) {
     notFound();
   }
 
