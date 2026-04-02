@@ -129,6 +129,8 @@ const MotionDrawer: React.FC<SideMenuProps> = ({
   buttonOpeningVariants = 'merge',
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
+  const drawerRef = React.useRef<HTMLDivElement>(null);
+  const openButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const isOpen =
     controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
@@ -138,6 +140,28 @@ const MotionDrawer: React.FC<SideMenuProps> = ({
     }
     onToggle?.(value);
   };
+
+  // Focus management
+  React.useEffect(() => {
+    if (isOpen && drawerRef.current) {
+      // Find first focusable element inside the drawer
+      const firstFocusable = drawerRef.current.querySelector(
+        'a, button, [tabindex]:not([tabindex="-1"])'
+      ) as HTMLElement;
+      firstFocusable?.focus();
+
+      // Handle Escape key
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setIsOpen(false);
+          openButtonRef.current?.focus();
+        }
+      };
+
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen]);
 
   const getDrawerVariants = () => {
     if (direction === 'left') {
@@ -201,6 +225,7 @@ const MotionDrawer: React.FC<SideMenuProps> = ({
     <>
       {showToggleButton && (
         <motion.button
+          ref={openButtonRef}
           className={cn(
             `fixed z-99 text-primary cursor-pointer ${openButtonPositionClasses}`,
             btnClassName
@@ -211,6 +236,8 @@ const MotionDrawer: React.FC<SideMenuProps> = ({
           transition={animationConfig}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          aria-label="Open navigation menu"
+          aria-expanded={isOpen}
         >
           <Menu />
           {/* Open */}
@@ -235,6 +262,7 @@ const MotionDrawer: React.FC<SideMenuProps> = ({
 
             {/* Drawer */}
             <motion.div
+              ref={drawerRef}
               className={`absolute h-full shadow-[8px_1px_21px_0px_rgba(17,17,26,0.1)] ${drawerPositionClasses} ${contentClassName}`}
               style={{
                 backgroundColor,
@@ -264,6 +292,7 @@ const MotionDrawer: React.FC<SideMenuProps> = ({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   transition={{ duration: 0.2 }}
+                  aria-label="Close navigation menu"
                 >
                   <X size={20} /> {/* Close */}
                 </motion.button>

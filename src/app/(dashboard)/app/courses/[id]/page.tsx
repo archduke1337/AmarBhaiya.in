@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { CoursePlayer } from "@/components/course/course-player";
-import { enrollInCourseAction } from "@/actions/enrollment";
+import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 
@@ -43,7 +43,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
         </div>
 
         {course.priceInr === 0 && (
-          <form action={enrollInCourseAction}>
+          <form action={enrollInCourseFormAction}>
             <input type="hidden" name="courseId" value={course.id} />
             <button
               type="submit"

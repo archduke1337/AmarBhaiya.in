@@ -67,7 +67,7 @@ export function QuizForm({
             <p className="text-sm font-medium">{q.text}</p>
 
             {q.type === "true_false" ? (
-              <div className="flex gap-4">
+              <div className="flex gap-4" role="group" aria-labelledby={`question-${q.id}`}>
                 {["True", "False"].map((opt) => (
                   <label
                     key={opt}
@@ -78,6 +78,7 @@ export function QuizForm({
                       name={`answer_${q.id}`}
                       value={opt}
                       required
+                      aria-label={`Answer: ${opt}`}
                       className="size-4 accent-foreground"
                     />
                     {opt}
@@ -90,10 +91,11 @@ export function QuizForm({
                 name={`answer_${q.id}`}
                 required
                 placeholder="Your answer..."
+                aria-label="Short answer input"
                 className="h-10 w-full border border-border bg-background px-3 text-sm"
               />
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2" role="group" aria-labelledby={`question-${q.id}`}>
                 {q.options.map((opt) => (
                   <label
                     key={opt}
@@ -104,6 +106,7 @@ export function QuizForm({
                       name={`answer_${q.id}`}
                       value={opt}
                       required
+                      aria-label={`Option: ${opt}`}
                       className="size-4 accent-foreground"
                     />
                     {opt}
@@ -117,6 +120,8 @@ export function QuizForm({
         <button
           type="submit"
           disabled={submitted}
+          aria-label="Submit quiz answers"
+          aria-busy={submitted}
           className="h-11 bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90 disabled:opacity-50 self-start"
         >
           {submitted ? "Submitting..." : "Submit Quiz"}

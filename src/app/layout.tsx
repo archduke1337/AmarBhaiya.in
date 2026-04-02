@@ -3,6 +3,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SkipLink } from "@/components/skip-link";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -52,11 +53,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="en-IN"
       className={cn("h-full antialiased font-sans", inter.variable)}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <SkipLink />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

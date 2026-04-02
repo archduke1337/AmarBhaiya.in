@@ -23,7 +23,7 @@
   --secondary: #f0f0f0;
   --secondary-foreground: #0a0a0a;
   --muted: #f0f0f0;
-  --muted-foreground: #737373;
+  --muted-foreground: #666666;
   --accent: #f0f0f0;
   --accent-foreground: #0a0a0a;
   --destructive: #dc2626;
@@ -197,6 +197,15 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Focus ─────────────────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 1px solid var(--ring);
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--foreground);
   outline-offset: 2px;
 }

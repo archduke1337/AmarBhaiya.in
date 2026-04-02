@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
@@ -13,60 +14,58 @@ type AnyRow = Record<string, unknown> & { $id: string };
 
 export async function enrollInCourseAction(
   formData: FormData
-): Promise<void> {
-  const user = await requireAuth();
-  const courseId = String(formData.get("courseId") ?? "");
-  if (!courseId) return;
-
-  const { tablesDB } = await createAdminClient();
-
-  // Check if already enrolled
+): Promise<ActionResult> {
   try {
-    const existing = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.equal("userId", [user.$id]),
-        Query.limit(1),
-      ],
-    });
+    const user = await requireAuth();
+    const courseId = String(formData.get("courseId") ?? "");
+    if (!courseId) return actionError("Course ID is required");
 
-    if (existing.rows.length > 0) {
-      // Already enrolled — just revalidate and return
-      revalidatePath("/app/courses");
-      return;
+    const { tablesDB } = await createAdminClient();
+
+    // Check if already enrolled
+    try {
+      const existing = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.enrollments,
+        queries: [
+          Query.equal("courseId", [courseId]),
+          Query.equal("userId", [user.$id]),
+          Query.limit(1),
+        ],
+      });
+
+      if (existing.rows.length > 0) {
+        // Already enrolled
+        revalidatePath("/app/courses");
+        return actionSuccess();
+      }
+    } catch {
+      // Continue to enroll
     }
-  } catch {
-    // Continue to enroll
-  }
 
-  // Verify course exists
-  let courseSlug = courseId;
-  let accessModel = "free";
+    // Verify course exists and get access model
+    let courseSlug = courseId;
+    let accessModel = "free";
 
-  try {
-    const course = (await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-    })) as AnyRow;
+    try {
+      const course = (await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courses,
+        rowId: courseId,
+      })) as AnyRow;
 
-    courseSlug = String(course.slug ?? courseId);
-    accessModel = String(course.accessModel ?? "free");
-  } catch {
-    // Course doesn't exist — still try to enroll (for flexibility)
-    console.error(`[Enrollment] Course ${courseId} not found via getRow, attempting enrollment anyway.`);
-  }
+      courseSlug = String(course.slug ?? courseId);
+      accessModel = String(course.accessModel ?? "free");
+    } catch {
+      return actionError("Course not found");
+    }
 
-  // Block paid courses from free enrollment
-  // (paid courses must go through Razorpay checkout)
-  if (accessModel === "paid" || accessModel === "subscription") {
-    console.error(`[Enrollment] Blocked free enrollment for ${accessModel} course ${courseId}`);
-    return;
-  }
+    // Block paid courses from free enrollment
+    if (accessModel === "paid" || accessModel === "subscription") {
+      return actionError("This course requires payment. Please use checkout.", "PAID_COURSE");
+    }
 
-  try {
+    // Create enrollment
     await tablesDB.createRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.enrollments,
@@ -84,98 +83,92 @@ export async function enrollInCourseAction(
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
     revalidatePath(`/courses/${courseSlug}`);
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      "[Enrollment] Failed to create enrollment:",
-      error instanceof Error ? error.message : error
-    );
+    const message = error instanceof Error ? error.message : "Failed to enroll in course";
+    console.error("[Enrollment] Failed to create enrollment:", message);
+    return actionError(message);
   }
 }
 
 // ── Mark Lesson Complete ────────────────────────────────────────────────────
+// OPTIMIZATION: Instead of recalculating progress from scratch every time,
+// we cache progress in the enrollment row. This prevents N+1 queries.
 
 export async function markLessonCompleteAction(
   formData: FormData
-): Promise<void> {
-  const user = await requireAuth();
-  const courseId = String(formData.get("courseId") ?? "");
-  const lessonId = String(formData.get("lessonId") ?? "");
-  if (!courseId || !lessonId) return;
-
-  const { tablesDB } = await createAdminClient();
-
-  // Check not already tracked
+): Promise<ActionResult> {
   try {
-    const existing = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.progress,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.equal("userId", [user.$id]),
-        Query.equal("lessonId", [lessonId]),
-        Query.limit(1),
-      ],
-    });
+    const user = await requireAuth();
+    const courseId = String(formData.get("courseId") ?? "");
+    const lessonId = String(formData.get("lessonId") ?? "");
+    if (!courseId || !lessonId) return actionError("Missing course or lesson ID");
 
-    if (existing.rows.length > 0) return; // Already completed
-  } catch {
-    // Continue
-  }
+    const { tablesDB } = await createAdminClient();
 
-  try {
-    // Create progress record
-    await tablesDB.createRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.progress,
-      rowId: ID.unique(),
-      data: {
-        courseId,
-        userId: user.$id,
-        lessonId,
-        completedAt: new Date().toISOString(),
-      },
-    });
-
-    // Recalculate course progress
-    const [completedResult, totalResult] = await Promise.all([
-      tablesDB.listRows({
+    // Check not already tracked
+    try {
+      const existing = await tablesDB.listRows({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.progress,
         queries: [
           Query.equal("courseId", [courseId]),
           Query.equal("userId", [user.$id]),
-          Query.limit(500),
+          Query.equal("lessonId", [lessonId]),
+          Query.limit(1),
         ],
-      }),
-      tablesDB.listRows({
+      });
+
+      if (existing.rows.length > 0) {
+        return actionSuccess(); // Already completed
+      }
+    } catch {
+      // Continue
+    }
+
+    try {
+      // Create progress record
+      await tablesDB.createRow({
         databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.lessons,
+        tableId: APPWRITE_CONFIG.tables.progress,
+        rowId: ID.unique(),
+        data: {
+          courseId,
+          userId: user.$id,
+          lessonId,
+          completedAt: new Date().toISOString(),
+        },
+      });
+
+      // Get enrollment record to increment completed count
+      const enrollments = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.enrollments,
         queries: [
           Query.equal("courseId", [courseId]),
-          Query.limit(500),
+          Query.equal("userId", [user.$id]),
+          Query.limit(1),
         ],
-      }),
-    ]);
+      });
 
-    const completedCount = completedResult.total;
-    const totalLessons = totalResult.total;
-    const progressPercent =
-      totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+      const enrollmentRow = enrollments.rows[0] as AnyRow | undefined;
+      if (!enrollmentRow) {
+        return actionSuccess();
+      }
 
-    // Update enrollment progress
-    const enrollment = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.equal("userId", [user.$id]),
-        Query.limit(1),
-      ],
-    });
+      // OPTIMIZATION: Get total lessons only once, cache calculation
+      const lessonsResult = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.lessons,
+        queries: [Query.equal("courseId", [courseId]), Query.limit(500)],
+      });
 
-    const enrollmentRow = enrollment.rows[0] as AnyRow | undefined;
-    if (enrollmentRow) {
+      const totalLessons = lessonsResult.total;
+      const currentProgress = Number(enrollmentRow.completedLessons ?? 0) + 1;
+      const progressPercent = totalLessons > 0 ? Math.round((currentProgress / totalLessons) * 100) : 0;
+
       const updateData: Record<string, unknown> = {
+        completedLessons: currentProgress,
         progress: progressPercent,
       };
 
@@ -191,15 +184,32 @@ export async function markLessonCompleteAction(
         rowId: enrollmentRow.$id,
         data: updateData,
       });
-    }
 
-    revalidatePath(`/app/learn/${courseId}/${lessonId}`);
-    revalidatePath("/app/courses");
-    revalidatePath("/app/dashboard");
+      // AUTO-GENERATE CERTIFICATE when course completes (100%)
+      if (progressPercent >= 100) {
+        try {
+          // Import dynamically to avoid circular dependency
+          const { issueCertificateAction } = await import("./certificate");
+          const formData = new FormData();
+          formData.set("courseId", courseId);
+          await issueCertificateAction(formData);
+        } catch (certError) {
+          // Log but don't fail the enrollment completion
+          console.error("Failed to auto-generate certificate:", certError);
+        }
+      }
+
+      revalidatePath(`/app/learn/${courseId}/${lessonId}`);
+      revalidatePath("/app/courses");
+      revalidatePath("/app/dashboard");
+      return actionSuccess();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to mark complete";
+      console.error(message);
+      return actionError(message);
+    }
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to mark complete."
-    );
+    return actionError(error instanceof Error ? error.message : "Unexpected error");
   }
 }
 

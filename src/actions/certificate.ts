@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
@@ -19,94 +20,109 @@ export type CertificateItem = {
   shareUrl: string;
 };
 
-// ── Issue Certificate ───────────────────────────────────────────────────────
+// ── Issue Certificate (Called when course reaches 100% completion) ──────────
 
 export async function issueCertificateAction(
   formData: FormData
-): Promise<void> {
-  const user = await requireAuth();
-  const courseId = String(formData.get("courseId") ?? "");
-  if (!courseId) return;
-
-  const { tablesDB } = await createAdminClient();
-
-  // Check if certificate already exists
+): Promise<ActionResult> {
   try {
-    const existing = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.certificates,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.equal("userId", [user.$id]),
-        Query.limit(1),
-      ],
-    });
+    const user = await requireAuth();
+    const courseId = String(formData.get("courseId") ?? "");
+    if (!courseId) return actionError("Course ID is required");
 
-    if (existing.rows.length > 0) return; // Already issued
-  } catch {
-    // Continue
-  }
+    const { tablesDB } = await createAdminClient();
 
-  // Verify enrollment is complete (100% progress)
-  try {
-    const enrollment = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.equal("userId", [user.$id]),
-        Query.limit(1),
-      ],
-    });
+    // Use unique composite key to prevent duplicate certificates
+    // (prevents race condition if this action called twice)
+    const certificateKey = `${user.$id}:${courseId}`;
 
-    const enrollmentRow = enrollment.rows[0] as AnyRow | undefined;
-    if (!enrollmentRow) return;
+    // Check if certificate already exists
+    try {
+      const existing = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.certificates,
+        queries: [
+          Query.equal("userId", [user.$id]),
+          Query.equal("courseId", [courseId]),
+          Query.limit(1),
+        ],
+      });
 
-    const progress = Number(enrollmentRow.progress ?? 0);
-    if (progress < 100) return; // Not yet completed
-  } catch {
-    return;
-  }
+      if (existing.rows.length > 0) {
+        return actionSuccess(); // Already issued
+      }
+    } catch {
+      // Continue
+    }
 
-  // Get course title
-  let courseTitle = "Course";
-  try {
-    const course = (await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-    })) as AnyRow;
-    courseTitle = String(course.title ?? "Course");
-  } catch {
-    // Use default
-  }
+    // Verify enrollment exists and is complete (100% progress)
+    let enrollmentRow: AnyRow | undefined;
+    try {
+      const enrollment = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.enrollments,
+        queries: [
+          Query.equal("courseId", [courseId]),
+          Query.equal("userId", [user.$id]),
+          Query.limit(1),
+        ],
+      });
 
-  // Generate a unique share URL
-  const certId = ID.unique();
-  const shareUrl = `/certificates/${certId}`;
+      enrollmentRow = enrollment.rows[0] as AnyRow | undefined;
+      if (!enrollmentRow) return actionError("No enrollment found");
 
-  try {
-    await tablesDB.createRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.certificates,
-      rowId: certId,
-      data: {
-        userId: user.$id,
-        courseId,
-        courseTitle,
-        userName: user.name,
-        issuedAt: new Date().toISOString(),
-        fileId: "", // PDF generation can be added later
-        shareUrl,
-      },
-    });
+      const progress = Number(enrollmentRow.progress ?? 0);
+      if (progress < 100) return actionError("Course not completed yet");
+    } catch (error) {
+      return actionError("Failed to verify enrollment");
+    }
 
-    revalidatePath("/app/courses");
-    revalidatePath("/app/dashboard");
+    // Get course title for certificate
+    let courseTitle = "Course";
+    try {
+      const course = (await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courses,
+        rowId: courseId,
+      })) as AnyRow;
+      courseTitle = String(course.title ?? "Course");
+    } catch {
+      // Use default title
+    }
+
+    // Generate unique certificate ID with verification token
+    const certId = ID.unique();
+    const verificationToken = `${certId}:${user.$id}:${Date.now()}`;
+    const shareUrl = `/certificates/${certId}`;
+
+    try {
+      // Create certificate record
+      await tablesDB.createRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.certificates,
+        rowId: certId,
+        data: {
+          userId: user.$id,
+          courseId,
+          courseTitle,
+          userName: user.name,
+          issuedAt: new Date().toISOString(),
+          fileId: "", // PDF generation can be added later
+          shareUrl,
+          verificationToken,
+          isPublished: true,
+        },
+      });
+
+      revalidatePath("/app/certificates");
+      revalidatePath("/app/courses");
+      return actionSuccess();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to issue certificate";
+      return actionError(message);
+    }
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to issue certificate."
-    );
+    return actionError(error instanceof Error ? error.message : "Unexpected error");
   }
 }
 

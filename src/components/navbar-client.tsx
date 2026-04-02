@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { LayoutDashboard, Menu, X } from "lucide-react";
 
@@ -30,12 +30,36 @@ export function NavbarClient({
 }: NavbarClientProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuButtonRef = React.useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Focus management for mobile menu
+  useEffect(() => {
+    if (mobileOpen && mobileMenuRef.current) {
+      // Find first interactive element
+      const firstFocusable = mobileMenuRef.current.querySelector(
+        'a, button, [tabindex]:not([tabindex="-1"])'
+      ) as HTMLElement;
+      firstFocusable?.focus();
+
+      // Handle Escape key to close menu
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setMobileOpen(false);
+          menuButtonRef.current?.focus();
+        }
+      };
+
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [mobileOpen]);
 
   return (
     <>
@@ -119,9 +143,11 @@ export function NavbarClient({
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
             <button
+              ref={menuButtonRef}
               onClick={() => setMobileOpen(!mobileOpen)}
               className="text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
             >
               {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
@@ -132,10 +158,13 @@ export function NavbarClient({
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
+            ref={mobileMenuRef}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="fixed inset-0 z-40 bg-background pt-14"
+            role="navigation"
+            aria-label="Mobile navigation"
           >
             <nav className="flex flex-col items-start px-6 py-8 gap-6">
               {NAV_LINKS.map((link) => (

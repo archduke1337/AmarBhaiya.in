@@ -4,8 +4,12 @@ import { NextResponse } from "next/server";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { verifyRazorpayWebhookSignature } from "@/lib/payments/razorpay";
+import { generateIdempotencyKey, isIdempotencyKeyProcessed } from "@/lib/utils/sanitize";
 
 export const runtime = "nodejs";
+
+// In-memory cache for processed idempotency keys (should be Redis in production)
+const processedWebhooks = new Set<string>();
 
 type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
 
@@ -82,6 +86,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true });
     }
 
+    // SECURITY: Check idempotency to prevent duplicate webhook processing
+    // Razorpay webhooks can retry, so we need to prevent double-charging
+    const eventId = payment.id || payment.order_id || "";
+    const idempotencyKey = generateIdempotencyKey(eventId, event);
+
+    if (isIdempotencyKeyProcessed(idempotencyKey, processedWebhooks)) {
+      console.log("Webhook already processed, skipping:", idempotencyKey);
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
     const providerRef = payment.order_id ?? payment.id;
     const status = mapRazorpayStatus(event, payment.status);
     const notes = payment.notes ?? {};
@@ -100,6 +114,7 @@ export async function POST(request: Request) {
     let paymentDocumentId = existingPayment?.$id ?? null;
 
     if (existingPayment) {
+      // Update existing payment record
       await tablesDB.updateRow({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.payments,
@@ -111,6 +126,7 @@ export async function POST(request: Request) {
         },
       });
     } else if (userId && courseId) {
+      // Create new payment record
       paymentDocumentId = ID.unique();
       await tablesDB.createRow({
         databaseId: APPWRITE_CONFIG.databaseId,
@@ -129,25 +145,40 @@ export async function POST(request: Request) {
       });
     }
 
+    // Only create enrollment if payment completed and not already enrolled
     if (status === "completed") {
       const enrollmentUserId = existingPayment?.userId ?? userId;
       const enrollmentCourseId = existingPayment?.courseId ?? courseId;
 
       if (enrollmentUserId && enrollmentCourseId) {
         try {
-          await tablesDB.createRow({
+          // Check if already enrolled (prevent duplicate enrollments)
+          const existingEnrollment = await tablesDB.listRows({
             databaseId: APPWRITE_CONFIG.databaseId,
             tableId: APPWRITE_CONFIG.tables.enrollments,
-            rowId: ID.unique(),
-            data: {
-              userId: enrollmentUserId,
-              courseId: enrollmentCourseId,
-              enrolledAt: new Date().toISOString(),
-              paymentId: paymentDocumentId ?? providerRef,
-              accessModel: normalizeAccessModel(notes.accessModel),
-              isActive: true,
-            },
+            queries: [
+              Query.equal("userId", [enrollmentUserId]),
+              Query.equal("courseId", [enrollmentCourseId]),
+              Query.limit(1),
+            ],
           });
+
+          // Only create if not already enrolled
+          if (existingEnrollment.rows.length === 0) {
+            await tablesDB.createRow({
+              databaseId: APPWRITE_CONFIG.databaseId,
+              tableId: APPWRITE_CONFIG.tables.enrollments,
+              rowId: ID.unique(),
+              data: {
+                userId: enrollmentUserId,
+                courseId: enrollmentCourseId,
+                enrolledAt: new Date().toISOString(),
+                paymentId: paymentDocumentId ?? providerRef,
+                accessModel: normalizeAccessModel(notes.accessModel),
+                isActive: true,
+              },
+            });
+          }
         } catch (error) {
           const appwriteError = error as { code?: number };
           if (appwriteError.code !== 409) {
@@ -156,6 +187,9 @@ export async function POST(request: Request) {
         }
       }
     }
+
+    // Mark this webhook as processed to prevent re-processing on retry
+    processedWebhooks.add(idempotencyKey);
 
     return NextResponse.json({ received: true, status });
   } catch (error) {

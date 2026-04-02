@@ -17,7 +17,7 @@ export default function AuthLayout({
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
-      {children}
+      <main id="main">{children}</main>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default async function DashboardLayout({
       <Sidebar role={role} userId={user.$id} />
       <div className="min-h-screen">
         <DashboardHeader userName={user.name} userEmail={user.email} role={role} />
-        <main className="px-6 py-8 md:px-8 md:py-10">{children}</main>
+        <main id="main" className="px-6 py-8 md:px-8 md:py-10">{children}</main>
       </div>
     </div>
   );

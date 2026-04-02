@@ -1,11 +1,23 @@
 "use client";
 
-import React, { Suspense, useRef, useEffect, useState } from "react";
-import { ShaderGradient, ShaderGradientCanvas } from "@shadergradient/react";
+import React, { Suspense, useRef, useEffect, useState, lazy } from "react";
 import { TimelineAnimation } from "@/components/timeline-animation";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+
+// PERFORMANCE: Lazy-load heavy 3D ShaderGradient component
+const ShaderGradientComponent = lazy(() =>
+  import("@shadergradient/react").then((mod) => ({
+    default: mod.ShaderGradient,
+  }))
+);
+
+const ShaderGradientCanvasComponent = lazy(() =>
+  import("@shadergradient/react").then((mod) => ({
+    default: mod.ShaderGradientCanvas,
+  }))
+);
 
 type HomeStatItem = {
   end: number;
@@ -211,15 +223,15 @@ export default function LandingPage() {
         style={{ opacity: heroOpacity, scale: heroScale }}
         className="relative min-h-screen flex flex-col justify-between overflow-hidden pt-14 text-white"
       >
-        {/* Shader Background — Responds to theme */}
-        <Suspense>
-          <ShaderGradientCanvas
+        {/* Shader Background — Lazy-loaded with Suspense */}
+        <Suspense fallback={<div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-black" />}>
+          <ShaderGradientCanvasComponent
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-            lazyLoad={false}
+            lazyLoad={true}
             pixelDensity={1}
             pointerEvents="none"
           >
-            <ShaderGradient
+            <ShaderGradientComponent
               animate="on"
               type="sphere"
               wireframe={false}
@@ -253,7 +265,7 @@ export default function LandingPage() {
               hoverState=""
               enableTransition={false}
             />
-          </ShaderGradientCanvas>
+          </ShaderGradientCanvasComponent>
         </Suspense>
 
         <div

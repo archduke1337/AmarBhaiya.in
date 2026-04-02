@@ -48,14 +48,20 @@ export function CommentSection({ initialComments = [] }: CommentSectionProps) {
   return (
     <div className="space-y-4">
       <form onSubmit={handlePostComment} className="space-y-3">
+        <label htmlFor="comment-input" className="sr-only">
+          Post a comment
+        </label>
         <textarea
+          id="comment-input"
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder="Ask a doubt or share an insight from this lesson"
+          aria-label="Comment input"
           className="w-full min-h-24 border border-border bg-background px-3 py-2"
         />
         <button
           type="submit"
+          aria-label="Post comment"
           className="h-9 px-4 bg-foreground text-background text-sm"
         >
           Post comment

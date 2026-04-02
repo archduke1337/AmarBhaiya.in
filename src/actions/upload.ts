@@ -6,8 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-
-
+import { validateFileMimeType } from "@/lib/utils/sanitize";
 
 // ── Upload Course Thumbnail ─────────────────────────────────────────────────
 
@@ -29,6 +28,14 @@ export async function uploadCourseThumbnailAction(
   if (!["jpg", "jpeg", "png", "webp"].includes(ext)) return;
 
   try {
+    // SECURITY: Verify MIME type using magic bytes to prevent spoofed files
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const validMimes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validateFileMimeType(buffer, file.name, validMimes)) {
+      console.error("File MIME type validation failed");
+      return;
+    }
+
     const { storage, tablesDB } = await createAdminClient();
 
     // Upload to bucket
@@ -76,6 +83,14 @@ export async function uploadLessonVideoAction(
   if (!["mp4", "webm", "mov", "mkv"].includes(ext)) return;
 
   try {
+    // SECURITY: Verify MIME type using magic bytes to prevent malware disguised as video
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const validMimes = ["video/mp4", "video/webm", "video/quicktime", "video/x-matroska"];
+    if (!validateFileMimeType(buffer, file.name, validMimes)) {
+      console.error("File MIME type validation failed");
+      return;
+    }
+
     const { storage, tablesDB } = await createAdminClient();
 
     const uploaded = await storage.createFile({

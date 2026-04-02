@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { sanitizeHtml, escapeHtml } from "@/lib/utils/sanitize";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
@@ -26,9 +27,12 @@ export async function postLessonCommentAction(
   const user = await requireAuth();
   const lessonId = String(formData.get("lessonId") ?? "");
   const courseId = String(formData.get("courseId") ?? "");
-  const text = String(formData.get("text") ?? "").trim();
+  let text = String(formData.get("text") ?? "").trim();
 
   if (!lessonId || !courseId || !text) return;
+
+  // SECURITY: Sanitize HTML to prevent XSS attacks
+  text = sanitizeHtml(text);
 
   try {
     const { tablesDB } = await createAdminClient();
@@ -43,7 +47,7 @@ export async function postLessonCommentAction(
         userId: user.$id,
         userName: user.name || "Anonymous",
         userRole: String(user.prefs?.role ?? "student"),
-        text,
+        text, // Now sanitized
         parentId: "",
         createdAt: new Date().toISOString(),
         isPinned: false,
