@@ -1,7 +1,10 @@
-import { Activity, AlertTriangle, Clock } from "lucide-react";
+import { Activity, AlertTriangle, Clock, Shield } from "lucide-react";
 
+import { resolveModerationActionAction } from "@/actions/operations";
 import { getAdminModerationData } from "@/lib/appwrite/dashboard-data";
-import { PageHeader, StatGrid, StatCard } from "@/components/dashboard";
+import { formatDateTime } from "@/lib/utils/format";
+import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 
 export default async function AdminModerationPage() {
   const data = await getAdminModerationData();
@@ -38,6 +41,54 @@ export default async function AdminModerationPage() {
           description="Users currently timed out"
         />
       </StatGrid>
+
+      {/* Open Escalations */}
+      <section className="flex flex-col gap-4">
+        <h2 className="text-lg font-medium">Open Escalations</h2>
+
+        {data.escalationItems.length === 0 ? (
+          <EmptyState
+            icon={Shield}
+            title="No open escalations"
+            description="All flagged items have been resolved."
+          />
+        ) : (
+          <div className="border border-border divide-y divide-border">
+            {data.escalationItems.map((item) => (
+              <div key={item.id} className="flex flex-col gap-2 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {item.targetUserName}
+                    </span>
+                    <Badge variant="outline" className="capitalize">
+                      {item.scope}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Flagged by {item.moderatorName}
+                    {item.createdAt ? ` · ${formatDateTime(item.createdAt)}` : ""}
+                  </p>
+                  {item.reason && (
+                    <p className="text-sm text-muted-foreground">
+                      Reason: {item.reason}
+                    </p>
+                  )}
+                </div>
+                <form action={resolveModerationActionAction}>
+                  <input type="hidden" name="actionId" value={item.id} />
+                  <button
+                    type="submit"
+                    className="h-9 border border-border px-4 text-sm transition-colors hover:bg-muted"
+                  >
+                    Resolve
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Guidance panel */}
       <section className="border border-border p-6">
