@@ -10,12 +10,6 @@ type RazorpayCheckoutProps = {
   userEmail: string;
 };
 
-type RazorpayResponse = {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-};
-
 declare global {
   interface Window {
     Razorpay: new (options: Record<string, unknown>) => {
@@ -84,7 +78,7 @@ export function RazorpayCheckout({
         theme: {
           color: "#000000",
         },
-        handler: function (response: RazorpayResponse) {
+        handler: function () {
           // Payment successful — webhook will handle enrollment
           // Redirect to courses page
           window.location.href = "/app/courses?payment=success";

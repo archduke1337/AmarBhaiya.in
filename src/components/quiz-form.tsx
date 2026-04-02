@@ -131,12 +131,11 @@ export function QuizResult({
   score,
   passed,
   passMark,
-  courseId,
 }: {
   score: number;
   passed: boolean;
   passMark: number;
-  courseId: string;
+  courseId?: string;
 }) {
   return (
     <div className="flex flex-col items-center gap-4 py-12 border border-border">

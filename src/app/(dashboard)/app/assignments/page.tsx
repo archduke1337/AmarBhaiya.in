@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { FileText, Upload, Clock, Download } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
-import { getStudentEnrolledCourses } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { submitAssignmentAction } from "@/actions/assignments";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";

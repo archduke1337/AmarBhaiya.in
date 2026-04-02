@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Users, BookOpen, DollarSign } from "lucide-react";
+import { Users } from "lucide-react";
 import { Query } from "node-appwrite";
 
 import { requireRole } from "@/lib/appwrite/auth";

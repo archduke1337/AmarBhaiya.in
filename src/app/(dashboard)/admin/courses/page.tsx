@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { BookOpen, Eye, Star, Layers } from "lucide-react";
 
 import { updateCourseVisibilityAction } from "@/actions/operations";

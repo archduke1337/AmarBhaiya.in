@@ -4,7 +4,6 @@ import {
   CreditCard,
   BookOpen,
   Video,
-  AlertTriangle,
   TrendingUp,
   ArrowRight,
   Shield,

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare, Pin, ExternalLink } from "lucide-react";
+import { MessageSquare, Pin } from "lucide-react";
 
 import { createForumThreadAction } from "@/actions/dashboard";
 import { requireAuth } from "@/lib/appwrite/auth";

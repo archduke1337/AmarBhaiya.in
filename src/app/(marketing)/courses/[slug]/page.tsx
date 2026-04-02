@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BookOpen, Clock, Lock, Play, Users } from "lucide-react";
+import { Lock, Play } from "lucide-react";
 
 import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 import { getLoggedInUser } from "@/lib/appwrite/auth";
 import { enrollInCourseAction, isEnrolled } from "@/actions/enrollment";
 import { RazorpayCheckout } from "@/components/razorpay-checkout";
-import { formatDuration } from "@/lib/utils/format";
 
 type PageProps = {
   params: Promise<{ slug: string }>;

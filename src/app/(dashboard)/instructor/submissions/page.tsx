@@ -1,4 +1,4 @@
-import { FileText, GraduationCap, Download } from "lucide-react";
+import { GraduationCap, Download } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorCourseList } from "@/lib/appwrite/dashboard-data";

@@ -1,4 +1,4 @@
-import { Shield, Activity, AlertTriangle, Clock } from "lucide-react";
+import { Activity, AlertTriangle, Clock } from "lucide-react";
 
 import { getAdminModerationData } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, StatGrid, StatCard } from "@/components/dashboard";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, BookOpen, ArrowRight, Layers } from "lucide-react";
+import { Plus, ArrowRight, Layers } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorCourseList } from "@/lib/appwrite/dashboard-data";

@@ -4,10 +4,7 @@ import {
   UserX,
   MessageSquare,
   Activity,
-  AlertTriangle,
   ArrowRight,
-  Shield,
-  Search,
 } from "lucide-react";
 
 import {
@@ -31,10 +28,6 @@ export default async function ModeratorDashboardPage() {
   ]);
 
   const pendingReports = reports.filter((r) => r.status === "pending");
-  const urgentReports = pendingReports.filter(() => {
-    // TODO: Track report age — flag reports older than 24h
-    return false;
-  });
 
   return (
     <div className="flex flex-col gap-8">

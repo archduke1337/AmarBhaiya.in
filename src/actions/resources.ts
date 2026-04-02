@@ -19,10 +19,6 @@ const createResourceSchema = z.object({
   isPublished: z.boolean().default(false),
 });
 
-const updateResourceSchema = createResourceSchema.partial().extend({
-  resourceId: z.string().min(1),
-});
-
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export type StandaloneResource = {

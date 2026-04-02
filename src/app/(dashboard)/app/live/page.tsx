@@ -2,13 +2,13 @@ import { Video, Calendar, Radio } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getUpcomingLiveSessions } from "@/lib/appwrite/dashboard-data";
-import { rsvpToSessionAction, cancelRsvpAction } from "@/actions/account";
+import { rsvpToSessionAction } from "@/actions/account";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 
 export default async function StudentLivePage() {
-  const user = await requireAuth();
+  await requireAuth();
   const sessions = await getUpcomingLiveSessions();
 
   return (

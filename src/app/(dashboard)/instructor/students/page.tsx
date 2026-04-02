@@ -1,4 +1,4 @@
-import { Users, GraduationCap } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorStudents } from "@/lib/appwrite/dashboard-data";

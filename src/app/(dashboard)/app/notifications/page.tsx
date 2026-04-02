@@ -12,7 +12,7 @@ import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 
 export default async function NotificationsPage() {
-  const user = await requireAuth();
+  await requireAuth();
   const notifications = await getUserNotifications();
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;

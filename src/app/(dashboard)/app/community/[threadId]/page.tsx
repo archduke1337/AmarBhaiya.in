@@ -11,7 +11,7 @@ import {
 } from "@/actions/community";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { formatRelativeTime } from "@/lib/utils/format";
-import { PageHeader, EmptyState } from "@/components/dashboard";
+import { EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 
 type PageProps = {

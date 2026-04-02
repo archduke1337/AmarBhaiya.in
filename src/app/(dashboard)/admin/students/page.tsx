@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { User, GraduationCap } from "lucide-react";
+import { User } from "lucide-react";
 import { Query } from "node-appwrite";
 
 import { requireRole } from "@/lib/appwrite/auth";

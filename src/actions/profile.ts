@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { createAdminClient } from "@/lib/appwrite/server";
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 

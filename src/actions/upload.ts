@@ -14,7 +14,7 @@ import { createAdminClient } from "@/lib/appwrite/server";
 export async function uploadCourseThumbnailAction(
   formData: FormData
 ): Promise<void> {
-  const { user, role } = await requireRole(["admin", "instructor"]);
+  await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   const file = formData.get("file") as File | null;
@@ -60,7 +60,7 @@ export async function uploadCourseThumbnailAction(
 export async function uploadLessonVideoAction(
   formData: FormData
 ): Promise<void> {
-  const { user, role } = await requireRole(["admin", "instructor"]);
+  await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   const lessonId = String(formData.get("lessonId") ?? "");
@@ -146,7 +146,7 @@ export async function uploadResourceFileAction(
 export async function uploadAvatarAction(
   formData: FormData
 ): Promise<void> {
-  const { user } = await requireRole(["admin", "instructor", "moderator", "student"]);
+  await requireRole(["admin", "instructor", "moderator", "student"]);
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) return;

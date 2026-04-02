@@ -1,4 +1,4 @@
-import { Users, Search } from "lucide-react";
+import { Users } from "lucide-react";
 
 import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import { updateUserRoleAction } from "@/actions/operations";

@@ -1,4 +1,4 @@
-import { Bell, Send, Megaphone } from "lucide-react";
+import { Send, Megaphone } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import {

@@ -4,7 +4,7 @@ import { Query } from "node-appwrite";
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
+import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { formatCurrency } from "@/lib/utils/format";
 
 type AnyRow = Record<string, unknown> & { $id: string };
