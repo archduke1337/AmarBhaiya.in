@@ -28,11 +28,11 @@ export function getOffset(page: number, pageSize: number = 20): number {
 /**
  * Calculate pagination info
  */
-export function getPaginationInfo(
+export function getPaginationInfo<T = unknown>(
   total: number,
   page: number,
   pageSize: number = 20
-): PaginatedResult<any> {
+): PaginatedResult<T> {
   const totalPages = Math.ceil(total / pageSize);
   const hasNextPage = page < totalPages;
 

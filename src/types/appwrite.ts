@@ -78,6 +78,10 @@ export interface Enrollment extends AppwriteRow {
   paymentId: string;
   accessModel: "free" | "paid" | "subscription";
   isActive: boolean;
+  completedLessons: number;
+  progress: number;
+  completedAt: string;
+  status: "active" | "completed";
 }
 
 export interface Progress extends AppwriteRow {
@@ -136,9 +140,13 @@ export interface Submission extends AppwriteRow {
 export interface Certificate extends AppwriteRow {
   userId: string;
   courseId: string;
+  courseTitle: string;
+  userName: string;
   issuedAt: string;
   fileId: string;
   shareUrl: string;
+  verificationToken: string;
+  isPublished: boolean;
 }
 
 // ── Live & Community ────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { sanitizeHtml, escapeHtml } from "@/lib/utils/sanitize";
+import { sanitizeHtml } from "@/lib/utils/sanitize";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 

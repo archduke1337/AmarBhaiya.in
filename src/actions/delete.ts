@@ -38,7 +38,7 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
 
   const { tablesDB } = await createAdminClient();
 
-  // Delete child rows
+  // Delete child rows (paginated to handle >2000 records)
   const childTables = [
     APPWRITE_CONFIG.tables.lessons,
     APPWRITE_CONFIG.tables.modules,
@@ -46,28 +46,49 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
     APPWRITE_CONFIG.tables.progress,
   ];
 
+  const failedDeletes: string[] = [];
+
   for (const tableId of childTables) {
     try {
-      const rows = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId,
-        queries: [Query.equal("courseId", [courseId]), Query.limit(2000)],
-      });
+      let hasMore = true;
+      while (hasMore) {
+        const rows = await tablesDB.listRows({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId,
+          queries: [Query.equal("courseId", [courseId]), Query.limit(500)],
+        });
 
-      for (const row of rows.rows) {
-        try {
-          await tablesDB.deleteRow({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId,
-            rowId: (row as { $id: string }).$id,
-          });
-        } catch {
-          // Continue deleting other rows
+        if (rows.rows.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        for (const row of rows.rows) {
+          try {
+            await tablesDB.deleteRow({
+              databaseId: APPWRITE_CONFIG.databaseId,
+              tableId,
+              rowId: (row as { $id: string }).$id,
+            });
+          } catch (error) {
+            const rowId = (row as { $id: string }).$id;
+            failedDeletes.push(`${tableId}/${rowId}`);
+            console.error(`[Delete] Failed to delete ${tableId}/${rowId}:`, error instanceof Error ? error.message : error);
+          }
+        }
+
+        // If we got fewer than 500, we're done
+        if (rows.rows.length < 500) {
+          hasMore = false;
         }
       }
-    } catch {
-      // Table might not have courseId column — skip
+    } catch (error) {
+      console.error(`[Delete] Failed to query ${tableId} for courseId=${courseId}:`, error instanceof Error ? error.message : error);
     }
+  }
+
+  if (failedDeletes.length > 0) {
+    console.warn(`[Delete] ${failedDeletes.length} child rows failed to delete for course ${courseId}. Orphaned records:`, failedDeletes);
   }
 
   // Delete the course itself

@@ -10,7 +10,6 @@ export const runtime = "nodejs";
 
 const createOrderSchema = z.object({
   courseId: z.string().min(1),
-  amount: z.number().int().positive(),
   redirectPath: z.string().optional(),
 });
 
@@ -49,12 +48,38 @@ export async function POST(request: Request) {
   }
 
   try {
+    const { tablesDB } = await createAdminClient();
+
+    // SECURITY: Look up the actual course price from the database
+    // Never trust client-provided amounts
+    type CourseRow = { price?: number; accessModel?: string };
+    let course: CourseRow;
+    try {
+      course = (await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courses,
+        rowId: parsed.data.courseId,
+      })) as CourseRow;
+    } catch {
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    }
+
+    const price = Number(course.price ?? 0);
+    if (price <= 0 || course.accessModel === "free") {
+      return NextResponse.json(
+        { error: "This course does not require payment" },
+        { status: 400 }
+      );
+    }
+
+    // Amount in paise (smallest currency unit)
+    const amountInPaise = price * 100;
     const requestUrl = new URL(request.url);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? requestUrl.origin;
     const merchantTransactionId = `pp_${Date.now()}_${ID.unique().slice(0, 8)}`;
 
     const phonePeResult = await createPhonePeOrder({
-      amount: parsed.data.amount,
+      amount: amountInPaise,
       merchantTransactionId,
       merchantUserId: user.$id,
       redirectUrl: `${appUrl}${getSafeRedirectPath(parsed.data.redirectPath)}`,
@@ -79,7 +104,7 @@ export async function POST(request: Request) {
       data: {
         userId: user.$id,
         courseId: parsed.data.courseId,
-        amount: parsed.data.amount,
+        amount: amountInPaise,
         currency: "INR",
         method: "phonepe",
         status: "pending",

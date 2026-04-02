@@ -20,9 +20,17 @@ export type CertificateItem = {
   shareUrl: string;
 };
 
-// ── Issue Certificate (Called when course reaches 100% completion) ──────────
+// ── Issue Certificate (form-compatible wrapper) ────────────────────────────
 
 export async function issueCertificateAction(
+  formData: FormData
+): Promise<void> {
+  await _issueCertificate(formData);
+}
+
+// ── Issue Certificate (Called when course reaches 100% completion) ──────────
+
+export async function _issueCertificate(
   formData: FormData
 ): Promise<ActionResult> {
   try {
@@ -31,10 +39,6 @@ export async function issueCertificateAction(
     if (!courseId) return actionError("Course ID is required");
 
     const { tablesDB } = await createAdminClient();
-
-    // Use unique composite key to prevent duplicate certificates
-    // (prevents race condition if this action called twice)
-    const certificateKey = `${user.$id}:${courseId}`;
 
     // Check if certificate already exists
     try {
@@ -73,7 +77,7 @@ export async function issueCertificateAction(
 
       const progress = Number(enrollmentRow.progress ?? 0);
       if (progress < 100) return actionError("Course not completed yet");
-    } catch (error) {
+    } catch {
       return actionError("Failed to verify enrollment");
     }
 

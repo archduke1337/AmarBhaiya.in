@@ -1,10 +1,21 @@
 // ── Appwrite Configuration ──────────────────────────────────────────────────
 // All Appwrite IDs in one place. Update these after creating resources in Console.
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
+function requireEnv(key: string, fallback?: string): string {
+  const value = process.env[key] || fallback;
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${key}. ` +
+      `Check your .env file or deployment settings.`
+    );
+  }
+  return value;
+}
+
+const PROJECT_ID = requireEnv("NEXT_PUBLIC_APPWRITE_PROJECT_ID");
 
 export const APPWRITE_CONFIG = {
-  endpoint: process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "",
+  endpoint: requireEnv("NEXT_PUBLIC_APPWRITE_ENDPOINT"),
   projectId: PROJECT_ID,
   databaseId: process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "amarbhaiya_db",
 

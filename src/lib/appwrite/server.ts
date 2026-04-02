@@ -44,10 +44,17 @@ let _adminClient: Client | null = null;
 
 function getAdminClient(): Client {
   if (!_adminClient) {
+    const apiKey = process.env.APPWRITE_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "Missing APPWRITE_API_KEY environment variable. " +
+        "Server-side operations require an Appwrite API key."
+      );
+    }
     _adminClient = new Client()
       .setEndpoint(APPWRITE_CONFIG.endpoint)
       .setProject(APPWRITE_CONFIG.projectId)
-      .setKey(process.env.APPWRITE_API_KEY!);
+      .setKey(apiKey);
   }
   return _adminClient;
 }

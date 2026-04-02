@@ -74,9 +74,13 @@ export async function enrollInCourseAction(
         courseId,
         userId: user.$id,
         enrolledAt: new Date().toISOString(),
-        status: "active",
-        completedAt: "",
+        paymentId: "",
+        accessModel: "free",
+        isActive: true,
+        completedLessons: 0,
         progress: 0,
+        completedAt: "",
+        status: "active",
       },
     });
 
@@ -219,6 +223,12 @@ export async function getCourseProgress(
   courseId: string,
   userId: string
 ): Promise<{ completedLessonIds: string[]; percent: number }> {
+  // SECURITY: Verify caller owns this data or is admin
+  const caller = await requireAuth();
+  if (caller.$id !== userId && !caller.labels?.includes("admin")) {
+    return { completedLessonIds: [], percent: 0 };
+  }
+
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -263,6 +273,12 @@ export async function isEnrolled(
   courseId: string,
   userId: string
 ): Promise<boolean> {
+  // SECURITY: Verify caller owns this data or is admin
+  const caller = await requireAuth();
+  if (caller.$id !== userId && !caller.labels?.includes("admin")) {
+    return false;
+  }
+
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -297,6 +313,12 @@ export type EnrolledCourse = {
 export async function getStudentEnrollments(
   userId: string
 ): Promise<EnrolledCourse[]> {
+  // SECURITY: Verify caller owns this data or is admin
+  const caller = await requireAuth();
+  if (caller.$id !== userId && !caller.labels?.includes("admin")) {
+    return [];
+  }
+
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -402,11 +424,13 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
         courseId,
         userId,
         enrolledAt: new Date().toISOString(),
-        status: "active",
-        completedAt: "",
-        progress: 0,
         paymentId: "",
         accessModel: "free",
+        isActive: true,
+        completedLessons: 0,
+        progress: 0,
+        completedAt: "",
+        status: "active",
       },
     });
 

@@ -9,6 +9,7 @@ import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { slugify } from "@/lib/utils/format";
+import { sanitizeHtml } from "@/lib/utils/sanitize";
 
 const createForumThreadSchema = z.object({
   forumCatId: z.string().min(1, "Category is required."),
@@ -70,8 +71,8 @@ export async function createForumThreadAction(
         userId: user.$id,
         userName: user.name,
         userRole: getUserRole(user),
-        title: parsed.data.title,
-        body: parsed.data.body,
+        title: sanitizeHtml(parsed.data.title),
+        body: sanitizeHtml(parsed.data.body),
         createdAt: now,
         isPinned: false,
         isLocked: false,

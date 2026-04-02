@@ -56,7 +56,7 @@ export function escapeHtml(text: string): string {
 export function validateFileMimeType(
   buffer: Buffer,
   filename: string,
-  allowedMimes: string[]
+  _allowedMimes?: string[]
 ): boolean {
   const extension = filename.split(".").pop()?.toLowerCase();
 
@@ -91,8 +91,10 @@ export function generateIdempotencyKey(
   eventId: string,
   timestamp: string
 ): string {
-  const crypto = require("crypto");
-  return crypto
+  // Use dynamic import workaround for server-side crypto
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const nodeCrypto = require("crypto") as typeof import("crypto");
+  return nodeCrypto
     .createHash("sha256")
     .update(`${eventId}:${timestamp}`)
     .digest("hex");

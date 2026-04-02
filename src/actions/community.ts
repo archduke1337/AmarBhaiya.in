@@ -8,6 +8,7 @@ import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { sanitizeHtml } from "@/lib/utils/sanitize";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -85,7 +86,7 @@ export async function createForumReplyAction(
         userId: user.$id,
         userName: user.name,
         userRole: getUserRole(user),
-        body: parsed.data.body,
+        body: sanitizeHtml(parsed.data.body),
         createdAt: now,
         isDeleted: false,
       },

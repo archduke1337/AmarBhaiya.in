@@ -267,6 +267,10 @@ async function main() {
   await varchar(T6, "paymentId", 50);
   await enumCol(T6, "accessModel", ["free", "paid", "subscription"], true, "free");
   await bool(T6, "isActive", false, true);
+  await int(T6, "completedLessons", false, 0);
+  await int(T6, "progress", false, 0);
+  await dt(T6, "completedAt");
+  await enumCol(T6, "status", ["active", "completed"], false, "active");
   await idx(T6, "idx_userId", ["userId"]);
   await idx(T6, "idx_courseId", ["courseId"]);
   await idx(T6, "idx_user_course", ["userId", "courseId"], "unique");
@@ -430,9 +434,13 @@ async function main() {
   }));
   await varchar(T13, "userId", 50, true);
   await varchar(T13, "courseId", 50, true);
+  await varchar(T13, "courseTitle", 200);
+  await varchar(T13, "userName", 200);
   await dt(T13, "issuedAt", true);
   await varchar(T13, "fileId", 100);
   await urlCol(T13, "shareUrl");
+  await varchar(T13, "verificationToken", 200);
+  await bool(T13, "isPublished", false, true);
   await idx(T13, "idx_userId", ["userId"]);
   await idx(T13, "idx_courseId", ["courseId"]);
   await idx(T13, "idx_user_course", ["userId", "courseId"], "unique");

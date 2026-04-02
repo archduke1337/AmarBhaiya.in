@@ -5,7 +5,6 @@
 "use server";
 
 import { enrollInCourseAction } from "@/actions/enrollment";
-import type { ActionResult } from "@/lib/errors/action-result";
 
 export async function enrollInCourseFormAction(
   formData: FormData
