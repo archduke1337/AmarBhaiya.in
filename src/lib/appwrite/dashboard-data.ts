@@ -171,10 +171,21 @@ export type AdminLiveData = {
   upcoming: InstructorLiveSessionItem[];
 };
 
+export type ModerationActionItem = {
+  id: string;
+  moderatorName: string;
+  targetUserName: string;
+  action: string;
+  scope: string;
+  reason: string;
+  createdAt: string;
+};
+
 export type AdminModerationData = {
   actionsToday: number;
   openEscalations: number;
   activeTimeouts: number;
+  escalationItems: ModerationActionItem[];
 };
 
 export type AdminAuditItem = {
@@ -1277,10 +1288,24 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
     (row) => row.action === "timeout" && !row.revertedAt
   ).length;
 
+  const escalationItems = rows
+    .filter((row) => row.action === "flag" && !row.revertedAt)
+    .slice(0, 20)
+    .map((row) => ({
+      id: row.$id,
+      moderatorName: typeof row.moderatorName === "string" ? row.moderatorName : "Unknown",
+      targetUserName: typeof row.targetUserName === "string" ? row.targetUserName : "Unknown",
+      action: typeof row.action === "string" ? row.action : "flag",
+      scope: typeof row.scope === "string" ? row.scope : "platform",
+      reason: typeof row.reason === "string" ? row.reason : "",
+      createdAt: typeof row.createdAt === "string" ? row.createdAt : "",
+    }));
+
   return {
     actionsToday,
     openEscalations,
     activeTimeouts,
+    escalationItems,
   };
 }
 
