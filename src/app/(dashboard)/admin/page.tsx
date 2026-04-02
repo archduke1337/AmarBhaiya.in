@@ -4,6 +4,7 @@ import {
   CreditCard,
   BookOpen,
   Video,
+  Megaphone,
   TrendingUp,
   ArrowRight,
   Shield,
@@ -24,6 +25,7 @@ export default async function AdminDashboardPage() {
 
   const quickActions = [
     { label: "User Management", href: "/admin/users", icon: Users, description: "Manage roles and access" },
+    { label: "Marketing CMS", href: "/admin/marketing", icon: Megaphone, description: "Homepage copy and blog content" },
     { label: "Course Oversight", href: "/admin/courses", icon: BookOpen, description: "Publish, feature, or archive" },
     { label: "Payment Records", href: "/admin/payments", icon: CreditCard, description: "Transactions and refunds" },
     { label: "Live Session Control", href: "/admin/live", icon: Video, description: "Active and scheduled sessions" },
