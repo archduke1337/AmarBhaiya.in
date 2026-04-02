@@ -2,6 +2,7 @@
 
 import { ID } from "node-appwrite";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
@@ -169,7 +170,12 @@ export async function createCourseDraftAction(
     revalidatePath("/instructor");
     revalidatePath("/instructor/courses");
     revalidatePath("/admin/courses");
+    redirect("/instructor/courses");
   } catch (error) {
+    // redirect() throws a special error in Next.js - rethrow it
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      throw error;
+    }
     console.error(error instanceof Error ? error.message : "Failed to create course.");
   }
 }

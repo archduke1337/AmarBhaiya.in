@@ -134,16 +134,7 @@ export default async function AdminCategoriesPage() {
                     />
                   </label>
 
-                  <div className="flex items-end justify-between md:col-span-2">
-                    <form action={deleteCategoryAction}>
-                      <input type="hidden" name="categoryId" value={category.id} />
-                      <button
-                        type="submit"
-                        className="h-9 border border-destructive/30 px-4 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                      >
-                        Delete
-                      </button>
-                    </form>
+                  <div className="flex items-end justify-end md:col-span-2">
                     <button
                       type="submit"
                       className="h-9 border border-border px-4 text-sm transition-colors hover:bg-muted"
@@ -152,6 +143,17 @@ export default async function AdminCategoriesPage() {
                     </button>
                   </div>
                 </form>
+                <div className="flex items-center px-5 pb-4">
+                  <form action={deleteCategoryAction}>
+                    <input type="hidden" name="categoryId" value={category.id} />
+                    <button
+                      type="submit"
+                      className="h-9 border border-destructive/30 px-4 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </div>
               </article>
             ))}
           </div>

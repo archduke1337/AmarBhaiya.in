@@ -158,17 +158,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 />
               </label>
 
-              <div className="flex justify-between">
-                <form action={deleteModuleAction}>
-                  <input type="hidden" name="courseId" value={course.id} />
-                  <input type="hidden" name="moduleId" value={module.id} />
-                  <button
-                    type="submit"
-                    className="h-9 px-3 border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    Delete module
-                  </button>
-                </form>
+              <div className="flex justify-end">
                 <button
                   type="submit"
                   className="h-9 px-3 border border-border text-sm hover:bg-muted"
@@ -177,6 +167,18 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 </button>
               </div>
             </form>
+            <div className="flex items-center px-1">
+              <form action={deleteModuleAction}>
+                <input type="hidden" name="courseId" value={course.id} />
+                <input type="hidden" name="moduleId" value={module.id} />
+                <button
+                  type="submit"
+                  className="h-9 px-3 border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  Delete module
+                </button>
+              </form>
+            </div>
 
             <form action={createCurriculumLessonAction} className="border border-border p-4 space-y-3">
               <input type="hidden" name="courseId" value={course.id} />
@@ -346,17 +348,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                       Free preview (demo for paid courses)
                     </label>
 
-                    <div className="flex justify-between">
-                      <form action={deleteLessonAction}>
-                        <input type="hidden" name="courseId" value={course.id} />
-                        <input type="hidden" name="lessonId" value={lesson.id} />
-                        <button
-                          type="submit"
-                          className="h-9 px-3 border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </form>
+                    <div className="flex justify-end">
                       <button
                         type="submit"
                         className="h-9 px-3 border border-border text-sm hover:bg-muted"
@@ -365,6 +357,18 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                       </button>
                     </div>
                   </form>
+                  <div className="flex items-center pt-2">
+                    <form action={deleteLessonAction}>
+                      <input type="hidden" name="courseId" value={course.id} />
+                      <input type="hidden" name="lessonId" value={lesson.id} />
+                      <button
+                        type="submit"
+                        className="h-9 px-3 border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        Delete lesson
+                      </button>
+                    </form>
+                  </div>
                 </li>
               ))}
             </ul>

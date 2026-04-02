@@ -217,7 +217,7 @@ function buildActionItems(
       label: `${stats.pendingReviews} submissions to review`,
       description: "Grade pending assignments",
       badge: "Urgent",
-      href: "/instructor/students",
+      href: "/instructor/submissions",
     });
   }
 

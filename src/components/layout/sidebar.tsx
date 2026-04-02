@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Bell,
   BookOpen,
+  ClipboardCheck,
   CreditCard,
   FileText,
   Folder,
   Flag,
+  GraduationCap,
   LayoutDashboard,
   Megaphone,
   MessageSquare,
+  Repeat,
   Shield,
+  TrendingUp,
+  UserCheck,
   UserRound,
   Users,
   Video,
@@ -37,11 +43,15 @@ function getNavItems(role: Role, userId: string): NavItem[] {
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
       { label: "Users", href: "/admin/users", icon: Users },
+      { label: "Student Data", href: "/admin/students", icon: GraduationCap },
+      { label: "Instructors", href: "/admin/instructors", icon: UserCheck },
       { label: "Courses", href: "/admin/courses", icon: BookOpen },
       { label: "Categories", href: "/admin/categories", icon: Folder },
       { label: "Payments", href: "/admin/payments", icon: CreditCard },
+      { label: "Subscriptions", href: "/admin/subscriptions", icon: Repeat },
       { label: "Live Sessions", href: "/admin/live", icon: Video },
       { label: "Moderation", href: "/admin/moderation", icon: Shield },
+      { label: "Notifications", href: "/admin/notifications", icon: Bell },
       { label: "Audit Logs", href: "/admin/audit", icon: FileText },
     ];
   }
@@ -50,10 +60,12 @@ function getNavItems(role: Role, userId: string): NavItem[] {
     return [
       { label: "Dashboard", href: "/instructor", icon: LayoutDashboard },
       { label: "My Courses", href: "/instructor/courses", icon: BookOpen },
+      { label: "Resources", href: "/instructor/resources", icon: FileText },
       { label: "Categories", href: "/instructor/categories", icon: Folder },
       { label: "Students", href: "/instructor/students", icon: Users },
+      { label: "Submissions", href: "/instructor/submissions", icon: ClipboardCheck },
       { label: "Live Sessions", href: "/instructor/live", icon: Video },
-      { label: "Community", href: "/instructor/community", icon: MessageSquare },
+      { label: "Earnings", href: "/instructor/earnings", icon: TrendingUp },
     ];
   }
 

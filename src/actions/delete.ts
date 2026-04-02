@@ -240,32 +240,6 @@ export async function deleteCategoryAction(formData: FormData): Promise<void> {
   revalidatePath("/instructor/categories");
 }
 
-// ── Delete Blog Post ────────────────────────────────────────────────────────
-
-export async function deleteBlogPostAction(formData: FormData): Promise<void> {
-  await requireRole(["admin"]);
-
-  const postId = String(formData.get("postId") ?? "");
-  if (!postId) return;
-
-  const { tablesDB } = await createAdminClient();
-
-  try {
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.blogPosts,
-      rowId: postId,
-    });
-  } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to delete blog post."
-    );
-  }
-
-  revalidatePath("/blog");
-  revalidatePath("/admin/marketing");
-}
-
 // ── Delete Forum Thread ─────────────────────────────────────────────────────
 // Admin or Moderator. Cascades: deletes all replies.
 
