@@ -1,4 +1,10 @@
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { Client, Storage } from "appwrite";
+
+const storageClient = new Client()
+  .setEndpoint(APPWRITE_CONFIG.endpoint)
+  .setProject(APPWRITE_CONFIG.projectId);
+const storage = new Storage(storageClient);
 
 /**
  * Build a file preview URL (for images — thumbnails, avatars, etc.).
@@ -10,16 +16,12 @@ export function getFilePreviewUrl(
   height?: number
 ): string {
   if (!fileId) return "";
-
-  const base = `${APPWRITE_CONFIG.endpoint}/storage/buckets/${bucketId}/files/${fileId}/preview`;
-  const params = new URLSearchParams({
-    project: APPWRITE_CONFIG.projectId,
-  });
-
-  if (width) params.set("width", String(width));
-  if (height) params.set("height", String(height));
-
-  return `${base}?${params.toString()}`;
+  return storage.getFilePreview({
+    bucketId,
+    fileId,
+    width,
+    height,
+  }).toString();
 }
 
 /**
@@ -36,6 +38,8 @@ export function getFileDownloadUrl(bucketId: string, fileId: string): string {
  */
 export function getFileViewUrl(bucketId: string, fileId: string): string {
   if (!fileId) return "";
-
-  return `${APPWRITE_CONFIG.endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`;
+  return storage.getFileView({
+    bucketId,
+    fileId,
+  }).toString();
 }

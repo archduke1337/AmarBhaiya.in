@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { getFileViewUrl } from "@/lib/utils/file-urls";
+import { getFilePreviewUrl, getFileViewUrl } from "@/lib/utils/file-urls";
 import { VideoPlayer } from "@/components/video-player";
 import { getCourseProgress } from "@/actions/enrollment";
 import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
@@ -102,9 +102,15 @@ export default async function LessonViewerPage({ params }: PageProps) {
       : null;
 
   // Build video URL
-  const videoFileId = String(lesson.videoFileId ?? "");
+  const videoFileId = String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? "");
+  const thumbnailFileId = String(
+    lesson.thumbnailFileId ?? lesson.videoThumbnailFileId ?? lesson.thumbnailId ?? ""
+  );
   const videoUrl = videoFileId
     ? getFileViewUrl(APPWRITE_CONFIG.buckets.courseVideos, videoFileId)
+    : "";
+  const posterUrl = thumbnailFileId
+    ? getFilePreviewUrl(APPWRITE_CONFIG.buckets.courseThumbnails, thumbnailFileId, 1280, 720)
     : "";
 
   // Get progress + comments
@@ -128,6 +134,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
       <VideoPlayer
         src={videoUrl}
         title={String(lesson.title ?? "Lesson")}
+        poster={posterUrl}
       />
 
       {/* Lesson info + mark complete */}

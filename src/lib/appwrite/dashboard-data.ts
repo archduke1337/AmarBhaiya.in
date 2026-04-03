@@ -754,7 +754,12 @@ export async function getInstructorCourseSummary(
     price: Number(course.price ?? 0),
     totalLessons: Number(course.totalLessons ?? 0),
     totalDuration: Number(course.totalDuration ?? 0),
-    thumbnailId: typeof course.thumbnailId === "string" ? course.thumbnailId : "",
+    thumbnailId:
+      typeof course.thumbnailFileId === "string" && course.thumbnailFileId.length > 0
+        ? course.thumbnailFileId
+        : typeof course.thumbnailId === "string"
+          ? course.thumbnailId
+          : "",
   };
 }
 
@@ -1566,7 +1571,12 @@ export async function getPublicCourses(): Promise<PublicCourseCard[]> {
         typeof c.shortDescription === "string" ? c.shortDescription : "",
       accessModel: typeof c.accessModel === "string" ? c.accessModel : "free",
       price: Number(c.price ?? 0),
-      thumbnailId: typeof c.thumbnailId === "string" ? c.thumbnailId : "",
+      thumbnailId:
+        typeof c.thumbnailFileId === "string" && c.thumbnailFileId.length > 0
+          ? c.thumbnailFileId
+          : typeof c.thumbnailId === "string"
+            ? c.thumbnailId
+            : "",
       instructorName:
         typeof c.instructorName === "string" ? c.instructorName : "",
       totalLessons: Number(c.totalLessons ?? 0),
@@ -1674,7 +1684,12 @@ export async function getPublicCourseBySlug(
       typeof course.shortDescription === "string" ? course.shortDescription : "",
     accessModel: typeof course.accessModel === "string" ? course.accessModel : "free",
     price: Number(course.price ?? 0),
-    thumbnailId: typeof course.thumbnailId === "string" ? course.thumbnailId : "",
+    thumbnailId:
+      typeof course.thumbnailFileId === "string" && course.thumbnailFileId.length > 0
+        ? course.thumbnailFileId
+        : typeof course.thumbnailId === "string"
+          ? course.thumbnailId
+          : "",
     instructorId: typeof course.instructorId === "string" ? course.instructorId : "",
     instructorName:
       typeof course.instructorName === "string" ? course.instructorName : "",

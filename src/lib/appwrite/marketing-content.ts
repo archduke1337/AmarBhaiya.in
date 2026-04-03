@@ -3,6 +3,7 @@ import type { Models } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { getFilePreviewUrl } from "@/lib/utils/file-urls";
 import type {
   BlogPostRecord,
   Category,
@@ -40,6 +41,8 @@ export type PublicCourseListItem = {
   totalDurationHours: number;
   updatedAt: string;
   accessModel: string;
+  thumbnailFileId: string;
+  thumbnailUrl: string;
 };
 
 export type PublicCourseDetail = PublicCourseListItem & {
@@ -293,6 +296,13 @@ function toPublicCourse(
   categoryById: Map<string, { slug: string; name: string }>,
   enrollmentCounts: Map<string, number>
 ): PublicCourseListItem {
+  const thumbnailFileId =
+    typeof row.thumbnailFileId === "string" && row.thumbnailFileId.length > 0
+      ? row.thumbnailFileId
+      : typeof row.thumbnailId === "string"
+        ? row.thumbnailId
+        : "";
+
   const categoryEntry =
     (typeof row.categoryId === "string" && categoryById.get(row.categoryId)) ||
     null;
@@ -324,6 +334,10 @@ function toPublicCourse(
       typeof row.accessModel === "string" && row.accessModel.length > 0
         ? row.accessModel
         : "free",
+    thumbnailFileId,
+    thumbnailUrl: thumbnailFileId
+      ? getFilePreviewUrl(APPWRITE_CONFIG.buckets.courseThumbnails, thumbnailFileId, 1280, 720)
+      : "",
   };
 }
 
