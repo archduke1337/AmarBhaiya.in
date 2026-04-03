@@ -656,7 +656,31 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
     return;
   }
 
-  const { tablesDB } = await createAdminClient();
+  if (parsed.data.targetUserId === user.$id) {
+    return;
+  }
+
+  const entityType = parsed.data.entityType;
+  const entityId = parsed.data.entityId;
+  const isThreadAction =
+    typeof entityType === "string" &&
+    entityType.toLowerCase().includes("thread") &&
+    typeof entityId === "string" &&
+    entityId.length > 0;
+
+  if ((parsed.data.action === "pin" || parsed.data.action === "unpin") && !isThreadAction) {
+    return;
+  }
+
+  const { tablesDB, users } = await createAdminClient();
+
+  let targetUserName = parsed.data.targetUserName || parsed.data.targetUserId;
+  try {
+    const targetUser = await users.get({ userId: parsed.data.targetUserId });
+    targetUserName = targetUser.name || targetUser.email || targetUserName;
+  } catch {
+    // Fall back to the submitted display name when the user record is unavailable.
+  }
 
   await tablesDB.createRow({
     databaseId: APPWRITE_CONFIG.databaseId,
@@ -666,7 +690,7 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
       moderatorId: user.$id,
       moderatorName: user.name,
       targetUserId: parsed.data.targetUserId,
-      targetUserName: parsed.data.targetUserName || parsed.data.targetUserId,
+      targetUserName,
       action: parsed.data.action,
       scope: parsed.data.scope,
       reason: parsed.data.reason,
@@ -677,14 +701,6 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
       revertedBy: "",
     },
   });
-
-  const entityType = parsed.data.entityType;
-  const entityId = parsed.data.entityId;
-  const isThreadAction =
-    typeof entityType === "string" &&
-    entityType.toLowerCase().includes("thread") &&
-    typeof entityId === "string" &&
-    entityId.length > 0;
 
   if (isThreadAction && (parsed.data.action === "pin" || parsed.data.action === "unpin")) {
     try {
