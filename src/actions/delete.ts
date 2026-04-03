@@ -215,6 +215,7 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
 }
 
 // ── Delete Category ─────────────────────────────────────────────────────────
+// SECURITY FIX: Prevent deletion if courses are assigned to this category
 
 export async function deleteCategoryAction(formData: FormData): Promise<void> {
   await requireRole(["admin"]);
@@ -225,6 +226,20 @@ export async function deleteCategoryAction(formData: FormData): Promise<void> {
   const { tablesDB } = await createAdminClient();
 
   try {
+    // VALIDATION: Check if any courses use this category
+    const coursesUsingCategory = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courses,
+      queries: [Query.equal("categoryId", [categoryId]), Query.limit(1)],
+    });
+
+    if (coursesUsingCategory.total > 0) {
+      console.error(
+        `[Delete] Cannot delete category ${categoryId}. ${coursesUsingCategory.total} courses assigned to this category.`
+      );
+      return; // Prevent deletion of category with active courses
+    }
+
     await tablesDB.deleteRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.categories,
