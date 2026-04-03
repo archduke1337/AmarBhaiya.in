@@ -47,6 +47,56 @@ export type ForumThreadDetail = {
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
+async function getForumThreadRow(threadId: string): Promise<AnyRow | null> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    return (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.forumThreads,
+      rowId: threadId,
+    })) as AnyRow;
+  } catch {
+    return null;
+  }
+}
+
+async function syncForumThreadReplyMetadata(threadId: string): Promise<void> {
+  const { tablesDB } = await createAdminClient();
+  const thread = await getForumThreadRow(threadId);
+  if (!thread) {
+    return;
+  }
+
+  const replies = await tablesDB.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.forumReplies,
+    queries: [
+      Query.equal("threadId", [threadId]),
+      Query.equal("isDeleted", [false]),
+      Query.orderDesc("$createdAt"),
+      Query.limit(1),
+    ],
+  });
+
+  const latestReply = replies.rows[0] as AnyRow | undefined;
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.forumThreads,
+    rowId: threadId,
+    data: {
+      replyCount: replies.total,
+      lastReplyAt: String(
+        latestReply?.createdAt
+          ?? latestReply?.$createdAt
+          ?? thread.createdAt
+          ?? thread.$createdAt
+          ?? new Date().toISOString()
+      ),
+    },
+  });
+}
+
 // ── Create Reply ────────────────────────────────────────────────────────────
 
 export async function createForumReplyAction(
@@ -92,19 +142,7 @@ export async function createForumReplyAction(
       },
     });
 
-    // Update thread reply count and lastReplyAt
-    const { tablesDB: adminDB } = await createAdminClient();
-    const currentCount = Number(thread.replyCount ?? 0);
-
-    await adminDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.forumThreads,
-      rowId: parsed.data.threadId,
-      data: {
-        replyCount: currentCount + 1,
-        lastReplyAt: now,
-      },
-    });
+    await syncForumThreadReplyMetadata(parsed.data.threadId);
 
     revalidatePath("/app/community");
     revalidatePath(`/app/community/${parsed.data.threadId}`);
@@ -212,6 +250,17 @@ export async function deleteForumReplyAction(
   const { tablesDB } = await createAdminClient();
 
   try {
+    const reply = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.forumReplies,
+      rowId: replyId,
+    }).catch(() => null)) as AnyRow | null;
+    if (!reply || Boolean(reply.isDeleted)) {
+      return;
+    }
+
+    const resolvedThreadId = String(reply.threadId ?? threadId);
+
     await tablesDB.updateRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.forumReplies,
@@ -222,8 +271,10 @@ export async function deleteForumReplyAction(
       },
     });
 
-    if (threadId) {
-      revalidatePath(`/app/community/${threadId}`);
+    await syncForumThreadReplyMetadata(resolvedThreadId);
+
+    if (resolvedThreadId) {
+      revalidatePath(`/app/community/${resolvedThreadId}`);
     }
     revalidatePath("/app/community");
     revalidatePath("/moderator/community");

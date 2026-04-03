@@ -8,6 +8,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
 type AnyRow = Record<string, unknown> & { $id: string };
+const VALID_SUBSCRIPTION_STATUSES = new Set(["active", "expired", "cancelled"]);
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -162,6 +163,7 @@ export async function adminUpdateSubscriptionAction(
   const subscriptionId = String(formData.get("subscriptionId") ?? "");
   const status = String(formData.get("status") ?? "");
   if (!subscriptionId || !status) return;
+  if (!VALID_SUBSCRIPTION_STATUSES.has(status)) return;
 
   const { tablesDB } = await createAdminClient();
 
@@ -190,7 +192,10 @@ export async function adminCreateSubscriptionAction(
 
   const userId = String(formData.get("userId") ?? "").trim();
   const planName = String(formData.get("planName") ?? "").trim();
-  const durationMonths = Number(formData.get("durationMonths") ?? 1);
+  const durationMonths = Math.max(
+    1,
+    Math.min(36, Math.floor(Number(formData.get("durationMonths") ?? 1) || 1))
+  );
 
   if (!userId || !planName) return;
 

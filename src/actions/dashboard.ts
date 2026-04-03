@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
+import { userCanManageCourse } from "@/lib/appwrite/access";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
@@ -183,7 +184,7 @@ export async function createCourseDraftAction(
 export async function createLiveSessionAction(
   formData: FormData
 ): Promise<void> {
-  const { user } = await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const payload = {
     courseId: String(formData.get("courseId") ?? ""),
@@ -198,6 +199,11 @@ export async function createLiveSessionAction(
   }
 
   try {
+    const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
+    if (!course) {
+      return;
+    }
+
     const { tablesDB } = await createAdminClient();
 
     await tablesDB.createRow({
@@ -206,7 +212,10 @@ export async function createLiveSessionAction(
       rowId: ID.unique(),
       data: {
         courseId: parsed.data.courseId,
-        instructorId: user.$id,
+        instructorId:
+          role === "admin"
+            ? String(course.instructorId ?? user.$id)
+            : user.$id,
         title: parsed.data.title,
         description: parsed.data.description,
         scheduledAt: normalizeIsoDate(parsed.data.scheduledAt),
@@ -219,6 +228,7 @@ export async function createLiveSessionAction(
 
     revalidatePath("/instructor/live");
     revalidatePath("/admin/live");
+    revalidatePath("/app/live");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create live session."
