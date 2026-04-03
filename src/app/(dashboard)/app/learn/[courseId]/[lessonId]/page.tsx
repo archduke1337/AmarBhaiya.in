@@ -7,7 +7,6 @@ import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import {
-  getFileDownloadUrl,
   getFilePreviewUrl,
 } from "@/lib/utils/file-urls";
 import { LessonVideoPlayer } from "@/components/lesson-video-player";
@@ -170,7 +169,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
         type === "link"
           ? url
           : fileId
-            ? getFileDownloadUrl(APPWRITE_CONFIG.buckets.courseResources, fileId)
+            ? `/api/course-resource/${resource.$id}`
             : "";
 
       if (!href) {

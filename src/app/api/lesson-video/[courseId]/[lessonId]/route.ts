@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
+import { proxyAppwriteBucketFile } from "@/lib/appwrite/file-proxy";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 
 export const runtime = "nodejs";
@@ -56,57 +57,10 @@ export async function GET(
     return NextResponse.json({ error: "No video attached to this lesson" }, { status: 404 });
   }
 
-  const upstreamResponse = await fetch(
-    `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.buckets.courseVideos}/files/${fileId}/view`,
-    {
-      method: "GET",
-      headers: {
-        "X-Appwrite-Project": APPWRITE_CONFIG.projectId,
-        "X-Appwrite-Key": process.env.APPWRITE_API_KEY ?? "",
-        ...(request.headers.get("range")
-          ? { Range: request.headers.get("range") as string }
-          : {}),
-      },
-      cache: "no-store",
-    }
-  ).catch(() => null);
-
-  if (!upstreamResponse) {
-    return NextResponse.json({ error: "Failed to stream lesson video" }, { status: 502 });
-  }
-
-  if (!upstreamResponse.ok && upstreamResponse.status !== 206) {
-    const errorText = await upstreamResponse.text().catch(() => "");
-    return NextResponse.json(
-      {
-        error: errorText || "Failed to stream lesson video",
-      },
-      { status: upstreamResponse.status }
-    );
-  }
-
-  const headers = new Headers();
-  const headerNames = [
-    "accept-ranges",
-    "cache-control",
-    "content-length",
-    "content-range",
-    "content-type",
-    "etag",
-    "last-modified",
-  ];
-
-  for (const headerName of headerNames) {
-    const value = upstreamResponse.headers.get(headerName);
-    if (value) {
-      headers.set(headerName, value);
-    }
-  }
-
-  headers.set("Content-Disposition", "inline");
-
-  return new Response(upstreamResponse.body, {
-    status: upstreamResponse.status,
-    headers,
+  return proxyAppwriteBucketFile({
+    request,
+    bucketId: APPWRITE_CONFIG.buckets.courseVideos,
+    fileId,
+    mode: "view",
   });
 }

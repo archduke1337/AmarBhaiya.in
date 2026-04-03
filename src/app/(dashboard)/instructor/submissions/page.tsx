@@ -17,12 +17,10 @@ import {
 } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import {
   getInstructorSubmissionQueue,
   type InstructorSubmissionQueueItem,
 } from "@/lib/appwrite/dashboard-data";
-import { getFileViewUrl } from "@/lib/utils/file-urls";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 
 export default async function InstructorSubmissionsPage() {
@@ -261,10 +259,7 @@ function SubmissionCard({
             </Link>
             {submission.fileId ? (
               <a
-                href={getFileViewUrl(
-                  APPWRITE_CONFIG.buckets.courseResources,
-                  submission.fileId
-                )}
+                href={`/api/submission-file/${submission.id}?download=1`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-8 items-center gap-1 border border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"

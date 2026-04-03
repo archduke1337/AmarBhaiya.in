@@ -6,12 +6,12 @@ import { submitAssignmentAction } from "@/actions/assignments";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { Query } from "node-appwrite";
-import { getFileViewUrl } from "@/lib/utils/file-urls";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
 type StudentAssignment = {
   id: string;
+  submissionId: string;
   courseId: string;
   courseTitle: string;
   title: string;
@@ -143,6 +143,7 @@ async function getStudentAssignments(
 
     return {
       id: row.$id,
+      submissionId: String(submission?.$id ?? ""),
       courseId: String(row.courseId ?? ""),
       courseTitle:
         courseTitleById.get(String(row.courseId ?? "")) ?? "Course",
@@ -286,19 +287,16 @@ export default async function StudentAssignmentsPage() {
                       )}
                     </div>
 
-                    {a.fileId && (
+                    {a.fileId && a.submissionId && (
                       <div className="mt-2">
                         <a
-                          href={getFileViewUrl(
-                            APPWRITE_CONFIG.buckets.courseResources,
-                            a.fileId
-                          )}
+                          href={`/api/submission-file/${a.submissionId}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs border border-border px-2 py-1 hover:bg-muted transition-colors"
                         >
                           <Download className="size-3" />
-                          View your submission
+                          Open your submission
                         </a>
                       </div>
                     )}
