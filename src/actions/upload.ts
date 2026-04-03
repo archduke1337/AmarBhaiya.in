@@ -7,16 +7,21 @@ import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
+import type { Role } from "@/lib/utils/constants";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
 async function canManageCourse(
   courseId: string,
-  role: "admin" | "instructor",
+  role: Role,
   userId: string
 ): Promise<boolean> {
   if (role === "admin") {
     return true;
+  }
+
+  if (role !== "instructor") {
+    return false;
   }
 
   const { tablesDB } = await createAdminClient();
@@ -36,11 +41,15 @@ async function canManageCourse(
 
 async function canManageResource(
   resourceId: string,
-  role: "admin" | "instructor",
+  role: Role,
   userId: string
 ): Promise<boolean> {
   if (role === "admin") {
     return true;
+  }
+
+  if (role !== "instructor") {
+    return false;
   }
 
   const { tablesDB } = await createAdminClient();

@@ -134,12 +134,15 @@ const MotionDrawer: React.FC<SideMenuProps> = ({
 
   const isOpen =
     controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
-  const setIsOpen = (value: boolean) => {
-    if (controlledIsOpen === undefined) {
-      setInternalIsOpen(value);
-    }
-    onToggle?.(value);
-  };
+  const setIsOpen = React.useCallback(
+    (value: boolean) => {
+      if (controlledIsOpen === undefined) {
+        setInternalIsOpen(value);
+      }
+      onToggle?.(value);
+    },
+    [controlledIsOpen, onToggle]
+  );
 
   // Focus management
   React.useEffect(() => {
@@ -161,7 +164,7 @@ const MotionDrawer: React.FC<SideMenuProps> = ({
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);
     }
-  }, [isOpen]);
+  }, [isOpen, setIsOpen]);
 
   const getDrawerVariants = () => {
     if (direction === 'left') {
