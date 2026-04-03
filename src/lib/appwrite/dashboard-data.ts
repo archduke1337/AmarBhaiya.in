@@ -1422,6 +1422,10 @@ export type StudentEnrolledCourse = {
   totalLessons: number;
   completedLessons: number;
   progressPercent: number;
+  continueHref: string;
+  continueLessonTitle: string;
+  resumePercent: number;
+  lastActivityAt: string | null;
 };
 
 export async function getStudentEnrolledCourses(
@@ -1469,45 +1473,160 @@ export async function getStudentEnrolledCourses(
     APPWRITE_CONFIG.tables.progress,
     [Query.equal("userId", [userId]), Query.limit(2000)]
   );
+  const lessonRows = await listRowsByFieldValues<LessonRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.lessons,
+    "courseId",
+    courseIds
+  );
+
+  const lessonsByCourse = new Map<string, LessonRow[]>();
+  for (const lesson of lessonRows) {
+    const courseId = typeof lesson.courseId === "string" ? lesson.courseId : "";
+    if (!courseId) {
+      continue;
+    }
+
+    const current = lessonsByCourse.get(courseId) ?? [];
+    current.push(lesson);
+    lessonsByCourse.set(courseId, current);
+  }
+
+  for (const [courseId, rows] of lessonsByCourse) {
+    lessonsByCourse.set(
+      courseId,
+      [...rows].sort(
+        (left, right) => Number(left.order ?? 0) - Number(right.order ?? 0)
+      )
+    );
+  }
 
   const completedByCourse = new Map<string, number>();
+  const progressByCourse = new Map<string, AnyRow[]>();
   for (const row of progressResult.rows) {
     const cid = typeof row.courseId === "string" ? row.courseId : "";
     const completedAt =
       typeof row.completedAt === "string" ? row.completedAt.trim() : "";
-    if (cid && completedAt) {
+    if (!cid) {
+      continue;
+    }
+
+    const courseRows = progressByCourse.get(cid) ?? [];
+    courseRows.push(row);
+    progressByCourse.set(cid, courseRows);
+
+    if (completedAt) {
       completedByCourse.set(cid, (completedByCourse.get(cid) ?? 0) + 1);
     }
   }
 
   return courseIds
-    .map((courseId) => {
-      const course = courseMap.get(courseId);
-      if (!course) return null;
-      const totalLessons = Number(course.totalLessons ?? 0);
-      const completedLessons = completedByCourse.get(courseId) ?? 0;
-      const progressPercent =
-        totalLessons > 0
-          ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
-          : 0;
+      .map((courseId) => {
+        const course = courseMap.get(courseId);
+        if (!course) return null;
+        const courseLessonRows = lessonsByCourse.get(courseId) ?? [];
+        const courseProgressRows = progressByCourse.get(courseId) ?? [];
+        const totalLessons = Number(course.totalLessons ?? 0);
+        const completedLessons = completedByCourse.get(courseId) ?? 0;
+        const progressPercent =
+          totalLessons > 0
+            ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
+            : 0;
+        const completedLessonIds = new Set(
+          courseProgressRows
+            .filter((row) => {
+              const completedAt =
+                typeof row.completedAt === "string" ? row.completedAt.trim() : "";
+              return completedAt.length > 0;
+            })
+            .map((row) => String(row.lessonId ?? ""))
+            .filter(Boolean)
+        );
+        const latestPartialRow = [...courseProgressRows]
+          .filter((row) => {
+            const completedAt =
+              typeof row.completedAt === "string" ? row.completedAt.trim() : "";
+            return completedAt.length === 0 && Number(row.percentComplete ?? 0) > 0;
+          })
+          .sort((left, right) => {
+            const leftTime =
+              toDate(left.$updatedAt ?? left.$createdAt)?.getTime() ?? 0;
+            const rightTime =
+              toDate(right.$updatedAt ?? right.$createdAt)?.getTime() ?? 0;
+            if (leftTime !== rightTime) {
+              return rightTime - leftTime;
+            }
 
-      return {
-        id: courseId,
-        title: typeof course.title === "string" ? course.title : "Untitled",
-        slug: typeof course.slug === "string" ? course.slug : courseId,
-        category:
-          (typeof course.categoryId === "string" &&
-            categoryNameById.get(course.categoryId)) ||
-          "General",
-        totalLessons,
-        completedLessons,
-        progressPercent,
-      };
-    })
+            return Number(right.percentComplete ?? 0) - Number(left.percentComplete ?? 0);
+          })[0];
+        const latestPartialLessonId = String(latestPartialRow?.lessonId ?? "");
+        const latestPartialLesson = courseLessonRows.find(
+          (lesson) => lesson.$id === latestPartialLessonId
+        );
+        const nextIncompleteLesson = courseLessonRows.find(
+          (lesson) => !completedLessonIds.has(lesson.$id)
+        );
+        const continueLesson =
+          progressPercent >= 100
+            ? null
+            : latestPartialLesson ?? nextIncompleteLesson ?? courseLessonRows[0] ?? null;
+        const resumePercent =
+          latestPartialLesson && continueLesson?.$id === latestPartialLesson.$id
+            ? Math.max(
+                0,
+                Math.min(99, Math.round(Number(latestPartialRow?.percentComplete ?? 0)))
+              )
+            : 0;
+        const latestActivityRow = [...courseProgressRows].sort((left, right) => {
+          const leftTime =
+            toDate(left.$updatedAt ?? left.completedAt ?? left.$createdAt)?.getTime() ?? 0;
+          const rightTime =
+            toDate(right.$updatedAt ?? right.completedAt ?? right.$createdAt)?.getTime() ?? 0;
+          return rightTime - leftTime;
+        })[0];
+        const lastActivityAt =
+          typeof latestActivityRow?.$updatedAt === "string"
+            ? latestActivityRow.$updatedAt
+            : typeof latestActivityRow?.completedAt === "string" && latestActivityRow.completedAt
+              ? latestActivityRow.completedAt
+              : typeof latestActivityRow?.$createdAt === "string"
+                ? latestActivityRow.$createdAt
+                : null;
+        const slug = typeof course.slug === "string" ? course.slug : courseId;
+        const continueHref =
+          progressPercent >= 100
+            ? `/app/courses/${slug}`
+            : continueLesson
+              ? `/app/learn/${courseId}/${continueLesson.$id}`
+              : `/app/courses/${slug}`;
+
+        return {
+          id: courseId,
+          title: typeof course.title === "string" ? course.title : "Untitled",
+          slug,
+          category:
+            (typeof course.categoryId === "string" &&
+              categoryNameById.get(course.categoryId)) ||
+            "General",
+          totalLessons,
+          completedLessons,
+          progressPercent,
+          continueHref,
+          continueLessonTitle:
+            typeof continueLesson?.title === "string" ? continueLesson.title : "",
+          resumePercent,
+          lastActivityAt,
+        };
+      })
     .filter((c): c is StudentEnrolledCourse => c !== null)
     .sort((a, b) => {
       if (a.progressPercent >= 100 && b.progressPercent < 100) return 1;
       if (b.progressPercent >= 100 && a.progressPercent < 100) return -1;
+      const aTime = toDate(a.lastActivityAt)?.getTime() ?? 0;
+      const bTime = toDate(b.lastActivityAt)?.getTime() ?? 0;
+      if (aTime !== bTime) {
+        return bTime - aTime;
+      }
       return b.progressPercent - a.progressPercent;
     });
 }

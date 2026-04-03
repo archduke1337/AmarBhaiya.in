@@ -95,15 +95,19 @@ function CourseCard({
     totalLessons: number;
     completedLessons: number;
     progressPercent: number;
+    continueHref: string;
+    continueLessonTitle: string;
+    resumePercent: number;
   };
   certificate?: { id: string; shareUrl: string };
 }) {
   const isComplete = course.progressPercent >= 100;
+  const primaryHref = isComplete ? `/app/courses/${course.slug || course.id}` : course.continueHref;
 
   return (
     <div className="flex flex-col border border-border transition-colors hover:border-foreground/20">
       <Link
-        href={`/app/courses/${course.slug || course.id}`}
+        href={primaryHref}
         className="group flex flex-col gap-4 p-5"
       >
         <div className="flex items-center justify-between gap-3">
@@ -116,6 +120,14 @@ function CourseCard({
         <h3 className="text-lg font-medium leading-tight group-hover:underline">
           {course.title}
         </h3>
+
+        {!isComplete && course.continueLessonTitle && (
+          <p className="text-xs text-muted-foreground">
+            {course.resumePercent > 0
+              ? `Resume ${course.continueLessonTitle} at ${course.resumePercent}%`
+              : `Up next: ${course.continueLessonTitle}`}
+          </p>
+        )}
 
         <div className="flex items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden bg-muted">
@@ -139,7 +151,11 @@ function CourseCard({
           </span>
           <span className="flex items-center gap-1 transition-colors group-hover:text-foreground">
             <ArrowRight className="size-3" />
-            {isComplete ? "Review" : "Continue"}
+            {isComplete
+              ? "Review"
+              : course.resumePercent > 0
+                ? "Resume"
+                : "Continue"}
           </span>
         </div>
       </Link>

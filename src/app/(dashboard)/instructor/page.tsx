@@ -9,13 +9,17 @@ import {
   Layers,
 } from "lucide-react";
 
+import {
+  getInstructorCourseResources,
+  getInstructorResources,
+} from "@/actions/resources";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getInstructorDashboardStats,
   getInstructorCourseList,
   getInstructorLiveSessions,
 } from "@/lib/appwrite/dashboard-data";
-import { formatCompactNumber } from "@/lib/utils/format";
+import { formatCompactNumber, formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import {
   PageHeader,
   StatCard,
@@ -29,14 +33,20 @@ export default async function InstructorDashboardPage() {
   const { user, role } = await requireRole(["admin", "instructor"]);
   const scope = { userId: user.$id, role };
 
-  const [stats, courses, sessions] = await Promise.all([
+  const [stats, courses, sessions, resources, courseResources] = await Promise.all([
     getInstructorDashboardStats(scope),
     getInstructorCourseList(scope),
     getInstructorLiveSessions(scope),
+    getInstructorResources(scope),
+    getInstructorCourseResources(scope),
   ]);
 
   const draftCourses = courses.filter((c) => c.status === "Draft");
   const publishedCourses = courses.filter((c) => c.status === "Published");
+  const standaloneDrafts = resources.filter((resource) => !resource.isPublished).length;
+  const standalonePublished = resources.length - standaloneDrafts;
+  const sessionsMissingJoinLink = sessions.filter((session) => !session.streamUrl).length;
+  const resourceCourseCount = new Set(courseResources.map((resource) => resource.courseId)).size;
 
   return (
     <div className="flex flex-col gap-8">
@@ -151,7 +161,11 @@ export default async function InstructorDashboardPage() {
           {/* Action Items */}
           <ActivityFeed
             title="Action Items"
-            items={buildActionItems(stats, draftCourses)}
+            items={buildActionItems(stats, draftCourses, {
+              courseResources: courseResources.length,
+              standaloneResources: resources.length,
+              sessionsMissingJoinLink,
+            })}
           />
 
           {/* Upcoming Sessions */}
@@ -162,14 +176,39 @@ export default async function InstructorDashboardPage() {
             items={sessions.slice(0, 4).map((session) => ({
               id: session.id,
               label: session.title,
-              description: `${session.rsvpCount} RSVPs`,
+              description: [
+                session.scheduledAt
+                  ? formatDateTime(session.scheduledAt)
+                  : "No schedule set yet",
+                `${session.rsvpCount} RSVPs`,
+                session.streamUrl ? null : "Join link missing",
+              ]
+                .filter(Boolean)
+                .join(" · "),
               badge:
                 session.status === "live"
                   ? "LIVE"
                   : session.status === "scheduled"
                     ? "Upcoming"
                     : session.status,
+              timestamp: session.scheduledAt
+                ? formatRelativeTime(session.scheduledAt)
+                : undefined,
+              href: `/instructor/live#session-${session.id}`,
             }))}
+          />
+
+          {/* Resource Library */}
+          <ActivityFeed
+            title="Resource Library"
+            viewAllHref="/instructor/resources"
+            items={buildResourceItems({
+              courseResources,
+              resourceCourseCount,
+              standaloneDrafts,
+              standalonePublished,
+              standaloneResources: resources,
+            })}
           />
 
           {/* Quick Links */}
@@ -182,6 +221,11 @@ export default async function InstructorDashboardPage() {
                 { label: "Manage Categories", href: "/instructor/categories" },
                 { label: "View Students", href: "/instructor/students" },
                 { label: "Schedule Live Session", href: "/instructor/live" },
+                { label: "Resources Library", href: "/instructor/resources" },
+                {
+                  label: "Upload Standalone Resource",
+                  href: "/instructor/resources#create-standalone-resource",
+                },
               ].map((link) => (
                 <Link
                   key={link.href}
@@ -201,7 +245,12 @@ export default async function InstructorDashboardPage() {
 
 function buildActionItems(
   stats: { pendingReviews: number },
-  draftCourses: Array<{ id: string; title: string }>
+  draftCourses: Array<{ id: string; title: string }>,
+  context: {
+    courseResources: number;
+    standaloneResources: number;
+    sessionsMissingJoinLink: number;
+  }
 ) {
   const items: Array<{
     id: string;
@@ -221,6 +270,36 @@ function buildActionItems(
     });
   }
 
+  if (context.sessionsMissingJoinLink > 0) {
+    items.push({
+      id: "live-links",
+      label: `${context.sessionsMissingJoinLink} live session${context.sessionsMissingJoinLink === 1 ? "" : "s"} still need a join link`,
+      description: "Add Zoom, YouTube, Stream, or meeting URLs before students arrive",
+      badge: "Live",
+      href: "/instructor/live",
+    });
+  }
+
+  if (context.courseResources === 0) {
+    items.push({
+      id: "lesson-resources",
+      label: "Add the first lesson resource",
+      description: "Attach PDFs, downloads, or links directly to a lesson",
+      badge: "Resources",
+      href: "/instructor/resources#create-course-resource",
+    });
+  }
+
+  if (context.standaloneResources === 0) {
+    items.push({
+      id: "standalone-resources",
+      label: "Create your standalone resource library",
+      description: "Publish notes, worksheets, and videos outside of courses",
+      badge: "Library",
+      href: "/instructor/resources#create-standalone-resource",
+    });
+  }
+
   for (const course of draftCourses.slice(0, 2)) {
     items.push({
       id: `draft-${course.id}`,
@@ -236,6 +315,88 @@ function buildActionItems(
       label: "No pending actions",
       description: "You're all caught up!",
       badge: "✓",
+    });
+  }
+
+  return items;
+}
+
+function buildResourceItems(context: {
+  courseResources: Array<{
+    id: string;
+    courseId: string;
+    courseTitle: string;
+    lessonTitle: string;
+    title: string;
+  }>;
+  resourceCourseCount: number;
+  standaloneDrafts: number;
+  standalonePublished: number;
+  standaloneResources: Array<{
+    id: string;
+    title: string;
+    type: string;
+    isPublished: boolean;
+    createdAt: string;
+  }>;
+}) {
+  const items: Array<{
+    id: string;
+    label: string;
+    description: string;
+    badge?: string;
+    href?: string;
+    timestamp?: string;
+  }> = [];
+
+  if (context.courseResources.length > 0) {
+    items.push({
+      id: "course-resources-summary",
+      label: `${context.courseResources.length} lesson resource${context.courseResources.length === 1 ? "" : "s"} attached`,
+      description: `${context.resourceCourseCount} course${context.resourceCourseCount === 1 ? "" : "s"} now include files, PDFs, or lesson links`,
+      badge: "Courses",
+      href: "/instructor/resources#course-resources",
+    });
+  } else {
+    items.push({
+      id: "course-resources-empty",
+      label: "No lesson resources attached yet",
+      description: "Start with a worksheet, PDF, or reference link inside a lesson",
+      badge: "Start",
+      href: "/instructor/resources#create-course-resource",
+    });
+  }
+
+  if (context.standaloneResources.length > 0) {
+    const latestStandalone = context.standaloneResources[0];
+
+    items.push({
+      id: "standalone-resources-summary",
+      label: `${context.standalonePublished} published standalone resource${context.standalonePublished === 1 ? "" : "s"}`,
+      description:
+        context.standaloneDrafts > 0
+          ? `${context.standaloneDrafts} draft${context.standaloneDrafts === 1 ? "" : "s"} still in progress`
+          : "Your independent resource library is fully published",
+      badge: "Library",
+      href: "/instructor/resources#standalone-resources",
+    });
+    items.push({
+      id: `standalone-resource-${latestStandalone.id}`,
+      label: latestStandalone.title,
+      description: `${latestStandalone.isPublished ? "Published" : "Draft"} ${latestStandalone.type.replace("_", " ")}`,
+      badge: "Latest",
+      timestamp: latestStandalone.createdAt
+        ? formatRelativeTime(latestStandalone.createdAt)
+        : undefined,
+      href: `/instructor/resources#standalone-resource-${latestStandalone.id}`,
+    });
+  } else {
+    items.push({
+      id: "standalone-resources-empty",
+      label: "No standalone resources yet",
+      description: "Create a free or paid download that students can access outside a course",
+      badge: "Create",
+      href: "/instructor/resources#create-standalone-resource",
     });
   }
 

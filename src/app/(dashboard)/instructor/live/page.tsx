@@ -47,7 +47,11 @@ export default async function InstructorLivePage() {
         ) : null}
 
         {sessions.map((session) => (
-          <article key={session.id} className="border border-border p-4 space-y-3">
+          <article
+            key={session.id}
+            id={`session-${session.id}`}
+            className="scroll-mt-24 border border-border p-4 space-y-3"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
                 <h3>{session.title}</h3>
@@ -182,7 +186,10 @@ export default async function InstructorLivePage() {
         ))}
       </section>
 
-      <section className="border border-border p-6 space-y-4">
+      <section
+        id="create-session"
+        className="scroll-mt-24 border border-border p-6 space-y-4"
+      >
         <h2 className="text-xl">Schedule a new live session</h2>
         {courses.length === 0 ? (
           <p className="text-sm text-muted-foreground">

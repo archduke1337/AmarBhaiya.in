@@ -120,7 +120,7 @@ export default async function StudentDashboardPage() {
               {inProgressCourses.slice(0, 3).map((course) => (
                 <Link
                   key={course.id}
-                  href={`/app/courses/${course.slug || course.id}`}
+                  href={course.continueHref}
                   className="group border border-border p-5 transition-colors hover:border-foreground/20"
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -132,6 +132,13 @@ export default async function StudentDashboardPage() {
                         {course.completedLessons} of {course.totalLessons}{" "}
                         lessons complete
                       </p>
+                      {course.continueLessonTitle && (
+                        <p className="text-xs text-muted-foreground">
+                          {course.resumePercent > 0
+                            ? `Resume ${course.continueLessonTitle} at ${course.resumePercent}%`
+                            : `Up next: ${course.continueLessonTitle}`}
+                        </p>
+                      )}
                     </div>
                     <Badge variant="outline" className="shrink-0">
                       {course.category || "General"}
@@ -155,7 +162,9 @@ export default async function StudentDashboardPage() {
 
                   <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
                     <ArrowRight className="size-3" />
-                    <span>Continue learning</span>
+                    <span>
+                      {course.resumePercent > 0 ? "Resume lesson" : "Open next lesson"}
+                    </span>
                   </div>
                 </Link>
               ))}

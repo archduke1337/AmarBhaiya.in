@@ -71,7 +71,10 @@ export default async function InstructorResourcesPage() {
       </section>
 
       {/* Course-linked resources */}
-      <section className="border border-border">
+      <section
+        id="create-course-resource"
+        className="scroll-mt-24 border border-border"
+      >
         <div className="flex items-center gap-2 border-b border-border px-5 py-3">
           <BookOpen className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-medium">Course Lesson Resources</h2>
@@ -152,7 +155,10 @@ export default async function InstructorResourcesPage() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section
+        id="course-resources"
+        className="scroll-mt-24 flex flex-col gap-3"
+      >
         <h2 className="text-lg font-medium">
           Course Resources ({courseResources.length})
         </h2>
@@ -165,7 +171,11 @@ export default async function InstructorResourcesPage() {
           />
         ) : (
           courseResources.map((resource) => (
-            <article key={resource.id} className="border border-border">
+            <article
+              key={resource.id}
+              id={`course-resource-${resource.id}`}
+              className="scroll-mt-24 border border-border"
+            >
               <div className="flex flex-col gap-2 p-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -283,7 +293,10 @@ export default async function InstructorResourcesPage() {
       </section>
 
       {/* Create standalone resource form */}
-      <section className="border border-border">
+      <section
+        id="create-standalone-resource"
+        className="scroll-mt-24 border border-border"
+      >
         <div className="flex items-center gap-2 border-b border-border px-5 py-3">
           <Plus className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-medium">Create Standalone Resource</h2>
@@ -370,7 +383,10 @@ export default async function InstructorResourcesPage() {
       </section>
 
       {/* Standalone resource list */}
-      <section className="flex flex-col gap-3">
+      <section
+        id="standalone-resources"
+        className="scroll-mt-24 flex flex-col gap-3"
+      >
         <h2 className="text-lg font-medium">
           Standalone Resources ({resources.length})
         </h2>
@@ -383,7 +399,11 @@ export default async function InstructorResourcesPage() {
           />
         ) : (
           resources.map((resource) => (
-            <article key={resource.id} className="border border-border">
+            <article
+              key={resource.id}
+              id={`standalone-resource-${resource.id}`}
+              className="scroll-mt-24 border border-border"
+            >
               <div className="flex flex-col gap-2 p-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
