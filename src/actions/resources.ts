@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireRole } from "@/lib/appwrite/auth";
+import { userCanManageResource } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
@@ -96,10 +97,11 @@ export async function createStandaloneResourceAction(
 export async function updateStandaloneResourceAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   if (!resourceId) return;
+  if (!(await userCanManageResource(resourceId, role, user.$id))) return;
 
   const data: Record<string, unknown> = {};
 
@@ -153,16 +155,7 @@ export async function deleteStandaloneResourceAction(
   try {
     const { tablesDB } = await createAdminClient();
 
-    // Instructors can only delete their own resources
-    if (role === "instructor") {
-      const resource = (await tablesDB.getRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.standaloneResources,
-        rowId: resourceId,
-      })) as AnyRow;
-
-      if (String(resource.instructorId) !== user.$id) return;
-    }
+    if (!(await userCanManageResource(resourceId, role, user.$id))) return;
 
     await tablesDB.deleteRow({
       databaseId: APPWRITE_CONFIG.databaseId,

@@ -4,10 +4,42 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
+import {
+  userCanManageCourse,
+  userHasCourseAccess,
+} from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
 type AnyRow = Record<string, unknown> & { $id: string };
+
+async function getAssignmentRow(assignmentId: string): Promise<AnyRow | null> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    return (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.assignments,
+      rowId: assignmentId,
+    })) as AnyRow;
+  } catch {
+    return null;
+  }
+}
+
+async function getSubmissionRow(submissionId: string): Promise<AnyRow | null> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    return (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.submissions,
+      rowId: submissionId,
+    })) as AnyRow;
+  } catch {
+    return null;
+  }
+}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,7 +68,7 @@ export type SubmissionItem = {
 export async function createAssignmentAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   const lessonId = String(formData.get("lessonId") ?? "");
@@ -45,9 +77,22 @@ export async function createAssignmentAction(
   const dueDate = String(formData.get("dueDate") ?? "");
 
   if (!courseId || !title) return;
+  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
 
   try {
     const { tablesDB } = await createAdminClient();
+
+    if (lessonId) {
+      const lesson = (await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.lessons,
+        rowId: lessonId,
+      }).catch(() => null)) as AnyRow | null;
+
+      if (!lesson || String(lesson.courseId ?? "") !== courseId) {
+        return;
+      }
+    }
 
     await tablesDB.createRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -109,12 +154,18 @@ export async function getCourseAssignments(
 export async function deleteAssignmentAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const assignmentId = String(formData.get("assignmentId") ?? "");
   if (!assignmentId) return;
 
   try {
+    const assignment = await getAssignmentRow(assignmentId);
+    if (!assignment) return;
+    if (!(await userCanManageCourse(String(assignment.courseId ?? ""), role, user.$id))) {
+      return;
+    }
+
     const { tablesDB } = await createAdminClient();
 
     await tablesDB.deleteRow({
@@ -141,31 +192,19 @@ export async function submitAssignmentAction(
   const assignmentId = String(formData.get("assignmentId") ?? "");
   if (!assignmentId) return;
 
-  // Handle file upload
-  const file = formData.get("file") as File | null;
-  let fileId = "";
+  const assignment = await getAssignmentRow(assignmentId);
+  if (!assignment) return;
 
-  if (file && file.size > 0) {
-    const { storage } = await createAdminClient();
-
-    try {
-      const uploaded = await storage.createFile(
-        APPWRITE_CONFIG.buckets.courseResources,
-        ID.unique(),
-        file
-      );
-      fileId = uploaded.$id;
-    } catch (error) {
-      console.error(
-        error instanceof Error ? error.message : "Failed to upload file."
-      );
-      return;
-    }
+  const courseId = String(assignment.courseId ?? "");
+  const lessonId = String(assignment.lessonId ?? "");
+  if (!courseId) return;
+  if (!(await userHasCourseAccess({ courseId, userId: user.$id, lessonId: lessonId || undefined }))) {
+    return;
   }
 
   const { tablesDB } = await createAdminClient();
 
-  // Check for existing submission
+  let existingSubmission: AnyRow | null = null;
   try {
     const existing = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -177,23 +216,57 @@ export async function submitAssignmentAction(
       ],
     });
 
-    if (existing.rows.length > 0) {
-      // Update existing submission
-      const row = existing.rows[0] as AnyRow;
+    existingSubmission = (existing.rows[0] as AnyRow | undefined) ?? null;
+  } catch {
+    existingSubmission = null;
+  }
+
+  // Handle file upload
+  const file = formData.get("file") as File | null;
+  let uploadedFileId = "";
+
+  if (file && file.size > 0) {
+    const { storage } = await createAdminClient();
+
+    try {
+      const uploaded = await storage.createFile(
+        APPWRITE_CONFIG.buckets.courseResources,
+        ID.unique(),
+        file
+      );
+      uploadedFileId = uploaded.$id;
+    } catch (error) {
+      console.error(
+        error instanceof Error ? error.message : "Failed to upload file."
+      );
+      return;
+    }
+  }
+
+  if (!uploadedFileId) {
+    return;
+  }
+
+  if (existingSubmission) {
+    try {
       await tablesDB.updateRow({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.submissions,
-        rowId: row.$id,
+        rowId: existingSubmission.$id,
         data: {
-          fileId,
+          fileId: uploadedFileId,
           submittedAt: new Date().toISOString(),
         },
       });
       revalidatePath("/app");
+      revalidatePath("/app/assignments");
+      return;
+    } catch (error) {
+      console.error(
+        error instanceof Error ? error.message : "Failed to update submission."
+      );
       return;
     }
-  } catch {
-    // Continue to create
   }
 
   try {
@@ -204,7 +277,7 @@ export async function submitAssignmentAction(
       data: {
         assignmentId,
         userId: user.$id,
-        fileId,
+        fileId: uploadedFileId,
         submittedAt: new Date().toISOString(),
         grade: 0,
         feedback: "",
@@ -212,6 +285,7 @@ export async function submitAssignmentAction(
     });
 
     revalidatePath("/app");
+    revalidatePath("/app/assignments");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to submit assignment."
@@ -224,7 +298,13 @@ export async function submitAssignmentAction(
 export async function getAssignmentSubmissions(
   assignmentId: string
 ): Promise<SubmissionItem[]> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
+  const assignment = await getAssignmentRow(assignmentId);
+  if (!assignment) return [];
+  if (!(await userCanManageCourse(String(assignment.courseId ?? ""), role, user.$id))) {
+    return [];
+  }
+
   const { tablesDB, users } = await createAdminClient();
 
   try {
@@ -274,15 +354,24 @@ export async function getAssignmentSubmissions(
 export async function gradeSubmissionAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const submissionId = String(formData.get("submissionId") ?? "");
-  const grade = Number(formData.get("grade") ?? 0);
+  const grade = Math.max(0, Math.min(100, Number(formData.get("grade") ?? 0)));
   const feedback = String(formData.get("feedback") ?? "").trim();
 
   if (!submissionId) return;
 
   try {
+    const submission = await getSubmissionRow(submissionId);
+    if (!submission) return;
+
+    const assignment = await getAssignmentRow(String(submission.assignmentId ?? ""));
+    if (!assignment) return;
+    if (!(await userCanManageCourse(String(assignment.courseId ?? ""), role, user.$id))) {
+      return;
+    }
+
     const { tablesDB } = await createAdminClient();
 
     await tablesDB.updateRow({
@@ -293,6 +382,7 @@ export async function gradeSubmissionAction(
     });
 
     revalidatePath("/instructor");
+    revalidatePath("/instructor/submissions");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to grade submission."

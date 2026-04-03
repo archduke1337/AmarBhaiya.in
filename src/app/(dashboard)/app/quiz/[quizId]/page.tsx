@@ -25,7 +25,7 @@ export default async function TakeQuizPage({ params }: PageProps) {
   }
 
   // Check for previous best attempt
-  const bestAttempt = await getUserBestAttempt(quizId, user.$id);
+  const bestAttempt = await getUserBestAttempt(quizId);
 
   // Strip correct answers from questions sent to client
   const clientQuestions = questions.map((q) => ({

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight, Lock, CheckCircle } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
+import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getFileViewUrl } from "@/lib/utils/file-urls";
@@ -54,29 +55,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
 
   if (!course) notFound();
 
-  // Check access - is the student enrolled, or is this a free/preview lesson?
-  const isFree = Boolean(lesson.isFree) || Boolean(lesson.isFreePreview);
-  const courseIsFree = String(course.accessModel) === "free";
-
-  let hasAccess = isFree || courseIsFree;
-
-  if (!hasAccess) {
-    try {
-      const enrollment = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.enrollments,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.equal("userId", [user.$id]),
-          Query.limit(1),
-        ],
-      });
-
-      hasAccess = enrollment.rows.length > 0;
-    } catch {
-      hasAccess = false;
-    }
-  }
+  const hasAccess = await userHasCourseAccess({ courseId, userId: user.$id, lessonId });
 
   if (!hasAccess) {
     return (

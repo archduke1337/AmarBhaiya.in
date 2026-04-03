@@ -4,68 +4,13 @@ import { ID } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
+import {
+  userCanManageCourse,
+  userCanManageResource,
+} from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
-import type { Role } from "@/lib/utils/constants";
-
-type AnyRow = Record<string, unknown> & { $id: string };
-
-async function canManageCourse(
-  courseId: string,
-  role: Role,
-  userId: string
-): Promise<boolean> {
-  if (role === "admin") {
-    return true;
-  }
-
-  if (role !== "instructor") {
-    return false;
-  }
-
-  const { tablesDB } = await createAdminClient();
-
-  try {
-    const course = (await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-    })) as AnyRow;
-
-    return String(course.instructorId ?? "") === userId;
-  } catch {
-    return false;
-  }
-}
-
-async function canManageResource(
-  resourceId: string,
-  role: Role,
-  userId: string
-): Promise<boolean> {
-  if (role === "admin") {
-    return true;
-  }
-
-  if (role !== "instructor") {
-    return false;
-  }
-
-  const { tablesDB } = await createAdminClient();
-
-  try {
-    const resource = (await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.standaloneResources,
-      rowId: resourceId,
-    })) as AnyRow;
-
-    return String(resource.instructorId ?? "") === userId;
-  } catch {
-    return false;
-  }
-}
 
 // ── Upload Course Thumbnail ─────────────────────────────────────────────────
 
@@ -78,7 +23,7 @@ export async function uploadCourseThumbnailAction(
   const file = formData.get("file") as File | null;
 
   if (!courseId || !file || file.size === 0) return;
-  if (!(await canManageCourse(courseId, role, user.$id))) return;
+  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
 
   // Validate file
   const maxSize = 5 * 1024 * 1024; // 5MB
@@ -134,7 +79,7 @@ export async function uploadLessonVideoAction(
   const file = formData.get("file") as File | null;
 
   if (!courseId || !lessonId || !file || file.size === 0) return;
-  if (!(await canManageCourse(courseId, role, user.$id))) return;
+  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
 
   // Validate: 500MB max
   const maxSize = 500 * 1024 * 1024;
@@ -187,7 +132,7 @@ export async function uploadResourceFileAction(
   const file = formData.get("file") as File | null;
 
   if (!resourceId || !file || file.size === 0) return;
-  if (!(await canManageResource(resourceId, role, user.$id))) return;
+  if (!(await userCanManageResource(resourceId, role, user.$id))) return;
 
   // Validate: 200MB max
   const maxSize = 200 * 1024 * 1024;

@@ -4,6 +4,7 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth } from "@/lib/appwrite/auth";
+import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
@@ -31,6 +32,7 @@ export async function postLessonCommentAction(
   let text = String(formData.get("text") ?? "").trim();
 
   if (!lessonId || !courseId || !text) return;
+  if (!(await userHasCourseAccess({ courseId, userId: user.$id, lessonId }))) return;
 
   // SECURITY: Sanitize HTML to prevent XSS attacks
   text = sanitizeHtml(text);
