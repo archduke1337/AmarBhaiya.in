@@ -5,7 +5,11 @@ import { Client, ID, Storage } from "appwrite";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import {
+  PUBLIC_APPWRITE_CONFIG,
+  getMissingPublicAppwriteEnvKeys,
+  hasPublicAppwriteConfig,
+} from "@/lib/appwrite/public-config";
 import {
   LESSON_VIDEO_ALLOWED_EXTENSIONS,
   LESSON_VIDEO_MAX_BYTES,
@@ -19,17 +23,19 @@ type LessonVideoUploadFormProps = {
 };
 
 function formatBytes(bytes: number): string {
-  if (bytes >= 1024 * 1024 * 1024) {
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  if (bytes >= 1_000_000_000) {
+    return `${(bytes / 1_000_000_000).toFixed(1)} GB`;
   }
 
-  return `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
+  return `${(bytes / 1_000_000).toFixed(0)} MB`;
 }
 
 export function LessonVideoUploadForm({
   courseId,
   lessonId,
 }: LessonVideoUploadFormProps) {
+  const missingEnvKeys = getMissingPublicAppwriteEnvKeys();
+  const isDirectUploadConfigured = hasPublicAppwriteConfig();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -37,6 +43,13 @@ export function LessonVideoUploadForm({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!isDirectUploadConfigured) {
+      toast.error(
+        `Video upload is unavailable until ${missingEnvKeys.join(", ")} ${missingEnvKeys.length === 1 ? "is" : "are"} set in the deployment environment.`
+      );
+      return;
+    }
 
     const file = inputRef.current?.files?.[0] ?? null;
     if (!file) {
@@ -78,13 +91,13 @@ export function LessonVideoUploadForm({
       }
 
       const client = new Client()
-        .setEndpoint(APPWRITE_CONFIG.endpoint)
-        .setProject(APPWRITE_CONFIG.projectId)
+        .setEndpoint(PUBLIC_APPWRITE_CONFIG.endpoint)
+        .setProject(PUBLIC_APPWRITE_CONFIG.projectId)
         .setJWT(tokenPayload.jwt);
       const storage = new Storage(client);
 
       const uploaded = await storage.createFile({
-        bucketId: APPWRITE_CONFIG.buckets.courseVideos,
+        bucketId: PUBLIC_APPWRITE_CONFIG.buckets.courseVideos,
         fileId: ID.unique(),
         file,
         onProgress: (snapshot) => {
@@ -126,6 +139,22 @@ export function LessonVideoUploadForm({
     } finally {
       setIsUploading(false);
     }
+  }
+
+  if (!isDirectUploadConfigured) {
+    return (
+      <div className="space-y-2 border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+        <p className="font-medium">Video upload is temporarily unavailable on this deployment.</p>
+        <p>
+          Missing public Appwrite environment {missingEnvKeys.length === 1 ? "variable" : "variables"}:{" "}
+          {missingEnvKeys.join(", ")}.
+        </p>
+        <p className="text-muted-foreground">
+          Lesson creation and edits still work. Add the missing variable{missingEnvKeys.length === 1 ? "" : "s"} in
+          the deployment settings and redeploy to enable direct video uploads again.
+        </p>
+      </div>
+    );
   }
 
   return (

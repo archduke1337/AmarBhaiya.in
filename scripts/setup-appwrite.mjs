@@ -899,7 +899,7 @@ async function main() {
         Permission.create(Role.label("instructor")),
         Permission.delete(Role.label("admin")),
       ],
-      maximumFileSize: 524288000, // 500MB
+      maximumFileSize: 5000000000, // 5GB
       allowedFileExtensions: ["mp4", "webm", "mov"],
       compression: "gzip",
       encryption: true,
