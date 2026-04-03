@@ -3,27 +3,58 @@
 import { useRef, useState } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
 
+export type VideoProgressSnapshot = {
+  currentTime: number;
+  duration: number;
+  percentComplete: number;
+  ended: boolean;
+};
+
 type VideoPlayerProps = {
   src: string;
   title?: string;
   poster?: string;
+  initialTimeSeconds?: number;
+  onProgressSnapshot?: (snapshot: VideoProgressSnapshot) => void;
 };
 
-export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
+export function VideoPlayer({
+  src,
+  title,
+  poster,
+  initialTimeSeconds = 0,
+  onProgressSnapshot,
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastUiSyncRef = useRef(0);
+  const lastProgressEmitRef = useRef(0);
+  const restoredInitialTimeRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
 
+  function emitProgressSnapshot(ended = false) {
+    const video = videoRef.current;
+    if (!video || !video.duration || !onProgressSnapshot) {
+      return;
+    }
+
+    onProgressSnapshot({
+      currentTime: video.currentTime,
+      duration: video.duration,
+      percentComplete: (video.currentTime / video.duration) * 100,
+      ended,
+    });
+  }
+
   function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
 
     if (video.paused) {
-      video.play();
+      void video.play();
       setIsPlaying(true);
     } else {
       video.pause();
@@ -52,14 +83,36 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
     }
 
     lastUiSyncRef.current = now;
-
     setCurrentTime(now);
     setProgress((now / video.duration) * 100);
+
+    if (now - lastProgressEmitRef.current >= 15 || now >= video.duration - 1) {
+      lastProgressEmitRef.current = now;
+      emitProgressSnapshot(now >= video.duration - 1);
+    }
   }
 
   function handleLoadedMetadata() {
     const video = videoRef.current;
     if (!video) return;
+
+    if (!restoredInitialTimeRef.current && initialTimeSeconds > 0) {
+      const resumeAt = Math.min(
+        Math.max(0, initialTimeSeconds),
+        Math.max(0, video.duration - 1)
+      );
+
+      if (resumeAt > 0) {
+        video.currentTime = resumeAt;
+        lastUiSyncRef.current = resumeAt;
+        lastProgressEmitRef.current = resumeAt;
+        setCurrentTime(resumeAt);
+        setProgress((resumeAt / video.duration) * 100);
+      }
+
+      restoredInitialTimeRef.current = true;
+    }
+
     setDuration(video.duration);
   }
 
@@ -83,9 +136,9 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
     if (!video) return;
 
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      void document.exitFullscreen();
     } else {
-      video.requestFullscreen();
+      void video.requestFullscreen();
     }
   }
 
@@ -106,7 +159,6 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
 
   return (
     <div className="group relative overflow-hidden border border-border bg-black">
-      {/* Video element */}
       <video
         ref={videoRef}
         src={src}
@@ -114,6 +166,11 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
         className="aspect-video w-full cursor-pointer"
         playsInline
         onClick={togglePlay}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => {
+          setIsPlaying(false);
+          emitProgressSnapshot();
+        }}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => {
@@ -121,15 +178,15 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
           setIsPlaying(false);
           if (!video || !video.duration) return;
           lastUiSyncRef.current = video.duration;
+          lastProgressEmitRef.current = video.duration;
           setCurrentTime(video.duration);
           setProgress(100);
+          emitProgressSnapshot(true);
         }}
         preload="metadata"
       />
 
-      {/* Controls overlay */}
       <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-4 py-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-        {/* Progress bar */}
         <div
           className="mb-3 h-1 w-full cursor-pointer bg-white/20"
           onClick={handleSeek}
@@ -142,7 +199,6 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Play / Pause */}
             <button
               type="button"
               onClick={togglePlay}
@@ -156,7 +212,6 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
               )}
             </button>
 
-            {/* Mute */}
             <button
               type="button"
               onClick={toggleMute}
@@ -170,21 +225,18 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
               )}
             </button>
 
-            {/* Time */}
             <span className="text-xs text-white/80 tabular-nums">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Title */}
             {title && (
               <span className="text-xs text-white/60 hidden sm:block">
                 {title}
               </span>
             )}
 
-            {/* Fullscreen */}
             <button
               type="button"
               onClick={toggleFullscreen}
@@ -197,7 +249,6 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
         </div>
       </div>
 
-      {/* Big play button overlay (when paused) */}
       {!isPlaying && (
         <button
           type="button"
@@ -206,7 +257,7 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
           aria-label="Play video"
         >
           <div className="flex size-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-transform hover:scale-110">
-            <Play className="size-7 text-white ml-1" />
+            <Play className="ml-1 size-7 text-white" />
           </div>
         </button>
       )}

@@ -11,7 +11,7 @@ import {
   getFilePreviewUrl,
   getFileViewUrl,
 } from "@/lib/utils/file-urls";
-import { VideoPlayer } from "@/components/video-player";
+import { LessonVideoPlayer } from "@/components/lesson-video-player";
 import { getCourseProgress } from "@/actions/enrollment";
 import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
 import { postLessonCommentAction, getLessonComments } from "@/actions/comments";
@@ -118,7 +118,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
     : "";
 
   // Get progress, comments, and lesson resources
-  const [{ completedLessonIds }, comments, lessonResourcesResult] = await Promise.all([
+  const [{ completedLessonIds }, comments, lessonResourcesResult, lessonProgressResult] = await Promise.all([
     getCourseProgress(courseId, user.$id),
     getLessonComments(lessonId),
     tablesDB.listRows({
@@ -126,7 +126,31 @@ export default async function LessonViewerPage({ params }: PageProps) {
       tableId: APPWRITE_CONFIG.tables.resources,
       queries: [Query.equal("lessonId", [lessonId]), Query.limit(100)],
     }).catch(() => ({ rows: [] })),
+    tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.progress,
+      queries: [
+        Query.equal("courseId", [courseId]),
+        Query.equal("userId", [user.$id]),
+        Query.equal("lessonId", [lessonId]),
+        Query.limit(1),
+      ],
+    }).catch(() => ({ rows: [] })),
   ]);
+  const lessonProgressRow = (lessonProgressResult.rows[0] as AnyRow | undefined) ?? null;
+  const lessonPercentComplete = Math.max(
+    0,
+    Math.min(99, Math.round(Number(lessonProgressRow?.percentComplete ?? 0)))
+  );
+  const lessonCompleted = completedLessonIds.includes(lessonId);
+  const lessonDurationSeconds = Number(lesson.duration ?? 0);
+  const resumeSeconds =
+    !lessonCompleted && lessonPercentComplete > 0 && lessonDurationSeconds > 0
+      ? Math.min(
+          Math.round((lessonDurationSeconds * lessonPercentComplete) / 100),
+          Math.max(0, lessonDurationSeconds - 1)
+        )
+      : 0;
   const lessonResources = (lessonResourcesResult.rows as AnyRow[])
     .map((resource) => {
       const type = String(resource.type ?? "file");
@@ -164,10 +188,15 @@ export default async function LessonViewerPage({ params }: PageProps) {
       </Link>
 
       {/* Video player */}
-      <VideoPlayer
+      <LessonVideoPlayer
+        courseId={courseId}
+        lessonId={lessonId}
         src={videoUrl}
         title={String(lesson.title ?? "Lesson")}
         poster={posterUrl}
+        initialPercentComplete={lessonPercentComplete}
+        initialResumeSeconds={resumeSeconds}
+        isCompleted={lessonCompleted}
       />
 
       {/* Lesson info + mark complete */}
@@ -176,7 +205,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
           <h1 className="text-2xl font-medium">
             {String(lesson.title ?? "Lesson")}
           </h1>
-          {completedLessonIds.includes(lessonId) ? (
+          {lessonCompleted ? (
             <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 shrink-0 pt-1">
               <CheckCircle className="size-4" />
               Completed
@@ -197,6 +226,11 @@ export default async function LessonViewerPage({ params }: PageProps) {
         {typeof lesson.description === "string" && lesson.description.length > 0 && (
           <p className="text-sm text-muted-foreground">
             {lesson.description}
+          </p>
+        )}
+        {!lessonCompleted && lessonPercentComplete > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Resume available from about {lessonPercentComplete}% of the lesson.
           </p>
         )}
       </div>

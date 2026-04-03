@@ -177,6 +177,7 @@ export default async function StudentDashboardPage() {
                 ? formatRelativeTime(session.scheduledAt)
                 : "Date TBD",
               badge: session.status === "live" ? "LIVE" : undefined,
+              href: "/app/live",
             }))}
           />
 

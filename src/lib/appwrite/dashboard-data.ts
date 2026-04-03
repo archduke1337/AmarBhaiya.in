@@ -1473,7 +1473,9 @@ export async function getStudentEnrolledCourses(
   const completedByCourse = new Map<string, number>();
   for (const row of progressResult.rows) {
     const cid = typeof row.courseId === "string" ? row.courseId : "";
-    if (cid) {
+    const completedAt =
+      typeof row.completedAt === "string" ? row.completedAt.trim() : "";
+    if (cid && completedAt) {
       completedByCourse.set(cid, (completedByCourse.get(cid) ?? 0) + 1);
     }
   }

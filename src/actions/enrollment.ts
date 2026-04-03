@@ -10,6 +10,10 @@ import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/acti
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
+function isCompletedProgressRow(row: Record<string, unknown>): boolean {
+  return typeof row.completedAt === "string" && row.completedAt.trim().length > 0;
+}
+
 async function resolveCourseForEnrollment(
   tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
   courseInput: string
@@ -171,7 +175,7 @@ export async function markLessonCompleteAction(
     const course = courseRow as AnyRow;
     const courseIsFree = String(course.accessModel ?? "free") === "free";
 
-    // Check not already tracked
+    let existingProgressRow: AnyRow | null = null;
     try {
       const existing = await tablesDB.listRows({
         databaseId: APPWRITE_CONFIG.databaseId,
@@ -184,8 +188,9 @@ export async function markLessonCompleteAction(
         ],
       });
 
-      if (existing.rows.length > 0) {
-        return actionSuccess(); // Already completed
+      existingProgressRow = (existing.rows[0] as AnyRow | undefined) ?? null;
+      if (existingProgressRow && isCompletedProgressRow(existingProgressRow)) {
+        return actionSuccess();
       }
     } catch {
       // Continue
@@ -208,17 +213,30 @@ export async function markLessonCompleteAction(
         return actionError("Enrollment required");
       }
 
-      await tablesDB.createRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.progress,
-        rowId: ID.unique(),
-        data: {
-          courseId,
-          userId: user.$id,
-          lessonId,
-          completedAt: new Date().toISOString(),
-        },
-      });
+      if (existingProgressRow) {
+        await tablesDB.updateRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.progress,
+          rowId: existingProgressRow.$id,
+          data: {
+            completedAt: new Date().toISOString(),
+            percentComplete: 100,
+          },
+        });
+      } else {
+        await tablesDB.createRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.progress,
+          rowId: ID.unique(),
+          data: {
+            courseId,
+            userId: user.$id,
+            lessonId,
+            completedAt: new Date().toISOString(),
+            percentComplete: 100,
+          },
+        });
+      }
 
       if (!enrollmentRow) {
         revalidatePath(`/app/learn/${courseId}/${lessonId}`);
@@ -317,9 +335,10 @@ export async function getCourseProgress(
       }),
     ]);
 
-    const completedLessonIds = result.rows.map((r) =>
-      String((r as AnyRow).lessonId ?? "")
-    );
+    const completedLessonIds = result.rows
+      .map((row) => row as AnyRow)
+      .filter((row) => isCompletedProgressRow(row))
+      .map((row) => String(row.lessonId ?? ""));
 
     const percent =
       totalLessons.total > 0
