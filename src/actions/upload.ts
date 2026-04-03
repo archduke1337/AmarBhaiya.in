@@ -12,6 +12,33 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
 
+type AnyRow = Record<string, unknown> & { $id: string };
+
+function getCourseThumbnailFileId(course: Record<string, unknown>): string {
+  return String(course.thumbnailFileId ?? course.thumbnailId ?? "");
+}
+
+function getLessonVideoFileId(lesson: Record<string, unknown>): string {
+  return String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? "");
+}
+
+async function deleteUploadedFileIfPresent(
+  storage: Awaited<ReturnType<typeof createAdminClient>>["storage"],
+  bucketId: string,
+  fileId: string
+): Promise<void> {
+  if (!fileId) return;
+
+  try {
+    await storage.deleteFile({ bucketId, fileId });
+  } catch (error) {
+    console.error(
+      `[Upload] Failed to clean up file ${bucketId}/${fileId}:`,
+      error instanceof Error ? error.message : error
+    );
+  }
+}
+
 // ── Upload Course Thumbnail ─────────────────────────────────────────────────
 
 export async function uploadCourseThumbnailAction(
@@ -23,7 +50,8 @@ export async function uploadCourseThumbnailAction(
   const file = formData.get("file") as File | null;
 
   if (!courseId || !file || file.size === 0) return;
-  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
+  const course = await userCanManageCourse(courseId, role, user.$id);
+  if (!course) return;
 
   // Validate file
   const maxSize = 5 * 1024 * 1024; // 5MB
@@ -42,6 +70,7 @@ export async function uploadCourseThumbnailAction(
     }
 
     const { storage, tablesDB } = await createAdminClient();
+    const previousThumbnailId = getCourseThumbnailFileId(course);
 
     // Upload to bucket
     const uploaded = await storage.createFile({
@@ -50,16 +79,45 @@ export async function uploadCourseThumbnailAction(
       file,
     });
 
-    // Update course record
-    await tablesDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-      data: { thumbnailId: uploaded.$id, thumbnailFileId: uploaded.$id },
-    });
+    try {
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courses,
+        rowId: courseId,
+        data: { thumbnailId: uploaded.$id, thumbnailFileId: uploaded.$id },
+      });
+    } catch {
+      try {
+        await tablesDB.updateRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.courses,
+          rowId: courseId,
+          data: { thumbnailId: uploaded.$id },
+        });
+      } catch (error) {
+        await deleteUploadedFileIfPresent(
+          storage,
+          APPWRITE_CONFIG.buckets.courseThumbnails,
+          uploaded.$id
+        );
+        throw error;
+      }
+    }
+
+    if (previousThumbnailId && previousThumbnailId !== uploaded.$id) {
+      await deleteUploadedFileIfPresent(
+        storage,
+        APPWRITE_CONFIG.buckets.courseThumbnails,
+        previousThumbnailId
+      );
+    }
 
     revalidatePath(`/instructor/courses/${courseId}`);
+    revalidatePath("/instructor/courses");
     revalidatePath("/courses");
+    if (typeof course.slug === "string" && course.slug) {
+      revalidatePath(`/courses/${course.slug}`);
+    }
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to upload thumbnail."
@@ -98,6 +156,17 @@ export async function uploadLessonVideoAction(
     }
 
     const { storage, tablesDB } = await createAdminClient();
+    const lesson = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      rowId: lessonId,
+    }).catch(() => null)) as AnyRow | null;
+
+    if (!lesson || String(lesson.courseId ?? "") !== courseId) {
+      return;
+    }
+
+    const previousVideoId = getLessonVideoFileId(lesson);
 
     const uploaded = await storage.createFile({
       bucketId: APPWRITE_CONFIG.buckets.courseVideos,
@@ -105,15 +174,32 @@ export async function uploadLessonVideoAction(
       file,
     });
 
-    // Update lesson record
-    await tablesDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      rowId: lessonId,
-      data: { videoFileId: uploaded.$id },
-    });
+    try {
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.lessons,
+        rowId: lessonId,
+        data: { videoFileId: uploaded.$id },
+      });
+    } catch (error) {
+      await deleteUploadedFileIfPresent(
+        storage,
+        APPWRITE_CONFIG.buckets.courseVideos,
+        uploaded.$id
+      );
+      throw error;
+    }
+
+    if (previousVideoId && previousVideoId !== uploaded.$id) {
+      await deleteUploadedFileIfPresent(
+        storage,
+        APPWRITE_CONFIG.buckets.courseVideos,
+        previousVideoId
+      );
+    }
 
     revalidatePath(`/instructor/courses/${courseId}/curriculum`);
+    revalidatePath(`/app/learn/${courseId}/${lessonId}`);
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to upload video."

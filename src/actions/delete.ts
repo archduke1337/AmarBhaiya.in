@@ -173,7 +173,7 @@ async function deleteLessonTree({
   }
 
   const failedDeletes: string[] = [];
-  const lessonVideoId = String(lesson.videoFileId ?? "");
+  const lessonVideoId = String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? "");
 
   try {
     const resources = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.resources, [
@@ -324,7 +324,7 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
   ]);
 
   const lessonVideoIds = lessons
-    .map((lesson) => String(lesson.videoFileId ?? ""))
+    .map((lesson) => String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? ""))
     .filter(Boolean);
   const lessonIds = lessons.map((lesson) => lesson.$id);
 
@@ -437,7 +437,7 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
   await deleteFileIds(
     storage,
     APPWRITE_CONFIG.buckets.courseThumbnails,
-    [String(course.thumbnailId ?? "")]
+    [String(course.thumbnailFileId ?? course.thumbnailId ?? "")]
   );
 
   revalidatePath("/instructor");

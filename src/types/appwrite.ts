@@ -32,6 +32,7 @@ export interface Course extends AppwriteRow {
   isPublished: boolean;
   isFeatured: boolean;
   thumbnailId: string;
+  thumbnailFileId?: string;
   totalDuration: number;
   totalLessons: number;
   enrollmentCount: number;

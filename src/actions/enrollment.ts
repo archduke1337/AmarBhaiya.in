@@ -10,6 +10,48 @@ import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/acti
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
+async function resolveCourseForEnrollment(
+  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
+  courseInput: string
+): Promise<{
+  courseId: string;
+  courseSlug: string;
+  accessModel: string;
+  isPublished: boolean;
+} | null> {
+  try {
+    let course: AnyRow | null = null;
+
+    try {
+      course = (await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courses,
+        rowId: courseInput,
+      })) as AnyRow;
+    } catch {
+      const bySlug = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courses,
+        queries: [Query.equal("slug", [courseInput]), Query.limit(1)],
+      });
+      course = (bySlug.rows[0] as AnyRow | undefined) ?? null;
+    }
+
+    if (!course) {
+      return null;
+    }
+
+    return {
+      courseId: course.$id,
+      courseSlug: String(course.slug ?? course.$id),
+      accessModel: String(course.accessModel ?? "free"),
+      isPublished: Boolean(course.isPublished),
+    };
+  } catch {
+    return null;
+  }
+}
+
 // ── Enroll in Course ────────────────────────────────────────────────────────
 
 export async function enrollInCourseAction(
@@ -21,9 +63,17 @@ export async function enrollInCourseAction(
     if (!courseInput) return actionError("Course ID is required");
 
     const { tablesDB } = await createAdminClient();
-    let courseId = courseInput;
+    const resolvedCourse = await resolveCourseForEnrollment(tablesDB, courseInput);
+    if (!resolvedCourse) {
+      return actionError("Course not found");
+    }
 
-    // Check if already enrolled
+    const { courseId, courseSlug, accessModel, isPublished } = resolvedCourse;
+    if (!isPublished) {
+      return actionError("Course not available");
+    }
+
+    // Check if already enrolled using canonical course id
     try {
       const existing = await tablesDB.listRows({
         databaseId: APPWRITE_CONFIG.databaseId,
@@ -36,44 +86,14 @@ export async function enrollInCourseAction(
       });
 
       if (existing.rows.length > 0) {
-        // Already enrolled
         revalidatePath("/app/courses");
+        revalidatePath("/app/dashboard");
+        revalidatePath(`/courses/${courseSlug}`);
+        revalidatePath(`/app/courses/${courseId}`);
         return actionSuccess();
       }
     } catch {
       // Continue to enroll
-    }
-
-    // Verify course exists and get access model
-    let courseSlug = courseInput;
-    let accessModel = "free";
-
-    try {
-      let course: AnyRow | null = null;
-      try {
-        course = (await tablesDB.getRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.courses,
-          rowId: courseInput,
-        })) as AnyRow;
-      } catch {
-        const bySlug = await tablesDB.listRows({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.courses,
-          queries: [Query.equal("slug", [courseInput]), Query.limit(1)],
-        });
-        course = (bySlug.rows[0] as AnyRow | undefined) ?? null;
-      }
-
-      if (!course) {
-        return actionError("Course not found");
-      }
-
-      courseId = course.$id;
-      courseSlug = String(course.slug ?? courseId);
-      accessModel = String(course.accessModel ?? "free");
-    } catch {
-      return actionError("Course not found");
     }
 
     // Block paid courses from free enrollment

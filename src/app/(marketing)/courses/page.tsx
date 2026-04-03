@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { getPublicCoursesPageData } from "@/lib/appwrite/marketing-content";
@@ -100,9 +101,11 @@ export default async function CoursesPage({
         {courses.map((course) => (
           <article key={course.slug} className="border border-border p-6 space-y-5">
             {course.thumbnailUrl ? (
-              <img
+              <Image
                 src={course.thumbnailUrl}
                 alt={course.title}
+                width={1280}
+                height={720}
                 className="w-full aspect-video object-cover border border-border"
                 loading="lazy"
               />

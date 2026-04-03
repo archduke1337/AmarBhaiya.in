@@ -155,6 +155,7 @@ async function main() {
   await bool(T2, "isPublished", false, false);
   await bool(T2, "isFeatured", false, false);
   await varchar(T2, "thumbnailId", 100);
+  await varchar(T2, "thumbnailFileId", 100);
   await int(T2, "totalDuration", false, 0);
   await int(T2, "totalLessons", false, 0);
   await int(T2, "enrollmentCount", false, 0);
