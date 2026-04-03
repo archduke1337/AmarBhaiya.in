@@ -13,7 +13,9 @@
 # testing
 /coverage
 .kiro
-
+.idea
+.claude
+.agents
 
 # next.js
 /.next/
