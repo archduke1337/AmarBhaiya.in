@@ -1,167 +1,184 @@
-import { DollarSign, TrendingUp, BookOpen } from "lucide-react";
-import { Query } from "node-appwrite";
+import Link from "next/link";
+import { BookOpen, DollarSign, Receipt, TrendingUp } from "lucide-react";
 
+import {
+  ActivityFeed,
+  EmptyState,
+  PageHeader,
+  StatCard,
+  StatGrid,
+} from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
-import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
-import { formatCurrency } from "@/lib/utils/format";
-
-type AnyRow = Record<string, unknown> & { $id: string };
-
-async function getInstructorEarnings(userId: string) {
-  const { tablesDB } = await createAdminClient();
-
-  // Get instructor's courses
-  const coursesResult = await tablesDB.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.courses,
-    queries: [
-      Query.equal("instructorId", [userId]),
-      Query.limit(100),
-    ],
-  });
-
-  const courses = coursesResult.rows as AnyRow[];
-  const courseIds = courses.map((c) => c.$id);
-
-  if (courseIds.length === 0) {
-    return { totalEarnings: 0, monthlyEarnings: 0, courseEarnings: [], totalEnrollments: 0 };
-  }
-
-  // Get all payments for these courses
-  const allPayments: AnyRow[] = [];
-  for (const courseId of courseIds) {
-    try {
-      const payResult = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.payments,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.equal("status", ["completed"]),
-          Query.limit(500),
-        ],
-      });
-      allPayments.push(...(payResult.rows as AnyRow[]));
-    } catch {
-      // skip
-    }
-  }
-
-  // Get enrollments
-  let totalEnrollments = 0;
-  for (const courseId of courseIds) {
-    try {
-      const enrollResult = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.enrollments,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.limit(500),
-        ],
-      });
-      totalEnrollments += enrollResult.rows.length;
-    } catch {
-      // skip
-    }
-  }
-
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  let totalEarnings = 0;
-  let monthlyEarnings = 0;
-  const earningsByCourse = new Map<string, number>();
-
-  for (const p of allPayments) {
-    const amount = Number(p.amount ?? 0) / 100; // paise → INR
-    totalEarnings += amount;
-
-    const createdAt = new Date(String(p.createdAt ?? ""));
-    if (createdAt >= monthStart) {
-      monthlyEarnings += amount;
-    }
-
-    const cid = String(p.courseId ?? "");
-    earningsByCourse.set(cid, (earningsByCourse.get(cid) ?? 0) + amount);
-  }
-
-  const courseEarnings = courses.map((c) => ({
-    id: c.$id,
-    title: String(c.title ?? "Untitled"),
-    earnings: earningsByCourse.get(c.$id) ?? 0,
-    accessModel: String(c.accessModel ?? "free"),
-  }));
-
-  return { totalEarnings, monthlyEarnings, courseEarnings, totalEnrollments };
-}
+import { getInstructorRevenueOverview } from "@/lib/appwrite/dashboard-data";
+import { formatCurrency, formatRelativeTime } from "@/lib/utils/format";
 
 export default async function InstructorEarningsPage() {
-  const { user } = await requireRole(["admin", "instructor"]);
-  const data = await getInstructorEarnings(user.$id);
+  const { user, role } = await requireRole(["admin", "instructor"]);
+  const revenue = await getInstructorRevenueOverview({ userId: user.$id, role });
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl">
+    <div className="flex max-w-6xl flex-col gap-8">
       <PageHeader
         eyebrow="Instructor · Revenue"
         title="Earnings Overview"
-        description="Track your course revenue and enrollment metrics."
+        description="Track revenue, recent sales, and the courses that need promotion or pricing attention."
+        actions={
+          <Link
+            href="/instructor"
+            className="inline-flex h-9 items-center px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Back to dashboard
+          </Link>
+        }
       />
 
-      <StatGrid columns={3}>
+      <StatGrid columns={4}>
         <StatCard
           label="Total Earnings"
-          value={formatCurrency(data.totalEarnings)}
+          value={formatCurrency(revenue.totalEarnings)}
           icon={DollarSign}
-          description="All time"
+          description="All completed sales"
         />
         <StatCard
           label="This Month"
-          value={formatCurrency(data.monthlyEarnings)}
+          value={formatCurrency(revenue.monthlyEarnings)}
           icon={TrendingUp}
-          description={`${new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" })}`}
+          description="Current calendar month"
         />
         <StatCard
           label="Total Enrollments"
-          value={data.totalEnrollments}
+          value={revenue.totalEnrollments}
           icon={BookOpen}
-          description="Across all courses"
+          description="Across all managed courses"
+        />
+        <StatCard
+          label="Paid Courses"
+          value={revenue.paidCourseCount}
+          icon={Receipt}
+          description={`${revenue.publishedPaidCourses} currently published`}
         />
       </StatGrid>
 
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3">
-          <h2 className="text-sm font-medium">Revenue by Course</h2>
-        </div>
-        {data.courseEarnings.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-            No courses yet.
-          </div>
-        ) : (
-          <div className="divide-y divide-border">
-            {data.courseEarnings
-              .sort((a, b) => b.earnings - a.earnings)
-              .map((course) => (
-                <div
+      {revenue.courseEarnings.length === 0 ? (
+        <EmptyState
+          icon={DollarSign}
+          title="No course revenue yet"
+          description="Once you create courses and start enrolling students, your revenue pulse will appear here."
+        />
+      ) : (
+        <>
+          <section className="grid gap-4 lg:grid-cols-2">
+            <div id="recent-sales" className="scroll-mt-24">
+              <ActivityFeed
+                title={`Recent Sales (${revenue.recentPayments.length})`}
+                emptyText="Completed sales will appear here."
+                items={revenue.recentPayments.map((payment) => ({
+                  id: payment.id,
+                  label: payment.courseTitle,
+                  description: formatCurrency(payment.amount),
+                  badge: "Sale",
+                  timestamp: payment.paidAt
+                    ? formatRelativeTime(payment.paidAt)
+                    : undefined,
+                  href: `#course-revenue-${payment.courseId}`,
+                }))}
+              />
+            </div>
+
+            <div id="courses-to-watch" className="scroll-mt-24">
+              <ActivityFeed
+                title={`Courses To Watch (${revenue.dormantPaidCourses.length})`}
+                emptyText="Every published paid course has revenue activity this month."
+                items={revenue.dormantPaidCourses.slice(0, 6).map((course) => ({
+                  id: course.id,
+                  label: course.title,
+                  description:
+                    course.totalRevenue > 0
+                      ? "Selling historically, but no completed sales this month"
+                      : "Published with no completed sales yet",
+                  badge: course.totalRevenue > 0 ? "Dormant" : "No sales",
+                  href: `#course-revenue-${course.id}`,
+                }))}
+              />
+            </div>
+          </section>
+
+          <section id="course-revenue" className="border border-border scroll-mt-24">
+            <div className="border-b border-border px-5 py-3">
+              <h2 className="text-sm font-medium">Revenue by Course</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Monthly revenue, lifetime revenue, enrollments, and last sale in one place.
+              </p>
+            </div>
+
+            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground lg:grid lg:grid-cols-[1.4fr_120px_140px_140px_140px]">
+              <span>Course</span>
+              <span>Type</span>
+              <span>This Month</span>
+              <span>All Time</span>
+              <span>Enrollments</span>
+            </div>
+
+            <div className="divide-y divide-border">
+              {revenue.courseEarnings.map((course) => (
+                <article
                   key={course.id}
-                  className="px-5 py-3 flex items-center justify-between"
+                  id={`course-revenue-${course.id}`}
+                  className="scroll-mt-24 px-5 py-4"
                 >
-                  <div>
-                    <p className="text-sm font-medium">{course.title}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">
+                  <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[1.4fr_120px_140px_140px_140px] lg:items-center lg:gap-4">
+                    <div className="flex flex-col gap-1">
+                      <Link
+                        href={`/instructor/courses/${course.id}`}
+                        className="text-sm font-medium transition-colors hover:text-muted-foreground"
+                      >
+                        {course.title}
+                      </Link>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant={course.accessModel === "paid" ? "default" : "outline"}>
+                          {course.accessModel}
+                        </Badge>
+                        <Badge variant={course.isPublished ? "secondary" : "outline"}>
+                          {course.isPublished ? "Published" : "Draft"}
+                        </Badge>
+                        {course.accessModel === "paid" && course.monthlyRevenue <= 0 ? (
+                          <Badge variant="destructive">Needs attention</Badge>
+                        ) : null}
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {course.lastPaymentAt
+                          ? `Last sale ${formatRelativeTime(course.lastPaymentAt)}`
+                          : "No completed sales yet"}
+                      </span>
+                    </div>
+
+                    <span className="text-sm text-muted-foreground capitalize">
                       {course.accessModel}
-                    </p>
+                    </span>
+
+                    <span className="text-sm font-medium tabular-nums">
+                      {course.accessModel === "paid"
+                        ? formatCurrency(course.monthlyRevenue)
+                        : "Free"}
+                    </span>
+
+                    <span className="text-sm font-medium tabular-nums">
+                      {course.accessModel === "paid"
+                        ? formatCurrency(course.totalRevenue)
+                        : "Free"}
+                    </span>
+
+                    <span className="text-sm text-muted-foreground">
+                      {course.enrollments}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium tabular-nums">
-                    {course.earnings > 0
-                      ? formatCurrency(course.earnings)
-                      : "Free"}
-                  </span>
-                </div>
+                </article>
               ))}
-          </div>
-        )}
-      </section>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }
