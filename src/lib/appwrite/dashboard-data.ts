@@ -785,14 +785,15 @@ export async function getInstructorCourseList(
   ]);
 
   const modulesByCourseId = new Map<string, ModuleRow[]>();
-  for (const module of moduleRows) {
-    const courseId = typeof module.courseId === "string" ? module.courseId : "";
+  for (const moduleRow of moduleRows) {
+    const courseId =
+      typeof moduleRow.courseId === "string" ? moduleRow.courseId : "";
     if (!courseId) {
       continue;
     }
 
     const current = modulesByCourseId.get(courseId) ?? [];
-    current.push(module);
+    current.push(moduleRow);
     modulesByCourseId.set(courseId, current);
   }
 
