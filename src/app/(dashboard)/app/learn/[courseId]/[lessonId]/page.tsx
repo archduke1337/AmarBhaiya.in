@@ -9,7 +9,6 @@ import { createAdminClient } from "@/lib/appwrite/server";
 import {
   getFileDownloadUrl,
   getFilePreviewUrl,
-  getFileViewUrl,
 } from "@/lib/utils/file-urls";
 import { LessonVideoPlayer } from "@/components/lesson-video-player";
 import { getCourseProgress } from "@/actions/enrollment";
@@ -111,7 +110,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
     lesson.thumbnailFileId ?? lesson.videoThumbnailFileId ?? lesson.thumbnailId ?? ""
   );
   const videoUrl = videoFileId
-    ? getFileViewUrl(APPWRITE_CONFIG.buckets.courseVideos, videoFileId)
+    ? `/api/lesson-video/${courseId}/${lessonId}`
     : "";
   const posterUrl = thumbnailFileId
     ? getFilePreviewUrl(APPWRITE_CONFIG.buckets.courseThumbnails, thumbnailFileId, 1280, 720)
