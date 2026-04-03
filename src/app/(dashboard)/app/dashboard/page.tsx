@@ -16,6 +16,7 @@ import { getUserRole } from "@/lib/appwrite/auth-utils";
 import {
   getStudentProfileStats,
   getStudentEnrolledCourses,
+  getStudentStudyQueue,
   getUpcomingLiveSessions,
 } from "@/lib/appwrite/dashboard-data";
 import { formatRelativeTime } from "@/lib/utils/format";
@@ -36,9 +37,10 @@ export default async function StudentDashboardPage() {
   const user = await requireAuth();
   const role = getUserRole(user);
 
-  const [stats, enrolledCourses, upcomingSessions, unreadCount, notifications] = await Promise.all([
+  const [stats, enrolledCourses, studyQueue, upcomingSessions, unreadCount, notifications] = await Promise.all([
     getStudentProfileStats(user.$id),
     getStudentEnrolledCourses(user.$id),
+    getStudentStudyQueue(user.$id),
     getUpcomingLiveSessions(),
     getUnreadNotificationCount(),
     getUserNotifications(),
@@ -173,6 +175,82 @@ export default async function StudentDashboardPage() {
               ))}
             </div>
           )}
+
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-medium">Study Queue</h2>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <Link
+                  href="/app/assignments#pending-assignments"
+                  className="transition-colors hover:text-foreground"
+                >
+                  Assignments
+                </Link>
+                <Link
+                  href="/app/quizzes"
+                  className="transition-colors hover:text-foreground"
+                >
+                  Quizzes
+                </Link>
+              </div>
+            </div>
+
+            {studyQueue.length === 0 ? (
+              <div className="border border-border px-5 py-6 text-sm text-muted-foreground">
+                No pending assignments or quiz retakes right now. Keep going with your lessons and new work will show up here automatically.
+              </div>
+            ) : (
+              <div className="border border-border">
+                <div className="divide-y divide-border">
+                  {studyQueue.map((item) => (
+                    <Link
+                      key={`${item.kind}-${item.id}`}
+                      href={item.href}
+                      className="group block transition-colors hover:bg-muted/40"
+                    >
+                      <div className="flex items-start justify-between gap-3 px-5 py-4">
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-medium group-hover:underline">
+                              {item.title}
+                            </p>
+                            <Badge variant="outline" className="text-[10px] uppercase">
+                              {item.kind}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {item.courseTitle}
+                            {item.lessonTitle ? ` · ${item.lessonTitle}` : ""}
+                          </p>
+                          <p className="line-clamp-2 text-xs text-muted-foreground">
+                            {item.detail}
+                          </p>
+                        </div>
+
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          <Badge
+                            variant={item.status === "Overdue" ? "default" : "outline"}
+                            className="text-[10px]"
+                          >
+                            {item.status}
+                          </Badge>
+                          {item.dueAt && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatRelativeTime(item.dueAt)}
+                            </span>
+                          )}
+                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <ArrowRight className="size-3" />
+                            Open
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
         </section>
 
         {/* Sidebar — upcoming sessions + achievements */}

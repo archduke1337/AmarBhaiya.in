@@ -184,12 +184,19 @@ export default async function StudentAssignmentsPage() {
         <div className="flex flex-col gap-6">
           {/* Pending */}
           {pending.length > 0 && (
-            <section className="flex flex-col gap-3">
+            <section
+              id="pending-assignments"
+              className="scroll-mt-24 flex flex-col gap-3"
+            >
               <h2 className="text-sm font-medium text-muted-foreground">
                 Pending ({pending.length})
               </h2>
               {pending.map((a) => (
-                <article key={a.id} className="border border-border">
+                <article
+                  key={a.id}
+                  id={`assignment-${a.id}`}
+                  className="scroll-mt-24 border border-border"
+                >
                   <div className="px-5 py-4 flex flex-col gap-2">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -242,12 +249,19 @@ export default async function StudentAssignmentsPage() {
 
           {/* Submitted */}
           {done.length > 0 && (
-            <section className="flex flex-col gap-3">
+            <section
+              id="submitted-assignments"
+              className="scroll-mt-24 flex flex-col gap-3"
+            >
               <h2 className="text-sm font-medium text-muted-foreground">
                 Submitted ({done.length})
               </h2>
               {done.map((a) => (
-                <article key={a.id} className="border border-border">
+                <article
+                  key={a.id}
+                  id={`assignment-${a.id}`}
+                  className="scroll-mt-24 border border-border"
+                >
                   <div className="px-5 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>

@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import type { Role } from "@/lib/utils/constants";
 import type {
+  Assignment,
   AuditLog,
   Category,
   Course,
@@ -16,6 +17,9 @@ import type {
   ModerationAction,
   Module,
   Payment,
+  Quiz,
+  QuizAttempt,
+  Submission,
 } from "@/types/appwrite";
 
 import { APPWRITE_CONFIG } from "./config";
@@ -42,6 +46,10 @@ type ForumThreadRow = AnyRow & Partial<ForumThread>;
 type ForumCategoryRow = AnyRow & Partial<ForumCategory>;
 type ModuleRow = AnyRow & Partial<Module>;
 type LessonRow = AnyRow & Partial<Lesson>;
+type QuizRow = AnyRow & Partial<Quiz>;
+type QuizAttemptRow = AnyRow & Partial<QuizAttempt>;
+type AssignmentRow = AnyRow & Partial<Assignment>;
+type SubmissionRow = AnyRow & Partial<Submission>;
 
 export type CommunityThreadItem = {
   id: string;
@@ -1334,6 +1342,11 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
 
   const escalationItems = rows
     .filter((row) => row.action === "flag" && !row.revertedAt)
+    .sort((left, right) => {
+      const leftTime = toDate(left.createdAt)?.getTime() ?? 0;
+      const rightTime = toDate(right.createdAt)?.getTime() ?? 0;
+      return rightTime - leftTime;
+    })
     .slice(0, 20)
     .map((row) => ({
       id: row.$id,
@@ -1430,6 +1443,18 @@ export type StudentEnrolledCourse = {
   continueLessonTitle: string;
   resumePercent: number;
   lastActivityAt: string | null;
+};
+
+export type StudentStudyQueueItem = {
+  id: string;
+  kind: "assignment" | "quiz";
+  title: string;
+  courseTitle: string;
+  lessonTitle: string;
+  href: string;
+  status: string;
+  detail: string;
+  dueAt: string | null;
 };
 
 export async function getStudentEnrolledCourses(
@@ -1633,6 +1658,256 @@ export async function getStudentEnrolledCourses(
       }
       return b.progressPercent - a.progressPercent;
     });
+}
+
+export async function getStudentStudyQueue(
+  userId: string
+): Promise<StudentStudyQueueItem[]> {
+  if (!userId) {
+    return [];
+  }
+
+  const { tablesDB } = await createAdminClient();
+  const enrollmentsResult = await safeListRows<EnrollmentRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.enrollments,
+    [
+      Query.equal("userId", [userId]),
+      Query.equal("isActive", [true]),
+      Query.limit(100),
+    ]
+  );
+
+  const courseIds = [
+    ...new Set(
+      enrollmentsResult.rows
+        .map((row) =>
+          typeof row.courseId === "string" ? row.courseId.trim() : ""
+        )
+        .filter(Boolean)
+    ),
+  ];
+
+  if (courseIds.length === 0) {
+    return [];
+  }
+
+  const [
+    courseRows,
+    lessonRows,
+    assignmentRows,
+    quizRows,
+    submissionsResult,
+    quizAttemptsResult,
+  ] = await Promise.all([
+    listRowsByFieldValues<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      "$id",
+      courseIds
+    ),
+    listRowsByFieldValues<LessonRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.lessons,
+      "courseId",
+      courseIds
+    ),
+    listRowsByFieldValues<AssignmentRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.assignments,
+      "courseId",
+      courseIds
+    ),
+    listRowsByFieldValues<QuizRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.quizzes,
+      "courseId",
+      courseIds
+    ),
+    safeListRows<SubmissionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.submissions,
+      [Query.equal("userId", [userId]), Query.limit(2000)]
+    ),
+    safeListRows<QuizAttemptRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.quizAttempts,
+      [Query.equal("userId", [userId]), Query.limit(2000)]
+    ),
+  ]);
+
+  const courseTitleById = new Map<string, string>(
+    courseRows.map((course) => [
+      course.$id,
+      typeof course.title === "string" ? course.title : "Course",
+    ])
+  );
+
+  const lessonMetaById = new Map<
+    string,
+    { title: string; order: number }
+  >(
+    lessonRows.map((lesson) => [
+      lesson.$id,
+      {
+        title: typeof lesson.title === "string" ? lesson.title : "",
+        order: Number(lesson.order ?? 0),
+      },
+    ])
+  );
+
+  const latestSubmissionByAssignmentId = new Map<string, SubmissionRow>();
+  for (const submission of submissionsResult.rows) {
+    const assignmentId =
+      typeof submission.assignmentId === "string"
+        ? submission.assignmentId.trim()
+        : "";
+    if (!assignmentId) {
+      continue;
+    }
+
+    const previous = latestSubmissionByAssignmentId.get(assignmentId);
+    const currentTime =
+      toDate(submission.submittedAt ?? submission.$createdAt)?.getTime() ?? 0;
+    const previousTime =
+      toDate(previous?.submittedAt ?? previous?.$createdAt)?.getTime() ?? -1;
+
+    if (!previous || currentTime >= previousTime) {
+      latestSubmissionByAssignmentId.set(assignmentId, submission);
+    }
+  }
+
+  const attemptsByQuizId = new Map<string, QuizAttemptRow[]>();
+  for (const attempt of quizAttemptsResult.rows) {
+    const quizId = typeof attempt.quizId === "string" ? attempt.quizId.trim() : "";
+    if (!quizId) {
+      continue;
+    }
+
+    const current = attemptsByQuizId.get(quizId) ?? [];
+    current.push(attempt);
+    attemptsByQuizId.set(quizId, current);
+  }
+
+  const now = Date.now();
+  const threeDaysMs = 1000 * 60 * 60 * 24 * 3;
+
+  const assignmentItems = assignmentRows
+    .filter((assignment) => !latestSubmissionByAssignmentId.has(assignment.$id))
+    .map((assignment) => {
+      const dueAt =
+        typeof assignment.dueDate === "string" && assignment.dueDate.trim().length > 0
+          ? assignment.dueDate
+          : null;
+      const dueTime = toDate(dueAt)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      const priority =
+        dueTime < now
+          ? 0
+          : dueTime <= now + threeDaysMs
+            ? 1
+            : dueAt
+              ? 3
+              : 5;
+
+      return {
+        id: assignment.$id,
+        kind: "assignment" as const,
+        title: typeof assignment.title === "string" ? assignment.title : "Assignment",
+        courseTitle:
+          courseTitleById.get(
+            typeof assignment.courseId === "string" ? assignment.courseId : ""
+          ) ?? "Course",
+        lessonTitle:
+          lessonMetaById.get(
+            typeof assignment.lessonId === "string" ? assignment.lessonId : ""
+          )?.title ?? "",
+        href: `/app/assignments#assignment-${assignment.$id}`,
+        status:
+          dueTime < now
+            ? "Overdue"
+            : dueTime <= now + threeDaysMs
+              ? "Due soon"
+              : "Pending",
+        detail:
+          typeof assignment.description === "string" && assignment.description.trim().length > 0
+            ? assignment.description.trim()
+            : "Upload your work to complete this assignment.",
+        dueAt,
+        sortPriority: priority,
+        sortTime: dueTime,
+        sortLabel:
+          typeof assignment.title === "string" ? assignment.title : "Assignment",
+      };
+    });
+
+  const quizItems = quizRows
+    .map((quiz) => {
+      const attempts = attemptsByQuizId.get(quiz.$id) ?? [];
+      if (attempts.some((attempt) => Boolean(attempt.passed))) {
+        return null;
+      }
+
+      const latestAttempt = [...attempts].sort((left, right) => {
+        const leftTime = toDate(left.completedAt ?? left.$createdAt)?.getTime() ?? 0;
+        const rightTime =
+          toDate(right.completedAt ?? right.$createdAt)?.getTime() ?? 0;
+        return rightTime - leftTime;
+      })[0];
+      const bestScore = attempts.reduce(
+        (max, attempt) => Math.max(max, Number(attempt.score ?? 0)),
+        0
+      );
+      const lessonMeta = lessonMetaById.get(
+        typeof quiz.lessonId === "string" ? quiz.lessonId : ""
+      );
+
+      return {
+        id: quiz.$id,
+        kind: "quiz" as const,
+        title: typeof quiz.title === "string" ? quiz.title : "Quiz",
+        courseTitle:
+          courseTitleById.get(
+            typeof quiz.courseId === "string" ? quiz.courseId : ""
+          ) ?? "Course",
+        lessonTitle: lessonMeta?.title ?? "",
+        href: `/app/quiz/${quiz.$id}`,
+        status: latestAttempt ? "Retry" : "Ready",
+        detail: latestAttempt
+          ? `Best ${bestScore}% · Pass mark ${Number(quiz.passMark ?? 60)}%`
+          : `Pass mark ${Number(quiz.passMark ?? 60)}%${lessonMeta?.title ? ` · ${lessonMeta.title}` : ""}`,
+        dueAt: null,
+        sortPriority: latestAttempt ? 2 : 4,
+        sortTime: lessonMeta?.order ?? Number.MAX_SAFE_INTEGER,
+        sortLabel: typeof quiz.title === "string" ? quiz.title : "Quiz",
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  return [...assignmentItems, ...quizItems]
+    .sort((left, right) => {
+      if (left.sortPriority !== right.sortPriority) {
+        return left.sortPriority - right.sortPriority;
+      }
+      if (left.sortTime !== right.sortTime) {
+        return left.sortTime - right.sortTime;
+      }
+      if (left.courseTitle !== right.courseTitle) {
+        return left.courseTitle.localeCompare(right.courseTitle);
+      }
+      return left.sortLabel.localeCompare(right.sortLabel);
+    })
+    .slice(0, 6)
+    .map((item) => ({
+      id: item.id,
+      kind: item.kind,
+      title: item.title,
+      courseTitle: item.courseTitle,
+      lessonTitle: item.lessonTitle,
+      href: item.href,
+      status: item.status,
+      detail: item.detail,
+      dueAt: item.dueAt,
+    }));
 }
 
 // ── Upcoming Live Sessions (for students) ─────────────────────────────────
