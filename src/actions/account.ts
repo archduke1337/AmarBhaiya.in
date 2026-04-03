@@ -4,8 +4,25 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth } from "@/lib/appwrite/auth";
+import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+
+type AnyRow = Record<string, unknown> & { $id: string };
+
+async function getLiveSessionRow(sessionId: string): Promise<AnyRow | null> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    return (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.liveSessions,
+      rowId: sessionId,
+    })) as AnyRow;
+  } catch {
+    return null;
+  }
+}
 
 // ── RSVP to Live Session ────────────────────────────────────────────────────
 
@@ -17,6 +34,14 @@ export async function rsvpToSessionAction(
   if (!sessionId) return;
 
   try {
+    const session = await getLiveSessionRow(sessionId);
+    if (!session) return;
+
+    const courseId = String(session.courseId ?? "");
+    const status = String(session.status ?? "scheduled");
+    if (!courseId || !["scheduled", "live"].includes(status)) return;
+    if (!(await userHasCourseAccess({ courseId, userId: user.$id }))) return;
+
     const { tablesDB } = await createAdminClient();
 
     // Check if already RSVPed

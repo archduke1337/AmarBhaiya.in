@@ -1,6 +1,8 @@
 import { Query } from "node-appwrite";
 import type { Models } from "node-appwrite";
 
+import { requireAuth } from "@/lib/appwrite/auth";
+import { userHasCourseAccess } from "@/lib/appwrite/access";
 import type { Role } from "@/lib/utils/constants";
 import type {
   AuditLog,
@@ -1480,6 +1482,7 @@ export type UpcomingSessionItem = {
 };
 
 export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> {
+  const user = await requireAuth();
   const { tablesDB } = await createAdminClient();
 
   const result = await safeListRows<LiveSessionRow>(
@@ -1488,16 +1491,42 @@ export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> 
     [
       Query.equal("status", ["scheduled", "live"]),
       Query.orderAsc("scheduledAt"),
-      Query.limit(10),
+      Query.limit(50),
     ]
   );
 
-  return result.rows.map((s) => ({
-    id: s.$id,
-    title: typeof s.title === "string" ? s.title : "Untitled session",
-    status: typeof s.status === "string" ? s.status : "scheduled",
-    scheduledAt: typeof s.scheduledAt === "string" ? s.scheduledAt : null,
-  }));
+  const accessByCourseId = new Map<string, boolean>();
+  const visibleSessions: UpcomingSessionItem[] = [];
+
+  for (const session of result.rows) {
+    const courseId = typeof session.courseId === "string" ? session.courseId : "";
+    if (!courseId) {
+      continue;
+    }
+
+    let hasAccess = accessByCourseId.get(courseId);
+    if (hasAccess === undefined) {
+      hasAccess = await userHasCourseAccess({ courseId, userId: user.$id });
+      accessByCourseId.set(courseId, hasAccess);
+    }
+
+    if (!hasAccess) {
+      continue;
+    }
+
+    visibleSessions.push({
+      id: session.$id,
+      title: typeof session.title === "string" ? session.title : "Untitled session",
+      status: typeof session.status === "string" ? session.status : "scheduled",
+      scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+    });
+
+    if (visibleSessions.length >= 10) {
+      break;
+    }
+  }
+
+  return visibleSessions;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
