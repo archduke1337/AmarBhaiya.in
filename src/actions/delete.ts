@@ -100,6 +100,7 @@ async function deleteRowsByQueries(
       }
     }
   } catch (error) {
+    failedDeletes.push(`${tableId}/__query_failed__`);
     console.error(
       `[Delete] Failed to query ${tableId}:`,
       error instanceof Error ? error.message : error
@@ -410,7 +411,7 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
 
   if (failedDeletes.length > 0) {
     console.warn(
-      `[Delete] ${failedDeletes.length} child rows failed to delete for course ${courseId}. Orphaned records:`,
+      `[Delete] Course ${courseId} was not deleted because child cleanup failed:`,
       failedDeletes
     );
     return;
@@ -506,10 +507,12 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
   revalidatePath("/app/assignments");
   revalidatePath("/app/quizzes");
   revalidatePath("/app/dashboard");
+  revalidatePath("/app/courses");
   revalidatePath("/courses");
   if (typeof course.slug === "string" && course.slug) {
     revalidatePath(`/courses/${course.slug}`);
   }
+  revalidatePath(`/instructor/courses/${courseId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
 }
 
@@ -540,10 +543,12 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
   revalidatePath("/app/assignments");
   revalidatePath("/app/quizzes");
   revalidatePath("/app/dashboard");
+  revalidatePath("/app/courses");
   revalidatePath("/courses");
   if (typeof course.slug === "string" && course.slug) {
     revalidatePath(`/courses/${course.slug}`);
   }
+  revalidatePath(`/instructor/courses/${courseId}`);
   revalidatePath(`/app/learn/${courseId}/${lessonId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
 }
@@ -717,7 +722,7 @@ export async function deleteLiveSessionAction(
   }
 
   // Delete RSVPs
-  const failedDeletes = [];
+  const failedDeletes: string[] = [];
   try {
     failedDeletes.push(
       ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.sessionRsvps, [
@@ -749,6 +754,7 @@ export async function deleteLiveSessionAction(
   }
 
   revalidatePath("/admin/live");
+  revalidatePath("/instructor");
   revalidatePath("/instructor/live");
   revalidatePath("/app/dashboard");
   revalidatePath("/app/live");
