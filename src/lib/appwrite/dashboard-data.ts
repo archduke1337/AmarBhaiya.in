@@ -52,6 +52,8 @@ type AssignmentRow = AnyRow & Partial<Assignment>;
 type SubmissionRow = AnyRow & Partial<Submission>;
 
 const REVIEW_OVERDUE_MS = 1000 * 60 * 60 * 24 * 3;
+const RECENT_ENROLLMENT_MS = 1000 * 60 * 60 * 24 * 14;
+const STUDENT_ATTENTION_MS = 1000 * 60 * 60 * 24 * 7;
 
 export type CommunityThreadItem = {
   id: string;
@@ -87,8 +89,13 @@ export type InstructorStudentItem = {
   id: string;
   name: string;
   email: string;
+  courseId: string;
   courseTitle: string;
   progressPercent: number;
+  enrolledAt: string | null;
+  needsAttention: boolean;
+  isNearCompletion: boolean;
+  isNewEnrollment: boolean;
 };
 
 export type InstructorSubmissionQueueItem = {
@@ -117,6 +124,36 @@ export type InstructorLiveSessionItem = {
   streamUrl: string;
   recordingUrl: string;
   rsvpCount: number;
+};
+
+export type InstructorRevenueCourseItem = {
+  id: string;
+  title: string;
+  accessModel: string;
+  isPublished: boolean;
+  enrollments: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+  lastPaymentAt: string | null;
+};
+
+export type InstructorRevenueRecentPaymentItem = {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  amount: number;
+  paidAt: string | null;
+};
+
+export type InstructorRevenueOverview = {
+  totalEarnings: number;
+  monthlyEarnings: number;
+  totalEnrollments: number;
+  paidCourseCount: number;
+  publishedPaidCourses: number;
+  courseEarnings: InstructorRevenueCourseItem[];
+  recentPayments: InstructorRevenueRecentPaymentItem[];
+  dormantPaidCourses: InstructorRevenueCourseItem[];
 };
 
 export type ModeratorDashboardStats = {
@@ -662,8 +699,7 @@ export async function getInstructorStudents(
       const leftDate = toDate(left.enrolledAt)?.getTime() ?? 0;
       const rightDate = toDate(right.enrolledAt)?.getTime() ?? 0;
       return rightDate - leftDate;
-    })
-    .slice(0, 40);
+    });
 
   if (activeEnrollmentRows.length === 0) {
     return [];
@@ -693,6 +729,13 @@ export async function getInstructorStudents(
     const userId = String(enrollment.userId);
     const courseId = typeof enrollment.courseId === "string" ? enrollment.courseId : "";
     const course = courseById.get(courseId);
+    const enrolledAt =
+      typeof enrollment.enrolledAt === "string" && enrollment.enrolledAt.length > 0
+        ? enrollment.enrolledAt
+        : typeof enrollment.$createdAt === "string"
+          ? enrollment.$createdAt
+          : null;
+    const enrolledTime = toDate(enrolledAt)?.getTime() ?? Number.NaN;
 
     const rawProgress = Number(enrollment.progress ?? 0);
     const progressPercent = Number.isFinite(rawProgress)
@@ -705,9 +748,19 @@ export async function getInstructorStudents(
       id: userId,
       name: user.name,
       email: user.email,
+      courseId,
       courseTitle:
         typeof course?.title === "string" ? course.title : "Unknown course",
       progressPercent,
+      enrolledAt,
+      needsAttention:
+        progressPercent < 25 &&
+        Number.isFinite(enrolledTime) &&
+        Date.now() - enrolledTime > STUDENT_ATTENTION_MS,
+      isNearCompletion: progressPercent >= 80 && progressPercent < 100,
+      isNewEnrollment:
+        Number.isFinite(enrolledTime) &&
+        Date.now() - enrolledTime <= RECENT_ENROLLMENT_MS,
     };
   });
 }
