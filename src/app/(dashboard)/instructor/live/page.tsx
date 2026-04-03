@@ -1,4 +1,7 @@
-import { createLiveSessionAction } from "@/actions/dashboard";
+import {
+  createLiveSessionAction,
+  updateLiveSessionAction,
+} from "@/actions/dashboard";
 import { deleteLiveSessionAction } from "@/actions/delete";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
@@ -6,6 +9,20 @@ import {
   getInstructorLiveSessions,
 } from "@/lib/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
+
+function toDateTimeLocalValue(value: string | null): string {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const pad = (input: number) => input.toString().padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
 export default async function InstructorLivePage() {
   const { user, role } = await requireRole(["admin", "instructor"]);
@@ -41,6 +58,35 @@ export default async function InstructorLivePage() {
                   {" · "}
                   {session.rsvpCount} RSVPs
                 </p>
+                {session.description ? (
+                  <p className="text-sm text-muted-foreground">
+                    {session.description}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  {session.streamUrl ? (
+                    <a
+                      href={session.streamUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-4"
+                    >
+                      Open join link
+                    </a>
+                  ) : (
+                    <span>No join link yet</span>
+                  )}
+                  {session.recordingUrl ? (
+                    <a
+                      href={session.recordingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-4"
+                    >
+                      Open recording
+                    </a>
+                  ) : null}
+                </div>
               </div>
               <form action={deleteLiveSessionAction}>
                 <input type="hidden" name="sessionId" value={session.id} />
@@ -52,12 +98,92 @@ export default async function InstructorLivePage() {
                 </button>
               </form>
             </div>
+
+            <form action={updateLiveSessionAction} className="grid gap-3 border-t border-border pt-3 md:grid-cols-2">
+              <input type="hidden" name="sessionId" value={session.id} />
+
+              <label className="space-y-1 text-sm md:col-span-2">
+                <span>Session title</span>
+                <input
+                  name="title"
+                  required
+                  minLength={4}
+                  defaultValue={session.title}
+                  className="h-10 w-full border border-border bg-background px-3"
+                />
+              </label>
+
+              <label className="space-y-1 text-sm md:col-span-2">
+                <span>Description</span>
+                <textarea
+                  name="description"
+                  rows={2}
+                  defaultValue={session.description}
+                  className="w-full border border-border bg-background px-3 py-2"
+                />
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span>Schedule</span>
+                <input
+                  type="datetime-local"
+                  name="scheduledAt"
+                  required
+                  defaultValue={toDateTimeLocalValue(session.scheduledAt)}
+                  className="w-full h-10 border border-border bg-background px-3"
+                />
+              </label>
+
+              <label className="space-y-1 text-sm">
+                <span>Status</span>
+                <select
+                  name="status"
+                  defaultValue={session.status}
+                  className="w-full h-10 border border-border bg-background px-3"
+                >
+                  <option value="scheduled">Scheduled</option>
+                  <option value="live">Live</option>
+                  <option value="ended">Ended</option>
+                </select>
+              </label>
+
+              <label className="space-y-1 text-sm md:col-span-2">
+                <span>Join URL</span>
+                <input
+                  name="streamUrl"
+                  type="url"
+                  defaultValue={session.streamUrl}
+                  placeholder="https://..."
+                  className="h-10 w-full border border-border bg-background px-3"
+                />
+              </label>
+
+              <label className="space-y-1 text-sm md:col-span-2">
+                <span>Recording URL</span>
+                <input
+                  name="recordingUrl"
+                  type="url"
+                  defaultValue={session.recordingUrl}
+                  placeholder="https://..."
+                  className="h-10 w-full border border-border bg-background px-3"
+                />
+              </label>
+
+              <div className="flex justify-end md:col-span-2">
+                <button
+                  type="submit"
+                  className="h-9 px-3 border border-border text-sm hover:bg-muted"
+                >
+                  Save session
+                </button>
+              </div>
+            </form>
           </article>
         ))}
       </section>
 
       <section className="border border-border p-6 space-y-4">
-        <h2 className="text-xl">Start a new live session</h2>
+        <h2 className="text-xl">Schedule a new live session</h2>
         {courses.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Create at least one course first to schedule live sessions.
@@ -93,6 +219,12 @@ export default async function InstructorLivePage() {
               name="scheduledAt"
               className="w-full h-11 border border-border bg-background px-3"
               required
+            />
+            <input
+              name="streamUrl"
+              type="url"
+              className="w-full h-11 border border-border bg-background px-3"
+              placeholder="Optional join URL (Zoom, YouTube Live, Stream call, etc.)"
             />
             <button className="h-10 px-4 bg-foreground text-background text-sm" type="submit">
               Create session

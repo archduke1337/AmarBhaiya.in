@@ -53,7 +53,7 @@ export default async function AdminLivePage() {
               <span>Session</span>
               <span>Status</span>
               <span>Scheduled At</span>
-              <span>Actions</span>
+              <span>Links</span>
             </div>
 
             <div className="divide-y divide-border">
@@ -77,15 +77,29 @@ export default async function AdminLivePage() {
                       : "Not scheduled"}
                   </span>
 
-                  <form action={deleteLiveSessionAction}>
-                    <input type="hidden" name="sessionId" value={session.id} />
-                    <button
-                      type="submit"
-                      className="text-xs text-destructive hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </form>
+                  <div className="flex items-center gap-3 text-xs">
+                    {session.streamUrl ? (
+                      <a
+                        href={session.streamUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="hover:underline"
+                      >
+                        Open
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">No link</span>
+                    )}
+                    <form action={deleteLiveSessionAction}>
+                      <input type="hidden" name="sessionId" value={session.id} />
+                      <button
+                        type="submit"
+                        className="text-destructive hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </form>
+                  </div>
                 </div>
               ))}
             </div>

@@ -34,6 +34,17 @@ const createLiveSessionSchema = z.object({
   title: z.string().trim().min(4, "Session title must be at least 4 characters."),
   description: z.string().trim().optional(),
   scheduledAt: z.string().min(1, "Schedule is required."),
+  streamUrl: z.string().trim().optional(),
+});
+
+const updateLiveSessionSchema = z.object({
+  sessionId: z.string().min(1, "Session is required."),
+  title: z.string().trim().min(4, "Session title must be at least 4 characters."),
+  description: z.string().trim().optional(),
+  scheduledAt: z.string().min(1, "Schedule is required."),
+  status: z.enum(["scheduled", "live", "ended"]).default("scheduled"),
+  streamUrl: z.string().trim().optional(),
+  recordingUrl: z.string().trim().optional(),
 });
 
 function normalizeIsoDate(value: string): string {
@@ -43,6 +54,24 @@ function normalizeIsoDate(value: string): string {
   }
 
   return parsed.toISOString();
+}
+
+function normalizeOptionalHttpUrl(value?: string): string | null {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) {
+    return "";
+  }
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return null;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 export async function createForumThreadAction(
@@ -191,10 +220,16 @@ export async function createLiveSessionAction(
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? "").trim() || undefined,
     scheduledAt: String(formData.get("scheduledAt") ?? ""),
+    streamUrl: String(formData.get("streamUrl") ?? "").trim() || undefined,
   };
 
   const parsed = createLiveSessionSchema.safeParse(payload);
   if (!parsed.success) {
+    return;
+  }
+
+  const streamUrl = normalizeOptionalHttpUrl(parsed.data.streamUrl);
+  if (streamUrl === null) {
     return;
   }
 
@@ -217,9 +252,9 @@ export async function createLiveSessionAction(
             ? String(course.instructorId ?? user.$id)
             : user.$id,
         title: parsed.data.title,
-        description: parsed.data.description,
+        description: parsed.data.description ?? "",
         scheduledAt: normalizeIsoDate(parsed.data.scheduledAt),
-        streamId: "",
+        streamId: streamUrl,
         status: "scheduled",
         recordingUrl: "",
         duration: 0,
@@ -232,6 +267,82 @@ export async function createLiveSessionAction(
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create live session."
+    );
+  }
+}
+
+export async function updateLiveSessionAction(
+  formData: FormData
+): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const payload = {
+    sessionId: String(formData.get("sessionId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    description: String(formData.get("description") ?? "").trim() || undefined,
+    scheduledAt: String(formData.get("scheduledAt") ?? ""),
+    status: String(formData.get("status") ?? "scheduled"),
+    streamUrl: String(formData.get("streamUrl") ?? "").trim() || undefined,
+    recordingUrl: String(formData.get("recordingUrl") ?? "").trim() || undefined,
+  };
+
+  const parsed = updateLiveSessionSchema.safeParse(payload);
+  if (!parsed.success) {
+    return;
+  }
+
+  const streamUrl = normalizeOptionalHttpUrl(parsed.data.streamUrl);
+  const recordingUrl = normalizeOptionalHttpUrl(parsed.data.recordingUrl);
+  if (streamUrl === null || recordingUrl === null) {
+    return;
+  }
+  if (parsed.data.status === "live" && !streamUrl) {
+    return;
+  }
+
+  try {
+    const { tablesDB } = await createAdminClient();
+    const session = await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.liveSessions,
+      rowId: parsed.data.sessionId,
+    }).catch(() => null);
+
+    if (!session) {
+      return;
+    }
+
+    const course = await userCanManageCourse(
+      String((session as Record<string, unknown>).courseId ?? ""),
+      role,
+      user.$id
+    );
+    if (!course) {
+      return;
+    }
+
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.liveSessions,
+      rowId: parsed.data.sessionId,
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description ?? "",
+        scheduledAt: normalizeIsoDate(parsed.data.scheduledAt),
+        status: parsed.data.status,
+        streamId: streamUrl,
+        recordingUrl: recordingUrl,
+      },
+    });
+
+    revalidatePath("/instructor");
+    revalidatePath("/instructor/live");
+    revalidatePath("/admin/live");
+    revalidatePath("/app/dashboard");
+    revalidatePath("/app/live");
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to update live session."
     );
   }
 }

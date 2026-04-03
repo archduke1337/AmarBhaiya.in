@@ -84,8 +84,11 @@ export type InstructorStudentItem = {
 export type InstructorLiveSessionItem = {
   id: string;
   title: string;
+  description: string;
   status: string;
   scheduledAt: string | null;
+  streamUrl: string;
+  recordingUrl: string;
   rsvpCount: number;
 };
 
@@ -258,6 +261,28 @@ function toDate(value: unknown): Date | null {
   }
 
   return parsed;
+}
+
+function getSafeHttpUrl(value: unknown): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return "";
+    }
+
+    return url.toString();
+  } catch {
+    return "";
+  }
 }
 
 function toUtcDateKey(value: unknown): string | null {
@@ -698,9 +723,13 @@ export async function getInstructorLiveSessions(
   return sessionsResult.rows.map((session) => ({
     id: session.$id,
     title: typeof session.title === "string" ? session.title : "Untitled session",
+    description:
+      typeof session.description === "string" ? session.description : "",
     status: typeof session.status === "string" ? session.status : "scheduled",
     scheduledAt:
       typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+    streamUrl: getSafeHttpUrl(session.streamId),
+    recordingUrl: getSafeHttpUrl(session.recordingUrl),
     rsvpCount: rsvpCountBySessionId.get(session.$id) ?? 0,
   }));
 }
@@ -1262,9 +1291,13 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
     .map((session) => ({
       id: session.$id,
       title: typeof session.title === "string" ? session.title : "Untitled session",
+      description:
+        typeof session.description === "string" ? session.description : "",
       status: typeof session.status === "string" ? session.status : "scheduled",
       scheduledAt:
         typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+      streamUrl: getSafeHttpUrl(session.streamId),
+      recordingUrl: getSafeHttpUrl(session.recordingUrl),
       rsvpCount: 0,
     }));
 
@@ -1484,6 +1517,14 @@ export type UpcomingSessionItem = {
   title: string;
   status: string;
   scheduledAt: string | null;
+  streamUrl: string;
+};
+
+export type LiveRecordingItem = {
+  id: string;
+  title: string;
+  scheduledAt: string | null;
+  recordingUrl: string;
 };
 
 export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> {
@@ -1524,6 +1565,7 @@ export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> 
       title: typeof session.title === "string" ? session.title : "Untitled session",
       status: typeof session.status === "string" ? session.status : "scheduled",
       scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+      streamUrl: getSafeHttpUrl(session.streamId),
     });
 
     if (visibleSessions.length >= 10) {
@@ -1532,6 +1574,56 @@ export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> 
   }
 
   return visibleSessions;
+}
+
+export async function getRecentLiveRecordings(): Promise<LiveRecordingItem[]> {
+  const user = await requireAuth();
+  const { tablesDB } = await createAdminClient();
+
+  const result = await safeListRows<LiveSessionRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.liveSessions,
+    [
+      Query.equal("status", ["ended"]),
+      Query.orderDesc("scheduledAt"),
+      Query.limit(50),
+    ]
+  );
+
+  const accessByCourseId = new Map<string, boolean>();
+  const recordings: LiveRecordingItem[] = [];
+
+  for (const session of result.rows) {
+    const courseId = typeof session.courseId === "string" ? session.courseId : "";
+    const recordingUrl = getSafeHttpUrl(session.recordingUrl);
+
+    if (!courseId || !recordingUrl) {
+      continue;
+    }
+
+    let hasAccess = accessByCourseId.get(courseId);
+    if (hasAccess === undefined) {
+      hasAccess = await userHasCourseAccess({ courseId, userId: user.$id });
+      accessByCourseId.set(courseId, hasAccess);
+    }
+
+    if (!hasAccess) {
+      continue;
+    }
+
+    recordings.push({
+      id: session.$id,
+      title: typeof session.title === "string" ? session.title : "Session recording",
+      scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+      recordingUrl,
+    });
+
+    if (recordings.length >= 10) {
+      break;
+    }
+  }
+
+  return recordings;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

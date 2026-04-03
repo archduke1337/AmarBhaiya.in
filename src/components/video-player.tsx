@@ -112,6 +112,7 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
         src={src}
         poster={poster}
         className="aspect-video w-full cursor-pointer"
+        playsInline
         onClick={togglePlay}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
@@ -127,7 +128,7 @@ export function VideoPlayer({ src, title, poster }: VideoPlayerProps) {
       />
 
       {/* Controls overlay */}
-      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-4 py-3 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-4 py-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
         {/* Progress bar */}
         <div
           className="mb-3 h-1 w-full cursor-pointer bg-white/20"
