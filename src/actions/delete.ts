@@ -467,8 +467,8 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
   if (!course) return;
 
   const { tablesDB, storage } = await createAdminClient();
-  const module = await getRowById(tablesDB, APPWRITE_CONFIG.tables.modules, moduleId);
-  if (!module || String(module.courseId ?? "") !== courseId) return;
+  const moduleRow = await getRowById(tablesDB, APPWRITE_CONFIG.tables.modules, moduleId);
+  if (!moduleRow || String(moduleRow.courseId ?? "") !== courseId) return;
 
   const lessons = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.lessons, [
     Query.equal("moduleId", [moduleId]),
