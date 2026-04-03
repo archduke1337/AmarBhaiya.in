@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, ArrowRight, Layers } from "lucide-react";
 
+import { deleteCourseAction } from "@/actions/delete";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorCourseList } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
@@ -93,6 +94,15 @@ export default async function InstructorCoursesPage() {
                     Curriculum
                     <ArrowRight className="size-3" />
                   </Link>
+                  <form action={deleteCourseAction}>
+                    <input type="hidden" name="courseId" value={course.id} />
+                    <button
+                      type="submit"
+                      className="inline-flex h-8 items-center border border-destructive/30 px-3 text-xs text-destructive transition-colors hover:bg-destructive/10"
+                    >
+                      Delete
+                    </button>
+                  </form>
                 </div>
               </div>
             </article>

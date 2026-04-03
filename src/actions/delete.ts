@@ -4,91 +4,233 @@ import { Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/appwrite/auth";
+import { userCanManageCourse } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import type { Role } from "@/lib/utils/constants";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-async function userOwnsCourse(courseId: string, role: Role, userId: string): Promise<boolean> {
-  if (role === "admin") return true;
+type AnyRow = Record<string, unknown> & { $id: string };
+type AdminServices = Awaited<ReturnType<typeof createAdminClient>>;
+type AdminTablesDB = AdminServices["tablesDB"];
+type AdminStorage = AdminServices["storage"];
 
-  const { tablesDB } = await createAdminClient();
-  try {
-    const course = (await tablesDB.getRow({
+async function listAllRows(
+  tablesDB: AdminTablesDB,
+  tableId: string,
+  queries: string[]
+): Promise<AnyRow[]> {
+  const rows: AnyRow[] = [];
+  let offset = 0;
+
+  while (true) {
+    const page = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-    })) as { instructorId?: string };
+      tableId,
+      queries: [...queries, Query.limit(500), Query.offset(offset)],
+    });
 
-    return course.instructorId === userId;
-  } catch {
-    return false;
+    rows.push(...(page.rows as AnyRow[]));
+
+    if (page.rows.length < 500) {
+      break;
+    }
+
+    offset += page.rows.length;
+  }
+
+  return rows;
+}
+
+async function deleteRowsByQueries(
+  tablesDB: AdminTablesDB,
+  tableId: string,
+  queries: string[]
+): Promise<string[]> {
+  const failedDeletes: string[] = [];
+
+  try {
+    let hasMore = true;
+    while (hasMore) {
+      const rows = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId,
+        queries: [...queries, Query.limit(500)],
+      });
+
+      if (rows.rows.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      for (const row of rows.rows as AnyRow[]) {
+        try {
+          await tablesDB.deleteRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId,
+            rowId: row.$id,
+          });
+        } catch (error) {
+          failedDeletes.push(`${tableId}/${row.$id}`);
+          console.error(
+            `[Delete] Failed to delete ${tableId}/${row.$id}:`,
+            error instanceof Error ? error.message : error
+          );
+        }
+      }
+
+      if (rows.rows.length < 500) {
+        hasMore = false;
+      }
+    }
+  } catch (error) {
+    console.error(
+      `[Delete] Failed to query ${tableId}:`,
+      error instanceof Error ? error.message : error
+    );
+  }
+
+  return failedDeletes;
+}
+
+async function deleteFileIds(
+  storage: AdminStorage,
+  bucketId: string,
+  fileIds: string[]
+): Promise<void> {
+  const uniqueIds = [...new Set(fileIds.map((fileId) => fileId.trim()).filter(Boolean))];
+
+  for (const fileId of uniqueIds) {
+    try {
+      await storage.deleteFile({ bucketId, fileId });
+    } catch (error) {
+      console.error(
+        `[Delete] Failed to delete file ${bucketId}/${fileId}:`,
+        error instanceof Error ? error.message : error
+      );
+    }
   }
 }
 
 // ── Delete Course ───────────────────────────────────────────────────────────
-// Admin only. Cascades: deletes all modules, lessons, enrollments, progress.
+// Instructor (owner) or Admin. Cascades through course-owned learning content.
 
 export async function deleteCourseAction(formData: FormData): Promise<void> {
-  await requireRole(["admin"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   if (!courseId) return;
 
-  const { tablesDB } = await createAdminClient();
+  const course = await userCanManageCourse(courseId, role, user.$id);
+  if (!course) return;
 
-  // Delete child rows (paginated to handle >2000 records)
-  const childTables = [
+  const { tablesDB, storage } = await createAdminClient();
+  const failedDeletes: string[] = [];
+
+  const lessons = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+    Query.equal("courseId", [courseId]),
+  ]);
+  const quizzes = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.quizzes, [
+    Query.equal("courseId", [courseId]),
+  ]);
+  const assignments = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.assignments, [
+    Query.equal("courseId", [courseId]),
+  ]);
+  const liveSessions = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.liveSessions, [
+    Query.equal("courseId", [courseId]),
+  ]);
+
+  const lessonVideoIds = lessons
+    .map((lesson) => String(lesson.videoFileId ?? ""))
+    .filter(Boolean);
+  const lessonIds = lessons.map((lesson) => lesson.$id);
+
+  const quizIds = quizzes.map((quiz) => quiz.$id);
+  for (const quizId of quizIds) {
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.quizAttempts, [
+        Query.equal("quizId", [quizId]),
+      ]))
+    );
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.quizQuestions, [
+        Query.equal("quizId", [quizId]),
+      ]))
+    );
+  }
+
+  const assignmentIds = assignments.map((assignment) => assignment.$id);
+  const submissionFileIds: string[] = [];
+  for (const assignmentId of assignmentIds) {
+    const submissions = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.submissions, [
+      Query.equal("assignmentId", [assignmentId]),
+    ]);
+
+    submissionFileIds.push(
+      ...submissions
+        .map((submission) => String(submission.fileId ?? ""))
+        .filter(Boolean)
+    );
+
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.submissions, [
+        Query.equal("assignmentId", [assignmentId]),
+      ]))
+    );
+  }
+
+  const liveSessionIds = liveSessions.map((session) => session.$id);
+  for (const sessionId of liveSessionIds) {
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.sessionRsvps, [
+        Query.equal("sessionId", [sessionId]),
+      ]))
+    );
+  }
+
+  const resourceFileIds: string[] = [];
+  for (const lessonId of lessonIds) {
+    const resources = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.resources, [
+      Query.equal("lessonId", [lessonId]),
+    ]);
+
+    resourceFileIds.push(
+      ...resources
+        .map((resource) => String(resource.fileId ?? ""))
+        .filter(Boolean)
+    );
+
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.resources, [
+        Query.equal("lessonId", [lessonId]),
+      ]))
+    );
+  }
+
+  const directCourseTables = [
+    APPWRITE_CONFIG.tables.courseComments,
+    APPWRITE_CONFIG.tables.quizzes,
+    APPWRITE_CONFIG.tables.assignments,
+    APPWRITE_CONFIG.tables.liveSessions,
     APPWRITE_CONFIG.tables.lessons,
     APPWRITE_CONFIG.tables.modules,
     APPWRITE_CONFIG.tables.enrollments,
     APPWRITE_CONFIG.tables.progress,
   ];
 
-  const failedDeletes: string[] = [];
-
-  for (const tableId of childTables) {
-    try {
-      let hasMore = true;
-      while (hasMore) {
-        const rows = await tablesDB.listRows({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId,
-          queries: [Query.equal("courseId", [courseId]), Query.limit(500)],
-        });
-
-        if (rows.rows.length === 0) {
-          hasMore = false;
-          break;
-        }
-
-        for (const row of rows.rows) {
-          try {
-            await tablesDB.deleteRow({
-              databaseId: APPWRITE_CONFIG.databaseId,
-              tableId,
-              rowId: (row as { $id: string }).$id,
-            });
-          } catch (error) {
-            const rowId = (row as { $id: string }).$id;
-            failedDeletes.push(`${tableId}/${rowId}`);
-            console.error(`[Delete] Failed to delete ${tableId}/${rowId}:`, error instanceof Error ? error.message : error);
-          }
-        }
-
-        // If we got fewer than 500, we're done
-        if (rows.rows.length < 500) {
-          hasMore = false;
-        }
-      }
-    } catch (error) {
-      console.error(`[Delete] Failed to query ${tableId} for courseId=${courseId}:`, error instanceof Error ? error.message : error);
-    }
+  for (const tableId of directCourseTables) {
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, tableId, [
+        Query.equal("courseId", [courseId]),
+      ]))
+    );
   }
 
   if (failedDeletes.length > 0) {
-    console.warn(`[Delete] ${failedDeletes.length} child rows failed to delete for course ${courseId}. Orphaned records:`, failedDeletes);
+    console.warn(
+      `[Delete] ${failedDeletes.length} child rows failed to delete for course ${courseId}. Orphaned records:`,
+      failedDeletes
+    );
   }
 
   // Delete the course itself
@@ -105,8 +247,25 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
     return;
   }
 
+  await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseVideos, lessonVideoIds);
+  await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseResources, resourceFileIds);
+  await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseResources, submissionFileIds);
+  await deleteFileIds(
+    storage,
+    APPWRITE_CONFIG.buckets.courseThumbnails,
+    [String(course.thumbnailId ?? "")]
+  );
+
+  revalidatePath("/instructor");
   revalidatePath("/admin/courses");
   revalidatePath("/instructor/courses");
+  revalidatePath("/admin/live");
+  revalidatePath("/instructor/live");
+  revalidatePath("/app");
+  revalidatePath("/app/live");
+  revalidatePath("/app/assignments");
+  revalidatePath("/app/quizzes");
+  revalidatePath("/");
   revalidatePath("/courses");
 }
 
@@ -120,7 +279,7 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
   const moduleId = String(formData.get("moduleId") ?? "");
   if (!courseId || !moduleId) return;
 
-  if (!(await userOwnsCourse(courseId, role, user.$id))) return;
+  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
 
   const { tablesDB } = await createAdminClient();
 
@@ -172,7 +331,7 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
   const lessonId = String(formData.get("lessonId") ?? "");
   if (!courseId || !lessonId) return;
 
-  if (!(await userOwnsCourse(courseId, role, user.$id))) return;
+  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
 
   const { tablesDB } = await createAdminClient();
 

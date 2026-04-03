@@ -1,5 +1,6 @@
 import { BookOpen, Eye, Star, Layers } from "lucide-react";
 
+import { deleteCourseAction } from "@/actions/delete";
 import { updateCourseVisibilityAction } from "@/actions/operations";
 import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
@@ -42,15 +43,15 @@ export default async function AdminCoursesPage() {
           title="No courses found"
           description="Instructors can create courses from their dashboard. They will appear here for admin review."
         />
-      ) : (
-        <section className="border border-border">
-          {/* Table header */}
-          <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_100px_100px_160px]">
-            <span>Course</span>
-            <span>Category</span>
-            <span>Status</span>
-            <span>Featured</span>
-            <span>Actions</span>
+        ) : (
+          <section className="border border-border">
+            {/* Table header */}
+            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_100px_100px_220px]">
+              <span>Course</span>
+              <span>Category</span>
+              <span>Status</span>
+              <span>Featured</span>
+              <span>Actions</span>
           </div>
 
           <div className="divide-y divide-border">
@@ -58,7 +59,7 @@ export default async function AdminCoursesPage() {
               <form
                 key={course.id}
                 action={updateCourseVisibilityAction}
-                className="flex flex-col gap-3 px-5 py-4 md:grid md:grid-cols-[1fr_120px_100px_100px_160px] md:items-center md:gap-4"
+                className="flex flex-col gap-3 px-5 py-4 md:grid md:grid-cols-[1fr_120px_100px_100px_220px] md:items-center md:gap-4"
               >
                 <input type="hidden" name="courseId" value={course.id} />
 
@@ -90,12 +91,22 @@ export default async function AdminCoursesPage() {
                   <span className="text-xs text-muted-foreground">Featured</span>
                 </label>
 
-                <button
-                  type="submit"
-                  className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
-                >
-                  Save
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="submit"
+                    formAction={deleteCourseAction}
+                    formNoValidate
+                    className="h-8 border border-destructive/30 px-3 text-xs text-destructive transition-colors hover:bg-destructive/10"
+                  >
+                    Delete
+                  </button>
+                </div>
               </form>
             ))}
           </div>
