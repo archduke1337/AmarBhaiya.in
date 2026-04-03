@@ -693,173 +693,198 @@ export async function getCommunityCategoriesData(): Promise<CommunityCategoryIte
 export async function getInstructorDashboardStats(
   scope: InstructorScope
 ): Promise<InstructorDashboardStats> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const coursesResult = await safeListRows<CourseRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.courses,
-    getInstructorQueries(scope)
-  );
+    const coursesResult = await safeListRows<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      getInstructorQueries(scope)
+    );
 
-  const courseIds = coursesResult.rows.map((course) => course.$id);
+    const courseIds = coursesResult.rows.map((course) => course.$id);
 
-  const activeEnrollmentsRows = await listRowsByFieldValues<EnrollmentRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.enrollments,
-    "courseId",
-    courseIds
-  );
+    const activeEnrollmentsRows = await listRowsByFieldValues<EnrollmentRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.enrollments,
+      "courseId",
+      courseIds
+    );
 
-  const activeEnrollments = activeEnrollmentsRows.filter(
-    (row) => row.isActive !== false
-  ).length;
+    const activeEnrollments = activeEnrollmentsRows.filter(
+      (row) => row.isActive !== false
+    ).length;
 
-  const liveSessionQueries: string[] = [
-    Query.equal("status", ["scheduled", "live"]),
-  ];
-  if (scope.role !== "admin") {
-    liveSessionQueries.push(Query.equal("instructorId", [scope.userId]));
+    const liveSessionQueries: string[] = [
+      Query.equal("status", ["scheduled", "live"]),
+    ];
+    if (scope.role !== "admin") {
+      liveSessionQueries.push(Query.equal("instructorId", [scope.userId]));
+    }
+    const liveSessions = await safeCountRows(
+      tablesDB,
+      APPWRITE_CONFIG.tables.liveSessions,
+      liveSessionQueries
+    );
+
+    const assignments = await listRowsByFieldValues<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.assignments,
+      "courseId",
+      courseIds
+    );
+    const assignmentIds = assignments.map((row) => row.$id);
+
+    const submissions = await listRowsByFieldValues<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.submissions,
+      "assignmentId",
+      assignmentIds
+    );
+    const pendingReviews = submissions.filter(
+      (row) => Number(row.grade ?? 0) <= 0
+    ).length;
+
+    return {
+      courses: coursesResult.total,
+      activeEnrollments,
+      liveSessions,
+      pendingReviews,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor dashboard stats."
+    );
+
+    return {
+      courses: 0,
+      activeEnrollments: 0,
+      liveSessions: 0,
+      pendingReviews: 0,
+    };
   }
-  const liveSessions = await safeCountRows(
-    tablesDB,
-    APPWRITE_CONFIG.tables.liveSessions,
-    liveSessionQueries
-  );
-
-  const assignments = await listRowsByFieldValues<AnyRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.assignments,
-    "courseId",
-    courseIds
-  );
-  const assignmentIds = assignments.map((row) => row.$id);
-
-  const submissions = await listRowsByFieldValues<AnyRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.submissions,
-    "assignmentId",
-    assignmentIds
-  );
-  const pendingReviews = submissions.filter(
-    (row) => Number(row.grade ?? 0) <= 0
-  ).length;
-
-  return {
-    courses: coursesResult.total,
-    activeEnrollments,
-    liveSessions,
-    pendingReviews,
-  };
 }
 
 export async function getInstructorCourseList(
   scope: InstructorScope
 ): Promise<InstructorCourseListItem[]> {
-  const { tablesDB } = await createAdminClient();
-  const coursesResult = await safeListRows<CourseRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.courses,
-    getInstructorQueries(scope)
-  );
-
-  const courseIds = coursesResult.rows.map((course) => course.$id);
-  const [moduleRows, lessonRows, enrollmentRows] = await Promise.all([
-    listRowsByFieldValues<ModuleRow>(
+  try {
+    const { tablesDB } = await createAdminClient();
+    const coursesResult = await safeListRows<CourseRow>(
       tablesDB,
-      APPWRITE_CONFIG.tables.modules,
-      "courseId",
-      courseIds
-    ),
-    listRowsByFieldValues<LessonRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.lessons,
-      "courseId",
-      courseIds
-    ),
-    listRowsByFieldValues<EnrollmentRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.enrollments,
-      "courseId",
-      courseIds
-    ),
-  ]);
-
-  const modulesByCourseId = new Map<string, ModuleRow[]>();
-  for (const moduleRow of moduleRows) {
-    const courseId =
-      typeof moduleRow.courseId === "string" ? moduleRow.courseId : "";
-    if (!courseId) {
-      continue;
-    }
-
-    const current = modulesByCourseId.get(courseId) ?? [];
-    current.push(moduleRow);
-    modulesByCourseId.set(courseId, current);
-  }
-
-  const lessonsByCourseId = new Map<string, LessonRow[]>();
-  for (const lesson of lessonRows) {
-    const courseId = typeof lesson.courseId === "string" ? lesson.courseId : "";
-    if (!courseId) {
-      continue;
-    }
-
-    const current = lessonsByCourseId.get(courseId) ?? [];
-    current.push(lesson);
-    lessonsByCourseId.set(courseId, current);
-  }
-
-  const activeEnrollmentsByCourseId = new Map<string, number>();
-  for (const enrollment of enrollmentRows) {
-    const courseId =
-      typeof enrollment.courseId === "string" ? enrollment.courseId : "";
-    if (!courseId || enrollment.isActive === false) {
-      continue;
-    }
-
-    activeEnrollmentsByCourseId.set(
-      courseId,
-      (activeEnrollmentsByCourseId.get(courseId) ?? 0) + 1
+      APPWRITE_CONFIG.tables.courses,
+      getInstructorQueries(scope)
     );
-  }
 
-  return coursesResult.rows
-    .sort((left, right) => {
-      const leftDate = toDate(left.$updatedAt ?? left.$createdAt)?.getTime() ?? 0;
-      const rightDate = toDate(right.$updatedAt ?? right.$createdAt)?.getTime() ?? 0;
-      return rightDate - leftDate;
-    })
-    .map((course) => {
-      const health = buildInstructorCourseHealth({
-        course,
-        modules: modulesByCourseId.get(course.$id) ?? [],
-        lessons: lessonsByCourseId.get(course.$id) ?? [],
-        activeEnrollments: activeEnrollmentsByCourseId.get(course.$id) ?? 0,
+    const courseIds = coursesResult.rows.map((course) => course.$id);
+    const [moduleRows, lessonRows, enrollmentRows] = await Promise.all([
+      listRowsByFieldValues<ModuleRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.modules,
+        "courseId",
+        courseIds
+      ),
+      listRowsByFieldValues<LessonRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.lessons,
+        "courseId",
+        courseIds
+      ),
+      listRowsByFieldValues<EnrollmentRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.enrollments,
+        "courseId",
+        courseIds
+      ),
+    ]);
+
+    const modulesByCourseId = new Map<string, ModuleRow[]>();
+    for (const moduleRow of moduleRows) {
+      const courseId =
+        typeof moduleRow.courseId === "string" ? moduleRow.courseId : "";
+      if (!courseId) {
+        continue;
+      }
+
+      const current = modulesByCourseId.get(courseId) ?? [];
+      current.push(moduleRow);
+      modulesByCourseId.set(courseId, current);
+    }
+
+    const lessonsByCourseId = new Map<string, LessonRow[]>();
+    for (const lesson of lessonRows) {
+      const courseId = typeof lesson.courseId === "string" ? lesson.courseId : "";
+      if (!courseId) {
+        continue;
+      }
+
+      const current = lessonsByCourseId.get(courseId) ?? [];
+      current.push(lesson);
+      lessonsByCourseId.set(courseId, current);
+    }
+
+    const activeEnrollmentsByCourseId = new Map<string, number>();
+    for (const enrollment of enrollmentRows) {
+      const courseId =
+        typeof enrollment.courseId === "string" ? enrollment.courseId : "";
+      if (!courseId || enrollment.isActive === false) {
+        continue;
+      }
+
+      activeEnrollmentsByCourseId.set(
+        courseId,
+        (activeEnrollmentsByCourseId.get(courseId) ?? 0) + 1
+      );
+    }
+
+    return coursesResult.rows
+      .sort((left, right) => {
+        const leftDate = toDate(left.$updatedAt ?? left.$createdAt)?.getTime() ?? 0;
+        const rightDate = toDate(right.$updatedAt ?? right.$createdAt)?.getTime() ?? 0;
+        return rightDate - leftDate;
+      })
+      .map((course) => {
+        const health = buildInstructorCourseHealth({
+          course,
+          modules: modulesByCourseId.get(course.$id) ?? [],
+          lessons: lessonsByCourseId.get(course.$id) ?? [],
+          activeEnrollments: activeEnrollmentsByCourseId.get(course.$id) ?? 0,
+        });
+
+        return {
+          id: course.$id,
+          title: typeof course.title === "string" ? course.title : "Untitled course",
+          shortDescription:
+            typeof course.shortDescription === "string" ? course.shortDescription : "",
+          status: course.isPublished ? "Published" : "Draft",
+          accessModel:
+            typeof course.accessModel === "string" ? course.accessModel : "free",
+          price: Number(course.price ?? 0),
+          totalLessons: health.totalLessons,
+          totalDuration: health.totalDuration,
+          moduleCount: health.moduleCount,
+          activeEnrollments: health.activeEnrollments,
+          hasThumbnail: health.hasThumbnail,
+          previewLessonCount: health.previewLessonCount,
+          lessonVideoCount: health.lessonVideoCount,
+          missingVideoCount: health.missingVideoCount,
+          publishBlockers: health.publishBlockers,
+          attentionFlags: health.attentionFlags,
+          readyToPublish: health.readyToPublish,
+          needsAttention: health.needsAttention,
+        };
       });
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor course list."
+    );
 
-      return {
-        id: course.$id,
-        title: typeof course.title === "string" ? course.title : "Untitled course",
-        shortDescription:
-          typeof course.shortDescription === "string" ? course.shortDescription : "",
-        status: course.isPublished ? "Published" : "Draft",
-        accessModel:
-          typeof course.accessModel === "string" ? course.accessModel : "free",
-        price: Number(course.price ?? 0),
-        totalLessons: health.totalLessons,
-        totalDuration: health.totalDuration,
-        moduleCount: health.moduleCount,
-        activeEnrollments: health.activeEnrollments,
-        hasThumbnail: health.hasThumbnail,
-        previewLessonCount: health.previewLessonCount,
-        lessonVideoCount: health.lessonVideoCount,
-        missingVideoCount: health.missingVideoCount,
-        publishBlockers: health.publishBlockers,
-        attentionFlags: health.attentionFlags,
-        readyToPublish: health.readyToPublish,
-        needsAttention: health.needsAttention,
-      };
-    });
+    return [];
+  }
 }
 
 export async function getInstructorStudents(
@@ -1258,52 +1283,62 @@ export async function getInstructorRevenueOverview(
 export async function getInstructorLiveSessions(
   scope: InstructorScope
 ): Promise<InstructorLiveSessionItem[]> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const queries: string[] = [Query.orderAsc("scheduledAt"), Query.limit(50)];
-  if (scope.role !== "admin") {
-    queries.push(Query.equal("instructorId", [scope.userId]));
-  }
-
-  const sessionsResult = await safeListRows<LiveSessionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.liveSessions,
-    queries
-  );
-
-  const sessionIds = sessionsResult.rows.map((session) => session.$id);
-  const rsvpRows = await listRowsByFieldValues<AnyRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.sessionRsvps,
-    "sessionId",
-    sessionIds
-  );
-
-  const rsvpCountBySessionId = new Map<string, number>();
-  for (const row of rsvpRows) {
-    const sessionId = typeof row.sessionId === "string" ? row.sessionId : "";
-    if (!sessionId) {
-      continue;
+    const queries: string[] = [Query.orderAsc("scheduledAt"), Query.limit(50)];
+    if (scope.role !== "admin") {
+      queries.push(Query.equal("instructorId", [scope.userId]));
     }
 
-    rsvpCountBySessionId.set(
-      sessionId,
-      (rsvpCountBySessionId.get(sessionId) ?? 0) + 1
+    const sessionsResult = await safeListRows<LiveSessionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.liveSessions,
+      queries
     );
-  }
 
-  return sessionsResult.rows.map((session) => ({
-    id: session.$id,
-    title: typeof session.title === "string" ? session.title : "Untitled session",
-    description:
-      typeof session.description === "string" ? session.description : "",
-    status: typeof session.status === "string" ? session.status : "scheduled",
-    scheduledAt:
-      typeof session.scheduledAt === "string" ? session.scheduledAt : null,
-    streamUrl: getSafeHttpUrl(session.streamId),
-    recordingUrl: getSafeHttpUrl(session.recordingUrl),
-    rsvpCount: rsvpCountBySessionId.get(session.$id) ?? 0,
-  }));
+    const sessionIds = sessionsResult.rows.map((session) => session.$id);
+    const rsvpRows = await listRowsByFieldValues<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.sessionRsvps,
+      "sessionId",
+      sessionIds
+    );
+
+    const rsvpCountBySessionId = new Map<string, number>();
+    for (const row of rsvpRows) {
+      const sessionId = typeof row.sessionId === "string" ? row.sessionId : "";
+      if (!sessionId) {
+        continue;
+      }
+
+      rsvpCountBySessionId.set(
+        sessionId,
+        (rsvpCountBySessionId.get(sessionId) ?? 0) + 1
+      );
+    }
+
+    return sessionsResult.rows.map((session) => ({
+      id: session.$id,
+      title: typeof session.title === "string" ? session.title : "Untitled session",
+      description:
+        typeof session.description === "string" ? session.description : "",
+      status: typeof session.status === "string" ? session.status : "scheduled",
+      scheduledAt:
+        typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+      streamUrl: getSafeHttpUrl(session.streamId),
+      recordingUrl: getSafeHttpUrl(session.recordingUrl),
+      rsvpCount: rsvpCountBySessionId.get(session.$id) ?? 0,
+    }));
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor live sessions."
+    );
+
+    return [];
+  }
 }
 
 export async function getInstructorCourseSummary(

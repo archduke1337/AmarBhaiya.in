@@ -414,18 +414,18 @@ export async function deleteStandaloneResourceAction(
 export async function getInstructorCourseResourceOptions(
   scope: { userId: string; role: string }
 ): Promise<CourseResourceOption[]> {
-  const { tablesDB } = await createAdminClient();
-
-  const courseQueries =
-    scope.role === "admin"
-      ? [Query.orderDesc("$updatedAt"), Query.limit(200)]
-      : [
-          Query.equal("instructorId", [scope.userId]),
-          Query.orderDesc("$updatedAt"),
-          Query.limit(200),
-        ];
-
   try {
+    const { tablesDB } = await createAdminClient();
+
+    const courseQueries =
+      scope.role === "admin"
+        ? [Query.orderDesc("$updatedAt"), Query.limit(200)]
+        : [
+            Query.equal("instructorId", [scope.userId]),
+            Query.orderDesc("$updatedAt"),
+            Query.limit(200),
+          ];
+
     const courseResult = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.courses,
@@ -459,7 +459,13 @@ export async function getInstructorCourseResourceOptions(
         lessonId: lesson.$id,
         lessonTitle: String(lesson.title ?? "Untitled lesson"),
       }));
-  } catch {
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor course resource options."
+    );
+
     return [];
   }
 }
@@ -526,18 +532,18 @@ export async function getInstructorCourseResources(
 export async function getInstructorResources(
   scope: { userId: string; role: string }
 ): Promise<StandaloneResource[]> {
-  const { tablesDB } = await createAdminClient();
-
-  const queries =
-    scope.role === "admin"
-      ? [Query.orderDesc("$createdAt"), Query.limit(100)]
-      : [
-          Query.equal("instructorId", [scope.userId]),
-          Query.orderDesc("$createdAt"),
-          Query.limit(100),
-        ];
-
   try {
+    const { tablesDB } = await createAdminClient();
+
+    const queries =
+      scope.role === "admin"
+        ? [Query.orderDesc("$createdAt"), Query.limit(100)]
+        : [
+            Query.equal("instructorId", [scope.userId]),
+            Query.orderDesc("$createdAt"),
+            Query.limit(100),
+          ];
+
     const result = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.standaloneResources,
@@ -563,7 +569,13 @@ export async function getInstructorResources(
         createdAt: String(r.createdAt ?? ""),
       };
     });
-  } catch {
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor resources."
+    );
+
     return [];
   }
 }
