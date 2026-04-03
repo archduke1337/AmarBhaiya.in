@@ -43,7 +43,10 @@ export default async function AdminModerationPage() {
       </StatGrid>
 
       {/* Open Escalations */}
-      <section className="flex flex-col gap-4">
+      <section
+        id="open-escalations"
+        className="scroll-mt-24 flex flex-col gap-4"
+      >
         <h2 className="text-lg font-medium">Open Escalations</h2>
 
         {data.escalationItems.length === 0 ? (
@@ -55,7 +58,11 @@ export default async function AdminModerationPage() {
         ) : (
           <div className="border border-border divide-y divide-border">
             {data.escalationItems.map((item) => (
-              <div key={item.id} className="flex flex-col gap-2 px-5 py-4 md:flex-row md:items-center md:justify-between">
+              <div
+                key={item.id}
+                id={`escalation-${item.id}`}
+                className="scroll-mt-24 flex flex-col gap-2 px-5 py-4 md:flex-row md:items-center md:justify-between"
+              >
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">

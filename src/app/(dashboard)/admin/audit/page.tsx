@@ -37,6 +37,7 @@ export default async function AdminAuditPage() {
             {logs.map((log) => (
               <div
                 key={log.id}
+                id={`audit-log-${log.id}`}
                 className="flex flex-col gap-1.5 px-5 py-3.5 md:grid md:grid-cols-[140px_1fr_120px_1fr_140px] md:items-center md:gap-4"
               >
                 <span className="text-sm font-medium">{log.actor}</span>

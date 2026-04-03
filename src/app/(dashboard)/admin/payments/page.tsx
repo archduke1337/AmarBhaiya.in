@@ -54,7 +54,10 @@ export default async function AdminPaymentsPage() {
           description="Payments will appear here once students purchase paid or subscription courses."
         />
       ) : (
-        <section className="border border-border">
+        <section
+          id="payments-list"
+          className="scroll-mt-24 border border-border"
+        >
           {/* Table header */}
           <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_1fr_100px_100px_80px]">
             <span>User</span>
@@ -68,6 +71,7 @@ export default async function AdminPaymentsPage() {
             {payments.map((payment) => (
               <div
                 key={payment.id}
+                id={`payment-${payment.id}`}
                 className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_1fr_100px_100px_80px] md:items-center md:gap-4"
               >
                 <div>

@@ -29,10 +29,11 @@ export default async function ModeratorReportsPage() {
           description="The content queue is clear. Reports from the community will appear here when flagged."
         />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div id="flagged-reports" className="scroll-mt-24 flex flex-col gap-4">
           {reports.map((report) => (
             <article
               key={report.id}
+              id={`report-${report.id}`}
               className="border border-border"
             >
               {/* Report header */}

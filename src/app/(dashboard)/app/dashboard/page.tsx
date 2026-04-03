@@ -1,8 +1,11 @@
 import Link from "next/link";
 import {
   BookOpen,
+  Bell,
+  CreditCard,
   Flame,
   GraduationCap,
+  MessageSquare,
   Trophy,
   Video,
   ArrowRight,
@@ -174,6 +177,15 @@ export default async function StudentDashboardPage() {
 
         {/* Sidebar — upcoming sessions + achievements */}
         <aside className="flex flex-col gap-6">
+          <ActivityFeed
+            title="Next Steps"
+            items={buildStudentActionItems(
+              inProgressCourses,
+              upcomingSessions,
+              unreadCount
+            )}
+          />
+
           {/* Upcoming Live Sessions */}
           <ActivityFeed
             title="Upcoming Sessions"
@@ -186,7 +198,7 @@ export default async function StudentDashboardPage() {
                 ? formatRelativeTime(session.scheduledAt)
                 : "Date TBD",
               badge: session.status === "live" ? "LIVE" : undefined,
-              href: "/app/live",
+              href: `/app/live#session-${session.id}`,
             }))}
           />
 
@@ -214,9 +226,51 @@ export default async function StudentDashboardPage() {
               label: n.title,
               description: n.body || n.type,
               badge: n.isRead ? undefined : "NEW",
-              href: n.link || "/app/notifications",
+              href: n.link || `/app/notifications#notification-${n.id}`,
             }))}
           />
+
+          <nav className="border border-border">
+            <p className="border-b border-border px-5 py-3 text-sm font-medium">
+              Quick Links
+            </p>
+            <div className="flex flex-col divide-y divide-border">
+              {[
+                {
+                  label: "Live Sessions",
+                  href: "/app/live#upcoming-sessions",
+                  icon: Video,
+                },
+                {
+                  label: "Notifications",
+                  href: "/app/notifications",
+                  icon: Bell,
+                },
+                {
+                  label: "Billing History",
+                  href: "/app/billing",
+                  icon: CreditCard,
+                },
+                {
+                  label: "Community",
+                  href: "/app/community",
+                  icon: MessageSquare,
+                },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="group flex items-center justify-between px-5 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <div className="flex items-center gap-2">
+                    <link.icon className="size-4" />
+                    {link.label}
+                  </div>
+                  <ArrowRight className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                </Link>
+              ))}
+            </div>
+          </nav>
         </aside>
       </div>
     </div>
@@ -228,4 +282,82 @@ function getGreeting(): string {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
+}
+
+function buildStudentActionItems(
+  inProgressCourses: Array<{
+    id: string;
+    title: string;
+    continueHref: string;
+    continueLessonTitle: string;
+    resumePercent: number;
+  }>,
+  upcomingSessions: Array<{
+    id: string;
+    title: string;
+    status: string;
+    scheduledAt: string | null;
+  }>,
+  unreadCount: number
+) {
+  const items: Array<{
+    id: string;
+    label: string;
+    description: string;
+    badge?: string;
+    href?: string;
+  }> = [];
+
+  const nextCourse = inProgressCourses[0];
+  if (nextCourse) {
+    items.push({
+      id: `resume-${nextCourse.id}`,
+      label: `Resume ${nextCourse.title}`,
+      description: nextCourse.continueLessonTitle
+        ? nextCourse.resumePercent > 0
+          ? `${nextCourse.continueLessonTitle} is waiting at ${nextCourse.resumePercent}%`
+          : `Next up: ${nextCourse.continueLessonTitle}`
+        : "Jump back into your course",
+      badge: "Study",
+      href: nextCourse.continueHref,
+    });
+  }
+
+  const nextSession = upcomingSessions[0];
+  if (nextSession) {
+    items.push({
+      id: `session-${nextSession.id}`,
+      label:
+        nextSession.status === "live"
+          ? `${nextSession.title} is live now`
+          : `Upcoming live session: ${nextSession.title}`,
+      description: nextSession.scheduledAt
+        ? formatRelativeTime(nextSession.scheduledAt)
+        : "Watch the live sessions page for the schedule",
+      badge: nextSession.status === "live" ? "LIVE" : "Live",
+      href: `/app/live#session-${nextSession.id}`,
+    });
+  }
+
+  if (unreadCount > 0) {
+    items.push({
+      id: "notifications",
+      label: `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`,
+      description: "Check updates from instructors, admins, and system reminders",
+      badge: "Inbox",
+      href: "/app/notifications",
+    });
+  }
+
+  if (items.length === 0) {
+    items.push({
+      id: "browse-courses",
+      label: "Explore the catalogue",
+      description: "Pick a course, join a live session, or head into the community",
+      badge: "Start",
+      href: "/courses",
+    });
+  }
+
+  return items;
 }

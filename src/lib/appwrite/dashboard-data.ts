@@ -107,6 +107,7 @@ export type ModeratorReportItem = {
   target: string;
   reason: string;
   status: "pending" | "reviewed";
+  createdAt: string | null;
 };
 
 export type ModeratorStudentItem = {
@@ -167,6 +168,7 @@ export type AdminPaymentItem = {
   status: string;
   userName: string;
   courseTitle: string;
+  createdAt: string | null;
 };
 
 export type AdminLiveData = {
@@ -913,10 +915,11 @@ export async function getModeratorReports(): Promise<ModeratorReportItem[]> {
         typeof row.targetUserName === "string"
           ? row.targetUserName
           : typeof row.targetUserId === "string"
-            ? row.targetUserId
-            : "Unknown user",
+          ? row.targetUserId
+          : "Unknown user",
       reason: typeof row.reason === "string" ? row.reason : "No reason provided",
       status: row.revertedAt ? "reviewed" : "pending",
+      createdAt: typeof row.createdAt === "string" ? row.createdAt : null,
     }));
 }
 
@@ -1256,6 +1259,7 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
     courseTitle:
       (typeof payment.courseId === "string" && courseMap.get(payment.courseId)) ||
       "Unknown course",
+    createdAt: typeof payment.createdAt === "string" ? payment.createdAt : null,
   }));
 }
 

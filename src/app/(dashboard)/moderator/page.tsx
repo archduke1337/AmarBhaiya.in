@@ -12,7 +12,7 @@ import {
   getModeratorReports,
   getModeratorCommunityData,
 } from "@/lib/appwrite/dashboard-data";
-import { formatCompactNumber } from "@/lib/utils/format";
+import { formatCompactNumber, formatRelativeTime } from "@/lib/utils/format";
 import {
   PageHeader,
   StatCard,
@@ -99,7 +99,10 @@ export default async function ModeratorDashboardPage() {
               label: `${report.entityType}: ${report.target}`,
               description: report.reason,
               badge: report.status === "pending" ? "Pending" : "Reviewed",
-              href: "/moderator/reports",
+              timestamp: report.createdAt
+                ? formatRelativeTime(report.createdAt)
+                : undefined,
+              href: `/moderator/reports#report-${report.id}`,
             }))}
           />
 
@@ -112,13 +115,23 @@ export default async function ModeratorDashboardPage() {
               id: thread.id,
               label: thread.title,
               description: `by ${thread.author} · ${thread.replies} replies`,
-              badge: thread.pinned ? "Pinned" : thread.category,
+              badge: thread.locked
+                ? "Locked"
+                : thread.pinned
+                  ? "Pinned"
+                  : thread.category,
+              href: `/moderator/community#thread-${thread.id}`,
             }))}
           />
         </div>
 
         {/* Sidebar */}
         <aside className="flex flex-col gap-6">
+          <ActivityFeed
+            title="Follow-up Queue"
+            items={buildModeratorFollowUpItems(stats, pendingReports)}
+          />
+
           {/* Moderation Action Breakdown */}
           <section className="border border-border">
             <p className="border-b border-border px-5 py-3 text-sm font-medium">
@@ -182,4 +195,65 @@ export default async function ModeratorDashboardPage() {
       </div>
     </div>
   );
+}
+
+function buildModeratorFollowUpItems(
+  stats: {
+    openReports: number;
+    mutedUsers: number;
+    flaggedThreads: number;
+    actionsToday: number;
+  },
+  pendingReports: Array<{ id: string; reason: string }>
+) {
+  const items: Array<{
+    id: string;
+    label: string;
+    description: string;
+    badge?: string;
+    href?: string;
+  }> = [];
+
+  if (pendingReports.length > 0) {
+    items.push({
+      id: "pending-reports",
+      label: `${pendingReports.length} report${pendingReports.length === 1 ? "" : "s"} still waiting`,
+      description:
+        pendingReports[0]?.reason || "Open the reports queue and clear the oldest flags first",
+      badge: "Urgent",
+      href: `/moderator/reports#report-${pendingReports[0]?.id ?? ""}`,
+    });
+  }
+
+  if (stats.flaggedThreads > 0) {
+    items.push({
+      id: "flagged-threads",
+      label: `${stats.flaggedThreads} thread${stats.flaggedThreads === 1 ? "" : "s"} under watch`,
+      description: "Inspect pinned, locked, and recently reported discussion threads",
+      badge: "Threads",
+      href: "/moderator/community#recent-threads",
+    });
+  }
+
+  if (stats.mutedUsers > 0) {
+    items.push({
+      id: "active-sanctions",
+      label: `${stats.mutedUsers} user${stats.mutedUsers === 1 ? "" : "s"} currently muted or timed out`,
+      description: "Review sanctions and confirm nothing should be reverted or escalated",
+      badge: "Users",
+      href: "/moderator/students",
+    });
+  }
+
+  if (items.length === 0) {
+    items.push({
+      id: "all-clear",
+      label: "No urgent moderation follow-up",
+      description: "Reports, threads, and user sanctions are under control",
+      badge: "Clear",
+      href: "/moderator/community",
+    });
+  }
+
+  return items;
 }

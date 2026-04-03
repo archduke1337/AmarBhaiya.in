@@ -35,7 +35,10 @@ export default async function ModeratorCommunityPage() {
       </section>
 
       {/* Thread list */}
-      <section className="flex flex-col gap-4">
+      <section
+        id="recent-threads"
+        className="scroll-mt-24 flex flex-col gap-4"
+      >
         <h2 className="text-lg font-medium">
           Recent Threads ({data.recentThreads.length})
         </h2>
@@ -49,7 +52,11 @@ export default async function ModeratorCommunityPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {data.recentThreads.map((thread) => (
-              <article key={thread.id} className="border border-border">
+              <article
+                key={thread.id}
+                id={`thread-${thread.id}`}
+                className="scroll-mt-24 border border-border"
+              >
                 {/* Thread header */}
                 <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex flex-col gap-1">

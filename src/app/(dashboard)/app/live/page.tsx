@@ -33,7 +33,10 @@ export default async function StudentLivePage() {
         />
       ) : (
         <>
-          <section className="flex flex-col gap-3">
+          <section
+            id="upcoming-sessions"
+            className="scroll-mt-24 flex flex-col gap-3"
+          >
             <h2 className="text-lg font-medium">Upcoming & Live</h2>
             {sessions.length === 0 ? (
               <p className="border border-border px-5 py-4 text-sm text-muted-foreground">
@@ -43,7 +46,8 @@ export default async function StudentLivePage() {
               sessions.map((session) => (
                 <article
                   key={session.id}
-                  className="border border-border"
+                  id={`session-${session.id}`}
+                  className="scroll-mt-24 border border-border"
                 >
                   <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-col gap-1.5">
@@ -108,7 +112,10 @@ export default async function StudentLivePage() {
             )}
           </section>
 
-          <section className="flex flex-col gap-3">
+          <section
+            id="recent-recordings"
+            className="scroll-mt-24 flex flex-col gap-3"
+          >
             <h2 className="text-lg font-medium">Recent Recordings</h2>
             {recordings.length === 0 ? (
               <p className="border border-border px-5 py-4 text-sm text-muted-foreground">
@@ -116,7 +123,11 @@ export default async function StudentLivePage() {
               </p>
             ) : (
               recordings.map((recording) => (
-                <article key={recording.id} className="border border-border">
+                <article
+                  key={recording.id}
+                  id={`recording-${recording.id}`}
+                  className="scroll-mt-24 border border-border"
+                >
                   <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-col gap-1.5">
                       <h2 className="text-base font-medium">{recording.title}</h2>

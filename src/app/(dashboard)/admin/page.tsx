@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  Bell,
   Users,
   CreditCard,
   BookOpen,
@@ -11,8 +12,19 @@ import {
   FileText,
 } from "lucide-react";
 
-import { getAdminDashboardStats } from "@/lib/appwrite/dashboard-data";
-import { formatCompactNumber, formatCurrency } from "@/lib/utils/format";
+import {
+  getAdminAuditLogs,
+  getAdminDashboardStats,
+  getAdminLiveData,
+  getAdminModerationData,
+  getAdminPayments,
+} from "@/lib/appwrite/dashboard-data";
+import {
+  formatCompactNumber,
+  formatCurrency,
+  formatDateTime,
+  formatRelativeTime,
+} from "@/lib/utils/format";
 import {
   PageHeader,
   StatCard,
@@ -21,7 +33,18 @@ import {
 } from "@/components/dashboard";
 
 export default async function AdminDashboardPage() {
-  const stats = await getAdminDashboardStats();
+  const [stats, payments, liveData, moderationData, auditLogs] = await Promise.all([
+    getAdminDashboardStats(),
+    getAdminPayments(),
+    getAdminLiveData(),
+    getAdminModerationData(),
+    getAdminAuditLogs(),
+  ]);
+
+  const draftCourses = Math.max(0, stats.totalCourses - stats.publishedCourses);
+  const sessionsMissingJoinLink = liveData.upcoming.filter(
+    (session) => !session.streamUrl
+  ).length;
 
   const quickActions = [
     { label: "User Management", href: "/admin/users", icon: Users, description: "Manage roles and access" },
@@ -30,6 +53,7 @@ export default async function AdminDashboardPage() {
     { label: "Payment Records", href: "/admin/payments", icon: CreditCard, description: "Transactions and refunds" },
     { label: "Live Session Control", href: "/admin/live", icon: Video, description: "Active and scheduled sessions" },
     { label: "Moderation Queue", href: "/admin/moderation", icon: Shield, description: "Escalations and timeouts" },
+    { label: "Notifications", href: "/admin/notifications", icon: Bell, description: "Broadcast updates across the platform" },
     { label: "Audit Trail", href: "/admin/audit", icon: FileText, description: "System-wide activity log" },
   ];
 
@@ -128,6 +152,16 @@ export default async function AdminDashboardPage() {
               </Link>
             ))}
           </div>
+
+          <ActivityFeed
+            title="Operational Queue"
+            items={buildOperationalQueue({
+              draftCourses,
+              liveData,
+              moderationData,
+              auditLogs,
+            })}
+          />
         </section>
 
         {/* System Health sidebar */}
@@ -135,7 +169,28 @@ export default async function AdminDashboardPage() {
           <ActivityFeed
             title="System Alerts"
             emptyText="No issues detected."
-            items={buildAlerts(stats)}
+            items={buildAlerts(stats, {
+              draftCourses,
+              openEscalations: moderationData.openEscalations,
+              recordingFailures: liveData.recordingFailures,
+              sessionsMissingJoinLink,
+            })}
+          />
+
+          <ActivityFeed
+            title="Revenue Pulse"
+            viewAllHref="/admin/payments"
+            emptyText="No recent payments."
+            items={payments.slice(0, 4).map((payment) => ({
+              id: payment.id,
+              label: payment.userName,
+              description: `${payment.courseTitle} · ${formatCurrency(payment.amount, payment.currency)}`,
+              badge: payment.status,
+              timestamp: payment.createdAt
+                ? formatRelativeTime(payment.createdAt)
+                : undefined,
+              href: `/admin/payments#payment-${payment.id}`,
+            }))}
           />
 
           <div className="border border-border p-4">
@@ -163,8 +218,31 @@ export default async function AdminDashboardPage() {
   );
 }
 
-function buildAlerts(stats: { totalUsers: number; activeEnrollments: number; monthlyRevenue: number; liveSessions: number; totalCourses: number; publishedCourses: number; completionRate: number; totalRevenue: number }) {
-  const alerts: Array<{ id: string; label: string; description: string; badge?: string }> = [];
+function buildAlerts(
+  stats: {
+    totalUsers: number;
+    activeEnrollments: number;
+    monthlyRevenue: number;
+    liveSessions: number;
+    totalCourses: number;
+    publishedCourses: number;
+    completionRate: number;
+    totalRevenue: number;
+  },
+  context: {
+    draftCourses: number;
+    openEscalations: number;
+    recordingFailures: number;
+    sessionsMissingJoinLink: number;
+  }
+) {
+  const alerts: Array<{
+    id: string;
+    label: string;
+    description: string;
+    badge?: string;
+    href?: string;
+  }> = [];
 
   if (stats.totalUsers === 0) {
     alerts.push({
@@ -172,6 +250,7 @@ function buildAlerts(stats: { totalUsers: number; activeEnrollments: number; mon
       label: "No users registered yet",
       description: "The platform has zero users. Share the registration link.",
       badge: "Setup",
+      href: "/admin/users",
     });
   }
 
@@ -181,6 +260,7 @@ function buildAlerts(stats: { totalUsers: number; activeEnrollments: number; mon
       label: "No active enrollments",
       description: "Publish courses and start enrolling students.",
       badge: "Content",
+      href: "/admin/courses",
     });
   }
 
@@ -189,6 +269,47 @@ function buildAlerts(stats: { totalUsers: number; activeEnrollments: number; mon
       id: "no-revenue",
       label: "No revenue this month",
       description: "Consider running a promotion or launching paid courses.",
+      href: "/admin/payments",
+    });
+  }
+
+  if (context.openEscalations > 0) {
+    alerts.push({
+      id: "open-escalations",
+      label: `${context.openEscalations} moderation escalation${context.openEscalations === 1 ? "" : "s"} open`,
+      description: "Admins need to review unresolved platform flags.",
+      badge: "Moderation",
+      href: "/admin/moderation#open-escalations",
+    });
+  }
+
+  if (context.sessionsMissingJoinLink > 0) {
+    alerts.push({
+      id: "missing-live-links",
+      label: `${context.sessionsMissingJoinLink} live session${context.sessionsMissingJoinLink === 1 ? "" : "s"} missing join links`,
+      description: "Students will not be able to join until instructors add meeting URLs.",
+      badge: "Live",
+      href: "/admin/live#upcoming-sessions",
+    });
+  }
+
+  if (context.recordingFailures > 0) {
+    alerts.push({
+      id: "recording-failures",
+      label: `${context.recordingFailures} ended session${context.recordingFailures === 1 ? "" : "s"} missing recordings`,
+      description: "Check whether instructors still need to publish replay links.",
+      badge: "Recordings",
+      href: "/admin/live#upcoming-sessions",
+    });
+  }
+
+  if (context.draftCourses > 0) {
+    alerts.push({
+      id: "draft-courses",
+      label: `${context.draftCourses} course draft${context.draftCourses === 1 ? "" : "s"} awaiting oversight`,
+      description: "Review unpublished courses and decide what should be featured or launched.",
+      badge: "Courses",
+      href: "/admin/courses",
     });
   }
 
@@ -198,8 +319,100 @@ function buildAlerts(stats: { totalUsers: number; activeEnrollments: number; mon
       label: "All systems operational",
       description: "No issues detected. Platform is running smoothly.",
       badge: "OK",
+      href: "/admin/audit",
     });
   }
 
   return alerts;
+}
+
+function buildOperationalQueue(context: {
+  draftCourses: number;
+  liveData: {
+    upcoming: Array<{
+      id: string;
+      title: string;
+      status: string;
+      scheduledAt: string | null;
+      streamUrl: string;
+    }>;
+  };
+  moderationData: {
+    escalationItems: Array<{
+      id: string;
+      targetUserName: string;
+      moderatorName: string;
+      scope: string;
+      reason: string;
+      createdAt: string;
+    }>;
+  };
+  auditLogs: Array<{
+    id: string;
+    actor: string;
+    action: string;
+    entity: string;
+    createdAt: string | null;
+  }>;
+}) {
+  const items: Array<{
+    id: string;
+    label: string;
+    description: string;
+    badge?: string;
+    href?: string;
+    timestamp?: string;
+  }> = [];
+
+  for (const escalation of context.moderationData.escalationItems.slice(0, 2)) {
+    items.push({
+      id: `escalation-${escalation.id}`,
+      label: `${escalation.targetUserName} needs review`,
+      description:
+        escalation.reason || `Raised by ${escalation.moderatorName} for admin follow-up`,
+      badge: escalation.scope,
+      href: `/admin/moderation#escalation-${escalation.id}`,
+      timestamp: escalation.createdAt
+        ? formatRelativeTime(escalation.createdAt)
+        : undefined,
+    });
+  }
+
+  for (const session of context.liveData.upcoming.filter((item) => !item.streamUrl).slice(0, 2)) {
+    items.push({
+      id: `session-${session.id}`,
+      label: `${session.title} is missing a join link`,
+      description: session.scheduledAt
+        ? formatDateTime(session.scheduledAt)
+        : "No schedule set yet",
+      badge: session.status,
+      href: `/admin/live#session-${session.id}`,
+    });
+  }
+
+  if (context.draftCourses > 0) {
+    items.push({
+      id: "draft-courses",
+      label: `${context.draftCourses} course draft${context.draftCourses === 1 ? "" : "s"} still unpublished`,
+      description: "Review publication, featuring, and visibility from course oversight",
+      badge: "Courses",
+      href: "/admin/courses",
+    });
+  }
+
+  if (items.length === 0 && context.auditLogs[0]) {
+    const latestLog = context.auditLogs[0];
+    items.push({
+      id: `audit-${latestLog.id}`,
+      label: `${latestLog.actor} performed ${latestLog.action}`,
+      description: latestLog.entity,
+      badge: "Audit",
+      href: `/admin/audit#audit-log-${latestLog.id}`,
+      timestamp: latestLog.createdAt
+        ? formatRelativeTime(latestLog.createdAt)
+        : undefined,
+    });
+  }
+
+  return items;
 }

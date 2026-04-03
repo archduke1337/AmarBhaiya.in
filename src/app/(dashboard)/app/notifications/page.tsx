@@ -53,6 +53,7 @@ export default async function NotificationsPage() {
           {notifications.map((notification) => (
             <article
               key={notification.id}
+              id={`notification-${notification.id}`}
               className={`flex items-start gap-4 border-b border-border px-5 py-4 transition-colors ${
                 notification.isRead ? "opacity-60" : "bg-muted/20"
               }`}

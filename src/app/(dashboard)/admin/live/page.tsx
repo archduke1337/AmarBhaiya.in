@@ -38,7 +38,10 @@ export default async function AdminLivePage() {
         />
       </StatGrid>
 
-      <section className="flex flex-col gap-4">
+      <section
+        id="upcoming-sessions"
+        className="scroll-mt-24 flex flex-col gap-4"
+      >
         <h2 className="text-lg font-medium">Upcoming Sessions</h2>
 
         {data.upcoming.length === 0 ? (
@@ -60,6 +63,7 @@ export default async function AdminLivePage() {
               {data.upcoming.map((session) => (
                 <div
                   key={session.id}
+                  id={`session-${session.id}`}
                   className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_200px_80px] md:items-center md:gap-4"
                 >
                   <span className="text-sm font-medium">{session.title}</span>
