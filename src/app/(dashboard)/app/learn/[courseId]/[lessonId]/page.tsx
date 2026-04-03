@@ -54,6 +54,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
   }
 
   if (!course) notFound();
+  const courseIsFree = String(course.accessModel ?? "free") === "free";
 
   const hasAccess = await userHasCourseAccess({ courseId, userId: user.$id, lessonId });
 
