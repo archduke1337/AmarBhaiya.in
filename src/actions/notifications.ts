@@ -96,13 +96,22 @@ export async function getUnreadNotificationCount(): Promise<number> {
 export async function markNotificationReadAction(
   formData: FormData
 ): Promise<void> {
-  await requireAuth();
+  const user = await requireAuth();
 
   const notificationId = String(formData.get("notificationId") ?? "");
   if (!notificationId) return;
 
   try {
     const { tablesDB } = await createAdminClient();
+    const notification = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.notifications,
+      rowId: notificationId,
+    })) as AnyRow;
+
+    if (String(notification.userId ?? "") !== user.$id) {
+      return;
+    }
 
     await tablesDB.updateRow({
       databaseId: APPWRITE_CONFIG.databaseId,

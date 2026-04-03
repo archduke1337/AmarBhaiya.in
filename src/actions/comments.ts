@@ -4,6 +4,7 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth } from "@/lib/appwrite/auth";
+import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
@@ -46,7 +47,7 @@ export async function postLessonCommentAction(
         courseId,
         userId: user.$id,
         userName: user.name || "Anonymous",
-        userRole: String(user.prefs?.role ?? "student"),
+        userRole: getUserRole(user),
         text, // Now sanitized
         parentId: "",
         createdAt: new Date().toISOString(),

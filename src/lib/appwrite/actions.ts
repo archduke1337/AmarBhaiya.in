@@ -14,6 +14,25 @@ export type ActionResult = {
   error?: string;
 };
 
+function getAppOrigin(): string {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+    (process.env.NODE_ENV === "production"
+      ? "https://amarbhaiya.in"
+      : "http://localhost:3000")
+  );
+}
+
+function getSessionCookieOptions(expire: string) {
+  return {
+    path: "/",
+    httpOnly: true,
+    sameSite: "strict" as const,
+    secure: process.env.NODE_ENV === "production",
+    expires: new Date(expire),
+  };
+}
+
 // ── Login ───────────────────────────────────────────────────────────────────
 
 export async function loginAction(data: LoginInput): Promise<ActionResult> {
@@ -32,13 +51,11 @@ export async function loginAction(data: LoginInput): Promise<ActionResult> {
 
     // Set session cookie
     const cookieStore = await cookies();
-    cookieStore.set(APPWRITE_CONFIG.sessionCookieName, session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: true,
-      expires: new Date(session.expire),
-    });
+    cookieStore.set(
+      APPWRITE_CONFIG.sessionCookieName,
+      session.secret,
+      getSessionCookieOptions(session.expire)
+    );
 
     return { success: true };
   } catch (err: unknown) {
@@ -78,13 +95,11 @@ export async function registerAction(data: RegisterInput): Promise<ActionResult>
     });
 
     const cookieStore = await cookies();
-    cookieStore.set(APPWRITE_CONFIG.sessionCookieName, session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: true,
-      expires: new Date(session.expire),
-    });
+    cookieStore.set(
+      APPWRITE_CONFIG.sessionCookieName,
+      session.secret,
+      getSessionCookieOptions(session.expire)
+    );
 
     return { success: true };
   } catch (err: unknown) {
@@ -114,7 +129,7 @@ export async function forgotPasswordAction(
     const { account } = await createAdminClient();
     await account.createRecovery({
       email: parsed.data.email,
-      url: `${process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.replace("/v1", "")}/reset-password`,
+      url: `${getAppOrigin()}/reset-password`,
     });
     return { success: true };
   } catch {

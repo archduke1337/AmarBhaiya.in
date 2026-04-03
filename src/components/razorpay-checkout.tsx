@@ -40,7 +40,6 @@ export function RazorpayCheckout({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           courseId,
-          amount: priceInr * 100, // Razorpay expects paise
           currency: "INR",
         }),
       });

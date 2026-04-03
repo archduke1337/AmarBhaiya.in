@@ -3,22 +3,73 @@
 import { ID } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
+
+type AnyRow = Record<string, unknown> & { $id: string };
+
+async function canManageCourse(
+  courseId: string,
+  role: "admin" | "instructor",
+  userId: string
+): Promise<boolean> {
+  if (role === "admin") {
+    return true;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const course = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courses,
+      rowId: courseId,
+    })) as AnyRow;
+
+    return String(course.instructorId ?? "") === userId;
+  } catch {
+    return false;
+  }
+}
+
+async function canManageResource(
+  resourceId: string,
+  role: "admin" | "instructor",
+  userId: string
+): Promise<boolean> {
+  if (role === "admin") {
+    return true;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const resource = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.standaloneResources,
+      rowId: resourceId,
+    })) as AnyRow;
+
+    return String(resource.instructorId ?? "") === userId;
+  } catch {
+    return false;
+  }
+}
 
 // ── Upload Course Thumbnail ─────────────────────────────────────────────────
 
 export async function uploadCourseThumbnailAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   const file = formData.get("file") as File | null;
 
   if (!courseId || !file || file.size === 0) return;
+  if (!(await canManageCourse(courseId, role, user.$id))) return;
 
   // Validate file
   const maxSize = 5 * 1024 * 1024; // 5MB
@@ -67,13 +118,14 @@ export async function uploadCourseThumbnailAction(
 export async function uploadLessonVideoAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   const lessonId = String(formData.get("lessonId") ?? "");
   const file = formData.get("file") as File | null;
 
   if (!courseId || !lessonId || !file || file.size === 0) return;
+  if (!(await canManageCourse(courseId, role, user.$id))) return;
 
   // Validate: 500MB max
   const maxSize = 500 * 1024 * 1024;
@@ -120,12 +172,13 @@ export async function uploadLessonVideoAction(
 export async function uploadResourceFileAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   const file = formData.get("file") as File | null;
 
   if (!resourceId || !file || file.size === 0) return;
+  if (!(await canManageResource(resourceId, role, user.$id))) return;
 
   // Validate: 200MB max
   const maxSize = 200 * 1024 * 1024;
@@ -161,7 +214,7 @@ export async function uploadResourceFileAction(
 export async function uploadAvatarAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor", "moderator", "student"]);
+  const user = await requireAuth();
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) return;
@@ -173,15 +226,31 @@ export async function uploadAvatarAction(
   if (!["jpg", "jpeg", "png", "webp"].includes(ext)) return;
 
   try {
-    const { storage } = await createAdminClient();
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const validMimes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validateFileMimeType(buffer, file.name, validMimes)) {
+      console.error("File MIME type validation failed");
+      return;
+    }
 
-    await storage.createFile({
+    const { storage } = await createAdminClient();
+    const { account } = await createSessionClient();
+
+    const uploaded = await storage.createFile({
       bucketId: APPWRITE_CONFIG.buckets.userAvatars,
       fileId: ID.unique(),
       file,
     });
 
+    await account.updatePrefs({
+      prefs: {
+        ...user.prefs,
+        avatarFileId: uploaded.$id,
+      },
+    });
+
     revalidatePath("/app/profile/edit");
+    revalidatePath("/app/dashboard");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to upload avatar."

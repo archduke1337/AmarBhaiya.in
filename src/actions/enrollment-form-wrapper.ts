@@ -4,7 +4,10 @@
  */
 "use server";
 
-import { enrollInCourseAction } from "@/actions/enrollment";
+import {
+  enrollInCourseAction,
+  markLessonCompleteAction,
+} from "@/actions/enrollment";
 
 export async function enrollInCourseFormAction(
   formData: FormData
@@ -12,5 +15,11 @@ export async function enrollInCourseFormAction(
   await enrollInCourseAction(formData);
   // Discard the ActionResult for form compatibility
   // The client will handle the result via URL search params or server revalidation
+}
+
+export async function markLessonCompleteFormAction(
+  formData: FormData
+): Promise<void> {
+  await markLessonCompleteAction(formData);
 }
 

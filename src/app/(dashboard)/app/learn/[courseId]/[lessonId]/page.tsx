@@ -7,7 +7,8 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getFileViewUrl } from "@/lib/utils/file-urls";
 import { VideoPlayer } from "@/components/video-player";
-import { markLessonCompleteAction, getCourseProgress } from "@/actions/enrollment";
+import { getCourseProgress } from "@/actions/enrollment";
+import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
 import { postLessonCommentAction, getLessonComments } from "@/actions/comments";
 import { Query } from "node-appwrite";
 
@@ -73,8 +74,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
 
       hasAccess = enrollment.rows.length > 0;
     } catch {
-      // If enrollment check fails, still allow for safety.
-      hasAccess = true;
+      hasAccess = false;
     }
   }
 
@@ -162,7 +162,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
               Completed
             </span>
           ) : (
-            <form action={markLessonCompleteAction} className="shrink-0">
+            <form action={markLessonCompleteFormAction} className="shrink-0">
               <input type="hidden" name="courseId" value={courseId} />
               <input type="hidden" name="lessonId" value={lessonId} />
               <button

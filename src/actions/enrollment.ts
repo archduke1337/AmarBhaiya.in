@@ -109,6 +109,30 @@ export async function markLessonCompleteAction(
     if (!courseId || !lessonId) return actionError("Missing course or lesson ID");
 
     const { tablesDB } = await createAdminClient();
+    const [courseRow, lessonRow] = await Promise.all([
+      tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courses,
+        rowId: courseId,
+      }).catch(() => null),
+      tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.lessons,
+        rowId: lessonId,
+      }).catch(() => null),
+    ]);
+
+    if (!courseRow || !lessonRow) {
+      return actionError("Course or lesson not found");
+    }
+
+    const lesson = lessonRow as AnyRow;
+    if (String(lesson.courseId ?? "") !== courseId) {
+      return actionError("Lesson does not belong to this course");
+    }
+
+    const course = courseRow as AnyRow;
+    const courseIsFree = String(course.accessModel ?? "free") === "free";
 
     // Check not already tracked
     try {
@@ -132,6 +156,21 @@ export async function markLessonCompleteAction(
 
     try {
       // Create progress record
+      const enrollments = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.enrollments,
+        queries: [
+          Query.equal("courseId", [courseId]),
+          Query.equal("userId", [user.$id]),
+          Query.limit(1),
+        ],
+      });
+
+      const enrollmentRow = enrollments.rows[0] as AnyRow | undefined;
+      if (!enrollmentRow && !courseIsFree) {
+        return actionError("Enrollment required");
+      }
+
       await tablesDB.createRow({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.progress,
@@ -144,19 +183,8 @@ export async function markLessonCompleteAction(
         },
       });
 
-      // Get enrollment record to increment completed count
-      const enrollments = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.enrollments,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.equal("userId", [user.$id]),
-          Query.limit(1),
-        ],
-      });
-
-      const enrollmentRow = enrollments.rows[0] as AnyRow | undefined;
       if (!enrollmentRow) {
+        revalidatePath(`/app/learn/${courseId}/${lessonId}`);
         return actionSuccess();
       }
 

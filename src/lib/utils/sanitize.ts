@@ -56,31 +56,68 @@ export function escapeHtml(text: string): string {
 export function validateFileMimeType(
   buffer: Buffer,
   filename: string,
-  _allowedMimes?: string[]
+  allowedMimes?: string[]
 ): boolean {
   const extension = filename.split(".").pop()?.toLowerCase();
-
-  // Magic bytes for common file types
-  const magicBytes: Record<string, string> = {
-    pdf: "25504446", // %PDF
-    jpg: "FFD8FF",
-    jpeg: "FFD8FF",
-    png: "89504E47", // PNG
-    gif: "47494638", // GIF
-    mp4: "0000001869747970", // ftyp (MP4 signature)
-    webm: "1A45DFA3", // EBML (WebM signature)
-    mov: "6674797020", // ftyp (MOV signature)
-    mkv: "1A45DFA3", // EBML (Matroska)
-  };
-
-  if (!extension || !magicBytes[extension]) {
-    return false; // Unknown extension
+  if (!extension) {
+    return false;
   }
 
-  const hex = buffer.slice(0, 4).toString("hex").toUpperCase();
-  const expectedPrefix = magicBytes[extension];
+  const fileTypeByExtension: Record<string, { mime: string; matches: (input: Buffer) => boolean }> = {
+    pdf: {
+      mime: "application/pdf",
+      matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "25504446",
+    },
+    jpg: {
+      mime: "image/jpeg",
+      matches: (input) => input.subarray(0, 3).toString("hex").toUpperCase() === "FFD8FF",
+    },
+    jpeg: {
+      mime: "image/jpeg",
+      matches: (input) => input.subarray(0, 3).toString("hex").toUpperCase() === "FFD8FF",
+    },
+    png: {
+      mime: "image/png",
+      matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "89504E47",
+    },
+    gif: {
+      mime: "image/gif",
+      matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "47494638",
+    },
+    webp: {
+      mime: "image/webp",
+      matches: (input) =>
+        input.subarray(0, 4).toString("ascii") === "RIFF" &&
+        input.subarray(8, 12).toString("ascii") === "WEBP",
+    },
+    mp4: {
+      mime: "video/mp4",
+      matches: (input) => input.subarray(4, 8).toString("ascii") === "ftyp",
+    },
+    mov: {
+      mime: "video/quicktime",
+      matches: (input) => input.subarray(4, 8).toString("ascii") === "ftyp",
+    },
+    webm: {
+      mime: "video/webm",
+      matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "1A45DFA3",
+    },
+    mkv: {
+      mime: "video/x-matroska",
+      matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "1A45DFA3",
+    },
+  };
 
-  return hex.startsWith(expectedPrefix);
+  const fileType = fileTypeByExtension[extension];
+  if (!fileType) {
+    return false;
+  }
+
+  if (allowedMimes && allowedMimes.length > 0 && !allowedMimes.includes(fileType.mime)) {
+    return false;
+  }
+
+  return fileType.matches(buffer);
 }
 
 /**

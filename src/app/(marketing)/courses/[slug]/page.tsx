@@ -5,7 +5,8 @@ import { Lock, Play } from "lucide-react";
 
 import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 import { getLoggedInUser } from "@/lib/appwrite/auth";
-import { enrollInCourseAction, isEnrolled } from "@/actions/enrollment";
+import { isEnrolled } from "@/actions/enrollment";
+import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
 import { RazorpayCheckout } from "@/components/razorpay-checkout";
 
 type PageProps = {
@@ -87,7 +88,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             </Link>
           ) : user && !enrolled ? (
             course.accessModel === "free" ? (
-              <form action={enrollInCourseAction}>
+              <form action={enrollInCourseFormAction}>
                 <input type="hidden" name="courseId" value={course.id} />
                 <button
                   type="submit"
