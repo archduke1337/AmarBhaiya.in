@@ -51,6 +51,8 @@ type QuizAttemptRow = AnyRow & Partial<QuizAttempt>;
 type AssignmentRow = AnyRow & Partial<Assignment>;
 type SubmissionRow = AnyRow & Partial<Submission>;
 
+const REVIEW_OVERDUE_MS = 1000 * 60 * 60 * 24 * 3;
+
 export type CommunityThreadItem = {
   id: string;
   title: string;
@@ -87,6 +89,23 @@ export type InstructorStudentItem = {
   email: string;
   courseTitle: string;
   progressPercent: number;
+};
+
+export type InstructorSubmissionQueueItem = {
+  id: string;
+  assignmentId: string;
+  assignmentTitle: string;
+  courseId: string;
+  courseTitle: string;
+  userId: string;
+  userName: string;
+  fileId: string;
+  submittedAt: string;
+  grade: number;
+  feedback: string;
+  gradedAt: string | null;
+  needsFeedback: boolean;
+  isOverdueReview: boolean;
 };
 
 export type InstructorLiveSessionItem = {
@@ -691,6 +710,133 @@ export async function getInstructorStudents(
       progressPercent,
     };
   });
+}
+
+export async function getInstructorSubmissionQueue(
+  scope: InstructorScope
+): Promise<InstructorSubmissionQueueItem[]> {
+  const { tablesDB, users } = await createAdminClient();
+
+  const coursesResult = await safeListRows<CourseRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.courses,
+    getInstructorQueries(scope)
+  );
+
+  const courseIds = coursesResult.rows.map((course) => course.$id);
+  if (courseIds.length === 0) {
+    return [];
+  }
+
+  const courseTitleById = new Map(
+    coursesResult.rows.map((course) => [
+      course.$id,
+      typeof course.title === "string" ? course.title : "Course",
+    ])
+  );
+
+  const assignmentRows = await listRowsByFieldValues<AssignmentRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.assignments,
+    "courseId",
+    courseIds
+  );
+
+  const assignmentById = new Map(
+    assignmentRows.map((row) => [
+      row.$id,
+      {
+        assignmentId: row.$id,
+        assignmentTitle:
+          typeof row.title === "string" ? row.title : "Assignment",
+        courseId:
+          typeof row.courseId === "string" ? row.courseId : "",
+      },
+    ])
+  );
+
+  const assignmentIds = [...assignmentById.keys()];
+  if (assignmentIds.length === 0) {
+    return [];
+  }
+
+  const submissionRows = await listRowsByFieldValues<SubmissionRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.submissions,
+    "assignmentId",
+    assignmentIds
+  );
+
+  const userIds = [
+    ...new Set(
+      submissionRows
+        .map((row) => (typeof row.userId === "string" ? row.userId.trim() : ""))
+        .filter(Boolean)
+    ),
+  ];
+
+  const userNameById = new Map<string, string>();
+  await Promise.all(
+    userIds.map(async (userId) => {
+      try {
+        const account = await users.get({ userId });
+        userNameById.set(userId, account.name || account.email || userId);
+      } catch {
+        userNameById.set(userId, "Student");
+      }
+    })
+  );
+
+  return submissionRows
+    .map((row) => {
+      const assignment = assignmentById.get(row.assignmentId ?? "");
+      if (!assignment) {
+        return null;
+      }
+
+      const userId = typeof row.userId === "string" ? row.userId : "";
+      const submittedAt =
+        typeof row.submittedAt === "string" && row.submittedAt.length > 0
+          ? row.submittedAt
+          : typeof row.$createdAt === "string"
+            ? row.$createdAt
+            : "";
+      const grade = Number(row.grade ?? 0);
+      const feedback = typeof row.feedback === "string" ? row.feedback : "";
+      const submittedTime = toDate(submittedAt)?.getTime() ?? Number.NaN;
+      const gradedAt =
+        grade > 0
+          ? typeof row.$updatedAt === "string" && row.$updatedAt.length > 0
+            ? row.$updatedAt
+            : submittedAt || null
+          : null;
+
+      return {
+        id: row.$id,
+        assignmentId: assignment.assignmentId,
+        assignmentTitle: assignment.assignmentTitle,
+        courseId: assignment.courseId,
+        courseTitle: courseTitleById.get(assignment.courseId) ?? "Course",
+        userId,
+        userName: userNameById.get(userId) ?? "Student",
+        fileId: typeof row.fileId === "string" ? row.fileId : "",
+        submittedAt,
+        grade,
+        feedback,
+        gradedAt,
+        needsFeedback: grade > 0 && feedback.trim().length === 0,
+        isOverdueReview:
+          grade <= 0 &&
+          Number.isFinite(submittedTime) &&
+          Date.now() - submittedTime > REVIEW_OVERDUE_MS,
+      } satisfies InstructorSubmissionQueueItem;
+    })
+    .filter((item): item is InstructorSubmissionQueueItem => item !== null)
+    .sort((left, right) => {
+      const leftTime = toDate(left.submittedAt)?.getTime() ?? 0;
+      const rightTime = toDate(right.submittedAt)?.getTime() ?? 0;
+      return rightTime - leftTime;
+    });
 }
 
 export async function getInstructorLiveSessions(

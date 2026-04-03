@@ -18,6 +18,7 @@ import {
   getInstructorDashboardStats,
   getInstructorCourseList,
   getInstructorLiveSessions,
+  getInstructorSubmissionQueue,
 } from "@/lib/appwrite/dashboard-data";
 import { formatCompactNumber, formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import {
@@ -33,12 +34,13 @@ export default async function InstructorDashboardPage() {
   const { user, role } = await requireRole(["admin", "instructor"]);
   const scope = { userId: user.$id, role };
 
-  const [stats, courses, sessions, resources, courseResources] = await Promise.all([
+  const [stats, courses, sessions, resources, courseResources, submissions] = await Promise.all([
     getInstructorDashboardStats(scope),
     getInstructorCourseList(scope),
     getInstructorLiveSessions(scope),
     getInstructorResources(scope),
     getInstructorCourseResources(scope),
+    getInstructorSubmissionQueue(scope),
   ]);
 
   const draftCourses = courses.filter((c) => c.status === "Draft");
@@ -47,6 +49,24 @@ export default async function InstructorDashboardPage() {
   const standalonePublished = resources.length - standaloneDrafts;
   const sessionsMissingJoinLink = sessions.filter((session) => !session.streamUrl).length;
   const resourceCourseCount = new Set(courseResources.map((resource) => resource.courseId)).size;
+  const awaitingGrade = [...submissions]
+    .filter((submission) => submission.grade === 0)
+    .sort((left, right) => {
+      const leftTime = new Date(left.submittedAt).getTime();
+      const rightTime = new Date(right.submittedAt).getTime();
+      return leftTime - rightTime;
+    });
+  const recentlyGraded = [...submissions]
+    .filter((submission) => submission.grade > 0)
+    .sort((left, right) => {
+      const leftTime = new Date(left.gradedAt ?? left.submittedAt).getTime();
+      const rightTime = new Date(right.gradedAt ?? right.submittedAt).getTime();
+      return rightTime - leftTime;
+    });
+  const feedbackMissing = recentlyGraded.filter((submission) => submission.needsFeedback);
+  const reviewOverdueCount = awaitingGrade.filter(
+    (submission) => submission.isOverdueReview
+  ).length;
 
   return (
     <div className="flex flex-col gap-8">
@@ -92,8 +112,12 @@ export default async function InstructorDashboardPage() {
           icon={ClipboardCheck}
           description={
             stats.pendingReviews > 0
-              ? "Assignments awaiting grading"
-              : "All caught up"
+              ? reviewOverdueCount > 0
+                ? `${reviewOverdueCount} overdue to review`
+                : "Assignments awaiting grading"
+              : feedbackMissing.length > 0
+                ? `${feedbackMissing.length} graded without feedback`
+                : "All caught up"
           }
         />
       </StatGrid>
@@ -154,6 +178,50 @@ export default async function InstructorDashboardPage() {
               ))}
             </div>
           )}
+
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium">Grading Flow</h2>
+              <Link
+                href="/instructor/submissions"
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Open submissions →
+              </Link>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              <ActivityFeed
+                title={`Awaiting Grade (${awaitingGrade.length})`}
+                emptyText="No submissions are waiting for review."
+                items={awaitingGrade.slice(0, 4).map((submission) => ({
+                  id: submission.id,
+                  label: submission.assignmentTitle,
+                  description: `${submission.userName} · ${submission.courseTitle}`,
+                  badge: submission.isOverdueReview ? "Overdue" : "Pending",
+                  timestamp: submission.submittedAt
+                    ? formatRelativeTime(submission.submittedAt)
+                    : undefined,
+                  href: `/instructor/submissions#submission-${submission.id}`,
+                }))}
+              />
+
+              <ActivityFeed
+                title={`Recently Graded (${recentlyGraded.length})`}
+                emptyText="Graded submissions will appear here."
+                items={recentlyGraded.slice(0, 4).map((submission) => ({
+                  id: submission.id,
+                  label: submission.assignmentTitle,
+                  description: `${submission.userName} · ${submission.grade}/100${submission.needsFeedback ? " · Feedback still missing" : ""}`,
+                  badge: submission.needsFeedback ? "Add feedback" : "Graded",
+                  timestamp: submission.gradedAt
+                    ? formatRelativeTime(submission.gradedAt)
+                    : undefined,
+                  href: `/instructor/submissions#submission-${submission.id}`,
+                }))}
+              />
+            </div>
+          </section>
         </section>
 
         {/* Sidebar */}
@@ -165,6 +233,10 @@ export default async function InstructorDashboardPage() {
               courseResources: courseResources.length,
               standaloneResources: resources.length,
               sessionsMissingJoinLink,
+              reviewOverdueCount,
+              feedbackMissingCount: feedbackMissing.length,
+              firstAwaitingSubmissionId: awaitingGrade[0]?.id,
+              firstFeedbackSubmissionId: feedbackMissing[0]?.id,
             })}
           />
 
@@ -220,6 +292,7 @@ export default async function InstructorDashboardPage() {
               {[
                 { label: "Manage Categories", href: "/instructor/categories" },
                 { label: "View Students", href: "/instructor/students" },
+                { label: "Review Submissions", href: "/instructor/submissions" },
                 { label: "Schedule Live Session", href: "/instructor/live" },
                 { label: "Resources Library", href: "/instructor/resources" },
                 {
@@ -250,6 +323,10 @@ function buildActionItems(
     courseResources: number;
     standaloneResources: number;
     sessionsMissingJoinLink: number;
+    reviewOverdueCount: number;
+    feedbackMissingCount: number;
+    firstAwaitingSubmissionId?: string;
+    firstFeedbackSubmissionId?: string;
   }
 ) {
   const items: Array<{
@@ -260,13 +337,37 @@ function buildActionItems(
     href?: string;
   }> = [];
 
-  if (stats.pendingReviews > 0) {
+  if (context.reviewOverdueCount > 0) {
+    items.push({
+      id: "overdue-reviews",
+      label: `${context.reviewOverdueCount} submission${context.reviewOverdueCount === 1 ? "" : "s"} overdue for review`,
+      description: "Start with the oldest work waiting in the grading queue",
+      badge: "Urgent",
+      href: context.firstAwaitingSubmissionId
+        ? `/instructor/submissions#submission-${context.firstAwaitingSubmissionId}`
+        : "/instructor/submissions#awaiting-grade",
+    });
+  } else if (stats.pendingReviews > 0) {
     items.push({
       id: "pending-reviews",
       label: `${stats.pendingReviews} submissions to review`,
       description: "Grade pending assignments",
       badge: "Urgent",
-      href: "/instructor/submissions",
+      href: context.firstAwaitingSubmissionId
+        ? `/instructor/submissions#submission-${context.firstAwaitingSubmissionId}`
+        : "/instructor/submissions#awaiting-grade",
+    });
+  }
+
+  if (context.feedbackMissingCount > 0) {
+    items.push({
+      id: "feedback-missing",
+      label: `${context.feedbackMissingCount} graded submission${context.feedbackMissingCount === 1 ? "" : "s"} still need feedback`,
+      description: "Add written context so students know what to improve next",
+      badge: "Feedback",
+      href: context.firstFeedbackSubmissionId
+        ? `/instructor/submissions#submission-${context.firstFeedbackSubmissionId}`
+        : "/instructor/submissions#graded-submissions",
     });
   }
 
