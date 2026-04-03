@@ -1,4 +1,5 @@
 import { createLiveSessionAction } from "@/actions/dashboard";
+import { deleteLiveSessionAction } from "@/actions/delete";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getInstructorCourseList,
@@ -29,15 +30,28 @@ export default async function InstructorLivePage() {
         ) : null}
 
         {sessions.map((session) => (
-          <article key={session.id} className="border border-border p-4 space-y-1">
-            <h3>{session.title}</h3>
-            <p className="text-sm text-muted-foreground">
-              {session.scheduledAt ? formatDateTime(session.scheduledAt) : "No schedule set"}
-              {" · "}
-              {session.status}
-              {" · "}
-              {session.rsvpCount} RSVPs
-            </p>
+          <article key={session.id} className="border border-border p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <h3>{session.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {session.scheduledAt ? formatDateTime(session.scheduledAt) : "No schedule set"}
+                  {" · "}
+                  {session.status}
+                  {" · "}
+                  {session.rsvpCount} RSVPs
+                </p>
+              </div>
+              <form action={deleteLiveSessionAction}>
+                <input type="hidden" name="sessionId" value={session.id} />
+                <button
+                  type="submit"
+                  className="h-8 border border-destructive/30 px-3 text-xs text-destructive transition-colors hover:bg-destructive/10"
+                >
+                  Delete
+                </button>
+              </form>
+            </div>
           </article>
         ))}
       </section>

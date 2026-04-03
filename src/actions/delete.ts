@@ -15,6 +15,22 @@ type AdminServices = Awaited<ReturnType<typeof createAdminClient>>;
 type AdminTablesDB = AdminServices["tablesDB"];
 type AdminStorage = AdminServices["storage"];
 
+async function getRowById(
+  tablesDB: AdminTablesDB,
+  tableId: string,
+  rowId: string
+): Promise<AnyRow | null> {
+  try {
+    return (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId,
+      rowId,
+    })) as AnyRow;
+  } catch {
+    return null;
+  }
+}
+
 async function listAllRows(
   tablesDB: AdminTablesDB,
   tableId: string,
@@ -109,6 +125,172 @@ async function deleteFileIds(
         error instanceof Error ? error.message : error
       );
     }
+  }
+}
+
+async function syncCourseLessonStats(
+  tablesDB: AdminTablesDB,
+  courseId: string
+): Promise<void> {
+  try {
+    const remaining = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      queries: [Query.equal("courseId", [courseId]), Query.limit(2000)],
+    });
+
+    const totalDuration = remaining.rows.reduce((sum, row) => {
+      const duration = Number((row as { duration?: unknown }).duration ?? 0);
+      return sum + (Number.isFinite(duration) ? duration : 0);
+    }, 0);
+
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courses,
+      rowId: courseId,
+      data: { totalLessons: remaining.total, totalDuration },
+    });
+  } catch {
+    // Non-critical
+  }
+}
+
+async function deleteLessonTree({
+  tablesDB,
+  storage,
+  lessonId,
+  courseId,
+}: {
+  tablesDB: AdminTablesDB;
+  storage: AdminStorage;
+  lessonId: string;
+  courseId: string;
+}): Promise<boolean> {
+  const lesson = await getRowById(tablesDB, APPWRITE_CONFIG.tables.lessons, lessonId);
+  if (!lesson || String(lesson.courseId ?? "") !== courseId) {
+    return false;
+  }
+
+  const failedDeletes: string[] = [];
+  const lessonVideoId = String(lesson.videoFileId ?? "");
+
+  try {
+    const resources = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.resources, [
+      Query.equal("lessonId", [lessonId]),
+    ]);
+    const resourceFileIds = resources
+      .map((resource) => String(resource.fileId ?? ""))
+      .filter(Boolean);
+
+    const quizzes = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.quizzes, [
+      Query.equal("lessonId", [lessonId]),
+    ]);
+    const assignments = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.assignments, [
+      Query.equal("lessonId", [lessonId]),
+    ]);
+
+    const submissionFileIds: string[] = [];
+
+    for (const quiz of quizzes) {
+      failedDeletes.push(
+        ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.quizAttempts, [
+          Query.equal("quizId", [quiz.$id]),
+        ]))
+      );
+      failedDeletes.push(
+        ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.quizQuestions, [
+          Query.equal("quizId", [quiz.$id]),
+        ]))
+      );
+
+      try {
+        await tablesDB.deleteRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.quizzes,
+          rowId: quiz.$id,
+        });
+      } catch (error) {
+        failedDeletes.push(`${APPWRITE_CONFIG.tables.quizzes}/${quiz.$id}`);
+        console.error(
+          `[Delete] Failed to delete ${APPWRITE_CONFIG.tables.quizzes}/${quiz.$id}:`,
+          error instanceof Error ? error.message : error
+        );
+      }
+    }
+
+    for (const assignment of assignments) {
+      const submissions = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.submissions, [
+        Query.equal("assignmentId", [assignment.$id]),
+      ]);
+
+      submissionFileIds.push(
+        ...submissions
+          .map((submission) => String(submission.fileId ?? ""))
+          .filter(Boolean)
+      );
+
+      failedDeletes.push(
+        ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.submissions, [
+          Query.equal("assignmentId", [assignment.$id]),
+        ]))
+      );
+
+      try {
+        await tablesDB.deleteRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.assignments,
+          rowId: assignment.$id,
+        });
+      } catch (error) {
+        failedDeletes.push(`${APPWRITE_CONFIG.tables.assignments}/${assignment.$id}`);
+        console.error(
+          `[Delete] Failed to delete ${APPWRITE_CONFIG.tables.assignments}/${assignment.$id}:`,
+          error instanceof Error ? error.message : error
+        );
+      }
+    }
+
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.resources, [
+        Query.equal("lessonId", [lessonId]),
+      ]))
+    );
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.courseComments, [
+        Query.equal("lessonId", [lessonId]),
+      ]))
+    );
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.progress, [
+        Query.equal("lessonId", [lessonId]),
+      ]))
+    );
+
+    if (failedDeletes.length > 0) {
+      console.warn(
+        `[Delete] Aborting lesson delete for ${lessonId} because child cleanup failed.`,
+        failedDeletes
+      );
+      return false;
+    }
+
+    await tablesDB.deleteRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      rowId: lessonId,
+    });
+
+    await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseVideos, [lessonVideoId]);
+    await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseResources, resourceFileIds);
+    await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseResources, submissionFileIds);
+
+    return true;
+  } catch (error) {
+    console.error(
+      `[Delete] Failed to delete lesson tree ${lessonId}:`,
+      error instanceof Error ? error.message : error
+    );
+    return false;
   }
 }
 
@@ -231,6 +413,7 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
       `[Delete] ${failedDeletes.length} child rows failed to delete for course ${courseId}. Orphaned records:`,
       failedDeletes
     );
+    return;
   }
 
   // Delete the course itself
@@ -279,31 +462,28 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
   const moduleId = String(formData.get("moduleId") ?? "");
   if (!courseId || !moduleId) return;
 
-  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
+  const course = await userCanManageCourse(courseId, role, user.$id);
+  if (!course) return;
 
-  const { tablesDB } = await createAdminClient();
+  const { tablesDB, storage } = await createAdminClient();
+  const module = await getRowById(tablesDB, APPWRITE_CONFIG.tables.modules, moduleId);
+  if (!module || String(module.courseId ?? "") !== courseId) return;
 
-  // Delete lessons in this module
-  try {
-    const lessons = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      queries: [Query.equal("moduleId", [moduleId]), Query.limit(500)],
+  const lessons = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+    Query.equal("moduleId", [moduleId]),
+  ]);
+
+  for (const lesson of lessons) {
+    const deleted = await deleteLessonTree({
+      tablesDB,
+      storage,
+      lessonId: lesson.$id,
+      courseId,
     });
 
-    for (const lesson of lessons.rows) {
-      try {
-        await tablesDB.deleteRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.lessons,
-          rowId: (lesson as { $id: string }).$id,
-        });
-      } catch {
-        // Continue
-      }
+    if (!deleted) {
+      return;
     }
-  } catch {
-    // No lessons to delete
   }
 
   // Delete the module
@@ -317,8 +497,19 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
     console.error(
       error instanceof Error ? error.message : "Failed to delete module."
     );
+    return;
   }
 
+  await syncCourseLessonStats(tablesDB, courseId);
+
+  revalidatePath("/app");
+  revalidatePath("/app/assignments");
+  revalidatePath("/app/quizzes");
+  revalidatePath("/app/dashboard");
+  revalidatePath("/courses");
+  if (typeof course.slug === "string" && course.slug) {
+    revalidatePath(`/courses/${course.slug}`);
+  }
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
 }
 
@@ -331,45 +522,29 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
   const lessonId = String(formData.get("lessonId") ?? "");
   if (!courseId || !lessonId) return;
 
-  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
+  const course = await userCanManageCourse(courseId, role, user.$id);
+  if (!course) return;
 
-  const { tablesDB } = await createAdminClient();
+  const { tablesDB, storage } = await createAdminClient();
+  const deleted = await deleteLessonTree({
+    tablesDB,
+    storage,
+    lessonId,
+    courseId,
+  });
+  if (!deleted) return;
 
-  try {
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      rowId: lessonId,
-    });
-  } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to delete lesson."
-    );
+  await syncCourseLessonStats(tablesDB, courseId);
+
+  revalidatePath("/app");
+  revalidatePath("/app/assignments");
+  revalidatePath("/app/quizzes");
+  revalidatePath("/app/dashboard");
+  revalidatePath("/courses");
+  if (typeof course.slug === "string" && course.slug) {
+    revalidatePath(`/courses/${course.slug}`);
   }
-
-  // Re-count lessons for the course
-  try {
-    const remaining = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      queries: [Query.equal("courseId", [courseId]), Query.limit(2000)],
-    });
-
-    const totalDuration = remaining.rows.reduce((sum, row) => {
-      const d = Number((row as { duration?: unknown }).duration ?? 0);
-      return sum + (Number.isFinite(d) ? d : 0);
-    }, 0);
-
-    await tablesDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-      data: { totalLessons: remaining.total, totalDuration },
-    });
-  } catch {
-    // Non-critical
-  }
-
+  revalidatePath(`/app/learn/${courseId}/${lessonId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
 }
 
@@ -525,34 +700,40 @@ export async function deleteForumReplyAction(
 export async function deleteLiveSessionAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const sessionId = String(formData.get("sessionId") ?? "");
   if (!sessionId) return;
 
   const { tablesDB } = await createAdminClient();
+  const session = await getRowById(
+    tablesDB,
+    APPWRITE_CONFIG.tables.liveSessions,
+    sessionId
+  );
+  if (!session) return;
+  if (!(await userCanManageCourse(String(session.courseId ?? ""), role, user.$id))) {
+    return;
+  }
 
   // Delete RSVPs
+  const failedDeletes = [];
   try {
-    const rsvps = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.sessionRsvps,
-      queries: [Query.equal("sessionId", [sessionId]), Query.limit(2000)],
-    });
-
-    for (const rsvp of rsvps.rows) {
-      try {
-        await tablesDB.deleteRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.sessionRsvps,
-          rowId: (rsvp as { $id: string }).$id,
-        });
-      } catch {
-        // Continue
-      }
-    }
+    failedDeletes.push(
+      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.sessionRsvps, [
+        Query.equal("sessionId", [sessionId]),
+      ]))
+    );
   } catch {
     // No RSVPs
+  }
+
+  if (failedDeletes.length > 0) {
+    console.warn(
+      `[Delete] Aborting live session delete for ${sessionId} because RSVP cleanup failed.`,
+      failedDeletes
+    );
+    return;
   }
 
   try {
@@ -569,4 +750,6 @@ export async function deleteLiveSessionAction(
 
   revalidatePath("/admin/live");
   revalidatePath("/instructor/live");
+  revalidatePath("/app/dashboard");
+  revalidatePath("/app/live");
 }
