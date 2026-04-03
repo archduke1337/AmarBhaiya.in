@@ -118,7 +118,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
     : "";
 
   // Get progress, comments, and lesson resources
-  const [{ completedLessonIds }, comments, lessonResourcesResult, lessonProgressResult] = await Promise.all([
+  const [{ completedLessonIds }, comments, lessonResourcesResult, lessonProgressResult, enrollmentResult] = await Promise.all([
     getCourseProgress(courseId, user.$id),
     getLessonComments(lessonId),
     tablesDB.listRows({
@@ -136,8 +136,19 @@ export default async function LessonViewerPage({ params }: PageProps) {
         Query.limit(1),
       ],
     }).catch(() => ({ rows: [] })),
+    tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      queries: [
+        Query.equal("courseId", [courseId]),
+        Query.equal("userId", [user.$id]),
+        Query.limit(1),
+      ],
+    }).catch(() => ({ rows: [] })),
   ]);
   const lessonProgressRow = (lessonProgressResult.rows[0] as AnyRow | undefined) ?? null;
+  const hasEnrollment = enrollmentResult.rows.length > 0;
+  const canMarkComplete = courseIsFree || hasEnrollment;
   const lessonPercentComplete = Math.max(
     0,
     Math.min(99, Math.round(Number(lessonProgressRow?.percentComplete ?? 0)))
@@ -197,6 +208,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
         initialPercentComplete={lessonPercentComplete}
         initialResumeSeconds={resumeSeconds}
         isCompleted={lessonCompleted}
+        canAutoComplete={canMarkComplete}
       />
 
       {/* Lesson info + mark complete */}
@@ -210,7 +222,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
               <CheckCircle className="size-4" />
               Completed
             </span>
-          ) : (
+          ) : canMarkComplete ? (
             <form action={markLessonCompleteFormAction} className="shrink-0">
               <input type="hidden" name="courseId" value={courseId} />
               <input type="hidden" name="lessonId" value={lessonId} />
@@ -221,6 +233,10 @@ export default async function LessonViewerPage({ params }: PageProps) {
                 Mark as complete
               </button>
             </form>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 pt-1">
+              Preview lesson
+            </span>
           )}
         </div>
         {typeof lesson.description === "string" && lesson.description.length > 0 && (

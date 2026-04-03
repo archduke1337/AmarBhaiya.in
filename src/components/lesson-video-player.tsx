@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   VideoPlayer,
@@ -16,6 +17,7 @@ type LessonVideoPlayerProps = {
   initialPercentComplete?: number;
   initialResumeSeconds?: number;
   isCompleted?: boolean;
+  canAutoComplete?: boolean;
 };
 
 export function LessonVideoPlayer({
@@ -27,12 +29,15 @@ export function LessonVideoPlayer({
   initialPercentComplete = 0,
   initialResumeSeconds = 0,
   isCompleted = false,
+  canAutoComplete = false,
 }: LessonVideoPlayerProps) {
+  const router = useRouter();
   const lastSentPercentRef = useRef(
     Math.max(0, Math.min(99, Math.round(initialPercentComplete)))
   );
   const lastSentTimeRef = useRef(Math.max(0, Math.floor(initialResumeSeconds)));
   const completedRef = useRef(isCompleted);
+  const completionRequestedRef = useRef(false);
 
   function persistSnapshot(snapshot: VideoProgressSnapshot) {
     if (completedRef.current) {
@@ -60,6 +65,36 @@ export function LessonVideoPlayer({
 
     lastSentTimeRef.current = Math.max(lastSentTimeRef.current, roundedTime);
     lastSentPercentRef.current = nextPercent;
+
+    if (snapshot.ended && canAutoComplete && !completionRequestedRef.current) {
+      completionRequestedRef.current = true;
+
+      startTransition(() => {
+        void fetch("/api/lesson-complete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            courseId,
+            lessonId,
+          }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to complete lesson");
+            }
+
+            completedRef.current = true;
+            router.refresh();
+          })
+          .catch(() => {
+            completionRequestedRef.current = false;
+          });
+      });
+
+      return;
+    }
 
     startTransition(() => {
       void fetch("/api/lesson-progress", {
