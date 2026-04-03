@@ -35,6 +35,18 @@ export async function createSessionClient() {
   };
 }
 
+export async function createPublicClient() {
+  const client = new Client()
+    .setEndpoint(APPWRITE_CONFIG.endpoint)
+    .setProject(APPWRITE_CONFIG.projectId);
+
+  return {
+    get account() {
+      return new Account(client);
+    },
+  };
+}
+
 // ── Admin Client ────────────────────────────────────────────────────────────
 // Used for privileged operations: creating accounts, managing labels, webhooks.
 // Uses API key — NEVER expose to client-side code.

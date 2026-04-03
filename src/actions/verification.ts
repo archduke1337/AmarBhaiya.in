@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSessionClient } from "@/lib/appwrite/server";
+import { redirect } from "next/navigation";
+import { createPublicClient, createSessionClient } from "@/lib/appwrite/server";
 import { requireAuth } from "@/lib/appwrite/auth";
 
 // ── Send Verification Email ─────────────────────────────────────────────────
@@ -35,7 +36,7 @@ export async function confirmEmailVerificationAction(
   secret: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { account } = await createSessionClient();
+    const { account } = await createPublicClient();
     await account.updateVerification({ userId, secret });
     revalidatePath("/app/profile/edit");
     revalidatePath("/app/dashboard");
@@ -61,7 +62,7 @@ export async function sendPasswordRecoveryAction(
   if (!email) return;
 
   try {
-    const { account } = await createSessionClient();
+    const { account } = await createPublicClient();
     const recoveryUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://amarbhaiya.in"}/reset-password`;
     await account.createRecovery({ email, url: recoveryUrl });
   } catch (error) {
@@ -85,8 +86,9 @@ export async function confirmPasswordRecoveryAction(
   if (!userId || !secret || !password || password.length < 8) return;
 
   try {
-    const { account } = await createSessionClient();
+    const { account } = await createPublicClient();
     await account.updateRecovery({ userId, secret, password });
+    redirect("/login?reset=success");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to reset password."
