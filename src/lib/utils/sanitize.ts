@@ -1,38 +1,27 @@
-import DOMPurify from "isomorphic-dompurify";
+const SCRIPT_OR_STYLE_BLOCK_PATTERN =
+  /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi;
+const HTML_TAG_PATTERN = /<\/?[^>]+>/g;
 
 /**
- * Sanitize user-generated HTML content to prevent XSS attacks
- * Allows safe tags: p, br, strong, em, u, h1-h6, ul, ol, li, a, code, pre
+ * Sanitize user-generated text to prevent XSS attacks in server actions.
+ *
+ * These inputs are rendered back as plain text, not rich HTML, so we strip tags
+ * instead of depending on a DOM-based sanitizer that would pull `jsdom` into the
+ * server bundle.
  */
 export function sanitizeHtml(dirty: string): string {
-  const config = {
-    ALLOWED_TAGS: [
-      "p",
-      "br",
-      "strong",
-      "b",
-      "em",
-      "i",
-      "u",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      "ul",
-      "ol",
-      "li",
-      "a",
-      "code",
-      "pre",
-      "blockquote",
-    ],
-    ALLOWED_ATTR: ["href", "title"],
-    ALLOW_DATA_ATTR: false,
-  };
+  if (!dirty) {
+    return "";
+  }
 
-  return DOMPurify.sanitize(dirty, config);
+  return dirty
+    .replace(/\0/g, "")
+    .replace(SCRIPT_OR_STYLE_BLOCK_PATTERN, " ")
+    .replace(HTML_TAG_PATTERN, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 /**
