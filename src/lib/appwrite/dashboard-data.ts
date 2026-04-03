@@ -890,242 +890,422 @@ export async function getInstructorCourseList(
 export async function getInstructorStudents(
   scope: InstructorScope
 ): Promise<InstructorStudentItem[]> {
-  const { tablesDB, users } = await createAdminClient();
+  try {
+    const { tablesDB, users } = await createAdminClient();
 
-  const coursesResult = await safeListRows<CourseRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.courses,
-    getInstructorQueries(scope)
-  );
+    const coursesResult = await safeListRows<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      getInstructorQueries(scope)
+    );
 
-  const courseById = new Map(coursesResult.rows.map((course) => [course.$id, course]));
-  const courseIds = [...courseById.keys()];
+    const courseById = new Map(coursesResult.rows.map((course) => [course.$id, course]));
+    const courseIds = [...courseById.keys()];
 
-  if (courseIds.length === 0) {
-    return [];
-  }
+    if (courseIds.length === 0) {
+      return [];
+    }
 
-  const enrollmentRows = await listRowsByFieldValues<EnrollmentRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.enrollments,
-    "courseId",
-    courseIds
-  );
+    const enrollmentRows = await listRowsByFieldValues<EnrollmentRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.enrollments,
+      "courseId",
+      courseIds
+    );
 
-  const activeEnrollmentRows = enrollmentRows
-    .filter((row) => row.isActive !== false && typeof row.userId === "string")
-    .sort((left, right) => {
-      const leftDate = toDate(left.enrolledAt)?.getTime() ?? 0;
-      const rightDate = toDate(right.enrolledAt)?.getTime() ?? 0;
-      return rightDate - leftDate;
+    const activeEnrollmentRows = enrollmentRows
+      .filter((row) => row.isActive !== false && typeof row.userId === "string")
+      .sort((left, right) => {
+        const leftDate = toDate(left.enrolledAt)?.getTime() ?? 0;
+        const rightDate = toDate(right.enrolledAt)?.getTime() ?? 0;
+        return rightDate - leftDate;
+      });
+
+    if (activeEnrollmentRows.length === 0) {
+      return [];
+    }
+
+    const uniqueUserIds = [...new Set(activeEnrollmentRows.map((row) => String(row.userId)))];
+
+    const userMap = new Map<string, { name: string; email: string }>();
+    await Promise.all(
+      uniqueUserIds.map(async (userId) => {
+        try {
+          const user = await users.get({ userId });
+          userMap.set(userId, {
+            name: user.name || "Unknown user",
+            email: user.email || "No email",
+          });
+        } catch {
+          userMap.set(userId, {
+            name: userId,
+            email: "No email",
+          });
+        }
+      })
+    );
+
+    return activeEnrollmentRows.map((enrollment) => {
+      const userId = String(enrollment.userId);
+      const courseId = typeof enrollment.courseId === "string" ? enrollment.courseId : "";
+      const course = courseById.get(courseId);
+      const enrolledAt =
+        typeof enrollment.enrolledAt === "string" && enrollment.enrolledAt.length > 0
+          ? enrollment.enrolledAt
+          : typeof enrollment.$createdAt === "string"
+            ? enrollment.$createdAt
+            : null;
+      const enrolledTime = toDate(enrolledAt)?.getTime() ?? Number.NaN;
+
+      const rawProgress = Number(enrollment.progress ?? 0);
+      const progressPercent = Number.isFinite(rawProgress)
+        ? Math.min(100, Math.max(0, Math.round(rawProgress)))
+        : 0;
+
+      const user = userMap.get(userId) ?? { name: userId, email: "No email" };
+
+      return {
+        id: userId,
+        name: user.name,
+        email: user.email,
+        courseId,
+        courseTitle:
+          typeof course?.title === "string" ? course.title : "Unknown course",
+        progressPercent,
+        enrolledAt,
+        needsAttention:
+          progressPercent < 25 &&
+          Number.isFinite(enrolledTime) &&
+          Date.now() - enrolledTime > STUDENT_ATTENTION_MS,
+        isNearCompletion: progressPercent >= 80 && progressPercent < 100,
+        isNewEnrollment:
+          Number.isFinite(enrolledTime) &&
+          Date.now() - enrolledTime <= RECENT_ENROLLMENT_MS,
+      };
     });
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor students."
+    );
 
-  if (activeEnrollmentRows.length === 0) {
     return [];
   }
-
-  const uniqueUserIds = [...new Set(activeEnrollmentRows.map((row) => String(row.userId)))];
-
-  const userMap = new Map<string, { name: string; email: string }>();
-  await Promise.all(
-    uniqueUserIds.map(async (userId) => {
-      try {
-        const user = await users.get({ userId });
-        userMap.set(userId, {
-          name: user.name || "Unknown user",
-          email: user.email || "No email",
-        });
-      } catch {
-        userMap.set(userId, {
-          name: userId,
-          email: "No email",
-        });
-      }
-    })
-  );
-
-  return activeEnrollmentRows.map((enrollment) => {
-    const userId = String(enrollment.userId);
-    const courseId = typeof enrollment.courseId === "string" ? enrollment.courseId : "";
-    const course = courseById.get(courseId);
-    const enrolledAt =
-      typeof enrollment.enrolledAt === "string" && enrollment.enrolledAt.length > 0
-        ? enrollment.enrolledAt
-        : typeof enrollment.$createdAt === "string"
-          ? enrollment.$createdAt
-          : null;
-    const enrolledTime = toDate(enrolledAt)?.getTime() ?? Number.NaN;
-
-    const rawProgress = Number(enrollment.progress ?? 0);
-    const progressPercent = Number.isFinite(rawProgress)
-      ? Math.min(100, Math.max(0, Math.round(rawProgress)))
-      : 0;
-
-    const user = userMap.get(userId) ?? { name: userId, email: "No email" };
-
-    return {
-      id: userId,
-      name: user.name,
-      email: user.email,
-      courseId,
-      courseTitle:
-        typeof course?.title === "string" ? course.title : "Unknown course",
-      progressPercent,
-      enrolledAt,
-      needsAttention:
-        progressPercent < 25 &&
-        Number.isFinite(enrolledTime) &&
-        Date.now() - enrolledTime > STUDENT_ATTENTION_MS,
-      isNearCompletion: progressPercent >= 80 && progressPercent < 100,
-      isNewEnrollment:
-        Number.isFinite(enrolledTime) &&
-        Date.now() - enrolledTime <= RECENT_ENROLLMENT_MS,
-    };
-  });
 }
 
 export async function getInstructorSubmissionQueue(
   scope: InstructorScope
 ): Promise<InstructorSubmissionQueueItem[]> {
-  const { tablesDB, users } = await createAdminClient();
+  try {
+    const { tablesDB, users } = await createAdminClient();
 
-  const coursesResult = await safeListRows<CourseRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.courses,
-    getInstructorQueries(scope)
-  );
+    const coursesResult = await safeListRows<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      getInstructorQueries(scope)
+    );
 
-  const courseIds = coursesResult.rows.map((course) => course.$id);
-  if (courseIds.length === 0) {
+    const courseIds = coursesResult.rows.map((course) => course.$id);
+    if (courseIds.length === 0) {
+      return [];
+    }
+
+    const courseTitleById = new Map(
+      coursesResult.rows.map((course) => [
+        course.$id,
+        typeof course.title === "string" ? course.title : "Course",
+      ])
+    );
+
+    const assignmentRows = await listRowsByFieldValues<AssignmentRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.assignments,
+      "courseId",
+      courseIds
+    );
+
+    const assignmentById = new Map(
+      assignmentRows.map((row) => [
+        row.$id,
+        {
+          assignmentId: row.$id,
+          assignmentTitle:
+            typeof row.title === "string" ? row.title : "Assignment",
+          courseId:
+            typeof row.courseId === "string" ? row.courseId : "",
+        },
+      ])
+    );
+
+    const assignmentIds = [...assignmentById.keys()];
+    if (assignmentIds.length === 0) {
+      return [];
+    }
+
+    const submissionRows = await listRowsByFieldValues<SubmissionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.submissions,
+      "assignmentId",
+      assignmentIds
+    );
+
+    const userIds = [
+      ...new Set(
+        submissionRows
+          .map((row) => (typeof row.userId === "string" ? row.userId.trim() : ""))
+          .filter(Boolean)
+      ),
+    ];
+
+    const userNameById = new Map<string, string>();
+    await Promise.all(
+      userIds.map(async (userId) => {
+        try {
+          const account = await users.get({ userId });
+          userNameById.set(userId, account.name || account.email || userId);
+        } catch {
+          userNameById.set(userId, "Student");
+        }
+      })
+    );
+
+    return submissionRows
+      .map((row) => {
+        const assignment = assignmentById.get(row.assignmentId ?? "");
+        if (!assignment) {
+          return null;
+        }
+
+        const userId = typeof row.userId === "string" ? row.userId : "";
+        const submittedAt =
+          typeof row.submittedAt === "string" && row.submittedAt.length > 0
+            ? row.submittedAt
+            : typeof row.$createdAt === "string"
+              ? row.$createdAt
+              : "";
+        const grade = Number(row.grade ?? 0);
+        const feedback = typeof row.feedback === "string" ? row.feedback : "";
+        const submittedTime = toDate(submittedAt)?.getTime() ?? Number.NaN;
+        const gradedAt =
+          grade > 0
+            ? typeof row.$updatedAt === "string" && row.$updatedAt.length > 0
+              ? row.$updatedAt
+              : submittedAt || null
+            : null;
+
+        return {
+          id: row.$id,
+          assignmentId: assignment.assignmentId,
+          assignmentTitle: assignment.assignmentTitle,
+          courseId: assignment.courseId,
+          courseTitle: courseTitleById.get(assignment.courseId) ?? "Course",
+          userId,
+          userName: userNameById.get(userId) ?? "Student",
+          fileId: typeof row.fileId === "string" ? row.fileId : "",
+          submittedAt,
+          grade,
+          feedback,
+          gradedAt,
+          needsFeedback: grade > 0 && feedback.trim().length === 0,
+          isOverdueReview:
+            grade <= 0 &&
+            Number.isFinite(submittedTime) &&
+            Date.now() - submittedTime > REVIEW_OVERDUE_MS,
+        } satisfies InstructorSubmissionQueueItem;
+      })
+      .filter((item): item is InstructorSubmissionQueueItem => item !== null)
+      .sort((left, right) => {
+        const leftTime = toDate(left.submittedAt)?.getTime() ?? 0;
+        const rightTime = toDate(right.submittedAt)?.getTime() ?? 0;
+        return rightTime - leftTime;
+      });
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor submission queue."
+    );
+
     return [];
   }
-
-  const courseTitleById = new Map(
-    coursesResult.rows.map((course) => [
-      course.$id,
-      typeof course.title === "string" ? course.title : "Course",
-    ])
-  );
-
-  const assignmentRows = await listRowsByFieldValues<AssignmentRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.assignments,
-    "courseId",
-    courseIds
-  );
-
-  const assignmentById = new Map(
-    assignmentRows.map((row) => [
-      row.$id,
-      {
-        assignmentId: row.$id,
-        assignmentTitle:
-          typeof row.title === "string" ? row.title : "Assignment",
-        courseId:
-          typeof row.courseId === "string" ? row.courseId : "",
-      },
-    ])
-  );
-
-  const assignmentIds = [...assignmentById.keys()];
-  if (assignmentIds.length === 0) {
-    return [];
-  }
-
-  const submissionRows = await listRowsByFieldValues<SubmissionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.submissions,
-    "assignmentId",
-    assignmentIds
-  );
-
-  const userIds = [
-    ...new Set(
-      submissionRows
-        .map((row) => (typeof row.userId === "string" ? row.userId.trim() : ""))
-        .filter(Boolean)
-    ),
-  ];
-
-  const userNameById = new Map<string, string>();
-  await Promise.all(
-    userIds.map(async (userId) => {
-      try {
-        const account = await users.get({ userId });
-        userNameById.set(userId, account.name || account.email || userId);
-      } catch {
-        userNameById.set(userId, "Student");
-      }
-    })
-  );
-
-  return submissionRows
-    .map((row) => {
-      const assignment = assignmentById.get(row.assignmentId ?? "");
-      if (!assignment) {
-        return null;
-      }
-
-      const userId = typeof row.userId === "string" ? row.userId : "";
-      const submittedAt =
-        typeof row.submittedAt === "string" && row.submittedAt.length > 0
-          ? row.submittedAt
-          : typeof row.$createdAt === "string"
-            ? row.$createdAt
-            : "";
-      const grade = Number(row.grade ?? 0);
-      const feedback = typeof row.feedback === "string" ? row.feedback : "";
-      const submittedTime = toDate(submittedAt)?.getTime() ?? Number.NaN;
-      const gradedAt =
-        grade > 0
-          ? typeof row.$updatedAt === "string" && row.$updatedAt.length > 0
-            ? row.$updatedAt
-            : submittedAt || null
-          : null;
-
-      return {
-        id: row.$id,
-        assignmentId: assignment.assignmentId,
-        assignmentTitle: assignment.assignmentTitle,
-        courseId: assignment.courseId,
-        courseTitle: courseTitleById.get(assignment.courseId) ?? "Course",
-        userId,
-        userName: userNameById.get(userId) ?? "Student",
-        fileId: typeof row.fileId === "string" ? row.fileId : "",
-        submittedAt,
-        grade,
-        feedback,
-        gradedAt,
-        needsFeedback: grade > 0 && feedback.trim().length === 0,
-        isOverdueReview:
-          grade <= 0 &&
-          Number.isFinite(submittedTime) &&
-          Date.now() - submittedTime > REVIEW_OVERDUE_MS,
-      } satisfies InstructorSubmissionQueueItem;
-    })
-    .filter((item): item is InstructorSubmissionQueueItem => item !== null)
-    .sort((left, right) => {
-      const leftTime = toDate(left.submittedAt)?.getTime() ?? 0;
-      const rightTime = toDate(right.submittedAt)?.getTime() ?? 0;
-      return rightTime - leftTime;
-    });
 }
 
 export async function getInstructorRevenueOverview(
   scope: InstructorScope
 ): Promise<InstructorRevenueOverview> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const coursesResult = await safeListRows<CourseRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.courses,
-    getInstructorQueries(scope)
-  );
+    const coursesResult = await safeListRows<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      getInstructorQueries(scope)
+    );
 
-  const courses = coursesResult.rows;
-  const courseIds = courses.map((course) => course.$id);
+    const courses = coursesResult.rows;
+    const courseIds = courses.map((course) => course.$id);
 
-  if (courseIds.length === 0) {
+    if (courseIds.length === 0) {
+      return {
+        totalEarnings: 0,
+        monthlyEarnings: 0,
+        totalEnrollments: 0,
+        paidCourseCount: 0,
+        publishedPaidCourses: 0,
+        courseEarnings: [],
+        recentPayments: [],
+        dormantPaidCourses: [],
+      };
+    }
+
+    const [paymentsByCourse, enrollmentsByCourse] = await Promise.all([
+      Promise.all(
+        courseIds.map(async (courseId) => {
+          const result = await safeListRows<PaymentRow>(
+            tablesDB,
+            APPWRITE_CONFIG.tables.payments,
+            [
+              Query.equal("courseId", [courseId]),
+              Query.equal("status", ["completed"]),
+              Query.limit(500),
+            ]
+          );
+
+          return [courseId, result.rows] as const;
+        })
+      ),
+      Promise.all(
+        courseIds.map(async (courseId) => {
+          const result = await safeListRows<EnrollmentRow>(
+            tablesDB,
+            APPWRITE_CONFIG.tables.enrollments,
+            [Query.equal("courseId", [courseId]), Query.limit(500)]
+          );
+
+          return [courseId, result.rows] as const;
+        })
+      ),
+    ]);
+
+    const paymentMap = new Map<string, PaymentRow[]>(paymentsByCourse);
+    const enrollmentMap = new Map<string, EnrollmentRow[]>(enrollmentsByCourse);
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    let totalEarnings = 0;
+    let monthlyEarnings = 0;
+    let totalEnrollments = 0;
+
+    const courseEarnings = courses
+      .map((course) => {
+        const payments = paymentMap.get(course.$id) ?? [];
+        const enrollments = enrollmentMap.get(course.$id) ?? [];
+        const totalRevenue = payments.reduce(
+          (sum, payment) => sum + Number(payment.amount ?? 0) / 100,
+          0
+        );
+        const monthlyRevenue = payments.reduce((sum, payment) => {
+          const paidAt = toDate(payment.createdAt ?? payment.$createdAt);
+          if (!paidAt || paidAt < monthStart) {
+            return sum;
+          }
+
+          return sum + Number(payment.amount ?? 0) / 100;
+        }, 0);
+        const lastPaymentAt =
+          [...payments]
+            .map((payment) =>
+              typeof payment.createdAt === "string" && payment.createdAt.length > 0
+                ? payment.createdAt
+                : typeof payment.$createdAt === "string"
+                  ? payment.$createdAt
+                  : null
+            )
+            .filter((value): value is string => Boolean(value))
+            .sort((left, right) => {
+              const leftTime = toDate(left)?.getTime() ?? 0;
+              const rightTime = toDate(right)?.getTime() ?? 0;
+              return rightTime - leftTime;
+            })[0] ?? null;
+
+        totalEarnings += totalRevenue;
+        monthlyEarnings += monthlyRevenue;
+        totalEnrollments += enrollments.length;
+
+        return {
+          id: course.$id,
+          title: typeof course.title === "string" ? course.title : "Untitled",
+          accessModel:
+            typeof course.accessModel === "string" ? course.accessModel : "free",
+          isPublished: Boolean(course.isPublished),
+          enrollments: enrollments.length,
+          totalRevenue,
+          monthlyRevenue,
+          lastPaymentAt,
+        } satisfies InstructorRevenueCourseItem;
+      })
+      .sort((left, right) => {
+        if (right.monthlyRevenue !== left.monthlyRevenue) {
+          return right.monthlyRevenue - left.monthlyRevenue;
+        }
+        if (right.totalRevenue !== left.totalRevenue) {
+          return right.totalRevenue - left.totalRevenue;
+        }
+        return right.enrollments - left.enrollments;
+      });
+
+    const recentPayments = [...paymentMap.entries()]
+      .flatMap(([courseId, payments]) =>
+        payments.map((payment) => ({
+          id: payment.$id,
+          courseId,
+          courseTitle:
+            courseEarnings.find((course) => course.id === courseId)?.title ?? "Course",
+          amount: Number(payment.amount ?? 0) / 100,
+          paidAt:
+            typeof payment.createdAt === "string" && payment.createdAt.length > 0
+              ? payment.createdAt
+              : typeof payment.$createdAt === "string"
+                ? payment.$createdAt
+                : null,
+        }))
+      )
+      .sort((left, right) => {
+        const leftTime = toDate(left.paidAt)?.getTime() ?? 0;
+        const rightTime = toDate(right.paidAt)?.getTime() ?? 0;
+        return rightTime - leftTime;
+      })
+      .slice(0, 6);
+
+    const dormantPaidCourses = courseEarnings.filter(
+      (course) =>
+        course.accessModel === "paid" &&
+        course.isPublished &&
+        course.monthlyRevenue <= 0
+    );
+
+    return {
+      totalEarnings,
+      monthlyEarnings,
+      totalEnrollments,
+      paidCourseCount: courseEarnings.filter((course) => course.accessModel === "paid")
+        .length,
+      publishedPaidCourses: courseEarnings.filter(
+        (course) => course.accessModel === "paid" && course.isPublished
+      ).length,
+      courseEarnings,
+      recentPayments,
+      dormantPaidCourses,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor revenue overview."
+    );
+
     return {
       totalEarnings: 0,
       monthlyEarnings: 0,
@@ -1137,147 +1317,6 @@ export async function getInstructorRevenueOverview(
       dormantPaidCourses: [],
     };
   }
-
-  const [paymentsByCourse, enrollmentsByCourse] = await Promise.all([
-    Promise.all(
-      courseIds.map(async (courseId) => {
-        const result = await safeListRows<PaymentRow>(
-          tablesDB,
-          APPWRITE_CONFIG.tables.payments,
-          [
-            Query.equal("courseId", [courseId]),
-            Query.equal("status", ["completed"]),
-            Query.limit(500),
-          ]
-        );
-
-        return [courseId, result.rows] as const;
-      })
-    ),
-    Promise.all(
-      courseIds.map(async (courseId) => {
-        const result = await safeListRows<EnrollmentRow>(
-          tablesDB,
-          APPWRITE_CONFIG.tables.enrollments,
-          [Query.equal("courseId", [courseId]), Query.limit(500)]
-        );
-
-        return [courseId, result.rows] as const;
-      })
-    ),
-  ]);
-
-  const paymentMap = new Map<string, PaymentRow[]>(paymentsByCourse);
-  const enrollmentMap = new Map<string, EnrollmentRow[]>(enrollmentsByCourse);
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-
-  let totalEarnings = 0;
-  let monthlyEarnings = 0;
-  let totalEnrollments = 0;
-
-  const courseEarnings = courses
-    .map((course) => {
-      const payments = paymentMap.get(course.$id) ?? [];
-      const enrollments = enrollmentMap.get(course.$id) ?? [];
-      const totalRevenue = payments.reduce(
-        (sum, payment) => sum + Number(payment.amount ?? 0) / 100,
-        0
-      );
-      const monthlyRevenue = payments.reduce((sum, payment) => {
-        const paidAt = toDate(payment.createdAt ?? payment.$createdAt);
-        if (!paidAt || paidAt < monthStart) {
-          return sum;
-        }
-
-        return sum + Number(payment.amount ?? 0) / 100;
-      }, 0);
-      const lastPaymentAt =
-        [...payments]
-          .map((payment) =>
-            typeof payment.createdAt === "string" && payment.createdAt.length > 0
-              ? payment.createdAt
-              : typeof payment.$createdAt === "string"
-                ? payment.$createdAt
-                : null
-          )
-          .filter((value): value is string => Boolean(value))
-          .sort((left, right) => {
-            const leftTime = toDate(left)?.getTime() ?? 0;
-            const rightTime = toDate(right)?.getTime() ?? 0;
-            return rightTime - leftTime;
-          })[0] ?? null;
-
-      totalEarnings += totalRevenue;
-      monthlyEarnings += monthlyRevenue;
-      totalEnrollments += enrollments.length;
-
-      return {
-        id: course.$id,
-        title: typeof course.title === "string" ? course.title : "Untitled",
-        accessModel:
-          typeof course.accessModel === "string" ? course.accessModel : "free",
-        isPublished: Boolean(course.isPublished),
-        enrollments: enrollments.length,
-        totalRevenue,
-        monthlyRevenue,
-        lastPaymentAt,
-      } satisfies InstructorRevenueCourseItem;
-    })
-    .sort((left, right) => {
-      if (right.monthlyRevenue !== left.monthlyRevenue) {
-        return right.monthlyRevenue - left.monthlyRevenue;
-      }
-      if (right.totalRevenue !== left.totalRevenue) {
-        return right.totalRevenue - left.totalRevenue;
-      }
-      return right.enrollments - left.enrollments;
-    });
-
-  const recentPayments = [...paymentMap.entries()]
-    .flatMap(([courseId, payments]) =>
-      payments.map((payment) => ({
-        id: payment.$id,
-        courseId,
-        courseTitle:
-          courseEarnings.find((course) => course.id === courseId)?.title ?? "Course",
-        amount: Number(payment.amount ?? 0) / 100,
-        paidAt:
-          typeof payment.createdAt === "string" && payment.createdAt.length > 0
-            ? payment.createdAt
-            : typeof payment.$createdAt === "string"
-              ? payment.$createdAt
-              : null,
-      }))
-    )
-    .sort((left, right) => {
-      const leftTime = toDate(left.paidAt)?.getTime() ?? 0;
-      const rightTime = toDate(right.paidAt)?.getTime() ?? 0;
-      return rightTime - leftTime;
-    })
-    .slice(0, 6);
-
-  const dormantPaidCourses = courseEarnings.filter(
-    (course) =>
-      course.accessModel === "paid" &&
-      course.isPublished &&
-      course.monthlyRevenue <= 0
-  );
-
-  return {
-    totalEarnings,
-    monthlyEarnings,
-    totalEnrollments,
-    paidCourseCount: courseEarnings.filter((course) => course.accessModel === "paid")
-      .length,
-    publishedPaidCourses: courseEarnings.filter(
-      (course) => course.accessModel === "paid" && course.isPublished
-    ).length,
-    courseEarnings,
-    recentPayments,
-    dormantPaidCourses,
-  };
 }
 
 export async function getInstructorLiveSessions(
@@ -1345,135 +1384,155 @@ export async function getInstructorCourseSummary(
   scope: InstructorScope,
   identifier: string
 ): Promise<InstructorCourseSummary | null> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const byId = await safeGetRow<CourseRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.courses,
-    identifier
-  );
-
-  const isAllowedById =
-    byId &&
-    (scope.role === "admin" || byId.instructorId === scope.userId);
-
-  let course = isAllowedById ? byId : null;
-
-  if (!course) {
-    const slugQueries: string[] = [Query.equal("slug", [identifier]), Query.limit(1)];
-    if (scope.role !== "admin") {
-      slugQueries.push(Query.equal("instructorId", [scope.userId]));
-    }
-
-    const bySlug = await safeListRows<CourseRow>(
+    const byId = await safeGetRow<CourseRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.courses,
-      slugQueries
+      identifier
     );
 
-    course = bySlug.rows[0] ?? null;
-  }
+    const isAllowedById =
+      byId &&
+      (scope.role === "admin" || byId.instructorId === scope.userId);
 
-  if (!course) {
+    let course = isAllowedById ? byId : null;
+
+    if (!course) {
+      const slugQueries: string[] = [Query.equal("slug", [identifier]), Query.limit(1)];
+      if (scope.role !== "admin") {
+        slugQueries.push(Query.equal("instructorId", [scope.userId]));
+      }
+
+      const bySlug = await safeListRows<CourseRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.courses,
+        slugQueries
+      );
+
+      course = bySlug.rows[0] ?? null;
+    }
+
+    if (!course) {
+      return null;
+    }
+
+    const [modulesResult, lessonsResult, enrollmentsResult] = await Promise.all([
+      safeListRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
+        Query.equal("courseId", [course.$id]),
+        Query.limit(200),
+      ]),
+      safeListRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+        Query.equal("courseId", [course.$id]),
+        Query.limit(1000),
+      ]),
+      safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+        Query.equal("courseId", [course.$id]),
+        Query.limit(500),
+      ]),
+    ]);
+
+    const health = buildInstructorCourseHealth({
+      course,
+      modules: modulesResult.rows,
+      lessons: lessonsResult.rows,
+      activeEnrollments: enrollmentsResult.rows.filter(
+        (enrollment) => enrollment.isActive !== false
+      ).length,
+    });
+
+    return {
+      id: course.$id,
+      title: typeof course.title === "string" ? course.title : "Untitled course",
+      slug: typeof course.slug === "string" ? course.slug : course.$id,
+      shortDescription:
+        typeof course.shortDescription === "string" ? course.shortDescription : "",
+      accessModel:
+        typeof course.accessModel === "string" ? course.accessModel : "free",
+      isPublished: Boolean(course.isPublished),
+      price: Number(course.price ?? 0),
+      totalLessons: health.totalLessons,
+      totalDuration: health.totalDuration,
+      thumbnailId: health.thumbnailId,
+      moduleCount: health.moduleCount,
+      activeEnrollments: health.activeEnrollments,
+      hasThumbnail: health.hasThumbnail,
+      previewLessonCount: health.previewLessonCount,
+      lessonVideoCount: health.lessonVideoCount,
+      missingVideoCount: health.missingVideoCount,
+      publishBlockers: health.publishBlockers,
+      attentionFlags: health.attentionFlags,
+      readyToPublish: health.readyToPublish,
+      needsAttention: health.needsAttention,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor course summary."
+    );
+
     return null;
   }
-
-  const [modulesResult, lessonsResult, enrollmentsResult] = await Promise.all([
-    safeListRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
-      Query.equal("courseId", [course.$id]),
-      Query.limit(200),
-    ]),
-    safeListRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
-      Query.equal("courseId", [course.$id]),
-      Query.limit(1000),
-    ]),
-    safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
-      Query.equal("courseId", [course.$id]),
-      Query.limit(500),
-    ]),
-  ]);
-
-  const health = buildInstructorCourseHealth({
-    course,
-    modules: modulesResult.rows,
-    lessons: lessonsResult.rows,
-    activeEnrollments: enrollmentsResult.rows.filter(
-      (enrollment) => enrollment.isActive !== false
-    ).length,
-  });
-
-  return {
-    id: course.$id,
-    title: typeof course.title === "string" ? course.title : "Untitled course",
-    slug: typeof course.slug === "string" ? course.slug : course.$id,
-    shortDescription:
-      typeof course.shortDescription === "string" ? course.shortDescription : "",
-    accessModel:
-      typeof course.accessModel === "string" ? course.accessModel : "free",
-    isPublished: Boolean(course.isPublished),
-    price: Number(course.price ?? 0),
-    totalLessons: health.totalLessons,
-    totalDuration: health.totalDuration,
-    thumbnailId: health.thumbnailId,
-    moduleCount: health.moduleCount,
-    activeEnrollments: health.activeEnrollments,
-    hasThumbnail: health.hasThumbnail,
-    previewLessonCount: health.previewLessonCount,
-    lessonVideoCount: health.lessonVideoCount,
-    missingVideoCount: health.missingVideoCount,
-    publishBlockers: health.publishBlockers,
-    attentionFlags: health.attentionFlags,
-    readyToPublish: health.readyToPublish,
-    needsAttention: health.needsAttention,
-  };
 }
 
 export async function getInstructorCurriculum(
   courseId: string
 ): Promise<InstructorCurriculumModule[]> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const modulesResult = await safeListRows<ModuleRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.modules,
-    [Query.equal("courseId", [courseId]), Query.orderAsc("order"), Query.limit(200)]
-  );
+    const modulesResult = await safeListRows<ModuleRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.modules,
+      [Query.equal("courseId", [courseId]), Query.orderAsc("order"), Query.limit(200)]
+    );
 
-  const lessonsByModule = new Map<string, LessonRow[]>();
-  const lessonsResult = await safeListRows<LessonRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.lessons,
-    [Query.equal("courseId", [courseId]), Query.orderAsc("order"), Query.limit(1000)]
-  );
+    const lessonsByModule = new Map<string, LessonRow[]>();
+    const lessonsResult = await safeListRows<LessonRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.lessons,
+      [Query.equal("courseId", [courseId]), Query.orderAsc("order"), Query.limit(1000)]
+    );
 
-  for (const lesson of lessonsResult.rows) {
-    if (typeof lesson.moduleId !== "string") {
-      continue;
+    for (const lesson of lessonsResult.rows) {
+      if (typeof lesson.moduleId !== "string") {
+        continue;
+      }
+
+      const current = lessonsByModule.get(lesson.moduleId) ?? [];
+      current.push(lesson);
+      lessonsByModule.set(lesson.moduleId, current);
     }
 
-    const current = lessonsByModule.get(lesson.moduleId) ?? [];
-    current.push(lesson);
-    lessonsByModule.set(lesson.moduleId, current);
-  }
-
-  return modulesResult.rows.map((module) => ({
-    id: module.$id,
-    title: typeof module.title === "string" ? module.title : "Untitled module",
-    description:
-      typeof module.description === "string" ? module.description : "",
-    order: Number(module.order ?? 0),
-    lessons: (lessonsByModule.get(module.$id) ?? []).map((lesson) => ({
-      id: lesson.$id,
-      title: typeof lesson.title === "string" ? lesson.title : "Untitled lesson",
+    return modulesResult.rows.map((module) => ({
+      id: module.$id,
+      title: typeof module.title === "string" ? module.title : "Untitled module",
       description:
-        typeof lesson.description === "string" ? lesson.description : "",
-      order: Number(lesson.order ?? 0),
-      duration: Number(lesson.duration ?? 0),
-      isFree: Boolean(lesson.isFree),
-      isFreePreview: Boolean(lesson.isFreePreview),
-      videoFileId: typeof lesson.videoFileId === "string" ? lesson.videoFileId : "",
-    })),
-  }));
+        typeof module.description === "string" ? module.description : "",
+      order: Number(module.order ?? 0),
+      lessons: (lessonsByModule.get(module.$id) ?? []).map((lesson) => ({
+        id: lesson.$id,
+        title: typeof lesson.title === "string" ? lesson.title : "Untitled lesson",
+        description:
+          typeof lesson.description === "string" ? lesson.description : "",
+        order: Number(lesson.order ?? 0),
+        duration: Number(lesson.duration ?? 0),
+        isFree: Boolean(lesson.isFree),
+        isFreePreview: Boolean(lesson.isFreePreview),
+        videoFileId: typeof lesson.videoFileId === "string" ? lesson.videoFileId : "",
+      })),
+    }));
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load instructor curriculum."
+    );
+
+    return [];
+  }
 }
 
 export async function getModeratorDashboardStats(): Promise<ModeratorDashboardStats> {
@@ -1799,22 +1858,30 @@ export async function getAdminCourses(): Promise<AdminCourseItem[]> {
 }
 
 export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const categoriesResult = await safeListRows<AnyRow & Partial<Category>>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.categories,
-    [Query.orderAsc("order"), Query.limit(100)]
-  );
+    const categoriesResult = await safeListRows<AnyRow & Partial<Category>>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.categories,
+      [Query.orderAsc("order"), Query.limit(100)]
+    );
 
-  return categoriesResult.rows.map((category) => ({
-    id: category.$id,
-    name: typeof category.name === "string" ? category.name : "Unnamed",
-    slug: typeof category.slug === "string" ? category.slug : "",
-    description:
-      typeof category.description === "string" ? category.description : "",
-    order: Number(category.order ?? 0),
-  }));
+    return categoriesResult.rows.map((category) => ({
+      id: category.$id,
+      name: typeof category.name === "string" ? category.name : "Unnamed",
+      slug: typeof category.slug === "string" ? category.slug : "",
+      description:
+        typeof category.description === "string" ? category.description : "",
+      order: Number(category.order ?? 0),
+    }));
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to load admin categories."
+    );
+
+    return [];
+  }
 }
 
 export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
