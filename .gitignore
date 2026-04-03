@@ -13,9 +13,7 @@
 # testing
 /coverage
 .kiro
-.idea
-.claude
-.agents
+
 
 # next.js
 /.next/
@@ -24,9 +22,27 @@
 # production
 /build
 
+
 # misc
+.idea
+.vscode
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+.env.production
+.agents
+.agents/agent
+.agents/skills
+.claude
+.agents\skills
 .DS_Store
 *.pem
+
+
 
 # debug
 npm-debug.log*

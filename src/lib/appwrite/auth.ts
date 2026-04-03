@@ -26,7 +26,23 @@ export interface AppwriteUser {
 export async function getLoggedInUser(): Promise<AppwriteUser | null> {
   try {
     const { account } = await createSessionClient();
-    return (await account.get()) as unknown as AppwriteUser;
+    const sessionUser = (await account.get()) as unknown as AppwriteUser;
+
+    try {
+      const { users } = await createAdminClient();
+      const adminUser = await users.get({ userId: sessionUser.$id });
+
+      return {
+        ...sessionUser,
+        labels: Array.isArray(adminUser.labels) ? adminUser.labels : sessionUser.labels,
+        status:
+          typeof adminUser.status === "boolean" ? adminUser.status : sessionUser.status,
+        name: adminUser.name || sessionUser.name,
+        email: adminUser.email || sessionUser.email,
+      };
+    } catch {
+      return sessionUser;
+    }
   } catch {
     return null;
   }

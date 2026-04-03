@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find C:UsersGauravDesktopAmarBhaiya.in -not -path */node_modules/* -type f \\\\\\(-name *.prisma -o -name *.schema.* -o -name *schema* -o -name *model* -o -name *type* -o -name *interface* \\\\\\))",
-      "Bash(ls -la /c/Users/Gaurav/Desktop/AmarBhaiya.in/*.md)",
-      "Bash(sed 's/.*\\\\.//')"
-    ]
-  }
-}
