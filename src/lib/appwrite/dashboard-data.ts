@@ -892,6 +892,175 @@ export async function getInstructorSubmissionQueue(
     });
 }
 
+export async function getInstructorRevenueOverview(
+  scope: InstructorScope
+): Promise<InstructorRevenueOverview> {
+  const { tablesDB } = await createAdminClient();
+
+  const coursesResult = await safeListRows<CourseRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.courses,
+    getInstructorQueries(scope)
+  );
+
+  const courses = coursesResult.rows;
+  const courseIds = courses.map((course) => course.$id);
+
+  if (courseIds.length === 0) {
+    return {
+      totalEarnings: 0,
+      monthlyEarnings: 0,
+      totalEnrollments: 0,
+      paidCourseCount: 0,
+      publishedPaidCourses: 0,
+      courseEarnings: [],
+      recentPayments: [],
+      dormantPaidCourses: [],
+    };
+  }
+
+  const [paymentsByCourse, enrollmentsByCourse] = await Promise.all([
+    Promise.all(
+      courseIds.map(async (courseId) => {
+        const result = await safeListRows<PaymentRow>(
+          tablesDB,
+          APPWRITE_CONFIG.tables.payments,
+          [
+            Query.equal("courseId", [courseId]),
+            Query.equal("status", ["completed"]),
+            Query.limit(500),
+          ]
+        );
+
+        return [courseId, result.rows] as const;
+      })
+    ),
+    Promise.all(
+      courseIds.map(async (courseId) => {
+        const result = await safeListRows<EnrollmentRow>(
+          tablesDB,
+          APPWRITE_CONFIG.tables.enrollments,
+          [Query.equal("courseId", [courseId]), Query.limit(500)]
+        );
+
+        return [courseId, result.rows] as const;
+      })
+    ),
+  ]);
+
+  const paymentMap = new Map<string, PaymentRow[]>(paymentsByCourse);
+  const enrollmentMap = new Map<string, EnrollmentRow[]>(enrollmentsByCourse);
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  let totalEarnings = 0;
+  let monthlyEarnings = 0;
+  let totalEnrollments = 0;
+
+  const courseEarnings = courses
+    .map((course) => {
+      const payments = paymentMap.get(course.$id) ?? [];
+      const enrollments = enrollmentMap.get(course.$id) ?? [];
+      const totalRevenue = payments.reduce(
+        (sum, payment) => sum + Number(payment.amount ?? 0) / 100,
+        0
+      );
+      const monthlyRevenue = payments.reduce((sum, payment) => {
+        const paidAt = toDate(payment.createdAt ?? payment.$createdAt);
+        if (!paidAt || paidAt < monthStart) {
+          return sum;
+        }
+
+        return sum + Number(payment.amount ?? 0) / 100;
+      }, 0);
+      const lastPaymentAt =
+        [...payments]
+          .map((payment) =>
+            typeof payment.createdAt === "string" && payment.createdAt.length > 0
+              ? payment.createdAt
+              : typeof payment.$createdAt === "string"
+                ? payment.$createdAt
+                : null
+          )
+          .filter((value): value is string => Boolean(value))
+          .sort((left, right) => {
+            const leftTime = toDate(left)?.getTime() ?? 0;
+            const rightTime = toDate(right)?.getTime() ?? 0;
+            return rightTime - leftTime;
+          })[0] ?? null;
+
+      totalEarnings += totalRevenue;
+      monthlyEarnings += monthlyRevenue;
+      totalEnrollments += enrollments.length;
+
+      return {
+        id: course.$id,
+        title: typeof course.title === "string" ? course.title : "Untitled",
+        accessModel:
+          typeof course.accessModel === "string" ? course.accessModel : "free",
+        isPublished: Boolean(course.isPublished),
+        enrollments: enrollments.length,
+        totalRevenue,
+        monthlyRevenue,
+        lastPaymentAt,
+      } satisfies InstructorRevenueCourseItem;
+    })
+    .sort((left, right) => {
+      if (right.monthlyRevenue !== left.monthlyRevenue) {
+        return right.monthlyRevenue - left.monthlyRevenue;
+      }
+      if (right.totalRevenue !== left.totalRevenue) {
+        return right.totalRevenue - left.totalRevenue;
+      }
+      return right.enrollments - left.enrollments;
+    });
+
+  const recentPayments = [...paymentMap.entries()]
+    .flatMap(([courseId, payments]) =>
+      payments.map((payment) => ({
+        id: payment.$id,
+        courseId,
+        courseTitle:
+          courseEarnings.find((course) => course.id === courseId)?.title ?? "Course",
+        amount: Number(payment.amount ?? 0) / 100,
+        paidAt:
+          typeof payment.createdAt === "string" && payment.createdAt.length > 0
+            ? payment.createdAt
+            : typeof payment.$createdAt === "string"
+              ? payment.$createdAt
+              : null,
+      }))
+    )
+    .sort((left, right) => {
+      const leftTime = toDate(left.paidAt)?.getTime() ?? 0;
+      const rightTime = toDate(right.paidAt)?.getTime() ?? 0;
+      return rightTime - leftTime;
+    })
+    .slice(0, 6);
+
+  const dormantPaidCourses = courseEarnings.filter(
+    (course) =>
+      course.accessModel === "paid" &&
+      course.isPublished &&
+      course.monthlyRevenue <= 0
+  );
+
+  return {
+    totalEarnings,
+    monthlyEarnings,
+    totalEnrollments,
+    paidCourseCount: courseEarnings.filter((course) => course.accessModel === "paid")
+      .length,
+    publishedPaidCourses: courseEarnings.filter(
+      (course) => course.accessModel === "paid" && course.isPublished
+    ).length,
+    courseEarnings,
+    recentPayments,
+    dormantPaidCourses,
+  };
+}
+
 export async function getInstructorLiveSessions(
   scope: InstructorScope
 ): Promise<InstructorLiveSessionItem[]> {
