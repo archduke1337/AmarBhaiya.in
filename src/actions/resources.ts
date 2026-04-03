@@ -24,11 +24,37 @@ const createResourceSchema = z.object({
   isPublished: z.boolean().default(false),
 });
 
-const createCourseResourceSchema = z.object({
-  lessonId: z.string().trim().min(1, "Lesson is required."),
+const courseResourceFieldsSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters.").max(200),
   type: z.enum(["pdf", "link", "file"]).default("file"),
   url: z.string().trim().optional(),
+}).superRefine((data, ctx) => {
+  if (data.type !== "link") {
+    return;
+  }
+
+  if (!data.url) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["url"],
+      message: "Link resources require a URL.",
+    });
+    return;
+  }
+
+  try {
+    new URL(data.url);
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["url"],
+      message: "Enter a valid URL.",
+    });
+  }
+});
+
+const createCourseResourceSchema = courseResourceFieldsSchema.extend({
+  lessonId: z.string().trim().min(1, "Lesson is required."),
 });
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -218,22 +244,19 @@ export async function updateCourseResourceAction(
   const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
   if (!resourceContext) return;
 
-  const data: Record<string, unknown> = {};
-  const title = String(formData.get("title") ?? "").trim();
-  if (title.length >= 3) {
-    data.title = title;
-  }
+  const parsed = courseResourceFieldsSchema.safeParse({
+    title: String(formData.get("title") ?? ""),
+    type: String(formData.get("type") ?? "file"),
+    url: String(formData.get("url") ?? "").trim() || undefined,
+  });
 
-  const type = String(formData.get("type") ?? "").trim();
-  if (type === "pdf" || type === "link" || type === "file") {
-    data.type = type;
-    data.url =
-      type === "link"
-        ? String(formData.get("url") ?? "").trim()
-        : "";
-  }
+  if (!parsed.success) return;
 
-  if (Object.keys(data).length === 0) return;
+  const data = {
+    title: parsed.data.title,
+    type: parsed.data.type,
+    url: parsed.data.type === "link" ? parsed.data.url ?? "" : "",
+  };
 
   try {
     const { tablesDB } = await createAdminClient();
