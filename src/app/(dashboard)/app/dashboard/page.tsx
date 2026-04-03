@@ -52,6 +52,11 @@ export default async function StudentDashboardPage() {
   const completedCourses = enrolledCourses.filter(
     (c) => c.progressPercent >= 100
   );
+  const learningNotifications = notifications.filter(
+    (notification) =>
+      notification.type === "assignment_feedback" ||
+      notification.type === "quiz_result"
+  );
 
   const greeting = getGreeting();
 
@@ -263,6 +268,24 @@ export default async function StudentDashboardPage() {
               unreadCount
             )}
           />
+
+          {learningNotifications.length > 0 && (
+            <ActivityFeed
+              title="Feedback & Results"
+              viewAllHref="/app/notifications"
+              items={learningNotifications.slice(0, 4).map((notification) => ({
+                id: notification.id,
+                label: notification.title,
+                description: notification.body || notification.type,
+                badge:
+                  notification.type === "assignment_feedback" ? "Grade" : "Quiz",
+                timestamp: notification.createdAt
+                  ? formatRelativeTime(notification.createdAt)
+                  : undefined,
+                href: notification.link || `/app/notifications#notification-${notification.id}`,
+              }))}
+            />
+          )}
 
           {/* Upcoming Live Sessions */}
           <ActivityFeed

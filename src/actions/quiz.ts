@@ -8,6 +8,7 @@ import {
   userCanManageCourse,
   userHasCourseAccess,
 } from "@/lib/appwrite/access";
+import { createNotificationEntry } from "@/actions/notifications";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
@@ -310,7 +311,26 @@ export async function submitQuizAttemptAction(
       },
     });
 
+    try {
+      await createNotificationEntry({
+        userId: user.$id,
+        type: "quiz_result",
+        title: passed
+          ? `You passed ${String(quiz.title ?? "your quiz")}`
+          : `Retry ${String(quiz.title ?? "your quiz")}`,
+        body: passed
+          ? `Score ${score}% · Pass mark ${passMark}%`
+          : `Score ${score}% · Pass mark ${passMark}% · Review the quiz and try again.`,
+        link: `/app/quiz/${quizId}`,
+      });
+    } catch {
+      // Keep the saved attempt even if notification delivery fails.
+    }
+
     revalidatePath("/app");
+    revalidatePath("/app/dashboard");
+    revalidatePath("/app/notifications");
+    revalidatePath("/app/quizzes");
     revalidatePath(`/app/quiz/${quizId}`);
   } catch (error) {
     console.error(

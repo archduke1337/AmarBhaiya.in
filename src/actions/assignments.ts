@@ -8,6 +8,7 @@ import {
   userCanManageCourse,
   userHasCourseAccess,
 } from "@/lib/appwrite/access";
+import { createNotificationEntry } from "@/actions/notifications";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
@@ -381,8 +382,28 @@ export async function gradeSubmissionAction(
       data: { grade, feedback },
     });
 
+    const assignmentTitle =
+      typeof assignment.title === "string" ? assignment.title : "assignment";
+    const scoreSummary = `You received ${grade}/100.`;
+    const feedbackSummary = feedback ? ` Feedback: ${feedback}` : "";
+
+    try {
+      await createNotificationEntry({
+        userId: String(submission.userId ?? ""),
+        type: "assignment_feedback",
+        title: `Assignment graded: ${assignmentTitle}`,
+        body: `${scoreSummary}${feedbackSummary}`.trim(),
+        link: `/app/assignments#assignment-${assignment.$id}`,
+      });
+    } catch {
+      // Keep grading successful even if notification delivery fails.
+    }
+
     revalidatePath("/instructor");
     revalidatePath("/instructor/submissions");
+    revalidatePath("/app/assignments");
+    revalidatePath("/app/notifications");
+    revalidatePath("/app/dashboard");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to grade submission."

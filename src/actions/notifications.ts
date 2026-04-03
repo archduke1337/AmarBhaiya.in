@@ -22,6 +22,15 @@ export type Notification = {
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
+type CreateNotificationInput = {
+  userId: string;
+  type: string;
+  title: string;
+  body?: string;
+  link?: string;
+  createdAt?: string;
+};
+
 async function processInBatches<T>(
   entries: T[],
   batchSize: number,
@@ -31,6 +40,34 @@ async function processInBatches<T>(
     const batch = entries.slice(index, index + batchSize);
     await Promise.allSettled(batch.map((entry) => worker(entry)));
   }
+}
+
+export async function createNotificationEntry(
+  input: CreateNotificationInput
+): Promise<void> {
+  const userId = input.userId.trim();
+  const title = input.title.trim();
+
+  if (!userId || !title) {
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.createRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.notifications,
+    rowId: ID.unique(),
+    data: {
+      userId,
+      type: input.type.trim() || "info",
+      title,
+      body: input.body?.trim() || "",
+      link: input.link?.trim() || "",
+      isRead: false,
+      createdAt: input.createdAt || new Date().toISOString(),
+    },
+  });
 }
 
 // ── Get User Notifications ──────────────────────────────────────────────────
@@ -176,21 +213,12 @@ export async function sendNotificationAction(
   if (!userId || !title) return;
 
   try {
-    const { tablesDB } = await createAdminClient();
-
-    await tablesDB.createRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.notifications,
-      rowId: ID.unique(),
-      data: {
-        userId,
-        type,
-        title,
-        body,
-        link,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      },
+    await createNotificationEntry({
+      userId,
+      type,
+      title,
+      body,
+      link,
     });
   } catch (error) {
     console.error(
@@ -214,26 +242,20 @@ export async function broadcastNotificationAction(
   if (!title) return;
 
   try {
-    const { tablesDB, users } = await createAdminClient();
+    const { users } = await createAdminClient();
 
     // Get all users
     const allUsers = await users.list({ queries: [Query.limit(500)] });
     const createdAt = new Date().toISOString();
 
     await processInBatches(allUsers.users, 50, async (user) => {
-      await tablesDB.createRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.notifications,
-        rowId: ID.unique(),
-        data: {
-          userId: user.$id,
-          type,
-          title,
-          body,
-          link,
-          isRead: false,
-          createdAt,
-        },
+      await createNotificationEntry({
+        userId: user.$id,
+        type,
+        title,
+        body,
+        link,
+        createdAt,
       });
     });
 
