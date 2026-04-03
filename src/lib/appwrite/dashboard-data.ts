@@ -51,6 +51,14 @@ type QuizAttemptRow = AnyRow & Partial<QuizAttempt>;
 type AssignmentRow = AnyRow & Partial<Assignment>;
 type SubmissionRow = AnyRow & Partial<Submission>;
 
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === "string");
+}
+
 const REVIEW_OVERDUE_MS = 1000 * 60 * 60 * 24 * 3;
 const RECENT_ENROLLMENT_MS = 1000 * 60 * 60 * 24 * 14;
 const STUDENT_ATTENTION_MS = 1000 * 60 * 60 * 24 * 7;
@@ -287,6 +295,8 @@ export type InstructorCourseSummary = {
   title: string;
   slug: string;
   shortDescription: string;
+  whatYouLearn: string[];
+  requirements: string[];
   accessModel: string;
   isPublished: boolean;
   price: number;
@@ -1448,6 +1458,8 @@ export async function getInstructorCourseSummary(
       slug: typeof course.slug === "string" ? course.slug : course.$id,
       shortDescription:
         typeof course.shortDescription === "string" ? course.shortDescription : "",
+      whatYouLearn: toStringArray(course.whatYouLearn),
+      requirements: toStringArray(course.requirements),
       accessModel:
         typeof course.accessModel === "string" ? course.accessModel : "free",
       isPublished: Boolean(course.isPublished),

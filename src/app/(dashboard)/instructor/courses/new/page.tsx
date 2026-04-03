@@ -61,6 +61,22 @@ export default async function InstructorNewCoursePage() {
             minLength={12}
           />
         </label>
+        <label className="space-y-2 block text-sm">
+          <span className="text-muted-foreground">What students will learn</span>
+          <textarea
+            name="whatYouLearn"
+            className="w-full min-h-28 border border-border bg-background px-3 py-2"
+            placeholder={"One outcome per line\nMaster real numbers\nBuild strong algebra fundamentals"}
+          />
+        </label>
+        <label className="space-y-2 block text-sm">
+          <span className="text-muted-foreground">Requirements</span>
+          <textarea
+            name="requirements"
+            className="w-full min-h-28 border border-border bg-background px-3 py-2"
+            placeholder={"One requirement per line\nBasic Class 9 maths\nNotebook for practice"}
+          />
+        </label>
         <button type="submit" className="h-10 px-4 bg-foreground text-background text-sm">Save draft</button>
       </form>
     </div>

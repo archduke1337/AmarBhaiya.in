@@ -9,6 +9,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import type { Role } from "@/lib/utils/constants";
 import { slugify } from "@/lib/utils/format";
+import { parseLineSeparatedList } from "@/lib/utils/form-lists";
 
 const roleEnum = z.enum(["admin", "instructor", "moderator", "student"]);
 
@@ -45,6 +46,8 @@ const updateInstructorCourseSchema = z.object({
   accessModel: z.enum(["free", "paid", "subscription"]),
   price: z.number().int().min(0),
   isPublished: z.boolean(),
+  requirements: z.array(z.string().trim().min(1)).default([]),
+  whatYouLearn: z.array(z.string().trim().min(1)).default([]),
 });
 
 const createModuleSchema = z.object({
@@ -341,6 +344,8 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
     accessModel: String(formData.get("accessModel") ?? "free"),
     price: parseInteger(formData.get("price"), 0),
     isPublished: parseBoolean(formData.get("isPublished"), false),
+    requirements: parseLineSeparatedList(formData.get("requirements")),
+    whatYouLearn: parseLineSeparatedList(formData.get("whatYouLearn")),
   });
 
   if (!parsed.success) {
@@ -365,6 +370,8 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
       accessModel: parsed.data.accessModel,
       price: parsed.data.accessModel === "free" ? 0 : parsed.data.price,
       isPublished: parsed.data.isPublished,
+      requirements: parsed.data.requirements,
+      whatYouLearn: parsed.data.whatYouLearn,
     },
   });
 

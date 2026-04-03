@@ -11,6 +11,7 @@ import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { slugify } from "@/lib/utils/format";
+import { parseLineSeparatedList } from "@/lib/utils/form-lists";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
 
 const createForumThreadSchema = z.object({
@@ -27,6 +28,8 @@ const createCourseSchema = z.object({
     .trim()
     .min(12, "Short description must be at least 12 characters."),
   accessModel: z.enum(["free", "paid", "subscription"]).default("free"),
+  requirements: z.array(z.string().trim().min(1)).default([]),
+  whatYouLearn: z.array(z.string().trim().min(1)).default([]),
 });
 
 const createLiveSessionSchema = z.object({
@@ -135,6 +138,8 @@ export async function createCourseDraftAction(
         | "free"
         | "paid"
         | "subscription",
+    requirements: parseLineSeparatedList(formData.get("requirements")),
+    whatYouLearn: parseLineSeparatedList(formData.get("whatYouLearn")),
   };
 
   const parsed = createCourseSchema.safeParse(payload);
@@ -176,8 +181,8 @@ export async function createCourseDraftAction(
             rating: 0,
             ratingCount: 0,
             tags: [],
-            requirements: [],
-            whatYouLearn: [],
+            requirements: parsed.data.requirements,
+            whatYouLearn: parsed.data.whatYouLearn,
           },
         });
 

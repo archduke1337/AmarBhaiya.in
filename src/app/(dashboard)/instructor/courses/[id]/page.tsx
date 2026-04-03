@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorCourseSummary } from "@/lib/appwrite/dashboard-data";
 import { formatCurrency, formatDuration } from "@/lib/utils/format";
+import { formatLineSeparatedList } from "@/lib/utils/form-lists";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -157,6 +158,28 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
               minLength={12}
               rows={4}
               defaultValue={course.shortDescription}
+              className="w-full border border-border bg-background px-3 py-2"
+            />
+          </label>
+
+          <label className="space-y-1 text-sm">
+            <span>What students will learn</span>
+            <textarea
+              name="whatYouLearn"
+              rows={5}
+              defaultValue={formatLineSeparatedList(course.whatYouLearn)}
+              placeholder={"One learning outcome per line\nUnderstand core concepts\nSolve exam-style problems faster"}
+              className="w-full border border-border bg-background px-3 py-2"
+            />
+          </label>
+
+          <label className="space-y-1 text-sm">
+            <span>Requirements</span>
+            <textarea
+              name="requirements"
+              rows={5}
+              defaultValue={formatLineSeparatedList(course.requirements)}
+              placeholder={"One requirement per line\nBasic arithmetic\nNotebook and pen"}
               className="w-full border border-border bg-background px-3 py-2"
             />
           </label>
