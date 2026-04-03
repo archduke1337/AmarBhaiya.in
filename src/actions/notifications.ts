@@ -74,9 +74,10 @@ export async function createNotificationEntry(
 
 export async function getUserNotifications(): Promise<Notification[]> {
   const user = await requireAuth();
-  const { tablesDB } = await createAdminClient();
 
   try {
+    const { tablesDB } = await createAdminClient();
+
     const result = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.notifications,
@@ -109,9 +110,10 @@ export async function getUserNotifications(): Promise<Notification[]> {
 
 export async function getUnreadNotificationCount(): Promise<number> {
   const user = await requireAuth();
-  const { tablesDB } = await createAdminClient();
 
   try {
+    const { tablesDB } = await createAdminClient();
+
     const result = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.notifications,

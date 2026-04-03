@@ -1536,274 +1536,343 @@ export async function getInstructorCurriculum(
 }
 
 export async function getModeratorDashboardStats(): Promise<ModeratorDashboardStats> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const actionsResult = await safeListRows<ModerationActionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.moderationActions,
-    [Query.limit(300)]
-  );
+    const actionsResult = await safeListRows<ModerationActionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.moderationActions,
+      [Query.limit(300)]
+    );
 
-  const rows = actionsResult.rows;
+    const rows = actionsResult.rows;
 
-  const openReports = rows.filter(
-    (row) => row.action === "flag" && !row.revertedAt
-  ).length;
+    const openReports = rows.filter(
+      (row) => row.action === "flag" && !row.revertedAt
+    ).length;
 
-  const mutedUsers = new Set(
-    rows
-      .filter(
-        (row) =>
-          (row.action === "mute" || row.action === "timeout") &&
-          !row.revertedAt &&
-          typeof row.targetUserId === "string"
-      )
-      .map((row) => String(row.targetUserId))
-  ).size;
+    const mutedUsers = new Set(
+      rows
+        .filter(
+          (row) =>
+            (row.action === "mute" || row.action === "timeout") &&
+            !row.revertedAt &&
+            typeof row.targetUserId === "string"
+        )
+        .map((row) => String(row.targetUserId))
+    ).size;
 
-  const flaggedThreads = new Set(
-    rows
-      .filter(
-        (row) =>
-          row.action === "flag" &&
-          typeof row.entityType === "string" &&
-          row.entityType.toLowerCase().includes("thread") &&
-          typeof row.entityId === "string"
-      )
-      .map((row) => String(row.entityId))
-  ).size;
+    const flaggedThreads = new Set(
+      rows
+        .filter(
+          (row) =>
+            row.action === "flag" &&
+            typeof row.entityType === "string" &&
+            row.entityType.toLowerCase().includes("thread") &&
+            typeof row.entityId === "string"
+        )
+        .map((row) => String(row.entityId))
+    ).size;
 
-  const actionsToday = rows.filter((row) => isToday(row.createdAt)).length;
+    const actionsToday = rows.filter((row) => isToday(row.createdAt)).length;
 
-  return {
-    openReports,
-    mutedUsers,
-    flaggedThreads,
-    actionsToday,
-  };
+    return {
+      openReports,
+      mutedUsers,
+      flaggedThreads,
+      actionsToday,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load moderator dashboard stats."
+    );
+
+    return {
+      openReports: 0,
+      mutedUsers: 0,
+      flaggedThreads: 0,
+      actionsToday: 0,
+    };
+  }
 }
 
 export async function getModeratorReports(): Promise<ModeratorReportItem[]> {
-  const { tablesDB } = await createAdminClient();
-  const actionsResult = await safeListRows<ModerationActionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.moderationActions,
-    [Query.equal("action", ["flag"]), Query.limit(100)]
-  );
+  try {
+    const { tablesDB } = await createAdminClient();
+    const actionsResult = await safeListRows<ModerationActionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.moderationActions,
+      [Query.equal("action", ["flag"]), Query.limit(100)]
+    );
 
-  return actionsResult.rows
-    .sort((left, right) => {
-      const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
-      const rightDate = toDate(right.createdAt)?.getTime() ?? 0;
-      return rightDate - leftDate;
-    })
-    .map((row) => ({
-      id: row.$id,
-      entityType:
-        typeof row.entityType === "string" ? row.entityType : "unknown",
-      entityId: typeof row.entityId === "string" ? row.entityId : "n/a",
-      targetUserId:
-        typeof row.targetUserId === "string" ? row.targetUserId : "",
-      target:
-        typeof row.targetUserName === "string"
-          ? row.targetUserName
-          : typeof row.targetUserId === "string"
-          ? row.targetUserId
-          : "Unknown user",
-      reason: typeof row.reason === "string" ? row.reason : "No reason provided",
-      status: row.revertedAt ? "reviewed" : "pending",
-      createdAt: typeof row.createdAt === "string" ? row.createdAt : null,
-    }));
+    return actionsResult.rows
+      .sort((left, right) => {
+        const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
+        const rightDate = toDate(right.createdAt)?.getTime() ?? 0;
+        return rightDate - leftDate;
+      })
+      .map((row) => ({
+        id: row.$id,
+        entityType:
+          typeof row.entityType === "string" ? row.entityType : "unknown",
+        entityId: typeof row.entityId === "string" ? row.entityId : "n/a",
+        targetUserId:
+          typeof row.targetUserId === "string" ? row.targetUserId : "",
+        target:
+          typeof row.targetUserName === "string"
+            ? row.targetUserName
+            : typeof row.targetUserId === "string"
+            ? row.targetUserId
+            : "Unknown user",
+        reason: typeof row.reason === "string" ? row.reason : "No reason provided",
+        status: row.revertedAt ? "reviewed" : "pending",
+        createdAt: typeof row.createdAt === "string" ? row.createdAt : null,
+      }));
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to load moderator reports."
+    );
+
+    return [];
+  }
 }
 
 export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
-  const { tablesDB } = await createAdminClient();
-  const actionsResult = await safeListRows<ModerationActionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.moderationActions,
-    [Query.limit(300)]
-  );
+  try {
+    const { tablesDB } = await createAdminClient();
+    const actionsResult = await safeListRows<ModerationActionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.moderationActions,
+      [Query.limit(300)]
+    );
 
-  const rows = actionsResult.rows
-    .filter((row) => typeof row.targetUserId === "string")
-    .sort((left, right) => {
-      const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
-      const rightDate = toDate(right.createdAt)?.getTime() ?? 0;
-      return rightDate - leftDate;
-    });
+    const rows = actionsResult.rows
+      .filter((row) => typeof row.targetUserId === "string")
+      .sort((left, right) => {
+        const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
+        const rightDate = toDate(right.createdAt)?.getTime() ?? 0;
+        return rightDate - leftDate;
+      });
 
-  const latestByUser = new Map<string, ModerationActionRow>();
-  for (const row of rows) {
-    const userId = String(row.targetUserId);
-    if (!latestByUser.has(userId)) {
-      latestByUser.set(userId, row);
+    const latestByUser = new Map<string, ModerationActionRow>();
+    for (const row of rows) {
+      const userId = String(row.targetUserId);
+      if (!latestByUser.has(userId)) {
+        latestByUser.set(userId, row);
+      }
     }
-  }
 
-  return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => ({
-    id: userId,
-    latestActionId: row.$id,
-    name:
-      typeof row.targetUserName === "string" && row.targetUserName.length > 0
-        ? row.targetUserName
-        : userId,
-    latestAction: typeof row.action === "string" ? row.action : "unknown",
-    latestReason: typeof row.reason === "string" ? row.reason : "No notes",
-    status: row.revertedAt ? "resolved" : "open",
-  }));
+    return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => ({
+      id: userId,
+      latestActionId: row.$id,
+      name:
+        typeof row.targetUserName === "string" && row.targetUserName.length > 0
+          ? row.targetUserName
+          : userId,
+      latestAction: typeof row.action === "string" ? row.action : "unknown",
+      latestReason: typeof row.reason === "string" ? row.reason : "No notes",
+      status: row.revertedAt ? "resolved" : "open",
+    }));
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to load moderator students."
+    );
+
+    return [];
+  }
 }
 
 export async function getModeratorCommunityData(): Promise<ModeratorCommunityData> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const [actionsResult, categoriesResult, threadsResult] = await Promise.all([
-    safeListRows<ModerationActionRow>(tablesDB, APPWRITE_CONFIG.tables.moderationActions, [
-      Query.limit(300),
-    ]),
-    safeListRows<ForumCategoryRow>(tablesDB, APPWRITE_CONFIG.tables.forumCategories, [
-      Query.limit(100),
-    ]),
-    safeListRows<ForumThreadRow>(tablesDB, APPWRITE_CONFIG.tables.forumThreads, [
-      Query.limit(30),
-    ]),
-  ]);
-
-  const counts = {
-    warn: 0,
-    mute: 0,
-    timeout: 0,
-    deletePost: 0,
-    flag: 0,
-  };
-
-  for (const action of actionsResult.rows) {
-    if (action.action === "warn") {
-      counts.warn += 1;
-    }
-    if (action.action === "mute") {
-      counts.mute += 1;
-    }
-    if (action.action === "timeout") {
-      counts.timeout += 1;
-    }
-    if (action.action === "delete_post") {
-      counts.deletePost += 1;
-    }
-    if (action.action === "flag") {
-      counts.flag += 1;
-    }
-  }
-
-  const categoryNameById = new Map<string, string>(
-    categoriesResult.rows.map((category) => [
-      category.$id,
-      typeof category.name === "string" ? category.name : "General",
-    ])
-  );
-
-  const recentThreads: CommunityThreadItem[] = threadsResult.rows
-    .sort((left, right) => {
-      const leftDate = toDate(left.lastReplyAt ?? left.createdAt)?.getTime() ?? 0;
-      const rightDate = toDate(right.lastReplyAt ?? right.createdAt)?.getTime() ?? 0;
-      return rightDate - leftDate;
-    })
-    .slice(0, 8)
-    .map((thread) => ({
-      id: thread.$id,
-      title: typeof thread.title === "string" ? thread.title : "Untitled thread",
-      authorId: typeof thread.userId === "string" ? thread.userId : "",
-      author: typeof thread.userName === "string" ? thread.userName : "Unknown user",
-      replies: Number(thread.replyCount ?? 0),
-      pinned: Boolean(thread.isPinned),
-      locked: Boolean(thread.isLocked),
-      category:
-        (typeof thread.forumCatId === "string" &&
-          categoryNameById.get(thread.forumCatId)) ||
-        "General",
-    }));
-
-  return {
-    actionCounts: [
-      { label: "Warn", value: counts.warn },
-      { label: "Mute", value: counts.mute },
-      { label: "Timeout", value: counts.timeout },
-      { label: "Delete Post", value: counts.deletePost },
-      { label: "Flag", value: counts.flag },
-    ],
-    recentThreads,
-  };
-}
-
-export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
-  const { tablesDB, users } = await createAdminClient();
-
-  const [usersTotal, activeEnrollmentsResult, completedPayments, liveSessions, coursesResult] =
-    await Promise.all([
-      users
-        .list({
-          queries: [Query.limit(1)],
-        })
-        .then((result) => result.total)
-        .catch(() => 0),
-      safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
-        Query.limit(500),
+    const [actionsResult, categoriesResult, threadsResult] = await Promise.all([
+      safeListRows<ModerationActionRow>(tablesDB, APPWRITE_CONFIG.tables.moderationActions, [
+        Query.limit(300),
       ]),
-      safeListRows<PaymentRow>(tablesDB, APPWRITE_CONFIG.tables.payments, [
-        Query.equal("status", ["completed"]),
-        Query.limit(500),
+      safeListRows<ForumCategoryRow>(tablesDB, APPWRITE_CONFIG.tables.forumCategories, [
+        Query.limit(100),
       ]),
-      safeCountRows(tablesDB, APPWRITE_CONFIG.tables.liveSessions, [
-        Query.equal("status", ["scheduled", "live"]),
-      ]),
-      safeListRows(tablesDB, APPWRITE_CONFIG.tables.courses, [
-        Query.limit(500),
+      safeListRows<ForumThreadRow>(tablesDB, APPWRITE_CONFIG.tables.forumThreads, [
+        Query.limit(30),
       ]),
     ]);
 
-  const activeEnrollments = activeEnrollmentsResult.rows.filter((row) => row.isActive !== false).length;
-  const completedEnrollments = activeEnrollmentsResult.rows.filter(
-    (row) => Number((row as AnyRow).progress ?? 0) >= 100
-  ).length;
-  const completionRate =
-    activeEnrollmentsResult.total > 0
-      ? Math.round((completedEnrollments / activeEnrollmentsResult.total) * 100)
-      : 0;
+    const counts = {
+      warn: 0,
+      mute: 0,
+      timeout: 0,
+      deletePost: 0,
+      flag: 0,
+    };
 
-  const totalCourses = coursesResult.total;
-  const publishedCourses = coursesResult.rows.filter(
-    (r) => Boolean((r as AnyRow).isPublished)
-  ).length;
-
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const monthlyRevenue = completedPayments.rows
-    .filter((payment) => {
-      const createdAt = toDate(payment.createdAt);
-      if (!createdAt) {
-        return false;
+    for (const action of actionsResult.rows) {
+      if (action.action === "warn") {
+        counts.warn += 1;
       }
+      if (action.action === "mute") {
+        counts.mute += 1;
+      }
+      if (action.action === "timeout") {
+        counts.timeout += 1;
+      }
+      if (action.action === "delete_post") {
+        counts.deletePost += 1;
+      }
+      if (action.action === "flag") {
+        counts.flag += 1;
+      }
+    }
 
-      return createdAt >= startOfMonth;
-    })
-    .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0) / 100;
+    const categoryNameById = new Map<string, string>(
+      categoriesResult.rows.map((category) => [
+        category.$id,
+        typeof category.name === "string" ? category.name : "General",
+      ])
+    );
 
-  const totalRevenue = completedPayments.rows.reduce(
-    (sum, payment) => sum + Number(payment.amount ?? 0),
-    0
-  ) / 100;
+    const recentThreads: CommunityThreadItem[] = threadsResult.rows
+      .sort((left, right) => {
+        const leftDate = toDate(left.lastReplyAt ?? left.createdAt)?.getTime() ?? 0;
+        const rightDate = toDate(right.lastReplyAt ?? right.createdAt)?.getTime() ?? 0;
+        return rightDate - leftDate;
+      })
+      .slice(0, 8)
+      .map((thread) => ({
+        id: thread.$id,
+        title: typeof thread.title === "string" ? thread.title : "Untitled thread",
+        authorId: typeof thread.userId === "string" ? thread.userId : "",
+        author: typeof thread.userName === "string" ? thread.userName : "Unknown user",
+        replies: Number(thread.replyCount ?? 0),
+        pinned: Boolean(thread.isPinned),
+        locked: Boolean(thread.isLocked),
+        category:
+          (typeof thread.forumCatId === "string" &&
+            categoryNameById.get(thread.forumCatId)) ||
+          "General",
+      }));
 
-  return {
-    totalUsers: usersTotal,
-    activeEnrollments,
-    monthlyRevenue,
-    totalRevenue,
-    liveSessions,
-    totalCourses,
-    publishedCourses,
-    completionRate,
-  };
+    return {
+      actionCounts: [
+        { label: "Warn", value: counts.warn },
+        { label: "Mute", value: counts.mute },
+        { label: "Timeout", value: counts.timeout },
+        { label: "Delete Post", value: counts.deletePost },
+        { label: "Flag", value: counts.flag },
+      ],
+      recentThreads,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load moderator community data."
+    );
+
+    return {
+      actionCounts: [
+        { label: "Warn", value: 0 },
+        { label: "Mute", value: 0 },
+        { label: "Timeout", value: 0 },
+        { label: "Delete Post", value: 0 },
+        { label: "Flag", value: 0 },
+      ],
+      recentThreads: [],
+    };
+  }
+}
+
+export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
+  try {
+    const { tablesDB, users } = await createAdminClient();
+
+    const [usersTotal, activeEnrollmentsResult, completedPayments, liveSessions, coursesResult] =
+      await Promise.all([
+        users
+          .list({
+            queries: [Query.limit(1)],
+          })
+          .then((result) => result.total)
+          .catch(() => 0),
+        safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+          Query.limit(500),
+        ]),
+        safeListRows<PaymentRow>(tablesDB, APPWRITE_CONFIG.tables.payments, [
+          Query.equal("status", ["completed"]),
+          Query.limit(500),
+        ]),
+        safeCountRows(tablesDB, APPWRITE_CONFIG.tables.liveSessions, [
+          Query.equal("status", ["scheduled", "live"]),
+        ]),
+        safeListRows(tablesDB, APPWRITE_CONFIG.tables.courses, [
+          Query.limit(500),
+        ]),
+      ]);
+
+    const activeEnrollments = activeEnrollmentsResult.rows.filter((row) => row.isActive !== false).length;
+    const completedEnrollments = activeEnrollmentsResult.rows.filter(
+      (row) => Number((row as AnyRow).progress ?? 0) >= 100
+    ).length;
+    const completionRate =
+      activeEnrollmentsResult.total > 0
+        ? Math.round((completedEnrollments / activeEnrollmentsResult.total) * 100)
+        : 0;
+
+    const totalCourses = coursesResult.total;
+    const publishedCourses = coursesResult.rows.filter(
+      (r) => Boolean((r as AnyRow).isPublished)
+    ).length;
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const monthlyRevenue = completedPayments.rows
+      .filter((payment) => {
+        const createdAt = toDate(payment.createdAt);
+        if (!createdAt) {
+          return false;
+        }
+
+        return createdAt >= startOfMonth;
+      })
+      .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0) / 100;
+
+    const totalRevenue = completedPayments.rows.reduce(
+      (sum, payment) => sum + Number(payment.amount ?? 0),
+      0
+    ) / 100;
+
+    return {
+      totalUsers: usersTotal,
+      activeEnrollments,
+      monthlyRevenue,
+      totalRevenue,
+      liveSessions,
+      totalCourses,
+      publishedCourses,
+      completionRate,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load admin dashboard stats."
+    );
+
+    return {
+      totalUsers: 0,
+      activeEnrollments: 0,
+      monthlyRevenue: 0,
+      totalRevenue: 0,
+      liveSessions: 0,
+      totalCourses: 0,
+      publishedCourses: 0,
+      completionRate: 0,
+    };
+  }
 }
 
 export async function getAdminUsers(): Promise<AdminUserItem[]> {
@@ -1885,197 +1954,241 @@ export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
 }
 
 export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
-  const { tablesDB, users } = await createAdminClient();
+  try {
+    const { tablesDB, users } = await createAdminClient();
 
-  const paymentsResult = await safeListRows<PaymentRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.payments,
-    [Query.limit(120)]
-  );
-
-  const paymentRows = paymentsResult.rows.sort((left, right) => {
-    const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
-    const rightDate = toDate(right.createdAt)?.getTime() ?? 0;
-    return rightDate - leftDate;
-  });
-
-  const courseIds = [
-    ...new Set(
-      paymentRows
-        .map((payment) => payment.courseId)
-        .filter((value): value is string => typeof value === "string")
-    ),
-  ];
-
-  const userIds = [
-    ...new Set(
-      paymentRows
-        .map((payment) => payment.userId)
-        .filter((value): value is string => typeof value === "string")
-    ),
-  ];
-
-  const courseMap = new Map<string, string>();
-  const courseRows = await listRowsByFieldValues<CourseRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.courses,
-    "$id",
-    courseIds
-  );
-  for (const row of courseRows) {
-    courseMap.set(
-      row.$id,
-      typeof row.title === "string" ? row.title : row.$id
+    const paymentsResult = await safeListRows<PaymentRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.payments,
+      [Query.limit(120)]
     );
-  }
-  for (const courseId of courseIds) {
-    if (!courseMap.has(courseId)) {
-      courseMap.set(courseId, courseId);
+
+    const paymentRows = paymentsResult.rows.sort((left, right) => {
+      const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
+      const rightDate = toDate(right.createdAt)?.getTime() ?? 0;
+      return rightDate - leftDate;
+    });
+
+    const courseIds = [
+      ...new Set(
+        paymentRows
+          .map((payment) => payment.courseId)
+          .filter((value): value is string => typeof value === "string")
+      ),
+    ];
+
+    const userIds = [
+      ...new Set(
+        paymentRows
+          .map((payment) => payment.userId)
+          .filter((value): value is string => typeof value === "string")
+      ),
+    ];
+
+    const courseMap = new Map<string, string>();
+    const courseRows = await listRowsByFieldValues<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      "$id",
+      courseIds
+    );
+    for (const row of courseRows) {
+      courseMap.set(
+        row.$id,
+        typeof row.title === "string" ? row.title : row.$id
+      );
     }
-  }
-
-  const userMap = new Map<string, string>();
-  await Promise.all(
-    userIds.map(async (userId) => {
-      try {
-        const user = await users.get({ userId });
-        userMap.set(userId, user.name || userId);
-      } catch {
-        userMap.set(userId, userId);
+    for (const courseId of courseIds) {
+      if (!courseMap.has(courseId)) {
+        courseMap.set(courseId, courseId);
       }
-    })
-  );
+    }
 
-  return paymentRows.map((payment) => ({
-    id: payment.$id,
-    providerRef:
-      typeof payment.providerRef === "string" ? payment.providerRef : payment.$id,
-    method: typeof payment.method === "string" ? payment.method : "unknown",
-    amount: Number(payment.amount ?? 0) / 100,
-    currency: typeof payment.currency === "string" ? payment.currency : "INR",
-    status: typeof payment.status === "string" ? payment.status : "pending",
-    userName:
-      (typeof payment.userId === "string" && userMap.get(payment.userId)) ||
-      "Unknown user",
-    courseTitle:
-      (typeof payment.courseId === "string" && courseMap.get(payment.courseId)) ||
-      "Unknown course",
-    createdAt: typeof payment.createdAt === "string" ? payment.createdAt : null,
-  }));
+    const userMap = new Map<string, string>();
+    await Promise.all(
+      userIds.map(async (userId) => {
+        try {
+          const user = await users.get({ userId });
+          userMap.set(userId, user.name || userId);
+        } catch {
+          userMap.set(userId, userId);
+        }
+      })
+    );
+
+    return paymentRows.map((payment) => ({
+      id: payment.$id,
+      providerRef:
+        typeof payment.providerRef === "string" ? payment.providerRef : payment.$id,
+      method: typeof payment.method === "string" ? payment.method : "unknown",
+      amount: Number(payment.amount ?? 0) / 100,
+      currency: typeof payment.currency === "string" ? payment.currency : "INR",
+      status: typeof payment.status === "string" ? payment.status : "pending",
+      userName:
+        (typeof payment.userId === "string" && userMap.get(payment.userId)) ||
+        "Unknown user",
+      courseTitle:
+        (typeof payment.courseId === "string" && courseMap.get(payment.courseId)) ||
+        "Unknown course",
+      createdAt: typeof payment.createdAt === "string" ? payment.createdAt : null,
+    }));
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to load admin payments."
+    );
+
+    return [];
+  }
 }
 
 export async function getAdminLiveData(): Promise<AdminLiveData> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const sessionsResult = await safeListRows<LiveSessionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.liveSessions,
-    [Query.limit(120)]
-  );
+    const sessionsResult = await safeListRows<LiveSessionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.liveSessions,
+      [Query.limit(120)]
+    );
 
-  const sessions = sessionsResult.rows;
+    const sessions = sessionsResult.rows;
 
-  const activeSessions = sessions.filter((session) => session.status === "live").length;
-  const scheduledSessions = sessions.filter(
-    (session) => session.status === "scheduled"
-  ).length;
-  const recordingFailures = sessions.filter(
-    (session) =>
-      session.status === "ended" &&
-      (!session.recordingUrl || String(session.recordingUrl).trim().length === 0)
-  ).length;
+    const activeSessions = sessions.filter((session) => session.status === "live").length;
+    const scheduledSessions = sessions.filter(
+      (session) => session.status === "scheduled"
+    ).length;
+    const recordingFailures = sessions.filter(
+      (session) =>
+        session.status === "ended" &&
+        (!session.recordingUrl || String(session.recordingUrl).trim().length === 0)
+    ).length;
 
-  const upcoming = sessions
-    .filter((session) => session.status === "scheduled" || session.status === "live")
-    .sort((left, right) => {
-      const leftDate = toDate(left.scheduledAt)?.getTime() ?? 0;
-      const rightDate = toDate(right.scheduledAt)?.getTime() ?? 0;
-      return leftDate - rightDate;
-    })
-    .slice(0, 8)
-    .map((session) => ({
-      id: session.$id,
-      title: typeof session.title === "string" ? session.title : "Untitled session",
-      description:
-        typeof session.description === "string" ? session.description : "",
-      status: typeof session.status === "string" ? session.status : "scheduled",
-      scheduledAt:
-        typeof session.scheduledAt === "string" ? session.scheduledAt : null,
-      streamUrl: getSafeHttpUrl(session.streamId),
-      recordingUrl: getSafeHttpUrl(session.recordingUrl),
-      rsvpCount: 0,
-    }));
+    const upcoming = sessions
+      .filter((session) => session.status === "scheduled" || session.status === "live")
+      .sort((left, right) => {
+        const leftDate = toDate(left.scheduledAt)?.getTime() ?? 0;
+        const rightDate = toDate(right.scheduledAt)?.getTime() ?? 0;
+        return leftDate - rightDate;
+      })
+      .slice(0, 8)
+      .map((session) => ({
+        id: session.$id,
+        title: typeof session.title === "string" ? session.title : "Untitled session",
+        description:
+          typeof session.description === "string" ? session.description : "",
+        status: typeof session.status === "string" ? session.status : "scheduled",
+        scheduledAt:
+          typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+        streamUrl: getSafeHttpUrl(session.streamId),
+        recordingUrl: getSafeHttpUrl(session.recordingUrl),
+        rsvpCount: 0,
+      }));
 
-  return {
-    activeSessions,
-    scheduledSessions,
-    recordingFailures,
-    upcoming,
-  };
+    return {
+      activeSessions,
+      scheduledSessions,
+      recordingFailures,
+      upcoming,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to load admin live data."
+    );
+
+    return {
+      activeSessions: 0,
+      scheduledSessions: 0,
+      recordingFailures: 0,
+      upcoming: [],
+    };
+  }
 }
 
 export async function getAdminModerationData(): Promise<AdminModerationData> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const actionsResult = await safeListRows<ModerationActionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.moderationActions,
-    [Query.limit(300)]
-  );
+    const actionsResult = await safeListRows<ModerationActionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.moderationActions,
+      [Query.limit(300)]
+    );
 
-  const rows = actionsResult.rows;
+    const rows = actionsResult.rows;
 
-  const actionsToday = rows.filter((row) => isToday(row.createdAt)).length;
-  const openEscalations = rows.filter(
-    (row) => row.action === "flag" && !row.revertedAt
-  ).length;
-  const activeTimeouts = rows.filter(
-    (row) => row.action === "timeout" && !row.revertedAt
-  ).length;
+    const actionsToday = rows.filter((row) => isToday(row.createdAt)).length;
+    const openEscalations = rows.filter(
+      (row) => row.action === "flag" && !row.revertedAt
+    ).length;
+    const activeTimeouts = rows.filter(
+      (row) => row.action === "timeout" && !row.revertedAt
+    ).length;
 
-  const escalationItems = rows
-    .filter((row) => row.action === "flag" && !row.revertedAt)
-    .sort((left, right) => {
-      const leftTime = toDate(left.createdAt)?.getTime() ?? 0;
-      const rightTime = toDate(right.createdAt)?.getTime() ?? 0;
-      return rightTime - leftTime;
-    })
-    .slice(0, 20)
-    .map((row) => ({
-      id: row.$id,
-      moderatorName: typeof row.moderatorName === "string" ? row.moderatorName : "Unknown",
-      targetUserName: typeof row.targetUserName === "string" ? row.targetUserName : "Unknown",
-      action: typeof row.action === "string" ? row.action : "flag",
-      scope: typeof row.scope === "string" ? row.scope : "platform",
-      reason: typeof row.reason === "string" ? row.reason : "",
-      createdAt: typeof row.createdAt === "string" ? row.createdAt : "",
-    }));
+    const escalationItems = rows
+      .filter((row) => row.action === "flag" && !row.revertedAt)
+      .sort((left, right) => {
+        const leftTime = toDate(left.createdAt)?.getTime() ?? 0;
+        const rightTime = toDate(right.createdAt)?.getTime() ?? 0;
+        return rightTime - leftTime;
+      })
+      .slice(0, 20)
+      .map((row) => ({
+        id: row.$id,
+        moderatorName: typeof row.moderatorName === "string" ? row.moderatorName : "Unknown",
+        targetUserName: typeof row.targetUserName === "string" ? row.targetUserName : "Unknown",
+        action: typeof row.action === "string" ? row.action : "flag",
+        scope: typeof row.scope === "string" ? row.scope : "platform",
+        reason: typeof row.reason === "string" ? row.reason : "",
+        createdAt: typeof row.createdAt === "string" ? row.createdAt : "",
+      }));
 
-  return {
-    actionsToday,
-    openEscalations,
-    activeTimeouts,
-    escalationItems,
-  };
+    return {
+      actionsToday,
+      openEscalations,
+      activeTimeouts,
+      escalationItems,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load admin moderation data."
+    );
+
+    return {
+      actionsToday: 0,
+      openEscalations: 0,
+      activeTimeouts: 0,
+      escalationItems: [],
+    };
+  }
 }
 
 export async function getAdminAuditLogs(): Promise<AdminAuditItem[]> {
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const logsResult = await safeListRows<AuditLogRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.auditLogs,
-    [Query.orderDesc("createdAt"), Query.limit(100)]
-  );
+    const logsResult = await safeListRows<AuditLogRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.auditLogs,
+      [Query.orderDesc("createdAt"), Query.limit(100)]
+    );
 
-  return logsResult.rows.map((log) => ({
-    id: log.$id,
-    actor: typeof log.actorName === "string" ? log.actorName : "Unknown actor",
-    action: typeof log.action === "string" ? log.action : "unknown action",
-    entity: typeof log.entity === "string" ? log.entity : "unknown entity",
-    entityId: typeof log.entityId === "string" ? log.entityId : "n/a",
-    createdAt: typeof log.createdAt === "string" ? log.createdAt : null,
-  }));
+    return logsResult.rows.map((log) => ({
+      id: log.$id,
+      actor: typeof log.actorName === "string" ? log.actorName : "Unknown actor",
+      action: typeof log.action === "string" ? log.action : "unknown action",
+      entity: typeof log.entity === "string" ? log.entity : "unknown entity",
+      entityId: typeof log.entityId === "string" ? log.entityId : "n/a",
+      createdAt: typeof log.createdAt === "string" ? log.createdAt : null,
+    }));
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to load admin audit logs."
+    );
+
+    return [];
+  }
 }
 
 export async function getStudentProfileStats(
@@ -2089,37 +2202,51 @@ export async function getStudentProfileStats(
     };
   }
 
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const [enrollmentsResult, certificatesResult, progressResult] = await Promise.all([
-    safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
-      Query.equal("userId", [userId]),
-      Query.equal("isActive", [true]),
-      Query.limit(500),
-    ]),
-    safeListRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.certificates, [
-      Query.equal("userId", [userId]),
-      Query.limit(500),
-    ]),
-    safeListRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.progress, [
-      Query.equal("userId", [userId]),
-      Query.limit(2000),
-    ]),
-  ]);
+    const [enrollmentsResult, certificatesResult, progressResult] = await Promise.all([
+      safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+        Query.equal("userId", [userId]),
+        Query.equal("isActive", [true]),
+        Query.limit(500),
+      ]),
+      safeListRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.certificates, [
+        Query.equal("userId", [userId]),
+        Query.limit(500),
+      ]),
+      safeListRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.progress, [
+        Query.equal("userId", [userId]),
+        Query.limit(2000),
+      ]),
+    ]);
 
-  const completedDateKeys = new Set<string>();
-  for (const row of progressResult.rows) {
-    const key = toUtcDateKey(row.completedAt);
-    if (key) {
-      completedDateKeys.add(key);
+    const completedDateKeys = new Set<string>();
+    for (const row of progressResult.rows) {
+      const key = toUtcDateKey(row.completedAt);
+      if (key) {
+        completedDateKeys.add(key);
+      }
     }
-  }
 
-  return {
-    currentStreakDays: calculateCurrentStreak(completedDateKeys),
-    activeCourses: enrollmentsResult.total,
-    certificates: certificatesResult.total,
-  };
+    return {
+      currentStreakDays: calculateCurrentStreak(completedDateKeys),
+      activeCourses: enrollmentsResult.total,
+      certificates: certificatesResult.total,
+    };
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load student profile stats."
+    );
+
+    return {
+      currentStreakDays: 0,
+      activeCourses: 0,
+      certificates: 0,
+    };
+  }
 }
 
 // ── Student Enrolled Courses ──────────────────────────────────────────────
@@ -2154,203 +2281,212 @@ export async function getStudentEnrolledCourses(
   userId: string
 ): Promise<StudentEnrolledCourse[]> {
   if (!userId) return [];
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const { tablesDB } = await createAdminClient();
-
-  const enrollmentsResult = await safeListRows<EnrollmentRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.enrollments,
-    [Query.equal("userId", [userId]), Query.equal("isActive", [true]), Query.limit(100)]
-  );
-
-  if (enrollmentsResult.rows.length === 0) return [];
-
-  const courseIds = enrollmentsResult.rows
-    .map((e) => (typeof e.courseId === "string" ? e.courseId : ""))
-    .filter(Boolean);
-
-  const courses = await listRowsByFieldValues<CourseRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.courses,
-    "$id",
-    courseIds
-  );
-
-  const courseMap = new Map(courses.map((c) => [c.$id, c]));
-
-  const categoriesResult = await safeListRows<AnyRow & Partial<Category>>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.categories,
-    [Query.limit(100)]
-  );
-  const categoryNameById = new Map<string, string>(
-    categoriesResult.rows.map((cat) => [
-      cat.$id,
-      typeof cat.name === "string" ? cat.name : "General",
-    ])
-  );
-
-  const progressResult = await safeListRows<AnyRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.progress,
-    [Query.equal("userId", [userId]), Query.limit(2000)]
-  );
-  const lessonRows = await listRowsByFieldValues<LessonRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.lessons,
-    "courseId",
-    courseIds
-  );
-
-  const lessonsByCourse = new Map<string, LessonRow[]>();
-  for (const lesson of lessonRows) {
-    const courseId = typeof lesson.courseId === "string" ? lesson.courseId : "";
-    if (!courseId) {
-      continue;
-    }
-
-    const current = lessonsByCourse.get(courseId) ?? [];
-    current.push(lesson);
-    lessonsByCourse.set(courseId, current);
-  }
-
-  for (const [courseId, rows] of lessonsByCourse) {
-    lessonsByCourse.set(
-      courseId,
-      [...rows].sort(
-        (left, right) => Number(left.order ?? 0) - Number(right.order ?? 0)
-      )
+    const enrollmentsResult = await safeListRows<EnrollmentRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.enrollments,
+      [Query.equal("userId", [userId]), Query.equal("isActive", [true]), Query.limit(100)]
     );
-  }
 
-  const completedByCourse = new Map<string, number>();
-  const progressByCourse = new Map<string, AnyRow[]>();
-  for (const row of progressResult.rows) {
-    const cid = typeof row.courseId === "string" ? row.courseId : "";
-    const completedAt =
-      typeof row.completedAt === "string" ? row.completedAt.trim() : "";
-    if (!cid) {
-      continue;
+    if (enrollmentsResult.rows.length === 0) return [];
+
+    const courseIds = enrollmentsResult.rows
+      .map((e) => (typeof e.courseId === "string" ? e.courseId : ""))
+      .filter(Boolean);
+
+    const courses = await listRowsByFieldValues<CourseRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      "$id",
+      courseIds
+    );
+
+    const courseMap = new Map(courses.map((c) => [c.$id, c]));
+
+    const categoriesResult = await safeListRows<AnyRow & Partial<Category>>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.categories,
+      [Query.limit(100)]
+    );
+    const categoryNameById = new Map<string, string>(
+      categoriesResult.rows.map((cat) => [
+        cat.$id,
+        typeof cat.name === "string" ? cat.name : "General",
+      ])
+    );
+
+    const progressResult = await safeListRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.progress,
+      [Query.equal("userId", [userId]), Query.limit(2000)]
+    );
+    const lessonRows = await listRowsByFieldValues<LessonRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.lessons,
+      "courseId",
+      courseIds
+    );
+
+    const lessonsByCourse = new Map<string, LessonRow[]>();
+    for (const lesson of lessonRows) {
+      const courseId = typeof lesson.courseId === "string" ? lesson.courseId : "";
+      if (!courseId) {
+        continue;
+      }
+
+      const current = lessonsByCourse.get(courseId) ?? [];
+      current.push(lesson);
+      lessonsByCourse.set(courseId, current);
     }
 
-    const courseRows = progressByCourse.get(cid) ?? [];
-    courseRows.push(row);
-    progressByCourse.set(cid, courseRows);
-
-    if (completedAt) {
-      completedByCourse.set(cid, (completedByCourse.get(cid) ?? 0) + 1);
+    for (const [courseId, rows] of lessonsByCourse) {
+      lessonsByCourse.set(
+        courseId,
+        [...rows].sort(
+          (left, right) => Number(left.order ?? 0) - Number(right.order ?? 0)
+        )
+      );
     }
-  }
 
-  return courseIds
-      .map((courseId) => {
-        const course = courseMap.get(courseId);
-        if (!course) return null;
-        const courseLessonRows = lessonsByCourse.get(courseId) ?? [];
-        const courseProgressRows = progressByCourse.get(courseId) ?? [];
-        const totalLessons = Number(course.totalLessons ?? 0);
-        const completedLessons = completedByCourse.get(courseId) ?? 0;
-        const progressPercent =
-          totalLessons > 0
-            ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
-            : 0;
-        const completedLessonIds = new Set(
-          courseProgressRows
+    const completedByCourse = new Map<string, number>();
+    const progressByCourse = new Map<string, AnyRow[]>();
+    for (const row of progressResult.rows) {
+      const cid = typeof row.courseId === "string" ? row.courseId : "";
+      const completedAt =
+        typeof row.completedAt === "string" ? row.completedAt.trim() : "";
+      if (!cid) {
+        continue;
+      }
+
+      const courseRows = progressByCourse.get(cid) ?? [];
+      courseRows.push(row);
+      progressByCourse.set(cid, courseRows);
+
+      if (completedAt) {
+        completedByCourse.set(cid, (completedByCourse.get(cid) ?? 0) + 1);
+      }
+    }
+
+    return courseIds
+        .map((courseId) => {
+          const course = courseMap.get(courseId);
+          if (!course) return null;
+          const courseLessonRows = lessonsByCourse.get(courseId) ?? [];
+          const courseProgressRows = progressByCourse.get(courseId) ?? [];
+          const totalLessons = Number(course.totalLessons ?? 0);
+          const completedLessons = completedByCourse.get(courseId) ?? 0;
+          const progressPercent =
+            totalLessons > 0
+              ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
+              : 0;
+          const completedLessonIds = new Set(
+            courseProgressRows
+              .filter((row) => {
+                const completedAt =
+                  typeof row.completedAt === "string" ? row.completedAt.trim() : "";
+                return completedAt.length > 0;
+              })
+              .map((row) => String(row.lessonId ?? ""))
+              .filter(Boolean)
+          );
+          const latestPartialRow = [...courseProgressRows]
             .filter((row) => {
               const completedAt =
                 typeof row.completedAt === "string" ? row.completedAt.trim() : "";
-              return completedAt.length > 0;
+              return completedAt.length === 0 && Number(row.percentComplete ?? 0) > 0;
             })
-            .map((row) => String(row.lessonId ?? ""))
-            .filter(Boolean)
-        );
-        const latestPartialRow = [...courseProgressRows]
-          .filter((row) => {
-            const completedAt =
-              typeof row.completedAt === "string" ? row.completedAt.trim() : "";
-            return completedAt.length === 0 && Number(row.percentComplete ?? 0) > 0;
-          })
-          .sort((left, right) => {
+            .sort((left, right) => {
+              const leftTime =
+                toDate(left.$updatedAt ?? left.$createdAt)?.getTime() ?? 0;
+              const rightTime =
+                toDate(right.$updatedAt ?? right.$createdAt)?.getTime() ?? 0;
+              if (leftTime !== rightTime) {
+                return rightTime - leftTime;
+              }
+
+              return Number(right.percentComplete ?? 0) - Number(left.percentComplete ?? 0);
+            })[0];
+          const latestPartialLessonId = String(latestPartialRow?.lessonId ?? "");
+          const latestPartialLesson = courseLessonRows.find(
+            (lesson) => lesson.$id === latestPartialLessonId
+          );
+          const nextIncompleteLesson = courseLessonRows.find(
+            (lesson) => !completedLessonIds.has(lesson.$id)
+          );
+          const continueLesson =
+            progressPercent >= 100
+              ? null
+              : latestPartialLesson ?? nextIncompleteLesson ?? courseLessonRows[0] ?? null;
+          const resumePercent =
+            latestPartialLesson && continueLesson?.$id === latestPartialLesson.$id
+              ? Math.max(
+                  0,
+                  Math.min(99, Math.round(Number(latestPartialRow?.percentComplete ?? 0)))
+                )
+              : 0;
+          const latestActivityRow = [...courseProgressRows].sort((left, right) => {
             const leftTime =
-              toDate(left.$updatedAt ?? left.$createdAt)?.getTime() ?? 0;
+              toDate(left.$updatedAt ?? left.completedAt ?? left.$createdAt)?.getTime() ?? 0;
             const rightTime =
-              toDate(right.$updatedAt ?? right.$createdAt)?.getTime() ?? 0;
-            if (leftTime !== rightTime) {
-              return rightTime - leftTime;
-            }
-
-            return Number(right.percentComplete ?? 0) - Number(left.percentComplete ?? 0);
+              toDate(right.$updatedAt ?? right.completedAt ?? right.$createdAt)?.getTime() ?? 0;
+            return rightTime - leftTime;
           })[0];
-        const latestPartialLessonId = String(latestPartialRow?.lessonId ?? "");
-        const latestPartialLesson = courseLessonRows.find(
-          (lesson) => lesson.$id === latestPartialLessonId
-        );
-        const nextIncompleteLesson = courseLessonRows.find(
-          (lesson) => !completedLessonIds.has(lesson.$id)
-        );
-        const continueLesson =
-          progressPercent >= 100
-            ? null
-            : latestPartialLesson ?? nextIncompleteLesson ?? courseLessonRows[0] ?? null;
-        const resumePercent =
-          latestPartialLesson && continueLesson?.$id === latestPartialLesson.$id
-            ? Math.max(
-                0,
-                Math.min(99, Math.round(Number(latestPartialRow?.percentComplete ?? 0)))
-              )
-            : 0;
-        const latestActivityRow = [...courseProgressRows].sort((left, right) => {
-          const leftTime =
-            toDate(left.$updatedAt ?? left.completedAt ?? left.$createdAt)?.getTime() ?? 0;
-          const rightTime =
-            toDate(right.$updatedAt ?? right.completedAt ?? right.$createdAt)?.getTime() ?? 0;
-          return rightTime - leftTime;
-        })[0];
-        const lastActivityAt =
-          typeof latestActivityRow?.$updatedAt === "string"
-            ? latestActivityRow.$updatedAt
-            : typeof latestActivityRow?.completedAt === "string" && latestActivityRow.completedAt
-              ? latestActivityRow.completedAt
-              : typeof latestActivityRow?.$createdAt === "string"
-                ? latestActivityRow.$createdAt
-                : null;
-        const slug = typeof course.slug === "string" ? course.slug : courseId;
-        const continueHref =
-          progressPercent >= 100
-            ? `/app/courses/${slug}`
-            : continueLesson
-              ? `/app/learn/${courseId}/${continueLesson.$id}`
-              : `/app/courses/${slug}`;
+          const lastActivityAt =
+            typeof latestActivityRow?.$updatedAt === "string"
+              ? latestActivityRow.$updatedAt
+              : typeof latestActivityRow?.completedAt === "string" && latestActivityRow.completedAt
+                ? latestActivityRow.completedAt
+                : typeof latestActivityRow?.$createdAt === "string"
+                  ? latestActivityRow.$createdAt
+                  : null;
+          const slug = typeof course.slug === "string" ? course.slug : courseId;
+          const continueHref =
+            progressPercent >= 100
+              ? `/app/courses/${slug}`
+              : continueLesson
+                ? `/app/learn/${courseId}/${continueLesson.$id}`
+                : `/app/courses/${slug}`;
 
-        return {
-          id: courseId,
-          title: typeof course.title === "string" ? course.title : "Untitled",
-          slug,
-          category:
-            (typeof course.categoryId === "string" &&
-              categoryNameById.get(course.categoryId)) ||
-            "General",
-          totalLessons,
-          completedLessons,
-          progressPercent,
-          continueHref,
-          continueLessonTitle:
-            typeof continueLesson?.title === "string" ? continueLesson.title : "",
-          resumePercent,
-          lastActivityAt,
-        };
-      })
-    .filter((c): c is StudentEnrolledCourse => c !== null)
-    .sort((a, b) => {
-      if (a.progressPercent >= 100 && b.progressPercent < 100) return 1;
-      if (b.progressPercent >= 100 && a.progressPercent < 100) return -1;
-      const aTime = toDate(a.lastActivityAt)?.getTime() ?? 0;
-      const bTime = toDate(b.lastActivityAt)?.getTime() ?? 0;
-      if (aTime !== bTime) {
-        return bTime - aTime;
-      }
-      return b.progressPercent - a.progressPercent;
-    });
+          return {
+            id: courseId,
+            title: typeof course.title === "string" ? course.title : "Untitled",
+            slug,
+            category:
+              (typeof course.categoryId === "string" &&
+                categoryNameById.get(course.categoryId)) ||
+              "General",
+            totalLessons,
+            completedLessons,
+            progressPercent,
+            continueHref,
+            continueLessonTitle:
+              typeof continueLesson?.title === "string" ? continueLesson.title : "",
+            resumePercent,
+            lastActivityAt,
+          };
+        })
+      .filter((c): c is StudentEnrolledCourse => c !== null)
+      .sort((a, b) => {
+        if (a.progressPercent >= 100 && b.progressPercent < 100) return 1;
+        if (b.progressPercent >= 100 && a.progressPercent < 100) return -1;
+        const aTime = toDate(a.lastActivityAt)?.getTime() ?? 0;
+        const bTime = toDate(b.lastActivityAt)?.getTime() ?? 0;
+        if (aTime !== bTime) {
+          return bTime - aTime;
+        }
+        return b.progressPercent - a.progressPercent;
+      });
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load student enrolled courses."
+    );
+
+    return [];
+  }
 }
 
 export async function getStudentStudyQueue(
@@ -2359,248 +2495,257 @@ export async function getStudentStudyQueue(
   if (!userId) {
     return [];
   }
+  try {
+    const { tablesDB } = await createAdminClient();
+    const enrollmentsResult = await safeListRows<EnrollmentRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.enrollments,
+      [
+        Query.equal("userId", [userId]),
+        Query.equal("isActive", [true]),
+        Query.limit(100),
+      ]
+    );
 
-  const { tablesDB } = await createAdminClient();
-  const enrollmentsResult = await safeListRows<EnrollmentRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.enrollments,
-    [
-      Query.equal("userId", [userId]),
-      Query.equal("isActive", [true]),
-      Query.limit(100),
-    ]
-  );
+    const courseIds = [
+      ...new Set(
+        enrollmentsResult.rows
+          .map((row) =>
+            typeof row.courseId === "string" ? row.courseId.trim() : ""
+          )
+          .filter(Boolean)
+      ),
+    ];
 
-  const courseIds = [
-    ...new Set(
-      enrollmentsResult.rows
-        .map((row) =>
-          typeof row.courseId === "string" ? row.courseId.trim() : ""
-        )
-        .filter(Boolean)
-    ),
-  ];
+    if (courseIds.length === 0) {
+      return [];
+    }
 
-  if (courseIds.length === 0) {
+    const [
+      courseRows,
+      lessonRows,
+      assignmentRows,
+      quizRows,
+      submissionsResult,
+      quizAttemptsResult,
+    ] = await Promise.all([
+      listRowsByFieldValues<CourseRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.courses,
+        "$id",
+        courseIds
+      ),
+      listRowsByFieldValues<LessonRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.lessons,
+        "courseId",
+        courseIds
+      ),
+      listRowsByFieldValues<AssignmentRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.assignments,
+        "courseId",
+        courseIds
+      ),
+      listRowsByFieldValues<QuizRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.quizzes,
+        "courseId",
+        courseIds
+      ),
+      safeListRows<SubmissionRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.submissions,
+        [Query.equal("userId", [userId]), Query.limit(2000)]
+      ),
+      safeListRows<QuizAttemptRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.quizAttempts,
+        [Query.equal("userId", [userId]), Query.limit(2000)]
+      ),
+    ]);
+
+    const courseTitleById = new Map<string, string>(
+      courseRows.map((course) => [
+        course.$id,
+        typeof course.title === "string" ? course.title : "Course",
+      ])
+    );
+
+    const lessonMetaById = new Map<
+      string,
+      { title: string; order: number }
+    >(
+      lessonRows.map((lesson) => [
+        lesson.$id,
+        {
+          title: typeof lesson.title === "string" ? lesson.title : "",
+          order: Number(lesson.order ?? 0),
+        },
+      ])
+    );
+
+    const latestSubmissionByAssignmentId = new Map<string, SubmissionRow>();
+    for (const submission of submissionsResult.rows) {
+      const assignmentId =
+        typeof submission.assignmentId === "string"
+          ? submission.assignmentId.trim()
+          : "";
+      if (!assignmentId) {
+        continue;
+      }
+
+      const previous = latestSubmissionByAssignmentId.get(assignmentId);
+      const currentTime =
+        toDate(submission.submittedAt ?? submission.$createdAt)?.getTime() ?? 0;
+      const previousTime =
+        toDate(previous?.submittedAt ?? previous?.$createdAt)?.getTime() ?? -1;
+
+      if (!previous || currentTime >= previousTime) {
+        latestSubmissionByAssignmentId.set(assignmentId, submission);
+      }
+    }
+
+    const attemptsByQuizId = new Map<string, QuizAttemptRow[]>();
+    for (const attempt of quizAttemptsResult.rows) {
+      const quizId = typeof attempt.quizId === "string" ? attempt.quizId.trim() : "";
+      if (!quizId) {
+        continue;
+      }
+
+      const current = attemptsByQuizId.get(quizId) ?? [];
+      current.push(attempt);
+      attemptsByQuizId.set(quizId, current);
+    }
+
+    const now = Date.now();
+    const threeDaysMs = 1000 * 60 * 60 * 24 * 3;
+
+    const assignmentItems = assignmentRows
+      .filter((assignment) => !latestSubmissionByAssignmentId.has(assignment.$id))
+      .map((assignment) => {
+        const dueAt =
+          typeof assignment.dueDate === "string" && assignment.dueDate.trim().length > 0
+            ? assignment.dueDate
+            : null;
+        const dueTime = toDate(dueAt)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const priority =
+          dueTime < now
+            ? 0
+            : dueTime <= now + threeDaysMs
+              ? 1
+              : dueAt
+                ? 3
+                : 5;
+
+        return {
+          id: assignment.$id,
+          kind: "assignment" as const,
+          title: typeof assignment.title === "string" ? assignment.title : "Assignment",
+          courseTitle:
+            courseTitleById.get(
+              typeof assignment.courseId === "string" ? assignment.courseId : ""
+            ) ?? "Course",
+          lessonTitle:
+            lessonMetaById.get(
+              typeof assignment.lessonId === "string" ? assignment.lessonId : ""
+            )?.title ?? "",
+          href: `/app/assignments#assignment-${assignment.$id}`,
+          status:
+            dueTime < now
+              ? "Overdue"
+              : dueTime <= now + threeDaysMs
+                ? "Due soon"
+                : "Pending",
+          detail:
+            typeof assignment.description === "string" && assignment.description.trim().length > 0
+              ? assignment.description.trim()
+              : "Upload your work to complete this assignment.",
+          dueAt,
+          sortPriority: priority,
+          sortTime: dueTime,
+          sortLabel:
+            typeof assignment.title === "string" ? assignment.title : "Assignment",
+        };
+      });
+
+    const quizItems = quizRows
+      .map((quiz) => {
+        const attempts = attemptsByQuizId.get(quiz.$id) ?? [];
+        if (attempts.some((attempt) => Boolean(attempt.passed))) {
+          return null;
+        }
+
+        const latestAttempt = [...attempts].sort((left, right) => {
+          const leftTime = toDate(left.completedAt ?? left.$createdAt)?.getTime() ?? 0;
+          const rightTime =
+            toDate(right.completedAt ?? right.$createdAt)?.getTime() ?? 0;
+          return rightTime - leftTime;
+        })[0];
+        const bestScore = attempts.reduce(
+          (max, attempt) => Math.max(max, Number(attempt.score ?? 0)),
+          0
+        );
+        const lessonMeta = lessonMetaById.get(
+          typeof quiz.lessonId === "string" ? quiz.lessonId : ""
+        );
+
+        return {
+          id: quiz.$id,
+          kind: "quiz" as const,
+          title: typeof quiz.title === "string" ? quiz.title : "Quiz",
+          courseTitle:
+            courseTitleById.get(
+              typeof quiz.courseId === "string" ? quiz.courseId : ""
+            ) ?? "Course",
+          lessonTitle: lessonMeta?.title ?? "",
+          href: `/app/quiz/${quiz.$id}`,
+          status: latestAttempt ? "Retry" : "Ready",
+          detail: latestAttempt
+            ? `Best ${bestScore}% · Pass mark ${Number(quiz.passMark ?? 60)}%`
+            : `Pass mark ${Number(quiz.passMark ?? 60)}%${lessonMeta?.title ? ` · ${lessonMeta.title}` : ""}`,
+          dueAt: null,
+          sortPriority: latestAttempt ? 2 : 4,
+          sortTime: lessonMeta?.order ?? Number.MAX_SAFE_INTEGER,
+          sortLabel: typeof quiz.title === "string" ? quiz.title : "Quiz",
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    return [...assignmentItems, ...quizItems]
+      .sort((left, right) => {
+        if (left.sortPriority !== right.sortPriority) {
+          return left.sortPriority - right.sortPriority;
+        }
+        if (left.sortTime !== right.sortTime) {
+          return left.sortTime - right.sortTime;
+        }
+        if (left.courseTitle !== right.courseTitle) {
+          return left.courseTitle.localeCompare(right.courseTitle);
+        }
+        return left.sortLabel.localeCompare(right.sortLabel);
+      })
+      .slice(0, 6)
+      .map((item) => ({
+        id: item.id,
+        kind: item.kind,
+        title: item.title,
+        courseTitle: item.courseTitle,
+        lessonTitle: item.lessonTitle,
+        href: item.href,
+        status: item.status,
+        detail: item.detail,
+        dueAt: item.dueAt,
+      }));
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load student study queue."
+    );
+
     return [];
   }
-
-  const [
-    courseRows,
-    lessonRows,
-    assignmentRows,
-    quizRows,
-    submissionsResult,
-    quizAttemptsResult,
-  ] = await Promise.all([
-    listRowsByFieldValues<CourseRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.courses,
-      "$id",
-      courseIds
-    ),
-    listRowsByFieldValues<LessonRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.lessons,
-      "courseId",
-      courseIds
-    ),
-    listRowsByFieldValues<AssignmentRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.assignments,
-      "courseId",
-      courseIds
-    ),
-    listRowsByFieldValues<QuizRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.quizzes,
-      "courseId",
-      courseIds
-    ),
-    safeListRows<SubmissionRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.submissions,
-      [Query.equal("userId", [userId]), Query.limit(2000)]
-    ),
-    safeListRows<QuizAttemptRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.quizAttempts,
-      [Query.equal("userId", [userId]), Query.limit(2000)]
-    ),
-  ]);
-
-  const courseTitleById = new Map<string, string>(
-    courseRows.map((course) => [
-      course.$id,
-      typeof course.title === "string" ? course.title : "Course",
-    ])
-  );
-
-  const lessonMetaById = new Map<
-    string,
-    { title: string; order: number }
-  >(
-    lessonRows.map((lesson) => [
-      lesson.$id,
-      {
-        title: typeof lesson.title === "string" ? lesson.title : "",
-        order: Number(lesson.order ?? 0),
-      },
-    ])
-  );
-
-  const latestSubmissionByAssignmentId = new Map<string, SubmissionRow>();
-  for (const submission of submissionsResult.rows) {
-    const assignmentId =
-      typeof submission.assignmentId === "string"
-        ? submission.assignmentId.trim()
-        : "";
-    if (!assignmentId) {
-      continue;
-    }
-
-    const previous = latestSubmissionByAssignmentId.get(assignmentId);
-    const currentTime =
-      toDate(submission.submittedAt ?? submission.$createdAt)?.getTime() ?? 0;
-    const previousTime =
-      toDate(previous?.submittedAt ?? previous?.$createdAt)?.getTime() ?? -1;
-
-    if (!previous || currentTime >= previousTime) {
-      latestSubmissionByAssignmentId.set(assignmentId, submission);
-    }
-  }
-
-  const attemptsByQuizId = new Map<string, QuizAttemptRow[]>();
-  for (const attempt of quizAttemptsResult.rows) {
-    const quizId = typeof attempt.quizId === "string" ? attempt.quizId.trim() : "";
-    if (!quizId) {
-      continue;
-    }
-
-    const current = attemptsByQuizId.get(quizId) ?? [];
-    current.push(attempt);
-    attemptsByQuizId.set(quizId, current);
-  }
-
-  const now = Date.now();
-  const threeDaysMs = 1000 * 60 * 60 * 24 * 3;
-
-  const assignmentItems = assignmentRows
-    .filter((assignment) => !latestSubmissionByAssignmentId.has(assignment.$id))
-    .map((assignment) => {
-      const dueAt =
-        typeof assignment.dueDate === "string" && assignment.dueDate.trim().length > 0
-          ? assignment.dueDate
-          : null;
-      const dueTime = toDate(dueAt)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-      const priority =
-        dueTime < now
-          ? 0
-          : dueTime <= now + threeDaysMs
-            ? 1
-            : dueAt
-              ? 3
-              : 5;
-
-      return {
-        id: assignment.$id,
-        kind: "assignment" as const,
-        title: typeof assignment.title === "string" ? assignment.title : "Assignment",
-        courseTitle:
-          courseTitleById.get(
-            typeof assignment.courseId === "string" ? assignment.courseId : ""
-          ) ?? "Course",
-        lessonTitle:
-          lessonMetaById.get(
-            typeof assignment.lessonId === "string" ? assignment.lessonId : ""
-          )?.title ?? "",
-        href: `/app/assignments#assignment-${assignment.$id}`,
-        status:
-          dueTime < now
-            ? "Overdue"
-            : dueTime <= now + threeDaysMs
-              ? "Due soon"
-              : "Pending",
-        detail:
-          typeof assignment.description === "string" && assignment.description.trim().length > 0
-            ? assignment.description.trim()
-            : "Upload your work to complete this assignment.",
-        dueAt,
-        sortPriority: priority,
-        sortTime: dueTime,
-        sortLabel:
-          typeof assignment.title === "string" ? assignment.title : "Assignment",
-      };
-    });
-
-  const quizItems = quizRows
-    .map((quiz) => {
-      const attempts = attemptsByQuizId.get(quiz.$id) ?? [];
-      if (attempts.some((attempt) => Boolean(attempt.passed))) {
-        return null;
-      }
-
-      const latestAttempt = [...attempts].sort((left, right) => {
-        const leftTime = toDate(left.completedAt ?? left.$createdAt)?.getTime() ?? 0;
-        const rightTime =
-          toDate(right.completedAt ?? right.$createdAt)?.getTime() ?? 0;
-        return rightTime - leftTime;
-      })[0];
-      const bestScore = attempts.reduce(
-        (max, attempt) => Math.max(max, Number(attempt.score ?? 0)),
-        0
-      );
-      const lessonMeta = lessonMetaById.get(
-        typeof quiz.lessonId === "string" ? quiz.lessonId : ""
-      );
-
-      return {
-        id: quiz.$id,
-        kind: "quiz" as const,
-        title: typeof quiz.title === "string" ? quiz.title : "Quiz",
-        courseTitle:
-          courseTitleById.get(
-            typeof quiz.courseId === "string" ? quiz.courseId : ""
-          ) ?? "Course",
-        lessonTitle: lessonMeta?.title ?? "",
-        href: `/app/quiz/${quiz.$id}`,
-        status: latestAttempt ? "Retry" : "Ready",
-        detail: latestAttempt
-          ? `Best ${bestScore}% · Pass mark ${Number(quiz.passMark ?? 60)}%`
-          : `Pass mark ${Number(quiz.passMark ?? 60)}%${lessonMeta?.title ? ` · ${lessonMeta.title}` : ""}`,
-        dueAt: null,
-        sortPriority: latestAttempt ? 2 : 4,
-        sortTime: lessonMeta?.order ?? Number.MAX_SAFE_INTEGER,
-        sortLabel: typeof quiz.title === "string" ? quiz.title : "Quiz",
-      };
-    })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
-
-  return [...assignmentItems, ...quizItems]
-    .sort((left, right) => {
-      if (left.sortPriority !== right.sortPriority) {
-        return left.sortPriority - right.sortPriority;
-      }
-      if (left.sortTime !== right.sortTime) {
-        return left.sortTime - right.sortTime;
-      }
-      if (left.courseTitle !== right.courseTitle) {
-        return left.courseTitle.localeCompare(right.courseTitle);
-      }
-      return left.sortLabel.localeCompare(right.sortLabel);
-    })
-    .slice(0, 6)
-    .map((item) => ({
-      id: item.id,
-      kind: item.kind,
-      title: item.title,
-      courseTitle: item.courseTitle,
-      lessonTitle: item.lessonTitle,
-      href: item.href,
-      status: item.status,
-      detail: item.detail,
-      dueAt: item.dueAt,
-    }));
 }
 
 // ── Upcoming Live Sessions (for students) ─────────────────────────────────
@@ -2622,51 +2767,62 @@ export type LiveRecordingItem = {
 
 export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> {
   const user = await requireAuth();
-  const { tablesDB } = await createAdminClient();
 
-  const result = await safeListRows<LiveSessionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.liveSessions,
-    [
-      Query.equal("status", ["scheduled", "live"]),
-      Query.orderAsc("scheduledAt"),
-      Query.limit(50),
-    ]
-  );
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  const accessByCourseId = new Map<string, boolean>();
-  const visibleSessions: UpcomingSessionItem[] = [];
+    const result = await safeListRows<LiveSessionRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.liveSessions,
+      [
+        Query.equal("status", ["scheduled", "live"]),
+        Query.orderAsc("scheduledAt"),
+        Query.limit(50),
+      ]
+    );
 
-  for (const session of result.rows) {
-    const courseId = typeof session.courseId === "string" ? session.courseId : "";
-    if (!courseId) {
-      continue;
+    const accessByCourseId = new Map<string, boolean>();
+    const visibleSessions: UpcomingSessionItem[] = [];
+
+    for (const session of result.rows) {
+      const courseId = typeof session.courseId === "string" ? session.courseId : "";
+      if (!courseId) {
+        continue;
+      }
+
+      let hasAccess = accessByCourseId.get(courseId);
+      if (hasAccess === undefined) {
+        hasAccess = await userHasCourseAccess({ courseId, userId: user.$id });
+        accessByCourseId.set(courseId, hasAccess);
+      }
+
+      if (!hasAccess) {
+        continue;
+      }
+
+      visibleSessions.push({
+        id: session.$id,
+        title: typeof session.title === "string" ? session.title : "Untitled session",
+        status: typeof session.status === "string" ? session.status : "scheduled",
+        scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+        streamUrl: getSafeHttpUrl(session.streamId),
+      });
+
+      if (visibleSessions.length >= 10) {
+        break;
+      }
     }
 
-    let hasAccess = accessByCourseId.get(courseId);
-    if (hasAccess === undefined) {
-      hasAccess = await userHasCourseAccess({ courseId, userId: user.$id });
-      accessByCourseId.set(courseId, hasAccess);
-    }
+    return visibleSessions;
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load upcoming live sessions."
+    );
 
-    if (!hasAccess) {
-      continue;
-    }
-
-    visibleSessions.push({
-      id: session.$id,
-      title: typeof session.title === "string" ? session.title : "Untitled session",
-      status: typeof session.status === "string" ? session.status : "scheduled",
-      scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
-      streamUrl: getSafeHttpUrl(session.streamId),
-    });
-
-    if (visibleSessions.length >= 10) {
-      break;
-    }
+    return [];
   }
-
-  return visibleSessions;
 }
 
 export async function getRecentLiveRecordings(): Promise<LiveRecordingItem[]> {
