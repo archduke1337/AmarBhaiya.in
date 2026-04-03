@@ -64,6 +64,7 @@ export default async function CoursesPage({
 
           <select
             name="category"
+            aria-label="Filter by category"
             defaultValue={category}
             className="h-11 bg-background border border-border px-3 text-sm"
           >
@@ -77,6 +78,7 @@ export default async function CoursesPage({
 
           <select
             name="sort"
+            aria-label="Sort courses"
             defaultValue={sort}
             className="h-11 bg-background border border-border px-3 text-sm"
           >
@@ -97,6 +99,18 @@ export default async function CoursesPage({
       <section className="max-w-6xl mx-auto grid md:grid-cols-2 gap-5">
         {courses.map((course) => (
           <article key={course.slug} className="border border-border p-6 space-y-5">
+            {course.thumbnailUrl ? (
+              <img
+                src={course.thumbnailUrl}
+                alt={course.title}
+                className="w-full aspect-video object-cover border border-border"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full aspect-video border border-border bg-muted/30 flex items-center justify-center text-xs text-muted-foreground">
+                No thumbnail
+              </div>
+            )}
             <div className="flex items-center justify-between gap-4">
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-border px-2 py-1">
                 {course.category}

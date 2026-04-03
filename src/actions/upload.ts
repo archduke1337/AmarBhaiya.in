@@ -110,7 +110,7 @@ export async function uploadCourseThumbnailAction(
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.courses,
       rowId: courseId,
-      data: { thumbnailId: uploaded.$id },
+      data: { thumbnailId: uploaded.$id, thumbnailFileId: uploaded.$id },
     });
 
     revalidatePath(`/instructor/courses/${courseId}`);

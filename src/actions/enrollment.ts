@@ -17,10 +17,11 @@ export async function enrollInCourseAction(
 ): Promise<ActionResult> {
   try {
     const user = await requireAuth();
-    const courseId = String(formData.get("courseId") ?? "");
-    if (!courseId) return actionError("Course ID is required");
+    const courseInput = String(formData.get("courseId") ?? "").trim();
+    if (!courseInput) return actionError("Course ID is required");
 
     const { tablesDB } = await createAdminClient();
+    let courseId = courseInput;
 
     // Check if already enrolled
     try {
@@ -44,16 +45,31 @@ export async function enrollInCourseAction(
     }
 
     // Verify course exists and get access model
-    let courseSlug = courseId;
+    let courseSlug = courseInput;
     let accessModel = "free";
 
     try {
-      const course = (await tablesDB.getRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.courses,
-        rowId: courseId,
-      })) as AnyRow;
+      let course: AnyRow | null = null;
+      try {
+        course = (await tablesDB.getRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.courses,
+          rowId: courseInput,
+        })) as AnyRow;
+      } catch {
+        const bySlug = await tablesDB.listRows({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.courses,
+          queries: [Query.equal("slug", [courseInput]), Query.limit(1)],
+        });
+        course = (bySlug.rows[0] as AnyRow | undefined) ?? null;
+      }
 
+      if (!course) {
+        return actionError("Course not found");
+      }
+
+      courseId = course.$id;
       courseSlug = String(course.slug ?? courseId);
       accessModel = String(course.accessModel ?? "free");
     } catch {
@@ -87,6 +103,7 @@ export async function enrollInCourseAction(
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
     revalidatePath(`/courses/${courseSlug}`);
+    revalidatePath(`/app/courses/${courseId}`);
     return actionSuccess();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to enroll in course";
