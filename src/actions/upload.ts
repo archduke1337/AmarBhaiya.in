@@ -10,10 +10,15 @@ import {
   userCanManageResource,
 } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { finalizeLessonVideoUpload } from "@/lib/appwrite/lesson-video-upload";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import {
+  LESSON_VIDEO_ALLOWED_MIMES,
+  LESSON_VIDEO_MAX_BYTES,
+  getFileExtension,
+  isAllowedLessonVideoExtension,
+} from "@/lib/uploads/lesson-video";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
-
-type AnyRow = Record<string, unknown> & { $id: string };
 
 const STANDALONE_RESOURCE_EXTENSIONS = [
   "pdf",
@@ -40,10 +45,6 @@ const COURSE_RESOURCE_EXTENSIONS = [
 
 function getCourseThumbnailFileId(course: Record<string, unknown>): string {
   return String(course.thumbnailFileId ?? course.thumbnailId ?? "");
-}
-
-function getLessonVideoFileId(lesson: Record<string, unknown>): string {
-  return String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? "");
 }
 
 async function deleteUploadedFileIfPresent(
@@ -164,34 +165,20 @@ export async function uploadLessonVideoAction(
   if (!courseId || !lessonId || !file || file.size === 0) return;
   if (!(await userCanManageCourse(courseId, role, user.$id))) return;
 
-  // Validate: 500MB max
-  const maxSize = 500 * 1024 * 1024;
-  if (file.size > maxSize) return;
+  if (file.size > LESSON_VIDEO_MAX_BYTES) return;
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  if (!["mp4", "webm", "mov", "mkv"].includes(ext)) return;
+  const ext = getFileExtension(file.name);
+  if (!isAllowedLessonVideoExtension(ext)) return;
 
   try {
     // SECURITY: Verify MIME type using magic bytes to prevent malware disguised as video
     const buffer = Buffer.from(await file.arrayBuffer());
-    const validMimes = ["video/mp4", "video/webm", "video/quicktime", "video/x-matroska"];
-    if (!validateFileMimeType(buffer, file.name, validMimes)) {
+    if (!validateFileMimeType(buffer, file.name, [...LESSON_VIDEO_ALLOWED_MIMES])) {
       console.error("File MIME type validation failed");
       return;
     }
 
-    const { storage, tablesDB } = await createAdminClient();
-    const lesson = (await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      rowId: lessonId,
-    }).catch(() => null)) as AnyRow | null;
-
-    if (!lesson || String(lesson.courseId ?? "") !== courseId) {
-      return;
-    }
-
-    const previousVideoId = getLessonVideoFileId(lesson);
+    const { storage } = await createAdminClient();
 
     const uploaded = await storage.createFile({
       bucketId: APPWRITE_CONFIG.buckets.courseVideos,
@@ -199,35 +186,23 @@ export async function uploadLessonVideoAction(
       file,
     });
 
-    try {
-      await tablesDB.updateRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.lessons,
-        rowId: lessonId,
-        data: { videoFileId: uploaded.$id },
-      });
-    } catch (error) {
+    const result = await finalizeLessonVideoUpload({
+      courseId,
+      lessonId,
+      uploadedFileId: uploaded.$id,
+      userId: user.$id,
+      role,
+    });
+
+    if (!result.success) {
       await deleteUploadedFileIfPresent(
         storage,
         APPWRITE_CONFIG.buckets.courseVideos,
         uploaded.$id
       );
-      throw error;
+      console.error(result.error);
+      return;
     }
-
-    if (previousVideoId && previousVideoId !== uploaded.$id) {
-      await deleteUploadedFileIfPresent(
-        storage,
-        APPWRITE_CONFIG.buckets.courseVideos,
-        previousVideoId
-      );
-    }
-
-    revalidatePath("/instructor");
-    revalidatePath("/instructor/courses");
-    revalidatePath(`/instructor/courses/${courseId}`);
-    revalidatePath(`/instructor/courses/${courseId}/curriculum`);
-    revalidatePath(`/app/learn/${courseId}/${lessonId}`);
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to upload video."

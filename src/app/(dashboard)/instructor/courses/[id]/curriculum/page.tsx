@@ -9,7 +9,6 @@ import {
   updateCurriculumModuleAction,
 } from "@/actions/operations";
 import { deleteModuleAction, deleteLessonAction } from "@/actions/delete";
-import { uploadLessonVideoAction } from "@/actions/upload";
 import {
   createQuizAction,
   addQuizQuestionAction,
@@ -22,6 +21,7 @@ import {
   deleteAssignmentAction,
 } from "@/actions/assignments";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
+import { LessonVideoUploadForm } from "@/components/instructor/lesson-video-upload-form";
 import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
@@ -344,26 +344,10 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   </p>
 
                   {/* Video upload */}
-                  <form
-                    action={uploadLessonVideoAction}
-                    encType="multipart/form-data"
-                    className="flex items-center gap-2"
-                  >
-                    <input type="hidden" name="courseId" value={course.id} />
-                    <input type="hidden" name="lessonId" value={lesson.id} />
-                    <input
-                      type="file"
-                      name="file"
-                      accept=".mp4,.webm,.mov,.mkv"
-                      className="text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
-                    />
-                    <button
-                      type="submit"
-                      className="h-8 shrink-0 border border-border px-3 text-xs hover:bg-muted transition-colors"
-                    >
-                      Upload
-                    </button>
-                  </form>
+                  <LessonVideoUploadForm
+                    courseId={course.id}
+                    lessonId={lesson.id}
+                  />
 
                   <form action={updateCurriculumLessonAction} className="grid gap-3">
                     <input type="hidden" name="courseId" value={course.id} />
