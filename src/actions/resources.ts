@@ -5,7 +5,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireRole } from "@/lib/appwrite/auth";
-import { userCanManageResource } from "@/lib/appwrite/access";
+import {
+  userCanManageCourseResource,
+  userCanManageLesson,
+  userCanManageResource,
+} from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
@@ -18,6 +22,13 @@ const createResourceSchema = z.object({
   accessModel: z.enum(["free", "paid"]).default("free"),
   price: z.number().min(0).default(0),
   isPublished: z.boolean().default(false),
+});
+
+const createCourseResourceSchema = z.object({
+  lessonId: z.string().trim().min(1, "Lesson is required."),
+  title: z.string().trim().min(3, "Title must be at least 3 characters.").max(200),
+  type: z.enum(["pdf", "link", "file"]).default("file"),
+  url: z.string().trim().optional(),
 });
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -39,7 +50,66 @@ export type StandaloneResource = {
   createdAt: string;
 };
 
+export type CourseResourceOption = {
+  courseId: string;
+  courseTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+};
+
+export type InstructorCourseResource = {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+  title: string;
+  type: "pdf" | "link" | "file";
+  url: string;
+  fileId: string;
+};
+
 type AnyRow = Record<string, unknown> & { $id: string };
+
+function chunkValues<T>(values: T[], chunkSize = 20): T[][] {
+  if (values.length <= chunkSize) {
+    return [values];
+  }
+
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += chunkSize) {
+    chunks.push(values.slice(index, index + chunkSize));
+  }
+  return chunks;
+}
+
+async function listRowsByFieldValues(
+  tableId: string,
+  field: string,
+  values: string[]
+): Promise<AnyRow[]> {
+  if (values.length === 0) {
+    return [];
+  }
+
+  const { tablesDB } = await createAdminClient();
+  const rows: AnyRow[] = [];
+
+  for (const chunk of chunkValues(values, 20)) {
+    try {
+      const result = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId,
+        queries: [Query.equal(field, chunk), Query.limit(500)],
+      });
+      rows.push(...(result.rows as AnyRow[]));
+    } catch {
+      // Skip failing chunks
+    }
+  }
+
+  return rows;
+}
 
 // ── Create ──────────────────────────────────────────────────────────────────
 
@@ -88,6 +158,141 @@ export async function createStandaloneResourceAction(
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create resource."
+    );
+  }
+}
+
+// ── Course-Linked Resources ────────────────────────────────────────────────
+
+export async function createCourseResourceAction(
+  formData: FormData
+): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const parsed = createCourseResourceSchema.safeParse({
+    lessonId: String(formData.get("lessonId") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    type: String(formData.get("type") ?? "file"),
+    url: String(formData.get("url") ?? "").trim() || undefined,
+  });
+
+  if (!parsed.success) return;
+
+  const lessonContext = await userCanManageLesson(parsed.data.lessonId, role, user.$id);
+  if (!lessonContext) return;
+
+  try {
+    const { tablesDB } = await createAdminClient();
+
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.resources,
+      rowId: ID.unique(),
+      data: {
+        lessonId: lessonContext.lesson.$id,
+        title: parsed.data.title,
+        fileId: "",
+        type: parsed.data.type,
+        url: parsed.data.type === "link" ? parsed.data.url || "" : "",
+      },
+    });
+
+    revalidatePath("/instructor/resources");
+    revalidatePath(`/instructor/courses/${lessonContext.course.$id}/curriculum`);
+    revalidatePath(`/app/learn/${lessonContext.course.$id}/${lessonContext.lesson.$id}`);
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to create course resource."
+    );
+  }
+}
+
+export async function updateCourseResourceAction(
+  formData: FormData
+): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const resourceId = String(formData.get("resourceId") ?? "");
+  if (!resourceId) return;
+
+  const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
+  if (!resourceContext) return;
+
+  const data: Record<string, unknown> = {};
+  const title = String(formData.get("title") ?? "").trim();
+  if (title.length >= 3) {
+    data.title = title;
+  }
+
+  const type = String(formData.get("type") ?? "").trim();
+  if (type === "pdf" || type === "link" || type === "file") {
+    data.type = type;
+    data.url =
+      type === "link"
+        ? String(formData.get("url") ?? "").trim()
+        : "";
+  }
+
+  if (Object.keys(data).length === 0) return;
+
+  try {
+    const { tablesDB } = await createAdminClient();
+
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.resources,
+      rowId: resourceId,
+      data,
+    });
+
+    revalidatePath("/instructor/resources");
+    revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
+    revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to update course resource."
+    );
+  }
+}
+
+export async function deleteCourseResourceAction(
+  formData: FormData
+): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const resourceId = String(formData.get("resourceId") ?? "");
+  if (!resourceId) return;
+
+  const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
+  if (!resourceContext) return;
+
+  try {
+    const { tablesDB, storage } = await createAdminClient();
+
+    const fileId = String(resourceContext.resource.fileId ?? "");
+    if (fileId) {
+      try {
+        await storage.deleteFile({
+          bucketId: APPWRITE_CONFIG.buckets.courseResources,
+          fileId,
+        });
+      } catch {
+        // Continue even if file cleanup fails
+      }
+    }
+
+    await tablesDB.deleteRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.resources,
+      rowId: resourceId,
+    });
+
+    revalidatePath("/instructor/resources");
+    revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
+    revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to delete course resource."
     );
   }
 }
@@ -153,9 +358,21 @@ export async function deleteStandaloneResourceAction(
   if (!resourceId) return;
 
   try {
-    const { tablesDB } = await createAdminClient();
+    const { tablesDB, storage } = await createAdminClient();
+    const resource = await userCanManageResource(resourceId, role, user.$id);
+    if (!resource) return;
 
-    if (!(await userCanManageResource(resourceId, role, user.$id))) return;
+    const fileId = String(resource.fileId ?? "");
+    if (fileId) {
+      try {
+        await storage.deleteFile({
+          bucketId: APPWRITE_CONFIG.buckets.resourceFiles,
+          fileId,
+        });
+      } catch {
+        // Continue even if file cleanup fails
+      }
+    }
 
     await tablesDB.deleteRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -169,6 +386,116 @@ export async function deleteStandaloneResourceAction(
       error instanceof Error ? error.message : "Failed to delete resource."
     );
   }
+}
+
+export async function getInstructorCourseResourceOptions(
+  scope: { userId: string; role: string }
+): Promise<CourseResourceOption[]> {
+  const { tablesDB } = await createAdminClient();
+
+  const courseQueries =
+    scope.role === "admin"
+      ? [Query.orderDesc("$updatedAt"), Query.limit(200)]
+      : [
+          Query.equal("instructorId", [scope.userId]),
+          Query.orderDesc("$updatedAt"),
+          Query.limit(200),
+        ];
+
+  try {
+    const courseResult = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courses,
+      queries: courseQueries,
+    });
+
+    const courseRows = courseResult.rows as AnyRow[];
+    const courseTitleById = new Map(
+      courseRows.map((course) => [course.$id, String(course.title ?? "Untitled course")])
+    );
+    const courseIds = courseRows.map((course) => course.$id);
+    const lessonRows = await listRowsByFieldValues(
+      APPWRITE_CONFIG.tables.lessons,
+      "courseId",
+      courseIds
+    );
+
+    return lessonRows
+      .sort((left, right) => {
+        const leftCourseTitle = courseTitleById.get(String(left.courseId ?? "")) ?? "";
+        const rightCourseTitle = courseTitleById.get(String(right.courseId ?? "")) ?? "";
+        if (leftCourseTitle !== rightCourseTitle) {
+          return leftCourseTitle.localeCompare(rightCourseTitle);
+        }
+
+        return Number(left.order ?? 0) - Number(right.order ?? 0);
+      })
+      .map((lesson) => ({
+        courseId: String(lesson.courseId ?? ""),
+        courseTitle: courseTitleById.get(String(lesson.courseId ?? "")) ?? "Untitled course",
+        lessonId: lesson.$id,
+        lessonTitle: String(lesson.title ?? "Untitled lesson"),
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getInstructorCourseResources(
+  scope: { userId: string; role: string }
+): Promise<InstructorCourseResource[]> {
+  const lessonOptions = await getInstructorCourseResourceOptions(scope);
+  const lessonIds = lessonOptions.map((lesson) => lesson.lessonId);
+
+  if (lessonIds.length === 0) {
+    return [];
+  }
+
+  const lessonById = new Map(
+    lessonOptions.map((lesson) => [
+      lesson.lessonId,
+      {
+        courseId: lesson.courseId,
+        courseTitle: lesson.courseTitle,
+        lessonTitle: lesson.lessonTitle,
+      },
+    ])
+  );
+
+  const resourceRows = await listRowsByFieldValues(
+    APPWRITE_CONFIG.tables.resources,
+    "lessonId",
+    lessonIds
+  );
+
+  return resourceRows
+    .map((row) => {
+      const lessonId = String(row.lessonId ?? "");
+      const lesson = lessonById.get(lessonId);
+      if (!lesson) return null;
+
+      return {
+        id: row.$id,
+        courseId: lesson.courseId,
+        courseTitle: lesson.courseTitle,
+        lessonId,
+        lessonTitle: lesson.lessonTitle,
+        title: String(row.title ?? ""),
+        type: (String(row.type ?? "file") as "pdf" | "link" | "file"),
+        url: String(row.url ?? ""),
+        fileId: String(row.fileId ?? ""),
+      } satisfies InstructorCourseResource;
+    })
+    .filter((resource): resource is InstructorCourseResource => resource !== null)
+    .sort((left, right) => {
+      if (left.courseTitle !== right.courseTitle) {
+        return left.courseTitle.localeCompare(right.courseTitle);
+      }
+      if (left.lessonTitle !== right.lessonTitle) {
+        return left.lessonTitle.localeCompare(right.lessonTitle);
+      }
+      return left.title.localeCompare(right.title);
+    });
 }
 
 // ── List (for instructor dashboard) ─────────────────────────────────────────

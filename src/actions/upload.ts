@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import {
   userCanManageCourse,
+  userCanManageCourseResource,
   userCanManageResource,
 } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
@@ -218,7 +219,8 @@ export async function uploadResourceFileAction(
   const file = formData.get("file") as File | null;
 
   if (!resourceId || !file || file.size === 0) return;
-  if (!(await userCanManageResource(resourceId, role, user.$id))) return;
+  const resource = await userCanManageResource(resourceId, role, user.$id);
+  if (!resource) return;
 
   // Validate: 200MB max
   const maxSize = 200 * 1024 * 1024;
@@ -226,6 +228,7 @@ export async function uploadResourceFileAction(
 
   try {
     const { storage, tablesDB } = await createAdminClient();
+    const previousFileId = String(resource.fileId ?? "");
 
     const uploaded = await storage.createFile({
       bucketId: APPWRITE_CONFIG.buckets.resourceFiles,
@@ -233,18 +236,99 @@ export async function uploadResourceFileAction(
       file,
     });
 
-    // Update resource record
-    await tablesDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.standaloneResources,
-      rowId: resourceId,
-      data: { fileId: uploaded.$id },
-    });
+    try {
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.standaloneResources,
+        rowId: resourceId,
+        data: { fileId: uploaded.$id },
+      });
+    } catch (error) {
+      await deleteUploadedFileIfPresent(
+        storage,
+        APPWRITE_CONFIG.buckets.resourceFiles,
+        uploaded.$id
+      );
+      throw error;
+    }
+
+    if (previousFileId && previousFileId !== uploaded.$id) {
+      await deleteUploadedFileIfPresent(
+        storage,
+        APPWRITE_CONFIG.buckets.resourceFiles,
+        previousFileId
+      );
+    }
 
     revalidatePath("/instructor/resources");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to upload resource file."
+    );
+  }
+}
+
+// ── Upload Course Resource File ────────────────────────────────────────────
+
+export async function uploadCourseResourceFileAction(
+  formData: FormData
+): Promise<void> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
+  const resourceId = String(formData.get("resourceId") ?? "");
+  const file = formData.get("file") as File | null;
+
+  if (!resourceId || !file || file.size === 0) return;
+
+  const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
+  if (!resourceContext) return;
+
+  const maxSize = 100 * 1024 * 1024;
+  if (file.size > maxSize) return;
+
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (!["pdf", "zip", "txt", "doc", "docx", "pptx"].includes(ext)) return;
+
+  try {
+    const { storage, tablesDB } = await createAdminClient();
+    const previousFileId = String(resourceContext.resource.fileId ?? "");
+
+    const uploaded = await storage.createFile({
+      bucketId: APPWRITE_CONFIG.buckets.courseResources,
+      fileId: ID.unique(),
+      file,
+    });
+
+    try {
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.resources,
+        rowId: resourceId,
+        data: { fileId: uploaded.$id },
+      });
+    } catch (error) {
+      await deleteUploadedFileIfPresent(
+        storage,
+        APPWRITE_CONFIG.buckets.courseResources,
+        uploaded.$id
+      );
+      throw error;
+    }
+
+    if (previousFileId && previousFileId !== uploaded.$id) {
+      await deleteUploadedFileIfPresent(
+        storage,
+        APPWRITE_CONFIG.buckets.courseResources,
+        previousFileId
+      );
+    }
+
+    revalidatePath("/instructor/resources");
+    revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
+    revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to upload course resource file."
     );
   }
 }

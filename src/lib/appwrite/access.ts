@@ -28,6 +28,24 @@ export async function getLessonRow(lessonId: string): Promise<AnyRow | null> {
   return getRowById(APPWRITE_CONFIG.tables.lessons, lessonId);
 }
 
+export async function userCanManageLesson(
+  lessonId: string,
+  role: Role,
+  userId: string
+): Promise<{ lesson: AnyRow; course: AnyRow } | null> {
+  const lesson = await getLessonRow(lessonId);
+  if (!lesson) {
+    return null;
+  }
+
+  const course = await userCanManageCourse(String(lesson.courseId ?? ""), role, userId);
+  if (!course) {
+    return null;
+  }
+
+  return { lesson, course };
+}
+
 export async function userCanManageCourse(
   courseId: string,
   role: Role,
@@ -60,6 +78,33 @@ export async function userCanManageResource(
   }
 
   return String(resource.instructorId ?? "") === userId ? resource : null;
+}
+
+export async function userCanManageCourseResource(
+  resourceId: string,
+  role: Role,
+  userId: string
+): Promise<{ resource: AnyRow; lesson: AnyRow; course: AnyRow } | null> {
+  const resource = await getRowById(APPWRITE_CONFIG.tables.resources, resourceId);
+  if (!resource) {
+    return null;
+  }
+
+  const lessonId = String(resource.lessonId ?? "");
+  if (!lessonId) {
+    return null;
+  }
+
+  const lessonContext = await userCanManageLesson(lessonId, role, userId);
+  if (!lessonContext) {
+    return null;
+  }
+
+  return {
+    resource,
+    lesson: lessonContext.lesson,
+    course: lessonContext.course,
+  };
 }
 
 export async function userHasCourseAccess({

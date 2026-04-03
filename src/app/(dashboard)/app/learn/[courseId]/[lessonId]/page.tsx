@@ -6,7 +6,11 @@ import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { getFilePreviewUrl, getFileViewUrl } from "@/lib/utils/file-urls";
+import {
+  getFileDownloadUrl,
+  getFilePreviewUrl,
+  getFileViewUrl,
+} from "@/lib/utils/file-urls";
 import { VideoPlayer } from "@/components/video-player";
 import { getCourseProgress } from "@/actions/enrollment";
 import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
@@ -113,11 +117,40 @@ export default async function LessonViewerPage({ params }: PageProps) {
     ? getFilePreviewUrl(APPWRITE_CONFIG.buckets.courseThumbnails, thumbnailFileId, 1280, 720)
     : "";
 
-  // Get progress + comments
-  const [{ completedLessonIds }, comments] = await Promise.all([
+  // Get progress, comments, and lesson resources
+  const [{ completedLessonIds }, comments, lessonResourcesResult] = await Promise.all([
     getCourseProgress(courseId, user.$id),
     getLessonComments(lessonId),
+    tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.resources,
+      queries: [Query.equal("lessonId", [lessonId]), Query.limit(100)],
+    }).catch(() => ({ rows: [] })),
   ]);
+  const lessonResources = (lessonResourcesResult.rows as AnyRow[])
+    .map((resource) => {
+      const type = String(resource.type ?? "file");
+      const url = String(resource.url ?? "");
+      const fileId = String(resource.fileId ?? "");
+      const href =
+        type === "link"
+          ? url
+          : fileId
+            ? getFileDownloadUrl(APPWRITE_CONFIG.buckets.courseResources, fileId)
+            : "";
+
+      if (!href) {
+        return null;
+      }
+
+      return {
+        id: resource.$id,
+        title: String(resource.title ?? "Resource"),
+        type,
+        href,
+      };
+    })
+    .filter((resource): resource is { id: string; title: string; type: string; href: string } => resource !== null);
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -167,6 +200,33 @@ export default async function LessonViewerPage({ params }: PageProps) {
           </p>
         )}
       </div>
+
+      {lessonResources.length > 0 && (
+        <section className="border border-border">
+          <div className="border-b border-border px-5 py-3">
+            <h2 className="text-sm font-medium">
+              Lesson Resources ({lessonResources.length})
+            </h2>
+          </div>
+          <ul className="divide-y divide-border">
+            {lessonResources.map((resource) => (
+              <li key={resource.id}>
+                <a
+                  href={resource.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-muted/40"
+                >
+                  <span>{resource.title}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {resource.type}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Navigation */}
       <nav className="flex items-center justify-between border-t border-border pt-4">

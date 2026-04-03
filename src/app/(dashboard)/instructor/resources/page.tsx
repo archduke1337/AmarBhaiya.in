@@ -1,12 +1,20 @@
-import { FileText, Plus, Download, Eye, EyeOff } from "lucide-react";
+import { BookOpen, Download, Eye, EyeOff, FileText, Plus } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import {
+  createCourseResourceAction,
   createStandaloneResourceAction,
+  deleteCourseResourceAction,
+  getInstructorCourseResourceOptions,
+  getInstructorCourseResources,
   getInstructorResources,
+  updateCourseResourceAction,
   updateStandaloneResourceAction,
 } from "@/actions/resources";
-import { uploadResourceFileAction } from "@/actions/upload";
+import {
+  uploadCourseResourceFileAction,
+  uploadResourceFileAction,
+} from "@/actions/upload";
 import { deleteStandaloneResourceAction } from "@/actions/resources";
 import { formatCurrency } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
@@ -14,24 +22,240 @@ import { Badge } from "@/components/ui/badge";
 
 export default async function InstructorResourcesPage() {
   const { user, role } = await requireRole(["admin", "instructor"]);
-  const resources = await getInstructorResources({ userId: user.$id, role });
+  const [resources, courseResources, lessonOptions] = await Promise.all([
+    getInstructorResources({ userId: user.$id, role }),
+    getInstructorCourseResources({ userId: user.$id, role }),
+    getInstructorCourseResourceOptions({ userId: user.$id, role }),
+  ]);
 
   const published = resources.filter((r) => r.isPublished).length;
   const free = resources.filter((r) => r.accessModel === "free").length;
+  const courseLinked = courseResources.length;
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Instructor · Resources"
-        title="Standalone Resources"
-        description={`${resources.length} total — ${published} published, ${free} free, ${resources.length - free} paid. These are independent materials NOT tied to any course.`}
+        title="Resources Library"
+        description={`${courseLinked} lesson-linked resources and ${resources.length} standalone resources. Manage course attachments and independent downloads from one place.`}
       />
 
-      {/* Create resource form */}
+      {/* Course-linked resources */}
+      <section className="border border-border">
+        <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+          <BookOpen className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-medium">Course Lesson Resources</h2>
+        </div>
+
+        {lessonOptions.length === 0 ? (
+          <div className="px-5 py-6 text-sm text-muted-foreground">
+            Add lessons in your course curriculum first. Once lessons exist, you can attach PDFs,
+            links, and downloadable files here for students.
+          </div>
+        ) : (
+          <form
+            action={createCourseResourceAction}
+            className="grid gap-4 p-5 md:grid-cols-2"
+          >
+            <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
+              <span className="text-muted-foreground">Lesson</span>
+              <select
+                name="lessonId"
+                required
+                className="h-10 border border-border bg-background px-3 text-sm"
+                defaultValue={lessonOptions[0]?.lessonId ?? ""}
+              >
+                {lessonOptions.map((lesson) => (
+                  <option key={lesson.lessonId} value={lesson.lessonId}>
+                    {lesson.courseTitle} · {lesson.lessonTitle}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-muted-foreground">Title</span>
+              <input
+                name="title"
+                required
+                minLength={3}
+                placeholder="e.g. Worksheet PDF"
+                className="h-10 border border-border bg-background px-3 text-sm"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-muted-foreground">Type</span>
+              <select
+                name="type"
+                className="h-10 border border-border bg-background px-3 text-sm"
+              >
+                <option value="file">Downloadable file</option>
+                <option value="pdf">PDF</option>
+                <option value="link">External link</option>
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
+              <span className="text-muted-foreground">Link URL (for link type)</span>
+              <input
+                name="url"
+                type="url"
+                placeholder="https://..."
+                className="h-10 border border-border bg-background px-3 text-sm"
+              />
+            </label>
+
+            <div className="flex items-end justify-end md:col-span-2">
+              <button
+                type="submit"
+                className="h-10 bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
+              >
+                Add Course Resource
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="border-t border-border bg-muted/10 px-5 py-3 text-xs text-muted-foreground">
+          These resources are attached to specific lessons and inherit course access automatically.
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-medium">
+          Course Resources ({courseResources.length})
+        </h2>
+
+        {courseResources.length === 0 ? (
+          <EmptyState
+            icon={BookOpen}
+            title="No lesson resources yet"
+            description="Attach PDFs, files, or links to specific lessons so students can access them while learning."
+          />
+        ) : (
+          courseResources.map((resource) => (
+            <article key={resource.id} className="border border-border">
+              <div className="flex flex-col gap-2 p-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-medium">{resource.title}</h3>
+                    <Badge variant="outline" className="text-[10px] uppercase">
+                      {resource.type}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {resource.courseTitle} · {resource.lessonTitle}
+                  </p>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <Download className="size-3" />
+                      {resource.fileId ? "File attached" : "No file yet"}
+                    </span>
+                    <span>
+                      {resource.type === "link"
+                        ? resource.url || "No link yet"
+                        : "Visible inside the lesson viewer"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <form
+                action={updateCourseResourceAction}
+                className="border-t border-border bg-muted/20 px-5 py-4"
+              >
+                <input type="hidden" name="resourceId" value={resource.id} />
+                <div className="grid gap-3 md:grid-cols-4">
+                  <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
+                    <span className="text-muted-foreground">Title</span>
+                    <input
+                      name="title"
+                      minLength={3}
+                      defaultValue={resource.title}
+                      className="h-9 border border-border bg-background px-3 text-xs"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="text-muted-foreground">Type</span>
+                    <select
+                      name="type"
+                      defaultValue={resource.type}
+                      className="h-9 border border-border bg-background px-3 text-xs"
+                    >
+                      <option value="file">File</option>
+                      <option value="pdf">PDF</option>
+                      <option value="link">Link</option>
+                    </select>
+                  </label>
+
+                  <div className="flex items-end">
+                    <button
+                      type="submit"
+                      className="h-9 w-full border border-border px-3 text-xs transition-colors hover:bg-muted"
+                    >
+                      Save
+                    </button>
+                  </div>
+
+                  <label className="flex flex-col gap-1.5 text-sm md:col-span-4">
+                    <span className="text-muted-foreground">Link URL</span>
+                    <input
+                      name="url"
+                      type="url"
+                      defaultValue={resource.url}
+                      placeholder="https://..."
+                      className="h-9 border border-border bg-background px-3 text-xs"
+                    />
+                  </label>
+                </div>
+              </form>
+
+              <form
+                action={uploadCourseResourceFileAction}
+                encType="multipart/form-data"
+                className="flex items-center gap-3 border-t border-border px-5 py-3"
+              >
+                <input type="hidden" name="resourceId" value={resource.id} />
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {resource.fileId ? "✓ File attached" : "No file"}
+                </span>
+                <input
+                  type="file"
+                  name="file"
+                  className="flex-1 text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
+                />
+                <button
+                  type="submit"
+                  className="h-8 shrink-0 border border-border px-3 text-xs hover:bg-muted transition-colors"
+                >
+                  Upload
+                </button>
+              </form>
+
+              <form
+                action={deleteCourseResourceAction}
+                className="flex justify-end border-t border-border px-5 py-2"
+              >
+                <input type="hidden" name="resourceId" value={resource.id} />
+                <button
+                  type="submit"
+                  className="h-8 px-3 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  Delete resource
+                </button>
+              </form>
+            </article>
+          ))
+        )}
+      </section>
+
+      {/* Create standalone resource form */}
       <section className="border border-border">
         <div className="flex items-center gap-2 border-b border-border px-5 py-3">
           <Plus className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-medium">Create New Resource</h2>
+          <h2 className="text-sm font-medium">Create Standalone Resource</h2>
         </div>
         <form
           action={createStandaloneResourceAction}
@@ -114,10 +338,10 @@ export default async function InstructorResourcesPage() {
         </form>
       </section>
 
-      {/* Resource list */}
+      {/* Standalone resource list */}
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">
-          Your Resources ({resources.length})
+          Standalone Resources ({resources.length})
         </h2>
 
         {resources.length === 0 ? (
