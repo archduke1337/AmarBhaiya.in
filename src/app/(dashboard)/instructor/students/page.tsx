@@ -130,7 +130,7 @@ export default async function InstructorStudentsPage() {
                   timestamp: student.enrolledAt
                     ? formatRelativeTime(student.enrolledAt)
                     : undefined,
-                  href: `#student-${student.courseId}-${student.id}`,
+                  href: `/instructor/students#student-${student.courseId}-${student.id}`,
                 }))}
               />
             </div>
@@ -147,7 +147,7 @@ export default async function InstructorStudentsPage() {
                   timestamp: student.enrolledAt
                     ? formatRelativeTime(student.enrolledAt)
                     : undefined,
-                  href: `#student-${student.courseId}-${student.id}`,
+                  href: `/instructor/students#student-${student.courseId}-${student.id}`,
                 }))}
               />
             </div>

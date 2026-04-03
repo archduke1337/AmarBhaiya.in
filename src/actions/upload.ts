@@ -136,6 +136,7 @@ export async function uploadCourseThumbnailAction(
       );
     }
 
+    revalidatePath("/instructor");
     revalidatePath(`/instructor/courses/${courseId}`);
     revalidatePath("/instructor/courses");
     revalidatePath("/courses");
@@ -222,6 +223,9 @@ export async function uploadLessonVideoAction(
       );
     }
 
+    revalidatePath("/instructor");
+    revalidatePath("/instructor/courses");
+    revalidatePath(`/instructor/courses/${courseId}`);
     revalidatePath(`/instructor/courses/${courseId}/curriculum`);
     revalidatePath(`/app/learn/${courseId}/${lessonId}`);
   } catch (error) {

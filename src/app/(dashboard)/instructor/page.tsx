@@ -55,6 +55,14 @@ export default async function InstructorDashboardPage() {
 
   const draftCourses = courses.filter((c) => c.status === "Draft");
   const publishedCourses = courses.filter((c) => c.status === "Published");
+  const readyToPublishCourses = courses.filter((course) => course.readyToPublish);
+  const setupBlockedCourses = courses.filter(
+    (course) => course.publishBlockers.length > 0
+  );
+  const courseWatchlist = courses.filter(
+    (course) =>
+      course.publishBlockers.length === 0 && course.attentionFlags.length > 0
+  );
   const standaloneDrafts = resources.filter((resource) => !resource.isPublished).length;
   const standalonePublished = resources.length - standaloneDrafts;
   const sessionsMissingJoinLink = sessions.filter((session) => !session.streamUrl).length;
@@ -204,6 +212,20 @@ export default async function InstructorDashboardPage() {
                         {course.shortDescription}
                       </p>
                     )}
+                    <p className="text-xs text-muted-foreground">
+                      {course.moduleCount} module{course.moduleCount === 1 ? "" : "s"} ·{" "}
+                      {course.totalLessons} lesson{course.totalLessons === 1 ? "" : "s"} ·{" "}
+                      {course.activeEnrollments} enrollment{course.activeEnrollments === 1 ? "" : "s"}
+                    </p>
+                    {course.publishBlockers[0] ? (
+                      <p className="text-xs text-destructive">
+                        {course.publishBlockers[0]}
+                      </p>
+                    ) : course.attentionFlags[0] ? (
+                      <p className="text-xs text-muted-foreground">
+                        {course.attentionFlags[0]}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Badge
@@ -219,6 +241,50 @@ export default async function InstructorDashboardPage() {
               ))}
             </div>
           )}
+
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium">Course Health</h2>
+              <Link
+                href="/instructor/courses"
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Open course library →
+              </Link>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              <ActivityFeed
+                title={`Ready To Publish (${readyToPublishCourses.length})`}
+                emptyText="No draft courses are fully ready to publish yet."
+                items={readyToPublishCourses.slice(0, 4).map((course) => ({
+                  id: course.id,
+                  label: course.title,
+                  description: `${course.moduleCount} modules · ${course.totalLessons} lessons · ${course.lessonVideoCount} videos`,
+                  badge: "Ready",
+                  href: `/instructor/courses#course-${course.id}`,
+                }))}
+              />
+
+              <ActivityFeed
+                title={`Needs Setup (${setupBlockedCourses.length + courseWatchlist.length})`}
+                emptyText="No course setup issues right now."
+                items={[...setupBlockedCourses, ...courseWatchlist]
+                  .slice(0, 4)
+                  .map((course) => ({
+                    id: `health-${course.id}`,
+                    label: course.title,
+                    description:
+                      course.publishBlockers[0] ??
+                      course.attentionFlags[0] ??
+                      "Needs a quick review",
+                    badge:
+                      course.publishBlockers.length > 0 ? "Blocked" : "Watch",
+                    href: `/instructor/courses#course-${course.id}`,
+                  }))}
+              />
+            </div>
+          </section>
 
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -330,6 +396,10 @@ export default async function InstructorDashboardPage() {
                   )
                 : undefined,
               dormantRevenueCourseId: dormantPaidCourses[0]?.id,
+              courseBlockingCount: setupBlockedCourses.length,
+              firstBlockedCourseId: setupBlockedCourses[0]?.id,
+              readyToPublishCount: readyToPublishCourses.length,
+              firstReadyCourseId: readyToPublishCourses[0]?.id,
             })}
           />
 
@@ -398,6 +468,7 @@ export default async function InstructorDashboardPage() {
                 { label: "Manage Categories", href: "/instructor/categories" },
                 { label: "View Students", href: "/instructor/students" },
                 { label: "Review Submissions", href: "/instructor/submissions" },
+                { label: "Course Library", href: "/instructor/courses" },
                 { label: "View Earnings", href: "/instructor/earnings" },
                 { label: "Schedule Live Session", href: "/instructor/live" },
                 { label: "Resources Library", href: "/instructor/resources" },
@@ -436,6 +507,10 @@ function buildActionItems(
     studentAttentionCount: number;
     firstStudentAttentionHref?: string;
     dormantRevenueCourseId?: string;
+    courseBlockingCount: number;
+    firstBlockedCourseId?: string;
+    readyToPublishCount: number;
+    firstReadyCourseId?: string;
   }
 ) {
   const items: Array<{
@@ -487,6 +562,30 @@ function buildActionItems(
       description: "Reach out to students who enrolled but still have low momentum",
       badge: "Students",
       href: context.firstStudentAttentionHref ?? "/instructor/students#needs-attention",
+    });
+  }
+
+  if (context.courseBlockingCount > 0) {
+    items.push({
+      id: "course-blockers",
+      label: `${context.courseBlockingCount} course${context.courseBlockingCount === 1 ? "" : "s"} still have publish blockers`,
+      description: "Fix missing thumbnail, curriculum, or lesson media before launch",
+      badge: "Courses",
+      href: context.firstBlockedCourseId
+        ? `/instructor/courses#course-${context.firstBlockedCourseId}`
+        : "/instructor/courses",
+    });
+  }
+
+  if (context.readyToPublishCount > 0) {
+    items.push({
+      id: "ready-to-publish",
+      label: `${context.readyToPublishCount} draft course${context.readyToPublishCount === 1 ? "" : "s"} are ready to publish`,
+      description: "Review the strongest drafts and decide if they should go live",
+      badge: "Ready",
+      href: context.firstReadyCourseId
+        ? `/instructor/courses#course-${context.firstReadyCourseId}`
+        : "/instructor/courses",
     });
   }
 

@@ -81,7 +81,7 @@ export default async function InstructorEarningsPage() {
                   timestamp: payment.paidAt
                     ? formatRelativeTime(payment.paidAt)
                     : undefined,
-                  href: `#course-revenue-${payment.courseId}`,
+                  href: `/instructor/earnings#course-revenue-${payment.courseId}`,
                 }))}
               />
             </div>
@@ -98,7 +98,7 @@ export default async function InstructorEarningsPage() {
                       ? "Selling historically, but no completed sales this month"
                       : "Published with no completed sales yet",
                   badge: course.totalRevenue > 0 ? "Dormant" : "No sales",
-                  href: `#course-revenue-${course.id}`,
+                  href: `/instructor/earnings#course-revenue-${course.id}`,
                 }))}
               />
             </div>

@@ -368,10 +368,12 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
     },
   });
 
+  revalidatePath("/instructor");
   revalidatePath("/instructor/courses");
   revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
   revalidatePath("/admin/courses");
+  revalidatePath("/courses");
 
   if (typeof course.slug === "string" && course.slug.length > 0) {
     revalidatePath(`/courses/${course.slug}`);
@@ -412,6 +414,9 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
     },
   });
 
+  revalidatePath("/instructor");
+  revalidatePath("/instructor/courses");
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
 }
 
@@ -492,6 +497,8 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
     },
   });
 
+  revalidatePath("/instructor");
+  revalidatePath("/instructor/courses");
   revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
 
@@ -548,6 +555,9 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
     },
   });
 
+  revalidatePath("/instructor");
+  revalidatePath("/instructor/courses");
+  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
 }
 
@@ -629,6 +639,8 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
     },
   });
 
+  revalidatePath("/instructor");
+  revalidatePath("/instructor/courses");
   revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
 

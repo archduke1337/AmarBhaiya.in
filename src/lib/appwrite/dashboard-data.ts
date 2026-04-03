@@ -83,6 +83,20 @@ export type InstructorCourseListItem = {
   title: string;
   shortDescription: string;
   status: "Published" | "Draft";
+  accessModel: string;
+  price: number;
+  totalLessons: number;
+  totalDuration: number;
+  moduleCount: number;
+  activeEnrollments: number;
+  hasThumbnail: boolean;
+  previewLessonCount: number;
+  lessonVideoCount: number;
+  missingVideoCount: number;
+  publishBlockers: string[];
+  attentionFlags: string[];
+  readyToPublish: boolean;
+  needsAttention: boolean;
 };
 
 export type InstructorStudentItem = {
@@ -279,6 +293,16 @@ export type InstructorCourseSummary = {
   totalLessons: number;
   totalDuration: number;
   thumbnailId: string;
+  moduleCount: number;
+  activeEnrollments: number;
+  hasThumbnail: boolean;
+  previewLessonCount: number;
+  lessonVideoCount: number;
+  missingVideoCount: number;
+  publishBlockers: string[];
+  attentionFlags: string[];
+  readyToPublish: boolean;
+  needsAttention: boolean;
 };
 
 export type InstructorCurriculumModule = {
@@ -349,6 +373,91 @@ function getSafeHttpUrl(value: unknown): string {
   } catch {
     return "";
   }
+}
+
+function getCourseThumbnailId(course: CourseRow): string {
+  if (
+    typeof course.thumbnailFileId === "string" &&
+    course.thumbnailFileId.length > 0
+  ) {
+    return course.thumbnailFileId;
+  }
+
+  if (typeof course.thumbnailId === "string" && course.thumbnailId.length > 0) {
+    return course.thumbnailId;
+  }
+
+  return "";
+}
+
+function buildInstructorCourseHealth(args: {
+  course: CourseRow;
+  modules: ModuleRow[];
+  lessons: LessonRow[];
+  activeEnrollments: number;
+}) {
+  const { course, modules, lessons, activeEnrollments } = args;
+  const thumbnailId = getCourseThumbnailId(course);
+  const hasThumbnail = thumbnailId.length > 0;
+  const totalLessons = lessons.length;
+  const totalDuration = lessons.reduce((sum, lesson) => {
+    const duration = Number(lesson.duration ?? 0);
+    return sum + (Number.isFinite(duration) ? duration : 0);
+  }, 0);
+  const lessonVideoCount = lessons.filter(
+    (lesson) => typeof lesson.videoFileId === "string" && lesson.videoFileId.length > 0
+  ).length;
+  const missingVideoCount = Math.max(0, totalLessons - lessonVideoCount);
+  const previewLessonCount = lessons.filter((lesson) => Boolean(lesson.isFreePreview))
+    .length;
+  const publishBlockers: string[] = [];
+  const attentionFlags: string[] = [];
+
+  if (!hasThumbnail) {
+    publishBlockers.push("Add a course thumbnail");
+  }
+
+  if (modules.length === 0) {
+    publishBlockers.push("Create the first module");
+  }
+
+  if (totalLessons === 0) {
+    publishBlockers.push("Add at least one lesson");
+  } else if (lessonVideoCount === 0) {
+    publishBlockers.push("Upload the first lesson video");
+  }
+
+  if (missingVideoCount > 0 && lessonVideoCount > 0) {
+    attentionFlags.push(
+      `${missingVideoCount} lesson${missingVideoCount === 1 ? "" : "s"} still need video`
+    );
+  }
+
+  const accessModel =
+    typeof course.accessModel === "string" ? course.accessModel : "free";
+  if (accessModel !== "free" && previewLessonCount === 0) {
+    attentionFlags.push("No free preview lesson for conversion");
+  }
+
+  if (Boolean(course.isPublished) && activeEnrollments === 0) {
+    attentionFlags.push("Published with no active enrollments yet");
+  }
+
+  return {
+    thumbnailId,
+    hasThumbnail,
+    totalLessons,
+    totalDuration,
+    moduleCount: modules.length,
+    activeEnrollments,
+    previewLessonCount,
+    lessonVideoCount,
+    missingVideoCount,
+    publishBlockers,
+    attentionFlags,
+    readyToPublish: !Boolean(course.isPublished) && publishBlockers.length === 0,
+    needsAttention: publishBlockers.length > 0 || attentionFlags.length > 0,
+  };
 }
 
 function toUtcDateKey(value: unknown): string | null {
@@ -653,19 +762,103 @@ export async function getInstructorCourseList(
     getInstructorQueries(scope)
   );
 
+  const courseIds = coursesResult.rows.map((course) => course.$id);
+  const [moduleRows, lessonRows, enrollmentRows] = await Promise.all([
+    listRowsByFieldValues<ModuleRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.modules,
+      "courseId",
+      courseIds
+    ),
+    listRowsByFieldValues<LessonRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.lessons,
+      "courseId",
+      courseIds
+    ),
+    listRowsByFieldValues<EnrollmentRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.enrollments,
+      "courseId",
+      courseIds
+    ),
+  ]);
+
+  const modulesByCourseId = new Map<string, ModuleRow[]>();
+  for (const module of moduleRows) {
+    const courseId = typeof module.courseId === "string" ? module.courseId : "";
+    if (!courseId) {
+      continue;
+    }
+
+    const current = modulesByCourseId.get(courseId) ?? [];
+    current.push(module);
+    modulesByCourseId.set(courseId, current);
+  }
+
+  const lessonsByCourseId = new Map<string, LessonRow[]>();
+  for (const lesson of lessonRows) {
+    const courseId = typeof lesson.courseId === "string" ? lesson.courseId : "";
+    if (!courseId) {
+      continue;
+    }
+
+    const current = lessonsByCourseId.get(courseId) ?? [];
+    current.push(lesson);
+    lessonsByCourseId.set(courseId, current);
+  }
+
+  const activeEnrollmentsByCourseId = new Map<string, number>();
+  for (const enrollment of enrollmentRows) {
+    const courseId =
+      typeof enrollment.courseId === "string" ? enrollment.courseId : "";
+    if (!courseId || enrollment.isActive === false) {
+      continue;
+    }
+
+    activeEnrollmentsByCourseId.set(
+      courseId,
+      (activeEnrollmentsByCourseId.get(courseId) ?? 0) + 1
+    );
+  }
+
   return coursesResult.rows
     .sort((left, right) => {
       const leftDate = toDate(left.$updatedAt ?? left.$createdAt)?.getTime() ?? 0;
       const rightDate = toDate(right.$updatedAt ?? right.$createdAt)?.getTime() ?? 0;
       return rightDate - leftDate;
     })
-    .map((course) => ({
-      id: course.$id,
-      title: typeof course.title === "string" ? course.title : "Untitled course",
-      shortDescription:
-        typeof course.shortDescription === "string" ? course.shortDescription : "",
-      status: course.isPublished ? "Published" : "Draft",
-    }));
+    .map((course) => {
+      const health = buildInstructorCourseHealth({
+        course,
+        modules: modulesByCourseId.get(course.$id) ?? [],
+        lessons: lessonsByCourseId.get(course.$id) ?? [],
+        activeEnrollments: activeEnrollmentsByCourseId.get(course.$id) ?? 0,
+      });
+
+      return {
+        id: course.$id,
+        title: typeof course.title === "string" ? course.title : "Untitled course",
+        shortDescription:
+          typeof course.shortDescription === "string" ? course.shortDescription : "",
+        status: course.isPublished ? "Published" : "Draft",
+        accessModel:
+          typeof course.accessModel === "string" ? course.accessModel : "free",
+        price: Number(course.price ?? 0),
+        totalLessons: health.totalLessons,
+        totalDuration: health.totalDuration,
+        moduleCount: health.moduleCount,
+        activeEnrollments: health.activeEnrollments,
+        hasThumbnail: health.hasThumbnail,
+        previewLessonCount: health.previewLessonCount,
+        lessonVideoCount: health.lessonVideoCount,
+        missingVideoCount: health.missingVideoCount,
+        publishBlockers: health.publishBlockers,
+        attentionFlags: health.attentionFlags,
+        readyToPublish: health.readyToPublish,
+        needsAttention: health.needsAttention,
+      };
+    });
 }
 
 export async function getInstructorStudents(
@@ -1149,6 +1342,30 @@ export async function getInstructorCourseSummary(
     return null;
   }
 
+  const [modulesResult, lessonsResult, enrollmentsResult] = await Promise.all([
+    safeListRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
+      Query.equal("courseId", [course.$id]),
+      Query.limit(200),
+    ]),
+    safeListRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+      Query.equal("courseId", [course.$id]),
+      Query.limit(1000),
+    ]),
+    safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+      Query.equal("courseId", [course.$id]),
+      Query.limit(500),
+    ]),
+  ]);
+
+  const health = buildInstructorCourseHealth({
+    course,
+    modules: modulesResult.rows,
+    lessons: lessonsResult.rows,
+    activeEnrollments: enrollmentsResult.rows.filter(
+      (enrollment) => enrollment.isActive !== false
+    ).length,
+  });
+
   return {
     id: course.$id,
     title: typeof course.title === "string" ? course.title : "Untitled course",
@@ -1159,14 +1376,19 @@ export async function getInstructorCourseSummary(
       typeof course.accessModel === "string" ? course.accessModel : "free",
     isPublished: Boolean(course.isPublished),
     price: Number(course.price ?? 0),
-    totalLessons: Number(course.totalLessons ?? 0),
-    totalDuration: Number(course.totalDuration ?? 0),
-    thumbnailId:
-      typeof course.thumbnailFileId === "string" && course.thumbnailFileId.length > 0
-        ? course.thumbnailFileId
-        : typeof course.thumbnailId === "string"
-          ? course.thumbnailId
-          : "",
+    totalLessons: health.totalLessons,
+    totalDuration: health.totalDuration,
+    thumbnailId: health.thumbnailId,
+    moduleCount: health.moduleCount,
+    activeEnrollments: health.activeEnrollments,
+    hasThumbnail: health.hasThumbnail,
+    previewLessonCount: health.previewLessonCount,
+    lessonVideoCount: health.lessonVideoCount,
+    missingVideoCount: health.missingVideoCount,
+    publishBlockers: health.publishBlockers,
+    attentionFlags: health.attentionFlags,
+    readyToPublish: health.readyToPublish,
+    needsAttention: health.needsAttention,
   };
 }
 

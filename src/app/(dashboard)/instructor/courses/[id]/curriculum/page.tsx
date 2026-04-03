@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Film, Layers, PlaySquare, ShieldCheck } from "lucide-react";
 
 import {
   createCurriculumLessonAction,
@@ -20,6 +21,8 @@ import {
   getCourseAssignments,
   deleteAssignmentAction,
 } from "@/actions/assignments";
+import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getInstructorCourseSummary,
@@ -48,18 +51,92 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Curriculum Builder</p>
-        <h1 className="text-3xl mt-2">Curriculum for {course.title}</h1>
-        </div>
-        <Link
-          href={`/instructor/courses/${course.id}`}
-          className="text-sm underline underline-offset-4"
-        >
-          Back to course details
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Curriculum Builder"
+        title={`Curriculum for ${course.title}`}
+        description="Build modules, lessons, quizzes, assignments, and the first-wave media students need."
+        actions={
+          <Link
+            href={`/instructor/courses/${course.id}`}
+            className="text-sm underline underline-offset-4"
+          >
+            Back to course details
+          </Link>
+        }
+      />
+
+      <StatGrid columns={4}>
+        <StatCard
+          label="Modules"
+          value={course.moduleCount}
+          icon={Layers}
+          description={`${course.totalLessons} lessons total`}
+        />
+        <StatCard
+          label="Lesson Videos"
+          value={course.lessonVideoCount}
+          icon={Film}
+          description={
+            course.missingVideoCount > 0
+              ? `${course.missingVideoCount} lessons still need video`
+              : "Every lesson has video"
+          }
+        />
+        <StatCard
+          label="Preview Lessons"
+          value={course.previewLessonCount}
+          icon={PlaySquare}
+          description={
+            course.accessModel === "free"
+              ? "Optional for free courses"
+              : "Useful for conversion"
+          }
+        />
+        <StatCard
+          label="Readiness"
+          value={course.publishBlockers.length === 0 ? "On track" : "Blocked"}
+          icon={ShieldCheck}
+          description={
+            course.publishBlockers.length === 0
+              ? "Curriculum baseline is in place"
+              : `${course.publishBlockers.length} blocker${course.publishBlockers.length === 1 ? "" : "s"} remaining`
+          }
+        />
+      </StatGrid>
+
+      {(course.publishBlockers.length > 0 || course.attentionFlags.length > 0) && (
+        <section className="border border-border p-5 space-y-3">
+          <h2 className="text-lg font-medium">Curriculum Health</h2>
+          {course.publishBlockers.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.15em] text-destructive">
+                Blocking issues
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {course.publishBlockers.map((blocker) => (
+                  <Badge key={blocker} variant="destructive">
+                    {blocker}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {course.attentionFlags.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+                Watch list
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {course.attentionFlags.map((flag) => (
+                  <Badge key={flag} variant="outline">
+                    {flag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </section>
+      )}
 
       <section className="border border-border p-6 space-y-4">
         <h2 className="text-xl">Create module</h2>

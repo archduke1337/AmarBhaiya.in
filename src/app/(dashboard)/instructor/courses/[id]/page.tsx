@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CheckCircle2, Film, Layers, Users } from "lucide-react";
 
 import { updateInstructorCourseAction } from "@/actions/operations";
 import { uploadCourseThumbnailAction } from "@/actions/upload";
+import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorCourseSummary } from "@/lib/appwrite/dashboard-data";
 import { formatCurrency, formatDuration } from "@/lib/utils/format";
@@ -22,10 +25,104 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Course Editor</p>
-        <h1 className="text-3xl mt-2">Edit course: {course.title}</h1>
-      </div>
+      <PageHeader
+        eyebrow="Course Editor"
+        title={`Edit course: ${course.title}`}
+        description="Update metadata, check publish readiness, and keep the launch checklist moving."
+        actions={
+          <Link
+            href={`/instructor/courses/${course.id}/curriculum`}
+            className="text-sm underline underline-offset-4"
+          >
+            Manage curriculum
+          </Link>
+        }
+      />
+
+      <StatGrid columns={4}>
+        <StatCard
+          label="Modules"
+          value={course.moduleCount}
+          icon={Layers}
+          description={`${course.totalLessons} lessons`}
+        />
+        <StatCard
+          label="Lesson Videos"
+          value={course.lessonVideoCount}
+          icon={Film}
+          description={
+            course.missingVideoCount > 0
+              ? `${course.missingVideoCount} still missing`
+              : "All lessons have video"
+          }
+        />
+        <StatCard
+          label="Enrollments"
+          value={course.activeEnrollments}
+          icon={Users}
+          description="Active learners"
+        />
+        <StatCard
+          label="Publish State"
+          value={course.isPublished ? "Live" : "Draft"}
+          icon={CheckCircle2}
+          description={
+            course.readyToPublish
+              ? "Ready to publish"
+              : course.publishBlockers.length > 0
+                ? `${course.publishBlockers.length} blocker${course.publishBlockers.length === 1 ? "" : "s"}`
+                : "Needs a quick review"
+          }
+        />
+      </StatGrid>
+
+      <section
+        id="publish-readiness"
+        className="border border-border p-6 space-y-4 scroll-mt-24"
+      >
+        <div className="flex flex-col gap-2">
+          <h2 className="text-xl">Publish Readiness</h2>
+          <p className="text-sm text-muted-foreground">
+            Publishing works best once the thumbnail, curriculum, and initial lesson media are in place.
+          </p>
+        </div>
+
+        {course.publishBlockers.length === 0 && course.attentionFlags.length === 0 ? (
+          <div className="border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
+            This course is in strong shape. You can publish it whenever you are ready.
+          </div>
+        ) : null}
+
+        {course.publishBlockers.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.15em] text-destructive">
+              Blocking issues
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {course.publishBlockers.map((blocker) => (
+                <Badge key={blocker} variant="destructive">
+                  {blocker}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {course.attentionFlags.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+              Watch list
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {course.attentionFlags.map((flag) => (
+                <Badge key={flag} variant="outline">
+                  {flag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </section>
 
       <section className="border border-border p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
@@ -159,7 +256,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
         <div className="border border-border p-4">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Lesson Stats</p>
           <p>
-            {course.totalLessons} lessons · {formatDuration(course.totalDuration)}
+            {course.moduleCount} modules · {course.totalLessons} lessons · {formatDuration(course.totalDuration)}
           </p>
         </div>
       </section>
