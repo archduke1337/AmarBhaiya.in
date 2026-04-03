@@ -4,10 +4,28 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
+import {
+  userCanManageCourse,
+  userHasCourseAccess,
+} from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 
 type AnyRow = Record<string, unknown> & { $id: string };
+
+async function getQuizRow(quizId: string): Promise<AnyRow | null> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    return (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.quizzes,
+      rowId: quizId,
+    })) as AnyRow;
+  } catch {
+    return null;
+  }
+}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,7 +58,7 @@ export type QuizAttemptResult = {
 // ── Create Quiz (Instructor) ────────────────────────────────────────────────
 
 export async function createQuizAction(formData: FormData): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   const lessonId = String(formData.get("lessonId") ?? "");
@@ -49,6 +67,7 @@ export async function createQuizAction(formData: FormData): Promise<void> {
   const timeLimit = Number(formData.get("timeLimit") ?? 0);
 
   if (!courseId || !title) return;
+  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
 
   try {
     const { tablesDB } = await createAdminClient();
@@ -79,7 +98,7 @@ export async function createQuizAction(formData: FormData): Promise<void> {
 export async function addQuizQuestionAction(
   formData: FormData
 ): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const quizId = String(formData.get("quizId") ?? "");
   const text = String(formData.get("text") ?? "").trim();
@@ -98,6 +117,12 @@ export async function addQuizQuestionAction(
   if (!quizId || !text || !correctAnswer) return;
 
   try {
+    const quiz = await getQuizRow(quizId);
+    if (!quiz) return;
+    if (!(await userCanManageCourse(String(quiz.courseId ?? ""), role, user.$id))) {
+      return;
+    }
+
     const { tablesDB } = await createAdminClient();
 
     await tablesDB.createRow({
@@ -128,6 +153,7 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
   quiz: QuizSummary | null;
   questions: QuizQuestionItem[];
 }> {
+  const user = await requireAuth();
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -136,6 +162,10 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
       tableId: APPWRITE_CONFIG.tables.quizzes,
       rowId: quizId,
     })) as AnyRow;
+
+    if (!(await userHasCourseAccess({ courseId: String(quiz.courseId ?? ""), userId: user.$id }))) {
+      return { quiz: null, questions: [] };
+    }
 
     const questionsResult = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -219,6 +249,11 @@ export async function submitQuizAttemptAction(
   if (!quizId) return;
 
   const { tablesDB } = await createAdminClient();
+  const quiz = await getQuizRow(quizId);
+  if (!quiz) return;
+  if (!(await userHasCourseAccess({ courseId: String(quiz.courseId ?? ""), userId: user.$id }))) {
+    return;
+  }
 
   // Get questions
   const questionsResult = await tablesDB.listRows({
@@ -236,11 +271,6 @@ export async function submitQuizAttemptAction(
   // Get quiz pass mark
   let passMark = 60;
   try {
-    const quiz = (await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.quizzes,
-      rowId: quizId,
-    })) as AnyRow;
     passMark = Number(quiz.passMark ?? 60);
   } catch {
     // Use default
@@ -281,6 +311,7 @@ export async function submitQuizAttemptAction(
     });
 
     revalidatePath("/app");
+    revalidatePath(`/app/quiz/${quizId}`);
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to save attempt."
@@ -291,9 +322,9 @@ export async function submitQuizAttemptAction(
 // ── Get User's Best Attempt ─────────────────────────────────────────────────
 
 export async function getUserBestAttempt(
-  quizId: string,
-  userId: string
+  quizId: string
 ): Promise<QuizAttemptResult | null> {
+  const user = await requireAuth();
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -302,7 +333,7 @@ export async function getUserBestAttempt(
       tableId: APPWRITE_CONFIG.tables.quizAttempts,
       queries: [
         Query.equal("quizId", [quizId]),
-        Query.equal("userId", [userId]),
+        Query.equal("userId", [user.$id]),
         Query.orderDesc("score"),
         Query.limit(1),
       ],
@@ -325,12 +356,18 @@ export async function getUserBestAttempt(
 // ── Delete Quiz ─────────────────────────────────────────────────────────────
 
 export async function deleteQuizAction(formData: FormData): Promise<void> {
-  await requireRole(["admin", "instructor"]);
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const quizId = String(formData.get("quizId") ?? "");
   if (!quizId) return;
 
   try {
+    const quiz = await getQuizRow(quizId);
+    if (!quiz) return;
+    if (!(await userCanManageCourse(String(quiz.courseId ?? ""), role, user.$id))) {
+      return;
+    }
+
     const { tablesDB } = await createAdminClient();
 
     // Delete questions first

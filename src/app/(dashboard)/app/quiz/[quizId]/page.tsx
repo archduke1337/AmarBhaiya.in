@@ -15,7 +15,7 @@ type PageProps = {
 };
 
 export default async function TakeQuizPage({ params }: PageProps) {
-  const user = await requireAuth();
+  await requireAuth();
   const { quizId } = await params;
 
   const { quiz, questions } = await getQuizWithQuestions(quizId);

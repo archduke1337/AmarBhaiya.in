@@ -11,7 +11,6 @@ import { VideoPlayer } from "@/components/video-player";
 import { getCourseProgress } from "@/actions/enrollment";
 import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
 import { postLessonCommentAction, getLessonComments } from "@/actions/comments";
-import { Query } from "node-appwrite";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
