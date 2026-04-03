@@ -68,7 +68,6 @@ src/
 │   │   └── marketing-content.ts → Content queries
 │   ├── payments/
 │   │   ├── razorpay.ts  → getRazorpayClient(), verifyWebhook()
-│   │   └── phonepe.ts   → PhonePe integration
 │   ├── stream/
 │   │   └── client.ts    → Stream Chat setup, tokens
 │   ├── errors/

@@ -15,7 +15,7 @@ AmarBhaiya.in is a **production-grade Learning Management System (LMS)** built o
 - **8 collections** in Appwrite TablesDB
 - **4 storage buckets** for media management
 - **4+ user roles** with granular permissions
-- **Payment integration** (Razorpay + PhonePe)
+- **Payment integration** (Razorpay)
 - **Real-time features** (Stream Chat integration)
 - **Comprehensive course platform** with quizzes, assignments, certificates
 
@@ -652,7 +652,7 @@ Complexity Score:
 **The codebase is well-suited for:**
 - Multi-instructor course platform
 - Large student base scalability  
-- International payments (Razorpay + PhonePe)
+- International payments (Razorpay)
 - Real-time community features
 - Role-based access control
 - Content personalization

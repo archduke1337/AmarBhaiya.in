@@ -204,7 +204,7 @@ Icons:          Lucide React 1.7
 Backend:        Node.js, Server Actions, API Routes
 Database:       Appwrite TablesDB (PostgreSQL)
 Authentication: Appwrite Account API + Cookies
-Payments:       Razorpay (India), PhonePe (optional)
+Payments:       Razorpay (India)
 Real-time:      Stream Chat 9.39
 Validation:     Zod 4.3
 Utilities:      date-fns, clsx, tailwind-merge

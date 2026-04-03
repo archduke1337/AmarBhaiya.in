@@ -223,7 +223,7 @@ export interface Payment extends AppwriteRow {
   courseId: string;
   amount: number;
   currency: string;
-  method: "razorpay" | "phonepe";
+  method: "razorpay";
   status: "pending" | "completed" | "failed" | "refunded";
   providerRef: string;
   createdAt: string;

@@ -723,7 +723,7 @@ ADMIN WORKFLOWS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - Payment records dashboard
 - Shows: transaction ID, amount, method, status, date
-- Methods: razorpay, phonepe
+- Methods: razorpay
 - Statuses: pending, completed, failed, refunded
 
 - Admin can:

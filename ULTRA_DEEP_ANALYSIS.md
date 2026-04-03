@@ -1064,8 +1064,6 @@ Payment/Community:
    - createRazorpayOrder(input) → Creates order
    - verifyRazorpayWebhookSignature(rawBody, signature) → HMAC-SHA256 verify
 
-2. phonepe.ts
-   - PhonePe payment integration (similar to Razorpay)
 ```
 
 ### Stream Chat (`/src/lib/stream/`)
