@@ -108,10 +108,11 @@ export async function upsertStudentProfileAction(
   }
 }
 
-export async function getStudentProfile(userId: string) {
+export async function getStudentProfile() {
+  const user = await requireAuth();
   const row = await findRowByUserId(
     APPWRITE_CONFIG.tables.studentProfiles,
-    userId
+    user.$id
   );
   if (!row) return null;
 
@@ -189,10 +190,11 @@ export async function upsertBillingInfoAction(
   }
 }
 
-export async function getBillingInfo(userId: string) {
+export async function getBillingInfo() {
+  const user = await requireAuth();
   const row = await findRowByUserId(
     APPWRITE_CONFIG.tables.billingInfo,
-    userId
+    user.$id
   );
   if (!row) return null;
 

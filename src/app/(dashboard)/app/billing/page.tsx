@@ -4,9 +4,9 @@ import { getUserSubscription, cancelSubscriptionAction } from "@/actions/subscri
 import { PageHeader } from "@/components/dashboard";
 
 export default async function BillingInfoPage() {
-  const user = await requireAuth();
+  await requireAuth();
   const [billing, subscription] = await Promise.all([
-    getBillingInfo(user.$id),
+    getBillingInfo(),
     getUserSubscription(),
   ]);
 

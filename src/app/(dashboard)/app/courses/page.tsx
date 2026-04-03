@@ -11,7 +11,7 @@ export default async function StudentCoursesPage() {
   const user = await requireAuth();
   const [courses, certificates] = await Promise.all([
     getStudentEnrolledCourses(user.$id),
-    getUserCertificates(user.$id),
+    getUserCertificates(),
   ]);
 
   const certByCourseId = new Map(

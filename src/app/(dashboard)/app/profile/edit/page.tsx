@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/dashboard";
 
 export default async function StudentProfileEditPage() {
   const user = await requireAuth();
-  const profile = await getStudentProfile(user.$id);
+  const profile = await getStudentProfile();
 
   return (
     <div className="flex flex-col gap-8 max-w-3xl">

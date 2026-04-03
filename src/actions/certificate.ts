@@ -133,8 +133,8 @@ export async function _issueCertificate(
 // ── Get User Certificates ───────────────────────────────────────────────────
 
 export async function getUserCertificates(
-  userId: string
 ): Promise<CertificateItem[]> {
+  const user = await requireAuth();
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -142,7 +142,7 @@ export async function getUserCertificates(
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.certificates,
       queries: [
-        Query.equal("userId", [userId]),
+        Query.equal("userId", [user.$id]),
         Query.orderDesc("$createdAt"),
         Query.limit(50),
       ],
