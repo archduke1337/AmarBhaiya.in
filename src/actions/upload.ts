@@ -15,6 +15,29 @@ import { validateFileMimeType } from "@/lib/utils/sanitize";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
+const STANDALONE_RESOURCE_EXTENSIONS = [
+  "pdf",
+  "zip",
+  "txt",
+  "doc",
+  "docx",
+  "ppt",
+  "pptx",
+  "mp4",
+  "webm",
+  "mov",
+  "mkv",
+] as const;
+
+const COURSE_RESOURCE_EXTENSIONS = [
+  "pdf",
+  "zip",
+  "txt",
+  "doc",
+  "docx",
+  "pptx",
+] as const;
+
 function getCourseThumbnailFileId(course: Record<string, unknown>): string {
   return String(course.thumbnailFileId ?? course.thumbnailId ?? "");
 }
@@ -226,6 +249,11 @@ export async function uploadResourceFileAction(
   const maxSize = 200 * 1024 * 1024;
   if (file.size > maxSize) return;
 
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (!STANDALONE_RESOURCE_EXTENSIONS.includes(ext as (typeof STANDALONE_RESOURCE_EXTENSIONS)[number])) {
+    return;
+  }
+
   try {
     const { storage, tablesDB } = await createAdminClient();
     const previousFileId = String(resource.fileId ?? "");
@@ -287,7 +315,9 @@ export async function uploadCourseResourceFileAction(
   if (file.size > maxSize) return;
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  if (!["pdf", "zip", "txt", "doc", "docx", "pptx"].includes(ext)) return;
+  if (!COURSE_RESOURCE_EXTENSIONS.includes(ext as (typeof COURSE_RESOURCE_EXTENSIONS)[number])) {
+    return;
+  }
 
   try {
     const { storage, tablesDB } = await createAdminClient();

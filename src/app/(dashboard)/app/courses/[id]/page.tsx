@@ -37,8 +37,8 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           </p>
           <h1 className="text-3xl md:text-4xl mt-2">{course.title}</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            This player is now active in Phase 5 with lesson navigation, notes,
-            resources, and comments.
+            Use this overview to navigate into lessons. Attached resources and
+            discussion now live inside the dedicated lesson viewer for each lesson.
           </p>
         </div>
 

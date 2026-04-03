@@ -5,6 +5,7 @@ import {
   createCourseResourceAction,
   createStandaloneResourceAction,
   deleteCourseResourceAction,
+  deleteStandaloneResourceAction,
   getInstructorCourseResourceOptions,
   getInstructorCourseResources,
   getInstructorResources,
@@ -15,7 +16,6 @@ import {
   uploadCourseResourceFileAction,
   uploadResourceFileAction,
 } from "@/actions/upload";
-import { deleteStandaloneResourceAction } from "@/actions/resources";
 import { formatCurrency } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,36 @@ export default async function InstructorResourcesPage() {
         title="Resources Library"
         description={`${courseLinked} lesson-linked resources and ${resources.length} standalone resources. Manage course attachments and independent downloads from one place.`}
       />
+
+      <section className="grid gap-3 md:grid-cols-3">
+        <article className="border border-border p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Course-linked
+          </p>
+          <p className="mt-2 text-2xl font-medium">{courseLinked}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Files and links attached directly to lessons.
+          </p>
+        </article>
+        <article className="border border-border p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Published standalone
+          </p>
+          <p className="mt-2 text-2xl font-medium">{published}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Visible in the independent resources library.
+          </p>
+        </article>
+        <article className="border border-border p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Free standalone
+          </p>
+          <p className="mt-2 text-2xl font-medium">{free}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Open access resources that do not need a purchase.
+          </p>
+        </article>
+      </section>
 
       {/* Course-linked resources */}
       <section className="border border-border">
@@ -224,6 +254,7 @@ export default async function InstructorResourcesPage() {
                 <input
                   type="file"
                   name="file"
+                  accept=".pdf,.zip,.txt,.doc,.docx,.pptx"
                   className="flex-1 text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
                 />
                 <button
@@ -403,6 +434,25 @@ export default async function InstructorResourcesPage() {
               >
                 <input type="hidden" name="resourceId" value={resource.id} />
                 <div className="grid gap-3 md:grid-cols-4">
+                  <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
+                    <span className="text-muted-foreground">Title</span>
+                    <input
+                      name="title"
+                      minLength={4}
+                      defaultValue={resource.title}
+                      className="h-9 border border-border bg-background px-3 text-xs"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
+                    <span className="text-muted-foreground">Description</span>
+                    <input
+                      name="description"
+                      defaultValue={resource.description}
+                      className="h-9 border border-border bg-background px-3 text-xs"
+                    />
+                  </label>
+
                   <label className="flex flex-col gap-1.5 text-sm">
                     <span className="text-muted-foreground">Type</span>
                     <select
@@ -474,6 +524,7 @@ export default async function InstructorResourcesPage() {
                 <input
                   type="file"
                   name="file"
+                  accept=".pdf,.zip,.txt,.doc,.docx,.ppt,.pptx,.mp4,.webm,.mov,.mkv"
                   className="flex-1 text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
                 />
                 <button
