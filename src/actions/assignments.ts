@@ -53,7 +53,8 @@ async function createSubmissionRecord(
       throw error;
     }
 
-    const { gradedAt: _gradedAt, ...legacyData } = data;
+    const legacyData = { ...data };
+    delete legacyData.gradedAt;
     await tablesDB.createRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.submissions,
@@ -80,7 +81,8 @@ async function updateSubmissionRecord(
       throw error;
     }
 
-    const { gradedAt: _gradedAt, ...legacyData } = data;
+    const legacyData = { ...data };
+    delete legacyData.gradedAt;
     await tablesDB.updateRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.submissions,
