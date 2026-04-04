@@ -1,14 +1,18 @@
 import { Send, Megaphone } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
+import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import {
   sendNotificationAction,
   broadcastNotificationAction,
 } from "@/actions/notifications";
 import { PageHeader } from "@/components/dashboard";
+import { formatAdminUserOption } from "@/lib/utils/admin-select";
 
 export default async function AdminNotificationsPage() {
   await requireRole(["admin"]);
+  const users = await getAdminUsers();
+  const directMessageUsers = [...users].sort((left, right) => left.name.localeCompare(right.name));
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl">
@@ -30,13 +34,23 @@ export default async function AdminNotificationsPage() {
           className="grid gap-4 p-5 md:grid-cols-2"
         >
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">User ID</span>
-            <input
+            <span className="text-muted-foreground">User</span>
+            <select
               name="userId"
               required
-              placeholder="Appwrite User ID"
-              className="h-10 border border-border bg-background px-3 text-sm"
-            />
+              disabled={directMessageUsers.length === 0}
+              defaultValue=""
+              className="h-10 border border-border bg-background px-3 text-sm disabled:opacity-60"
+            >
+              <option value="" disabled>
+                {directMessageUsers.length > 0 ? "Select user" : "No users available"}
+              </option>
+              {directMessageUsers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {formatAdminUserOption(user)}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
@@ -86,12 +100,18 @@ export default async function AdminNotificationsPage() {
           <div className="flex items-end">
             <button
               type="submit"
+              disabled={directMessageUsers.length === 0}
               className="h-10 bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90"
             >
               Send Notification
             </button>
           </div>
         </form>
+        <div className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
+          {directMessageUsers.length > 0
+            ? `${directMessageUsers.length} users are available for targeted notifications.`
+            : "No users are available for targeted notifications yet."}
+        </div>
       </section>
 
       {/* Broadcast to all users */}

@@ -4,15 +4,21 @@ import {
   adminCreateSubscriptionAction,
   adminUpdateSubscriptionAction,
 } from "@/actions/subscriptions";
+import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { CreditCard } from "lucide-react";
+import { formatAdminUserOption } from "@/lib/utils/admin-select";
 
 export default async function AdminSubscriptionsPage() {
   await requireRole(["admin"]);
-  const subscriptions = await getAllSubscriptions();
+  const [subscriptions, users] = await Promise.all([
+    getAllSubscriptions(),
+    getAdminUsers(),
+  ]);
 
   const active = subscriptions.filter((s) => s.status === "active");
   const other = subscriptions.filter((s) => s.status !== "active");
+  const studentOptions = users.filter((user) => user.role === "student");
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -30,13 +36,23 @@ export default async function AdminSubscriptionsPage() {
           className="grid gap-3 md:grid-cols-4"
         >
           <label className="space-y-1 text-sm">
-            <span className="text-muted-foreground">User ID</span>
-            <input
+            <span className="text-muted-foreground">Student</span>
+            <select
               name="userId"
               required
-              placeholder="Appwrite User ID"
-              className="h-9 w-full border border-border bg-background px-3 text-xs"
-            />
+              disabled={studentOptions.length === 0}
+              defaultValue=""
+              className="h-9 w-full border border-border bg-background px-3 text-xs disabled:opacity-60"
+            >
+              <option value="" disabled>
+                {studentOptions.length > 0 ? "Select student" : "No students available"}
+              </option>
+              {studentOptions.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {formatAdminUserOption(user)}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="space-y-1 text-sm">
@@ -64,12 +80,18 @@ export default async function AdminSubscriptionsPage() {
           <div className="flex items-end">
             <button
               type="submit"
+              disabled={studentOptions.length === 0}
               className="h-9 w-full bg-foreground text-background text-xs transition-opacity hover:opacity-90"
             >
               Grant Access
             </button>
           </div>
         </form>
+        <p className="text-xs text-muted-foreground">
+          {studentOptions.length > 0
+            ? `${studentOptions.length} students available for manual subscription grants.`
+            : "No student accounts are available for manual subscription grants yet."}
+        </p>
       </section>
 
       {/* Subscriptions list */}

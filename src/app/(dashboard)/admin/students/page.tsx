@@ -4,9 +4,11 @@ import { Query } from "node-appwrite";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { getAdminCourses, getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { adminEnrollAction } from "@/actions/enrollment";
+import { formatAdminCourseOption, formatAdminUserOption } from "@/lib/utils/admin-select";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
@@ -26,7 +28,15 @@ async function getAllStudentProfiles() {
 
 export default async function AdminStudentProfilesPage() {
   await requireRole(["admin"]);
-  const profiles = await getAllStudentProfiles();
+  const [profiles, users, courses] = await Promise.all([
+    getAllStudentProfiles(),
+    getAdminUsers(),
+    getAdminCourses(),
+  ]);
+
+  const studentOptions = users.filter((user) => user.role === "student");
+  const courseOptions = [...courses].sort((left, right) => left.title.localeCompare(right.title));
+  const canManuallyEnroll = studentOptions.length > 0 && courseOptions.length > 0;
 
   return (
     <div className="flex flex-col gap-8 max-w-5xl">
@@ -40,25 +50,57 @@ export default async function AdminStudentProfilesPage() {
       <section className="border border-border p-5 space-y-3">
         <h2 className="text-sm font-medium">Manual Enrollment</h2>
         <form action={adminEnrollAction} className="grid gap-3 md:grid-cols-3">
-          <input
-            name="userId"
-            required
-            placeholder="User ID"
-            className="h-9 border border-border bg-background px-3 text-xs"
-          />
-          <input
-            name="courseId"
-            required
-            placeholder="Course ID"
-            className="h-9 border border-border bg-background px-3 text-xs"
-          />
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Student</span>
+            <select
+              name="userId"
+              required
+              disabled={!canManuallyEnroll}
+              className="h-9 w-full border border-border bg-background px-3 text-xs disabled:opacity-60"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                {studentOptions.length > 0 ? "Select student" : "No students available"}
+              </option>
+              {studentOptions.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {formatAdminUserOption(user)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Course</span>
+            <select
+              name="courseId"
+              required
+              disabled={!canManuallyEnroll}
+              className="h-9 w-full border border-border bg-background px-3 text-xs disabled:opacity-60"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                {courseOptions.length > 0 ? "Select course" : "No courses available"}
+              </option>
+              {courseOptions.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {formatAdminCourseOption(course)}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             type="submit"
+            disabled={!canManuallyEnroll}
             className="h-9 bg-foreground text-background text-xs transition-opacity hover:opacity-90"
           >
             Enroll Student
           </button>
         </form>
+        <p className="text-xs text-muted-foreground">
+          {canManuallyEnroll
+            ? `${studentOptions.length} students and ${courseOptions.length} courses available for manual enrollment.`
+            : "Manual enrollment is unavailable until at least one student and one course exist."}
+        </p>
       </section>
 
       {profiles.length === 0 ? (
