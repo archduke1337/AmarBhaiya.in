@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { processInBatches } from "@/lib/utils/batch";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -31,18 +32,11 @@ type CreateNotificationInput = {
   createdAt?: string;
 };
 
-async function processInBatches<T>(
-  entries: T[],
-  batchSize: number,
-  worker: (entry: T) => Promise<void>
-): Promise<void> {
-  for (let index = 0; index < entries.length; index += batchSize) {
-    const batch = entries.slice(index, index + batchSize);
-    await Promise.allSettled(batch.map((entry) => worker(entry)));
-  }
-}
+type AdminTablesDB = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
+type AdminUsers = Awaited<ReturnType<typeof createAdminClient>>["users"];
 
-export async function createNotificationEntry(
+async function writeNotificationEntry(
+  tablesDB: AdminTablesDB,
   input: CreateNotificationInput
 ): Promise<void> {
   const userId = input.userId.trim();
@@ -51,8 +45,6 @@ export async function createNotificationEntry(
   if (!userId || !title) {
     return;
   }
-
-  const { tablesDB } = await createAdminClient();
 
   await tablesDB.createRow({
     databaseId: APPWRITE_CONFIG.databaseId,
@@ -68,6 +60,45 @@ export async function createNotificationEntry(
       createdAt: input.createdAt || new Date().toISOString(),
     },
   });
+}
+
+async function listAllAdminUserIds(users: AdminUsers): Promise<string[]> {
+  const userIds: string[] = [];
+  const pageSize = 100;
+  let offset = 0;
+
+  while (true) {
+    const page = await users.list({
+      queries: [
+        Query.orderDesc("registration"),
+        Query.limit(pageSize),
+        Query.offset(offset),
+      ],
+    });
+
+    userIds.push(...page.users.map((user) => user.$id));
+
+    if (page.users.length < pageSize) {
+      break;
+    }
+
+    offset += page.users.length;
+  }
+
+  return userIds;
+}
+
+export async function createNotificationEntry(
+  input: CreateNotificationInput,
+  tablesDB?: AdminTablesDB
+): Promise<void> {
+  if (tablesDB) {
+    await writeNotificationEntry(tablesDB, input);
+    return;
+  }
+
+  const adminClient = await createAdminClient();
+  await writeNotificationEntry(adminClient.tablesDB, input);
 }
 
 // ── Get User Notifications ──────────────────────────────────────────────────
@@ -173,24 +204,35 @@ export async function markAllNotificationsReadAction(): Promise<void> {
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.notifications,
-      queries: [
-        Query.equal("userId", [user.$id]),
-        Query.equal("isRead", [false]),
-        Query.limit(200),
-      ],
-    });
-
-    await processInBatches(result.rows as AnyRow[], 25, async (row) => {
-      await tablesDB.updateRow({
+    while (true) {
+      const result = await tablesDB.listRows({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.notifications,
-        rowId: row.$id,
-        data: { isRead: true },
+        queries: [
+          Query.equal("userId", [user.$id]),
+          Query.equal("isRead", [false]),
+          Query.limit(200),
+        ],
       });
-    });
+
+      const unreadRows = result.rows as AnyRow[];
+      if (unreadRows.length === 0) {
+        break;
+      }
+
+      await processInBatches(unreadRows, 25, async (row) => {
+        await tablesDB.updateRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.notifications,
+          rowId: row.$id,
+          data: { isRead: true },
+        });
+      });
+
+      if (unreadRows.length < 200) {
+        break;
+      }
+    }
 
     revalidatePath("/app/notifications");
     revalidatePath("/app/dashboard");
@@ -215,13 +257,20 @@ export async function sendNotificationAction(
   if (!userId || !title) return;
 
   try {
-    await createNotificationEntry({
-      userId,
-      type,
-      title,
-      body,
-      link,
-    });
+    const { tablesDB } = await createAdminClient();
+
+    await createNotificationEntry(
+      {
+        userId,
+        type,
+        title,
+        body,
+        link,
+      },
+      tablesDB
+    );
+
+    revalidatePath("/admin/notifications");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to send notification."
@@ -244,23 +293,26 @@ export async function broadcastNotificationAction(
   if (!title) return;
 
   try {
-    const { users } = await createAdminClient();
+    const { tablesDB, users } = await createAdminClient();
 
-    // Get all users
-    const allUsers = await users.list({ queries: [Query.limit(500)] });
+    const allUserIds = await listAllAdminUserIds(users);
     const createdAt = new Date().toISOString();
 
-    await processInBatches(allUsers.users, 50, async (user) => {
-      await createNotificationEntry({
-        userId: user.$id,
-        type,
-        title,
-        body,
-        link,
-        createdAt,
-      });
+    await processInBatches(allUserIds, 50, async (userId) => {
+      await createNotificationEntry(
+        {
+          userId,
+          type,
+          title,
+          body,
+          link,
+          createdAt,
+        },
+        tablesDB
+      );
     });
 
+    revalidatePath("/admin/notifications");
     revalidatePath("/admin");
   } catch (error) {
     console.error(

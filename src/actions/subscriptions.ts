@@ -6,9 +6,12 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { processInBatches } from "@/lib/utils/batch";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 const VALID_SUBSCRIPTION_STATUSES = new Set(["active", "expired", "cancelled"]);
+type AdminTablesDB = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
+type AdminUsers = Awaited<ReturnType<typeof createAdminClient>>["users"];
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -31,6 +34,54 @@ export type UserSubscription = {
   endDate: string;
   status: string;
 };
+
+async function listAllSubscriptionRows(
+  tablesDB: AdminTablesDB
+): Promise<AnyRow[]> {
+  const rows: AnyRow[] = [];
+  const pageSize = 500;
+  let offset = 0;
+
+  while (true) {
+    const result = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.subscriptions,
+      queries: [
+        Query.orderDesc("$createdAt"),
+        Query.limit(pageSize),
+        Query.offset(offset),
+      ],
+    });
+
+    rows.push(...(result.rows as AnyRow[]));
+
+    if (result.rows.length < pageSize) {
+      break;
+    }
+
+    offset += result.rows.length;
+  }
+
+  return rows;
+}
+
+async function buildUserNameMap(
+  users: AdminUsers,
+  userIds: string[]
+): Promise<Map<string, string>> {
+  const userNameById = new Map<string, string>();
+
+  await processInBatches(userIds, 25, async (userId) => {
+    try {
+      const user = await users.get(userId);
+      userNameById.set(userId, user.name || user.email || "Unknown");
+    } catch {
+      // User may not exist
+    }
+  });
+
+  return userNameById;
+}
 
 // ── Get User's Subscription ─────────────────────────────────────────────────
 
@@ -75,41 +126,30 @@ export async function getAllSubscriptions(): Promise<UserSubscription[]> {
   const { tablesDB, users } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.subscriptions,
-      queries: [
-        Query.orderDesc("$createdAt"),
-        Query.limit(200),
-      ],
-    });
+    const rows = await listAllSubscriptionRows(tablesDB);
+    const userIds = Array.from(
+      new Set(
+        rows
+          .map((row) => String(row.userId ?? ""))
+          .filter((userId) => userId.length > 0)
+      )
+    );
+    const userNameById = await buildUserNameMap(users, userIds);
 
-    const subs: UserSubscription[] = [];
+    return rows.map((row) => {
+      const userId = String(row.userId ?? "");
 
-    for (const r of result.rows) {
-      const row = r as AnyRow;
-      let userName = "Unknown";
-
-      try {
-        const u = await users.get(String(row.userId ?? ""));
-        userName = u.name || u.email;
-      } catch {
-        // User may not exist
-      }
-
-      subs.push({
+      return {
         id: row.$id,
-        userId: String(row.userId ?? ""),
-        userName,
+        userId,
+        userName: userNameById.get(userId) ?? "Unknown",
         planId: String(row.planId ?? ""),
         planName: String(row.planName ?? "Unknown"),
         startDate: String(row.startDate ?? ""),
         endDate: String(row.endDate ?? ""),
         status: String(row.status ?? "expired"),
-      });
-    }
-
-    return subs;
+      };
+    });
   } catch {
     return [];
   }
