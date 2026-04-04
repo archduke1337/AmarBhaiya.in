@@ -1473,26 +1473,23 @@ export async function getInstructorCourseSummary(
       return null;
     }
 
-    const [modulesResult, lessonsResult, enrollmentsResult] = await Promise.all([
-      safeListRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
+    const [moduleRows, lessonRows, enrollmentRows] = await Promise.all([
+      safeListAllRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
         Query.equal("courseId", [course.$id]),
-        Query.limit(200),
       ]),
-      safeListRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+      safeListAllRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
         Query.equal("courseId", [course.$id]),
-        Query.limit(1000),
       ]),
-      safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+      safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
         Query.equal("courseId", [course.$id]),
-        Query.limit(500),
       ]),
     ]);
 
     const health = buildInstructorCourseHealth({
       course,
-      modules: modulesResult.rows,
-      lessons: lessonsResult.rows,
-      activeEnrollments: enrollmentsResult.rows.filter(
+      modules: moduleRows,
+      lessons: lessonRows,
+      activeEnrollments: enrollmentRows.filter(
         (enrollment) => enrollment.isActive !== false
       ).length,
     });
@@ -1540,20 +1537,20 @@ export async function getInstructorCurriculum(
   try {
     const { tablesDB } = await createAdminClient();
 
-    const modulesResult = await safeListRows<ModuleRow>(
+    const moduleRows = await safeListAllRows<ModuleRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.modules,
-      [Query.equal("courseId", [courseId]), Query.orderAsc("order"), Query.limit(200)]
+      [Query.equal("courseId", [courseId]), Query.orderAsc("order")]
     );
 
     const lessonsByModule = new Map<string, LessonRow[]>();
-    const lessonsResult = await safeListRows<LessonRow>(
+    const lessonRows = await safeListAllRows<LessonRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.lessons,
-      [Query.equal("courseId", [courseId]), Query.orderAsc("order"), Query.limit(1000)]
+      [Query.equal("courseId", [courseId]), Query.orderAsc("order")]
     );
 
-    for (const lesson of lessonsResult.rows) {
+    for (const lesson of lessonRows) {
       if (typeof lesson.moduleId !== "string") {
         continue;
       }
@@ -1563,7 +1560,7 @@ export async function getInstructorCurriculum(
       lessonsByModule.set(lesson.moduleId, current);
     }
 
-    return modulesResult.rows.map((module) => ({
+    return moduleRows.map((module) => ({
       id: module.$id,
       title: typeof module.title === "string" ? module.title : "Untitled module",
       description:
@@ -1596,13 +1593,11 @@ export async function getModeratorDashboardStats(): Promise<ModeratorDashboardSt
   try {
     const { tablesDB } = await createAdminClient();
 
-    const actionsResult = await safeListRows<ModerationActionRow>(
+    const rows = await safeListAllRows<ModerationActionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.moderationActions,
-      [Query.limit(300)]
+      [Query.orderDesc("createdAt")]
     );
-
-    const rows = actionsResult.rows;
 
     const openReports = rows.filter(
       (row) => row.action === "flag" && !row.revertedAt
@@ -1658,13 +1653,13 @@ export async function getModeratorDashboardStats(): Promise<ModeratorDashboardSt
 export async function getModeratorReports(): Promise<ModeratorReportItem[]> {
   try {
     const { tablesDB } = await createAdminClient();
-    const actionsResult = await safeListRows<ModerationActionRow>(
+    const rows = await safeListAllRows<ModerationActionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.moderationActions,
-      [Query.equal("action", ["flag"]), Query.limit(100)]
+      [Query.equal("action", ["flag"]), Query.orderDesc("createdAt")]
     );
 
-    return actionsResult.rows
+    return rows
       .sort((left, right) => {
         const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
         const rightDate = toDate(right.createdAt)?.getTime() ?? 0;
@@ -1699,13 +1694,13 @@ export async function getModeratorReports(): Promise<ModeratorReportItem[]> {
 export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
   try {
     const { tablesDB } = await createAdminClient();
-    const actionsResult = await safeListRows<ModerationActionRow>(
+    const rows = await safeListAllRows<ModerationActionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.moderationActions,
-      [Query.limit(300)]
+      [Query.orderDesc("createdAt")]
     );
 
-    const rows = actionsResult.rows
+    const filteredRows = rows
       .filter((row) => typeof row.targetUserId === "string")
       .sort((left, right) => {
         const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
@@ -1715,7 +1710,7 @@ export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
 
       const latestByUser = new Map<string, ModerationActionRow>();
       const countByUser = new Map<string, number>();
-      for (const row of rows) {
+      for (const row of filteredRows) {
         const userId = String(row.targetUserId);
         if (!latestByUser.has(userId)) {
           latestByUser.set(userId, row);
@@ -1750,15 +1745,15 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
   try {
     const { tablesDB } = await createAdminClient();
 
-    const [actionsResult, categoriesResult, threadsResult] = await Promise.all([
-      safeListRows<ModerationActionRow>(tablesDB, APPWRITE_CONFIG.tables.moderationActions, [
-        Query.limit(300),
+    const [actionRows, categoryRows, threadRows] = await Promise.all([
+      safeListAllRows<ModerationActionRow>(tablesDB, APPWRITE_CONFIG.tables.moderationActions, [
+        Query.orderDesc("createdAt"),
       ]),
-      safeListRows<ForumCategoryRow>(tablesDB, APPWRITE_CONFIG.tables.forumCategories, [
-        Query.limit(100),
+      safeListAllRows<ForumCategoryRow>(tablesDB, APPWRITE_CONFIG.tables.forumCategories, [
+        Query.orderAsc("name"),
       ]),
-      safeListRows<ForumThreadRow>(tablesDB, APPWRITE_CONFIG.tables.forumThreads, [
-        Query.limit(30),
+      safeListAllRows<ForumThreadRow>(tablesDB, APPWRITE_CONFIG.tables.forumThreads, [
+        Query.orderDesc("lastReplyAt"),
       ]),
     ]);
 
@@ -1770,7 +1765,7 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
       flag: 0,
     };
 
-    for (const action of actionsResult.rows) {
+    for (const action of actionRows) {
       if (action.action === "warn") {
         counts.warn += 1;
       }
@@ -1789,13 +1784,13 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
     }
 
     const categoryNameById = new Map<string, string>(
-      categoriesResult.rows.map((category) => [
+      categoryRows.map((category) => [
         category.$id,
         typeof category.name === "string" ? category.name : "General",
       ])
     );
 
-    const recentThreads: CommunityThreadItem[] = threadsResult.rows
+    const recentThreads: CommunityThreadItem[] = threadRows
       .sort((left, right) => {
         const leftDate = toDate(left.lastReplyAt ?? left.createdAt)?.getTime() ?? 0;
         const rightDate = toDate(right.lastReplyAt ?? right.createdAt)?.getTime() ?? 0;
@@ -2134,13 +2129,11 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
   try {
     const { tablesDB } = await createAdminClient();
 
-    const sessionsResult = await safeListRows<LiveSessionRow>(
+    const sessions = await safeListAllRows<LiveSessionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.liveSessions,
-      [Query.limit(120)]
+      [Query.orderAsc("scheduledAt")]
     );
-
-    const sessions = sessionsResult.rows;
 
     const activeSessions = sessions.filter((session) => session.status === "live").length;
     const scheduledSessions = sessions.filter(
@@ -2197,13 +2190,11 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
   try {
     const { tablesDB } = await createAdminClient();
 
-    const actionsResult = await safeListRows<ModerationActionRow>(
+    const rows = await safeListAllRows<ModerationActionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.moderationActions,
-      [Query.limit(300)]
+      [Query.orderDesc("createdAt")]
     );
-
-    const rows = actionsResult.rows;
 
     const actionsToday = rows.filter((row) => isToday(row.createdAt)).length;
     const openEscalations = rows.filter(
@@ -2294,24 +2285,21 @@ export async function getStudentProfileStats(
   try {
     const { tablesDB } = await createAdminClient();
 
-    const [enrollmentsResult, certificatesResult, progressResult] = await Promise.all([
-      safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+    const [enrollmentRows, certificateRows, progressRows] = await Promise.all([
+      safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
         Query.equal("userId", [userId]),
         Query.equal("isActive", [true]),
-        Query.limit(500),
       ]),
-      safeListRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.certificates, [
+      safeListAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.certificates, [
         Query.equal("userId", [userId]),
-        Query.limit(500),
       ]),
-      safeListRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.progress, [
+      safeListAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.progress, [
         Query.equal("userId", [userId]),
-        Query.limit(2000),
       ]),
     ]);
 
     const completedDateKeys = new Set<string>();
-    for (const row of progressResult.rows) {
+    for (const row of progressRows) {
       const key = toUtcDateKey(row.completedAt);
       if (key) {
         completedDateKeys.add(key);
@@ -2320,8 +2308,8 @@ export async function getStudentProfileStats(
 
     return {
       currentStreakDays: calculateCurrentStreak(completedDateKeys),
-      activeCourses: enrollmentsResult.total,
-      certificates: certificatesResult.total,
+      activeCourses: enrollmentRows.length,
+      certificates: certificateRows.length,
     };
   } catch (error) {
     console.error(
@@ -2373,15 +2361,15 @@ export async function getStudentEnrolledCourses(
   try {
     const { tablesDB } = await createAdminClient();
 
-    const enrollmentsResult = await safeListRows<EnrollmentRow>(
+    const enrollmentRows = await safeListAllRows<EnrollmentRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.enrollments,
-      [Query.equal("userId", [userId]), Query.equal("isActive", [true]), Query.limit(100)]
+      [Query.equal("userId", [userId]), Query.equal("isActive", [true])]
     );
 
-    if (enrollmentsResult.rows.length === 0) return [];
+    if (enrollmentRows.length === 0) return [];
 
-    const courseIds = enrollmentsResult.rows
+    const courseIds = enrollmentRows
       .map((e) => (typeof e.courseId === "string" ? e.courseId : ""))
       .filter(Boolean);
 
@@ -2406,10 +2394,10 @@ export async function getStudentEnrolledCourses(
       ])
     );
 
-    const progressResult = await safeListRows<AnyRow>(
+    const progressRows = await safeListAllRows<AnyRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.progress,
-      [Query.equal("userId", [userId]), Query.limit(2000)]
+      [Query.equal("userId", [userId])]
     );
     const lessonRows = await listRowsByFieldValues<LessonRow>(
       tablesDB,
@@ -2441,7 +2429,7 @@ export async function getStudentEnrolledCourses(
 
     const completedByCourse = new Map<string, number>();
     const progressByCourse = new Map<string, AnyRow[]>();
-    for (const row of progressResult.rows) {
+    for (const row of progressRows) {
       const cid = typeof row.courseId === "string" ? row.courseId : "";
       const completedAt =
         typeof row.completedAt === "string" ? row.completedAt.trim() : "";
@@ -2586,19 +2574,18 @@ export async function getStudentStudyQueue(
   }
   try {
     const { tablesDB } = await createAdminClient();
-    const enrollmentsResult = await safeListRows<EnrollmentRow>(
+    const enrollmentRows = await safeListAllRows<EnrollmentRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.enrollments,
       [
         Query.equal("userId", [userId]),
         Query.equal("isActive", [true]),
-        Query.limit(100),
       ]
     );
 
     const courseIds = [
       ...new Set(
-        enrollmentsResult.rows
+        enrollmentRows
           .map((row) =>
             typeof row.courseId === "string" ? row.courseId.trim() : ""
           )
@@ -2642,15 +2629,15 @@ export async function getStudentStudyQueue(
         "courseId",
         courseIds
       ),
-      safeListRows<SubmissionRow>(
+      safeListAllRows<SubmissionRow>(
         tablesDB,
         APPWRITE_CONFIG.tables.submissions,
-        [Query.equal("userId", [userId]), Query.limit(2000)]
+        [Query.equal("userId", [userId])]
       ),
-      safeListRows<QuizAttemptRow>(
+      safeListAllRows<QuizAttemptRow>(
         tablesDB,
         APPWRITE_CONFIG.tables.quizAttempts,
-        [Query.equal("userId", [userId]), Query.limit(2000)]
+        [Query.equal("userId", [userId])]
       ),
     ]);
 
@@ -2675,7 +2662,7 @@ export async function getStudentStudyQueue(
     );
 
     const latestSubmissionByAssignmentId = new Map<string, SubmissionRow>();
-    for (const submission of submissionsResult.rows) {
+    for (const submission of submissionsResult) {
       const assignmentId =
         typeof submission.assignmentId === "string"
           ? submission.assignmentId.trim()
@@ -2696,7 +2683,7 @@ export async function getStudentStudyQueue(
     }
 
     const attemptsByQuizId = new Map<string, QuizAttemptRow[]>();
-    for (const attempt of quizAttemptsResult.rows) {
+    for (const attempt of quizAttemptsResult) {
       const quizId = typeof attempt.quizId === "string" ? attempt.quizId.trim() : "";
       if (!quizId) {
         continue;

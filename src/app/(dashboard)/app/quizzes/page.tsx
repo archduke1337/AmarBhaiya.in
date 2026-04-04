@@ -1,12 +1,13 @@
 import { Award, CheckCircle, XCircle } from "lucide-react";
 import { Query } from "node-appwrite";
+import type { Models } from "node-appwrite";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = Models.Row & Record<string, unknown>;
 
 type QuizAttemptDisplay = {
   id: string;
@@ -21,47 +22,104 @@ async function getStudentQuizHistory(userId: string): Promise<QuizAttemptDisplay
   const { tablesDB } = await createAdminClient();
 
   try {
-    const attemptsResult = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.quizAttempts,
-      queries: [
-        Query.equal("userId", [userId]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(100),
-      ],
-    });
+    const listAllRows = async (
+      tableId: string,
+      queries: string[] = []
+    ): Promise<AnyRow[]> => {
+      const rows: AnyRow[] = [];
+      let offset = 0;
+
+      while (true) {
+        const result = await tablesDB.listRows({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId,
+          queries: [...queries, Query.limit(500), Query.offset(offset)],
+        });
+
+        rows.push(...(result.rows as AnyRow[]));
+
+        if (result.rows.length < 500) {
+          break;
+        }
+
+        offset += result.rows.length;
+      }
+
+      return rows;
+    };
+
+    const chunkValues = (values: string[], chunkSize = 20): string[][] => {
+      const chunks: string[][] = [];
+      for (let index = 0; index < values.length; index += chunkSize) {
+        chunks.push(values.slice(index, index + chunkSize));
+      }
+      return chunks;
+    };
+
+    const listRowsByFieldValues = async (
+      tableId: string,
+      field: string,
+      values: string[]
+    ): Promise<AnyRow[]> => {
+      if (values.length === 0) {
+        return [];
+      }
+
+      const results = await Promise.all(
+        chunkValues(values).map((chunk) =>
+          listAllRows(tableId, [Query.equal(field, chunk)])
+        )
+      );
+
+      return results.flat();
+    };
+
+    const attemptsRows = await listAllRows(APPWRITE_CONFIG.tables.quizAttempts, [
+      Query.equal("userId", [userId]),
+      Query.orderDesc("$createdAt"),
+    ]);
+
+    const quizIds = [
+      ...new Set(
+        attemptsRows
+          .map((row) => String(row.quizId ?? ""))
+          .filter((quizId) => quizId.length > 0)
+      ),
+    ];
+
+    const quizRows = await listRowsByFieldValues(
+      APPWRITE_CONFIG.tables.quizzes,
+      "$id",
+      quizIds
+    );
+    const courseIds = [
+      ...new Set(
+        quizRows
+          .map((quiz) => String(quiz.courseId ?? ""))
+          .filter((courseId) => courseId.length > 0)
+      ),
+    ];
+    const courseRows = await listRowsByFieldValues(
+      APPWRITE_CONFIG.tables.courses,
+      "$id",
+      courseIds
+    );
+
+    const quizById = new Map(quizRows.map((quiz) => [quiz.$id, quiz]));
+    const courseTitleById = new Map(
+      courseRows.map((course) => [
+        course.$id,
+        String(course.title ?? "Course"),
+      ])
+    );
 
     const attempts: QuizAttemptDisplay[] = [];
 
-    for (const r of attemptsResult.rows) {
-      const row = r as AnyRow;
-
-      let quizTitle = "Quiz";
-      let courseTitle = "Course";
-
-      try {
-        const quiz = (await tablesDB.getRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.quizzes,
-          rowId: String(row.quizId ?? ""),
-        })) as AnyRow;
-        quizTitle = String(quiz.title ?? "Quiz");
-
-        if (quiz.courseId) {
-          try {
-            const course = (await tablesDB.getRow({
-              databaseId: APPWRITE_CONFIG.databaseId,
-              tableId: APPWRITE_CONFIG.tables.courses,
-              rowId: String(quiz.courseId ?? ""),
-            })) as AnyRow;
-            courseTitle = String(course.title ?? "Course");
-          } catch {
-            // skip
-          }
-        }
-      } catch {
-        // skip
-      }
+    for (const row of attemptsRows) {
+      const quiz = quizById.get(String(row.quizId ?? ""));
+      const quizTitle = String(quiz?.title ?? "Quiz");
+      const courseTitle =
+        courseTitleById.get(String(quiz?.courseId ?? "")) ?? "Course";
 
       attempts.push({
         id: row.$id,

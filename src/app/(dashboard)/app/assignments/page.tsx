@@ -1,4 +1,5 @@
 import { FileText, Upload, Clock, Download } from "lucide-react";
+import type { Models } from "node-appwrite";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { PageHeader, EmptyState } from "@/components/dashboard";
@@ -7,7 +8,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { Query } from "node-appwrite";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = Models.Row & Record<string, unknown>;
 
 type StudentAssignment = {
   id: string;
@@ -56,17 +57,31 @@ async function getStudentAssignments(
     const results = await Promise.all(
       chunks.map(async (chunk) => {
         try {
-          const result = await tablesDB.listRows({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId,
-            queries: [
-              Query.equal(field, chunk),
-              Query.limit(500),
-              ...extraQueries,
-            ],
-          });
+          const rows: AnyRow[] = [];
+          let offset = 0;
 
-          return result.rows as AnyRow[];
+          while (true) {
+            const result = await tablesDB.listRows({
+              databaseId: APPWRITE_CONFIG.databaseId,
+              tableId,
+              queries: [
+                Query.equal(field, chunk),
+                ...extraQueries,
+                Query.limit(500),
+                Query.offset(offset),
+              ],
+            });
+
+            rows.push(...(result.rows as AnyRow[]));
+
+            if (result.rows.length < 500) {
+              break;
+            }
+
+            offset += result.rows.length;
+          }
+
+          return rows;
         } catch {
           return [] as AnyRow[];
         }
@@ -76,16 +91,44 @@ async function getStudentAssignments(
     return results.flat();
   };
 
-  // Get enrolled course IDs
-  const enrollments = await tablesDB.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.enrollments,
-    queries: [Query.equal("userId", [userId]), Query.limit(100)],
-  });
+  const listAllRows = async (
+    tableId: string,
+    queries: string[] = []
+  ): Promise<AnyRow[]> => {
+    try {
+      const rows: AnyRow[] = [];
+      let offset = 0;
+
+      while (true) {
+        const result = await tablesDB.listRows({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId,
+          queries: [...queries, Query.limit(500), Query.offset(offset)],
+        });
+
+        rows.push(...(result.rows as AnyRow[]));
+
+        if (result.rows.length < 500) {
+          break;
+        }
+
+        offset += result.rows.length;
+      }
+
+      return rows;
+    } catch {
+      return [];
+    }
+  };
+
+  const enrollments = await listAllRows(APPWRITE_CONFIG.tables.enrollments, [
+    Query.equal("userId", [userId]),
+    Query.equal("isActive", [true]),
+  ]);
 
   const courseIds = Array.from(
     new Set(
-      enrollments.rows
+      enrollments
         .map((r) => String((r as AnyRow).courseId ?? ""))
         .filter((id) => id.length > 0)
     )
@@ -101,17 +144,10 @@ async function getStudentAssignments(
       courseIds,
       [Query.orderDesc("$createdAt")]
     ),
-    tablesDB
-      .listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.submissions,
-        queries: [
-          Query.equal("userId", [userId]),
-          Query.orderDesc("$createdAt"),
-          Query.limit(2000),
-        ],
-      })
-      .catch(() => ({ rows: [] as AnyRow[] })),
+    listAllRows(APPWRITE_CONFIG.tables.submissions, [
+      Query.equal("userId", [userId]),
+      Query.orderDesc("$createdAt"),
+    ]),
   ]);
 
   const courseTitleById = new Map<string, string>(
@@ -121,7 +157,7 @@ async function getStudentAssignments(
   const assignmentIds = new Set(assignmentRows.map((row) => row.$id));
   const latestSubmissionByAssignmentId = new Map<string, AnyRow>();
 
-  for (const row of submissionsResult.rows as AnyRow[]) {
+  for (const row of submissionsResult) {
     const assignmentId = String(row.assignmentId ?? "");
     if (!assignmentIds.has(assignmentId)) {
       continue;
