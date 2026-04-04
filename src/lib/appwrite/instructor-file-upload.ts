@@ -15,8 +15,6 @@ import {
 } from "@/lib/uploads/instructor-file";
 import type { Role } from "@/lib/utils/constants";
 
-type AnyRow = Record<string, unknown> & { $id: string };
-
 type UploadTargetInput = {
   kind: InstructorUploadKind;
   userId: string;
