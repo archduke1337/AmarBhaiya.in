@@ -121,18 +121,11 @@ export async function userHasCourseAccess({
     return false;
   }
 
-  if (String(course.accessModel ?? "free") === "free") {
-    return true;
-  }
-
+  let lesson: AnyRow | null = null;
   if (lessonId) {
-    const lesson = await getLessonRow(lessonId);
+    lesson = await getLessonRow(lessonId);
     if (!lesson || String(lesson.courseId ?? "") !== courseId) {
       return false;
-    }
-
-    if (Boolean(lesson.isFree) || Boolean(lesson.isFreePreview)) {
-      return true;
     }
   }
 
@@ -149,12 +142,32 @@ export async function userHasCourseAccess({
       ],
     });
 
-    return enrollments.rows.some((row) => {
+    const hasActiveEnrollment = enrollments.rows.some((row) => {
       const enrollment = row as AnyRow;
       return enrollment.isActive !== false
         && String(enrollment.status ?? "active") !== "cancelled";
     });
+
+    if (hasActiveEnrollment) {
+      return true;
+    }
   } catch {
+    // Continue to public-access checks below.
+  }
+
+  if (course.isPublished === false) {
     return false;
   }
+
+  if (String(course.accessModel ?? "free") === "free") {
+    return true;
+  }
+
+  if (lesson) {
+    if (Boolean(lesson.isFree) || Boolean(lesson.isFreePreview)) {
+      return true;
+    }
+  }
+
+  return false;
 }

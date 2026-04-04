@@ -146,6 +146,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
   ]);
   const lessonProgressRow = (lessonProgressResult.rows[0] as AnyRow | undefined) ?? null;
   const hasEnrollment = enrollmentResult.rows.length > 0;
+  const hasFullCourseAccess = courseIsFree || hasEnrollment;
   const canMarkComplete = courseIsFree || hasEnrollment;
   const lessonPercentComplete = Math.max(
     0,
@@ -184,6 +185,14 @@ export default async function LessonViewerPage({ params }: PageProps) {
       };
     })
     .filter((resource): resource is { id: string; title: string; type: string; href: string } => resource !== null);
+
+  function canOpenLesson(row: AnyRow | null | undefined): boolean {
+    if (!row) {
+      return false;
+    }
+
+    return hasFullCourseAccess || Boolean(row.isFree) || Boolean(row.isFreePreview);
+  }
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -279,13 +288,20 @@ export default async function LessonViewerPage({ params }: PageProps) {
       {/* Navigation */}
       <nav className="flex items-center justify-between border-t border-border pt-4">
         {prevLesson ? (
-          <Link
-            href={`/app/learn/${courseId}/${prevLesson.$id}`}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="size-4" />
-            Previous
-          </Link>
+          canOpenLesson(prevLesson) ? (
+            <Link
+              href={`/app/learn/${courseId}/${prevLesson.$id}`}
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="size-4" />
+              Previous
+            </Link>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+              <Lock className="size-4" />
+              Previous locked
+            </span>
+          )
         ) : (
           <span />
         )}
@@ -295,13 +311,20 @@ export default async function LessonViewerPage({ params }: PageProps) {
         </span>
 
         {nextLesson ? (
-          <Link
-            href={`/app/learn/${courseId}/${nextLesson.$id}`}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Next
-            <ChevronRight className="size-4" />
-          </Link>
+          canOpenLesson(nextLesson) ? (
+            <Link
+              href={`/app/learn/${courseId}/${nextLesson.$id}`}
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Next
+              <ChevronRight className="size-4" />
+            </Link>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+              Next locked
+              <Lock className="size-4" />
+            </span>
+          )
         ) : (
           <span />
         )}
@@ -318,35 +341,39 @@ export default async function LessonViewerPage({ params }: PageProps) {
           <ul className="divide-y divide-border">
             {allLessons.map((l, i) => {
               const isActive = l.$id === lessonId;
-              const isAccessible =
-                Boolean(l.isFree) ||
-                Boolean(l.isFreePreview) ||
-                courseIsFree;
+              const isAccessible = canOpenLesson(l);
 
               return (
                 <li key={l.$id}>
-                  <Link
-                    href={`/app/learn/${courseId}/${l.$id}`}
-                    className={`flex items-center gap-3 px-5 py-3 text-sm transition-colors ${
-                      isActive
-                        ? "bg-muted font-medium"
-                        : "hover:bg-muted/50"
-                    }`}
-                  >
-                    <span className="text-xs text-muted-foreground w-6">
-                      {completedLessonIds.includes(l.$id) ? (
-                        <CheckCircle className="size-3.5 text-emerald-600" />
-                      ) : (
-                        i + 1
-                      )}
-                    </span>
-                    <span className="flex-1 truncate">
-                      {String(l.title ?? `Lesson ${i + 1}`)}
-                    </span>
-                    {!isAccessible && (
-                      <Lock className="size-3.5 text-muted-foreground shrink-0" />
-                    )}
-                  </Link>
+                  {isAccessible ? (
+                    <Link
+                      href={`/app/learn/${courseId}/${l.$id}`}
+                      className={`flex items-center gap-3 px-5 py-3 text-sm transition-colors ${
+                        isActive
+                          ? "bg-muted font-medium"
+                          : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <span className="text-xs text-muted-foreground w-6">
+                        {completedLessonIds.includes(l.$id) ? (
+                          <CheckCircle className="size-3.5 text-emerald-600" />
+                        ) : (
+                          i + 1
+                        )}
+                      </span>
+                      <span className="flex-1 truncate">
+                        {String(l.title ?? `Lesson ${i + 1}`)}
+                      </span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-3 px-5 py-3 text-sm text-muted-foreground">
+                      <span className="text-xs w-6">{i + 1}</span>
+                      <span className="flex-1 truncate">
+                        {String(l.title ?? `Lesson ${i + 1}`)}
+                      </span>
+                      <Lock className="size-3.5 shrink-0" />
+                    </div>
+                  )}
                 </li>
               );
             })}

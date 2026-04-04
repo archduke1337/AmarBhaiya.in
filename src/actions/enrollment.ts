@@ -563,6 +563,41 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
   const { tablesDB } = await createAdminClient();
 
   try {
+    const enrollment = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      rowId: enrollmentId,
+    }).catch(() => null)) as AnyRow | null;
+
+    if (!enrollment) {
+      return;
+    }
+
+    const userId = String(enrollment.userId ?? "");
+    const courseId = String(enrollment.courseId ?? "");
+
+    if (userId && courseId) {
+      const progressRows = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.progress,
+        queries: [
+          Query.equal("userId", [userId]),
+          Query.equal("courseId", [courseId]),
+          Query.limit(2000),
+        ],
+      }).catch(() => ({ rows: [] }));
+
+      await Promise.allSettled(
+        (progressRows.rows as AnyRow[]).map((row) =>
+          tablesDB.deleteRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.tables.progress,
+            rowId: row.$id,
+          })
+        )
+      );
+    }
+
     await tablesDB.deleteRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.enrollments,
@@ -571,6 +606,13 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
 
     revalidatePath("/admin/students");
     revalidatePath("/admin/courses");
+    if (userId) {
+      revalidatePath(`/admin/students/${userId}`);
+    }
+    if (courseId) {
+      revalidatePath(`/app/courses/${courseId}`);
+      revalidatePath("/app/dashboard");
+    }
   } catch (error) {
     console.error("[Admin Unenroll]", error instanceof Error ? error.message : error);
   }

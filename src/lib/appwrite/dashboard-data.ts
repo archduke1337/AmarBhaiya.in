@@ -552,12 +552,16 @@ function resolveRoleFromLabels(labels: string[] | undefined): string {
   return "student";
 }
 
-function getInstructorQueries(scope: InstructorScope): string[] {
+function getInstructorBaseQueries(scope: InstructorScope): string[] {
   if (scope.role === "admin") {
-    return [Query.limit(100)];
+    return [];
   }
 
-  return [Query.equal("instructorId", [scope.userId]), Query.limit(100)];
+  return [Query.equal("instructorId", [scope.userId])];
+}
+
+function getInstructorQueries(scope: InstructorScope): string[] {
+  return [...getInstructorBaseQueries(scope), Query.limit(100)];
 }
 
 async function safeListRows<Row extends AnyRow>(
@@ -627,15 +631,14 @@ async function listRowsByFieldValues<Row extends AnyRow>(
   const chunks = chunkValues(values, 20);
   const results = await Promise.all(
     chunks.map((chunk) =>
-      safeListRows<Row>(tablesDB, tableId, [
+      safeListAllRows<Row>(tablesDB, tableId, [
         Query.equal(field, chunk),
-        Query.limit(200),
         ...extraQueries,
       ])
     )
   );
 
-  return results.flatMap((result) => result.rows);
+  return results.flatMap((result) => result);
 }
 
 export async function getCommunityThreadsData(): Promise<CommunityThreadItem[]> {
@@ -781,6 +784,34 @@ export async function getInstructorDashboardStats(
       pendingReviews: 0,
     };
   }
+}
+
+async function safeListAllRows<Row extends AnyRow>(
+  tablesDB: AdminClient["tablesDB"] | Awaited<ReturnType<typeof createSessionClient>>["tablesDB"],
+  tableId: string,
+  queries: string[] = [],
+  pageSize = 500
+): Promise<Row[]> {
+  const rows: Row[] = [];
+  let offset = 0;
+
+  while (true) {
+    const response = await safeListRows<Row>(tablesDB, tableId, [
+      ...queries,
+      Query.limit(pageSize),
+      Query.offset(offset),
+    ]);
+
+    rows.push(...response.rows);
+
+    if (response.rows.length < pageSize) {
+      break;
+    }
+
+    offset += response.rows.length;
+  }
+
+  return rows;
 }
 
 export async function getInstructorCourseList(
@@ -1153,13 +1184,11 @@ export async function getInstructorRevenueOverview(
   try {
     const { tablesDB } = await createAdminClient();
 
-    const coursesResult = await safeListRows<CourseRow>(
+    const courses = await safeListAllRows<CourseRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.courses,
-      getInstructorQueries(scope)
+      getInstructorBaseQueries(scope)
     );
-
-    const courses = coursesResult.rows;
     const courseIds = courses.map((course) => course.$id);
 
     if (courseIds.length === 0) {
@@ -1175,37 +1204,47 @@ export async function getInstructorRevenueOverview(
       };
     }
 
-    const [paymentsByCourse, enrollmentsByCourse] = await Promise.all([
-      Promise.all(
-        courseIds.map(async (courseId) => {
-          const result = await safeListRows<PaymentRow>(
-            tablesDB,
-            APPWRITE_CONFIG.tables.payments,
-            [
-              Query.equal("courseId", [courseId]),
-              Query.equal("status", ["completed"]),
-              Query.limit(500),
-            ]
-          );
-
-          return [courseId, result.rows] as const;
-        })
+    const [payments, enrollments] = await Promise.all([
+      listRowsByFieldValues<PaymentRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.payments,
+        "courseId",
+        courseIds,
+        [Query.equal("status", ["completed"])]
       ),
-      Promise.all(
-        courseIds.map(async (courseId) => {
-          const result = await safeListRows<EnrollmentRow>(
-            tablesDB,
-            APPWRITE_CONFIG.tables.enrollments,
-            [Query.equal("courseId", [courseId]), Query.limit(500)]
-          );
-
-          return [courseId, result.rows] as const;
-        })
+      listRowsByFieldValues<EnrollmentRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.enrollments,
+        "courseId",
+        courseIds
       ),
     ]);
 
-    const paymentMap = new Map<string, PaymentRow[]>(paymentsByCourse);
-    const enrollmentMap = new Map<string, EnrollmentRow[]>(enrollmentsByCourse);
+    const paymentMap = new Map<string, PaymentRow[]>();
+    for (const payment of payments) {
+      const courseId =
+        typeof payment.courseId === "string" ? payment.courseId : "";
+      if (!courseId) {
+        continue;
+      }
+
+      const existing = paymentMap.get(courseId) ?? [];
+      existing.push(payment);
+      paymentMap.set(courseId, existing);
+    }
+
+    const enrollmentMap = new Map<string, EnrollmentRow[]>();
+    for (const enrollment of enrollments) {
+      const courseId =
+        typeof enrollment.courseId === "string" ? enrollment.courseId : "";
+      if (!courseId) {
+        continue;
+      }
+
+      const existing = enrollmentMap.get(courseId) ?? [];
+      existing.push(enrollment);
+      enrollmentMap.set(courseId, existing);
+    }
     const monthStart = new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
@@ -1811,7 +1850,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   try {
     const { tablesDB, users } = await createAdminClient();
 
-    const [usersTotal, activeEnrollmentsResult, completedPayments, liveSessions, coursesResult] =
+    const [usersTotal, enrollmentRows, completedPaymentRows, liveSessions, courseRows] =
       await Promise.all([
         users
           .list({
@@ -1819,32 +1858,27 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
           })
           .then((result) => result.total)
           .catch(() => 0),
-        safeListRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
-          Query.limit(500),
-        ]),
-        safeListRows<PaymentRow>(tablesDB, APPWRITE_CONFIG.tables.payments, [
+        safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments),
+        safeListAllRows<PaymentRow>(tablesDB, APPWRITE_CONFIG.tables.payments, [
           Query.equal("status", ["completed"]),
-          Query.limit(500),
         ]),
         safeCountRows(tablesDB, APPWRITE_CONFIG.tables.liveSessions, [
           Query.equal("status", ["scheduled", "live"]),
         ]),
-        safeListRows(tablesDB, APPWRITE_CONFIG.tables.courses, [
-          Query.limit(500),
-        ]),
+        safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses),
       ]);
 
-    const activeEnrollments = activeEnrollmentsResult.rows.filter((row) => row.isActive !== false).length;
-    const completedEnrollments = activeEnrollmentsResult.rows.filter(
+    const activeEnrollments = enrollmentRows.filter((row) => row.isActive !== false).length;
+    const completedEnrollments = enrollmentRows.filter(
       (row) => Number((row as AnyRow).progress ?? 0) >= 100
     ).length;
     const completionRate =
-      activeEnrollmentsResult.total > 0
-        ? Math.round((completedEnrollments / activeEnrollmentsResult.total) * 100)
+      enrollmentRows.length > 0
+        ? Math.round((completedEnrollments / enrollmentRows.length) * 100)
         : 0;
 
-    const totalCourses = coursesResult.total;
-    const publishedCourses = coursesResult.rows.filter(
+    const totalCourses = courseRows.length;
+    const publishedCourses = courseRows.filter(
       (r) => Boolean((r as AnyRow).isPublished)
     ).length;
 
@@ -1852,7 +1886,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const monthlyRevenue = completedPayments.rows
+    const monthlyRevenue = completedPaymentRows
       .filter((payment) => {
         const createdAt = toDate(payment.createdAt);
         if (!createdAt) {
@@ -1863,7 +1897,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       })
       .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0) / 100;
 
-    const totalRevenue = completedPayments.rows.reduce(
+    const totalRevenue = completedPaymentRows.reduce(
       (sum, payment) => sum + Number(payment.amount ?? 0),
       0
     ) / 100;
@@ -1922,7 +1956,7 @@ export async function getAdminCourses(): Promise<AdminCourseItem[]> {
   const { tablesDB } = await createAdminClient();
 
   const [coursesResult, categoriesResult] = await Promise.all([
-    safeListRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [Query.limit(100)]),
+    safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses),
     safeListRows<AnyRow & Partial<Category>>(
       tablesDB,
       APPWRITE_CONFIG.tables.categories,
@@ -1937,7 +1971,7 @@ export async function getAdminCourses(): Promise<AdminCourseItem[]> {
     ])
   );
 
-  return coursesResult.rows.map((course) => ({
+  return coursesResult.map((course) => ({
     id: course.$id,
     title: typeof course.title === "string" ? course.title : "Untitled course",
     state: course.isPublished ? "published" : "draft",
@@ -1980,13 +2014,13 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
   try {
     const { tablesDB, users } = await createAdminClient();
 
-    const paymentsResult = await safeListRows<PaymentRow>(
+    const paymentRows = await safeListAllRows<PaymentRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.payments,
-      [Query.limit(120)]
+      [Query.orderDesc("createdAt")]
     );
 
-    const paymentRows = paymentsResult.rows.sort((left, right) => {
+    const sortedPaymentRows = paymentRows.sort((left, right) => {
       const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
       const rightDate = toDate(right.createdAt)?.getTime() ?? 0;
       return rightDate - leftDate;
@@ -1994,7 +2028,7 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
 
     const courseIds = [
       ...new Set(
-        paymentRows
+        sortedPaymentRows
           .map((payment) => payment.courseId)
           .filter((value): value is string => typeof value === "string")
       ),
@@ -2002,7 +2036,7 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
 
     const userIds = [
       ...new Set(
-        paymentRows
+        sortedPaymentRows
           .map((payment) => payment.userId)
           .filter((value): value is string => typeof value === "string")
       ),
@@ -2047,7 +2081,7 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
       })
     );
 
-      return paymentRows.map((payment) => ({
+      return sortedPaymentRows.map((payment) => ({
         id: payment.$id,
         userId: typeof payment.userId === "string" ? payment.userId : "",
         providerRef:
@@ -2959,7 +2993,7 @@ export async function getPublicCourses(): Promise<PublicCourseCard[]> {
         typeof c.instructorName === "string" ? c.instructorName : "",
       totalLessons: Number(c.totalLessons ?? 0),
       totalDuration: Number(c.totalDuration ?? 0),
-      enrolledCount: Number(c.enrolledCount ?? 0),
+      enrolledCount: Number(c.enrollmentCount ?? c.enrolledCount ?? 0),
       categoryId: typeof c.categoryId === "string" ? c.categoryId : "",
     }));
   } catch {
@@ -3020,39 +3054,55 @@ export async function getPublicCourseBySlug(
 
   if (!course || !course.isPublished) return null;
 
-  // Fetch modules
-  const modulesResult = await safeListRows(
-    tablesDB,
-    APPWRITE_CONFIG.tables.modules,
-    [Query.equal("courseId", [course.$id]), Query.orderAsc("order"), Query.limit(100)]
-  );
+  const [modulesResult, lessonRows, activeEnrollmentRows] = await Promise.all([
+    safeListRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
+      Query.equal("courseId", [course.$id]),
+      Query.orderAsc("order"),
+      Query.limit(100),
+    ]),
+    safeListAllRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+      Query.equal("courseId", [course.$id]),
+      Query.orderAsc("order"),
+    ]),
+    safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+      Query.equal("courseId", [course.$id]),
+      Query.equal("isActive", [true]),
+    ]),
+  ]);
 
-  const modules = [];
-  for (const mod of modulesResult.rows) {
-    const m = mod as AnyRow;
-    const lessonsResult = await safeListRows(
-      tablesDB,
-      APPWRITE_CONFIG.tables.lessons,
-      [Query.equal("moduleId", [m.$id]), Query.orderAsc("order"), Query.limit(100)]
+  const lessonsByModuleId = new Map<string, LessonRow[]>();
+  for (const lesson of lessonRows) {
+    const moduleId =
+      typeof lesson.moduleId === "string" ? lesson.moduleId : "";
+    if (!moduleId) {
+      continue;
+    }
+
+    const existing = lessonsByModuleId.get(moduleId) ?? [];
+    existing.push(lesson);
+    lessonsByModuleId.set(moduleId, existing);
+  }
+
+  const modules = modulesResult.rows.map((module) => {
+    const moduleLessons = (lessonsByModuleId.get(module.$id) ?? []).sort(
+      (left, right) => Number(left.order ?? 0) - Number(right.order ?? 0)
     );
 
-    modules.push({
-      id: m.$id,
-      title: typeof m.title === "string" ? m.title : "Untitled Module",
-      order: Number(m.order ?? 0),
-      lessons: lessonsResult.rows.map((l) => {
-        const lesson = l as AnyRow;
-        return {
-          id: lesson.$id,
-          title: typeof lesson.title === "string" ? lesson.title : "Untitled Lesson",
-          order: Number(lesson.order ?? 0),
-          duration: Number(lesson.duration ?? 0),
-          isFree: Boolean(lesson.isFree),
-          isFreePreview: Boolean(lesson.isFreePreview),
-        };
-      }),
-    });
-  }
+    return {
+      id: module.$id,
+      title: typeof module.title === "string" ? module.title : "Untitled Module",
+      order: Number(module.order ?? 0),
+      lessons: moduleLessons.map((lesson) => ({
+        id: lesson.$id,
+        title:
+          typeof lesson.title === "string" ? lesson.title : "Untitled Lesson",
+        order: Number(lesson.order ?? 0),
+        duration: Number(lesson.duration ?? 0),
+        isFree: Boolean(lesson.isFree),
+        isFreePreview: Boolean(lesson.isFreePreview),
+      })),
+    };
+  });
 
   return {
     id: course.$id,
@@ -3073,7 +3123,10 @@ export async function getPublicCourseBySlug(
       typeof course.instructorName === "string" ? course.instructorName : "",
     totalLessons: Number(course.totalLessons ?? 0),
     totalDuration: Number(course.totalDuration ?? 0),
-    enrolledCount: Number(course.enrolledCount ?? 0),
+    enrolledCount:
+      activeEnrollmentRows.length > 0
+        ? activeEnrollmentRows.length
+        : Number(course.enrollmentCount ?? course.enrolledCount ?? 0),
     isPublished: Boolean(course.isPublished),
     modules,
   };
