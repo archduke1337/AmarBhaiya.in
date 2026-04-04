@@ -15,6 +15,14 @@ import {
   type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
+import {
+  ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS,
+  ASSIGNMENT_SUBMISSION_ALLOWED_MIMES,
+  ASSIGNMENT_SUBMISSION_MAX_BYTES,
+  getAssignmentSubmissionFileExtension,
+} from "@/lib/uploads/assignment-submission";
+import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
+import { validateFileMimeType } from "@/lib/utils/sanitize";
 import { processInBatches } from "@/lib/utils/batch";
 
 type AnyRow = AnyAppwriteRow;
@@ -262,6 +270,28 @@ export async function submitAssignmentAction(
   const previousFileId = String(existingSubmission?.fileId ?? "");
 
   if (file && file.size > 0) {
+    if (file.size > ASSIGNMENT_SUBMISSION_MAX_BYTES) {
+      return;
+    }
+
+    const extension = getAssignmentSubmissionFileExtension(file.name);
+    if (
+      !ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS.includes(
+        extension as (typeof ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS)[number]
+      )
+    ) {
+      return;
+    }
+
+    const fileHeader = Buffer.from(await file.slice(0, 32).arrayBuffer());
+    if (
+      !validateFileMimeType(fileHeader, file.name, [
+        ...ASSIGNMENT_SUBMISSION_ALLOWED_MIMES,
+      ])
+    ) {
+      return;
+    }
+
     const { storage } = await createAdminClient();
 
     try {
@@ -292,6 +322,8 @@ export async function submitAssignmentAction(
         data: {
           fileId: uploadedFileId,
           submittedAt: new Date().toISOString(),
+          grade: 0,
+          feedback: "",
         },
       });
 
@@ -348,6 +380,55 @@ export async function submitAssignmentAction(
     revalidatePath("/app");
     revalidatePath("/app/assignments");
   } catch (error) {
+    const appwriteError = error as { code?: number };
+    if (appwriteError.code === 409) {
+      try {
+        const conflictRows = await tablesDB.listRows({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.submissions,
+          queries: [
+            Query.equal("assignmentId", [assignmentId]),
+            Query.equal("userId", [user.$id]),
+            Query.limit(1),
+          ],
+        });
+
+        const conflictedSubmission = (conflictRows.rows[0] as AnyRow | undefined) ?? null;
+        if (conflictedSubmission) {
+          await tablesDB.updateRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.tables.submissions,
+            rowId: conflictedSubmission.$id,
+            data: {
+              fileId: uploadedFileId,
+              submittedAt: new Date().toISOString(),
+              grade: 0,
+              feedback: "",
+            },
+          });
+
+          const conflictedPreviousFileId = String(conflictedSubmission.fileId ?? "");
+          if (conflictedPreviousFileId && conflictedPreviousFileId !== uploadedFileId) {
+            const { storage } = await createAdminClient();
+            try {
+              await storage.deleteFile({
+                bucketId: APPWRITE_CONFIG.buckets.courseResources,
+                fileId: conflictedPreviousFileId,
+              });
+            } catch {
+              // Submission update already succeeded; ignore old file cleanup failure.
+            }
+          }
+
+          revalidatePath("/app");
+          revalidatePath("/app/assignments");
+          return;
+        }
+      } catch {
+        // Fall through to rollback logic below.
+      }
+    }
+
     if (uploadedFileId) {
       const { storage } = await createAdminClient();
       try {
@@ -427,10 +508,12 @@ export async function gradeSubmissionAction(
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const submissionId = String(formData.get("submissionId") ?? "");
-  const grade = Math.max(0, Math.min(100, Number(formData.get("grade") ?? 0)));
+  const rawGrade = parseFiniteNumber(formData.get("grade"));
   const feedback = String(formData.get("feedback") ?? "").trim();
 
-  if (!submissionId) return;
+  if (!submissionId || rawGrade === null) return;
+
+  const grade = clampNumber(Math.round(rawGrade), 0, 100);
 
   try {
     const submission = await getSubmissionRow(submissionId);

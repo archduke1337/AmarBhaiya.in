@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 
-const { createAdminClientMock } = vi.hoisted(() => ({
-  createAdminClientMock: vi.fn(),
+const { createPublicClientMock } = vi.hoisted(() => ({
+  createPublicClientMock: vi.fn(),
 }));
 
 vi.mock("@/lib/appwrite/server", () => ({
-  createAdminClient: createAdminClientMock,
+  createPublicClient: createPublicClientMock,
 }));
 
 import { POST } from "./route";
@@ -18,7 +18,7 @@ describe("POST /api/auth/login", () => {
   beforeEach(() => {
     createEmailPasswordSessionMock.mockReset();
 
-    createAdminClientMock.mockResolvedValue({
+    createPublicClientMock.mockResolvedValue({
       account: {
         createEmailPasswordSession: createEmailPasswordSessionMock,
       },
@@ -37,7 +37,7 @@ describe("POST /api/auth/login", () => {
 
     expect(response.status).toBe(400);
     expect(body.error).toBe("Please enter a valid email address.");
-    expect(createAdminClientMock).not.toHaveBeenCalled();
+    expect(createPublicClientMock).not.toHaveBeenCalled();
   });
 
   it("creates session, sets cookie, and returns success", async () => {
@@ -103,6 +103,6 @@ describe("POST /api/auth/login", () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body).toEqual({ error: "Service unavailable" });
+    expect(body).toEqual({ error: "Login failed. Please try again." });
   });
 });

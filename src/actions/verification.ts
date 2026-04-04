@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createPublicClient, createSessionClient } from "@/lib/appwrite/server";
 import { requireAuth } from "@/lib/appwrite/auth";
+import { passwordSchema } from "@/lib/validators/auth";
 
 // ── Send Verification Email ─────────────────────────────────────────────────
 // Sends a magic link to the user's email. When clicked, Appwrite confirms
@@ -82,12 +83,17 @@ export async function confirmPasswordRecoveryAction(
   const userId = String(formData.get("userId") ?? "");
   const secret = String(formData.get("secret") ?? "");
   const password = String(formData.get("password") ?? "");
+  const parsedPassword = passwordSchema.safeParse(password);
 
-  if (!userId || !secret || !password || password.length < 8) return;
+  if (!userId || !secret || !parsedPassword.success) return;
 
   try {
     const { account } = await createPublicClient();
-    await account.updateRecovery({ userId, secret, password });
+    await account.updateRecovery({
+      userId,
+      secret,
+      password: parsedPassword.data,
+    });
     redirect("/login?reset=success");
   } catch (error) {
     console.error(

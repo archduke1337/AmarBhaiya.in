@@ -12,6 +12,7 @@ import {
 } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { parseFiniteNumber } from "@/lib/utils/number";
 import { normalizeHttpUrl } from "@/lib/utils/url";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
@@ -388,7 +389,7 @@ export async function updateStandaloneResourceAction(
   if (title) data.title = title;
 
   const description = String(formData.get("description") ?? "").trim();
-  if (description !== undefined) data.description = description;
+  if (formData.has("description")) data.description = description;
 
   const type = String(formData.get("type") ?? "");
   if (["notes", "worksheet", "test_paper", "video", "other"].includes(type)) {
@@ -398,7 +399,13 @@ export async function updateStandaloneResourceAction(
   const accessModel = String(formData.get("accessModel") ?? "");
   if (["free", "paid"].includes(accessModel)) {
     data.accessModel = accessModel;
-    data.price = accessModel === "paid" ? Number(formData.get("price") ?? 0) : 0;
+    if (accessModel === "paid") {
+      const price = parseFiniteNumber(formData.get("price"));
+      if (price === null || price < 0) return;
+      data.price = price;
+    } else {
+      data.price = 0;
+    }
   }
 
   data.isPublished = formData.get("isPublished") === "on";

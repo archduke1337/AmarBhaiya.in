@@ -6,6 +6,12 @@ type StreamConfig = {
 };
 
 let streamClient: StreamChat | null = null;
+const ensuredStreamUsers = new Map<
+  string,
+  { fingerprint: string; expiresAt: number }
+>();
+const STREAM_TOKEN_TTL_SECONDS = 60 * 60;
+const STREAM_USER_CACHE_TTL_MS = 15 * 60 * 1000;
 
 function requireStreamConfig(): StreamConfig {
   const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;
@@ -33,7 +39,8 @@ export function getStreamServerClient(): StreamChat {
 }
 
 export function createStreamUserToken(userId: string): string {
-  return getStreamServerClient().createToken(userId);
+  const expirationTime = Math.floor(Date.now() / 1000) + STREAM_TOKEN_TTL_SECONDS;
+  return getStreamServerClient().createToken(userId, expirationTime);
 }
 
 export async function ensureStreamUser(user: {
@@ -41,11 +48,22 @@ export async function ensureStreamUser(user: {
   name?: string;
   image?: string;
 }): Promise<void> {
+  const fingerprint = `${user.name ?? ""}::${user.image ?? ""}`;
+  const cached = ensuredStreamUsers.get(user.id);
+  if (cached && cached.fingerprint === fingerprint && cached.expiresAt > Date.now()) {
+    return;
+  }
+
   const client = getStreamServerClient();
 
   await client.upsertUser({
     id: user.id,
     name: user.name,
     image: user.image,
+  });
+
+  ensuredStreamUsers.set(user.id, {
+    fingerprint,
+    expiresAt: Date.now() + STREAM_USER_CACHE_TTL_MS,
   });
 }

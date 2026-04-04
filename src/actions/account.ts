@@ -7,6 +7,7 @@ import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { passwordSchema } from "@/lib/validators/auth";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
@@ -126,15 +127,18 @@ export async function changePasswordAction(
 
   const currentPassword = String(formData.get("currentPassword") ?? "");
   const newPassword = String(formData.get("newPassword") ?? "");
-  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "").trim();
+  const parsedPassword = passwordSchema.safeParse(newPassword);
 
-  if (!currentPassword || !newPassword) return;
-  if (newPassword.length < 8) return;
-  if (newPassword !== confirmPassword) return;
+  if (!currentPassword || !parsedPassword.success) return;
+  if (parsedPassword.data !== confirmPassword) return;
 
   try {
     const { account } = await createSessionClient();
-    await account.updatePassword({ password: newPassword, oldPassword: currentPassword });
+    await account.updatePassword({
+      password: parsedPassword.data,
+      oldPassword: currentPassword,
+    });
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to change password."

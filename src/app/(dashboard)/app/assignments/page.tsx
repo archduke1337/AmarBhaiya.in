@@ -4,6 +4,10 @@ import type { Models } from "node-appwrite";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { submitAssignmentAction } from "@/actions/assignments";
+import {
+  ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS,
+  ASSIGNMENT_SUBMISSION_MAX_BYTES,
+} from "@/lib/uploads/assignment-submission";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { Query } from "node-appwrite";
@@ -196,6 +200,10 @@ async function getStudentAssignments(
 }
 
 export default async function StudentAssignmentsPage() {
+  const acceptedAssignmentFileTypes = ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS
+    .map((extension) => `.${extension}`)
+    .join(",");
+
   const user = await requireAuth();
   const assignments = await getStudentAssignments(user.$id);
 
@@ -269,9 +277,13 @@ export default async function StudentAssignmentsPage() {
                       <input
                         type="file"
                         name="file"
+                        accept={acceptedAssignmentFileTypes}
                         className="text-xs file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:mr-2"
                       />
                     </label>
+                    <span className="text-[10px] text-muted-foreground hidden lg:inline">
+                      Max {Math.round(ASSIGNMENT_SUBMISSION_MAX_BYTES / (1024 * 1024))} MB
+                    </span>
                     <button
                       type="submit"
                       className="h-8 bg-foreground text-background px-4 text-xs transition-opacity hover:opacity-90 shrink-0"

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { createPublicClient } from "@/lib/appwrite/server";
 import { loginSchema } from "@/lib/validators/auth";
 
 export const runtime = "nodejs";
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { account } = await createAdminClient();
+    const { account } = await createPublicClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
@@ -50,6 +50,9 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Login failed. Please try again." },
+      { status: 500 }
+    );
   }
 }

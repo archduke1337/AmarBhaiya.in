@@ -1,11 +1,20 @@
 "use server";
 
+import { ID } from "node-appwrite";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createAdminClient, createSessionClient } from "./server";
+import {
+  createPublicClient,
+  createSessionClient,
+} from "./server";
 import { APPWRITE_CONFIG } from "./config";
-import { loginSchema, registerSchema, forgotPasswordSchema } from "../validators/auth";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+} from "../validators/auth";
 import type { LoginInput, RegisterInput, ForgotPasswordInput } from "../validators/auth";
+import { getAppOrigin } from "../utils/url";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -13,15 +22,6 @@ export type ActionResult = {
   success: boolean;
   error?: string;
 };
-
-function getAppOrigin(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    (process.env.NODE_ENV === "production"
-      ? "https://amarbhaiya.in"
-      : "http://localhost:3000")
-  );
-}
 
 function getSessionCookieOptions(expire: string) {
   return {
@@ -43,7 +43,7 @@ export async function loginAction(data: LoginInput): Promise<ActionResult> {
   }
 
   try {
-    const { account } = await createAdminClient();
+    const { account } = await createPublicClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
@@ -65,7 +65,7 @@ export async function loginAction(data: LoginInput): Promise<ActionResult> {
     if (message.includes("Invalid credentials")) {
       return { success: false, error: "Invalid email or password." };
     }
-    return { success: false, error: message };
+    return { success: false, error: "Login failed. Please try again." };
   }
 }
 
@@ -78,11 +78,11 @@ export async function registerAction(data: RegisterInput): Promise<ActionResult>
   }
 
   try {
-    const { account } = await createAdminClient();
+    const { account } = await createPublicClient();
 
     // Create user account
     await account.create({
-      userId: "unique()",
+      userId: ID.unique(),
       email: parsed.data.email,
       password: parsed.data.password,
       name: parsed.data.name,
@@ -111,7 +111,7 @@ export async function registerAction(data: RegisterInput): Promise<ActionResult>
         error: "An account with this email already exists.",
       };
     }
-    return { success: false, error: message };
+    return { success: false, error: "Registration failed. Please try again." };
   }
 }
 
@@ -126,7 +126,7 @@ export async function forgotPasswordAction(
   }
 
   try {
-    const { account } = await createAdminClient();
+    const { account } = await createPublicClient();
     await account.createRecovery({
       email: parsed.data.email,
       url: `${getAppOrigin()}/reset-password`,

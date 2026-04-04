@@ -418,6 +418,7 @@ async function main() {
   await text(T12, "feedback");
   await idx(T12, "idx_assignmentId", ["assignmentId"]);
   await idx(T12, "idx_userId", ["userId"]);
+  await idx(T12, "idx_assignment_user", ["assignmentId", "userId"], "unique");
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 13. certificates

@@ -15,6 +15,7 @@ import {
   type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
 import { processInBatches } from "@/lib/utils/batch";
 
 type AnyRow = AnyAppwriteRow;
@@ -79,8 +80,10 @@ export async function createQuizAction(formData: FormData): Promise<void> {
   const courseId = String(formData.get("courseId") ?? "");
   const lessonId = String(formData.get("lessonId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
-  const passMark = Number(formData.get("passMark") ?? 60);
-  const timeLimit = Number(formData.get("timeLimit") ?? 0);
+  const rawPassMark = parseFiniteNumber(formData.get("passMark"));
+  const rawTimeLimit = parseFiniteNumber(formData.get("timeLimit"));
+  const passMark = clampNumber(Math.round(rawPassMark ?? 60), 0, 100);
+  const timeLimit = Math.max(0, Math.round(rawTimeLimit ?? 0));
 
   if (!courseId || !title) return;
   if (!(await userCanManageCourse(courseId, role, user.$id))) return;
@@ -139,7 +142,8 @@ export async function addQuizQuestionAction(
     .map((o) => o.trim())
     .filter(Boolean);
 
-  const order = Number(formData.get("order") ?? 0);
+  const rawOrder = parseFiniteNumber(formData.get("order"));
+  const order = Math.max(0, Math.trunc(rawOrder ?? 0));
 
   if (!quizId || !text || !correctAnswer) return;
 

@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 
-const { createAdminClientMock } = vi.hoisted(() => ({
-  createAdminClientMock: vi.fn(),
+const { createPublicClientMock } = vi.hoisted(() => ({
+  createPublicClientMock: vi.fn(),
 }));
 
 vi.mock("@/lib/appwrite/server", () => ({
-  createAdminClient: createAdminClientMock,
+  createPublicClient: createPublicClientMock,
 }));
 
 vi.mock("node-appwrite", () => ({
@@ -26,7 +26,7 @@ describe("POST /api/auth/register", () => {
     createMock.mockReset();
     createEmailPasswordSessionMock.mockReset();
 
-    createAdminClientMock.mockResolvedValue({
+    createPublicClientMock.mockResolvedValue({
       account: {
         create: createMock,
         createEmailPasswordSession: createEmailPasswordSessionMock,
@@ -51,7 +51,7 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(400);
     expect(body.error).toBe("Name must be at least 2 characters.");
-    expect(createAdminClientMock).not.toHaveBeenCalled();
+    expect(createPublicClientMock).not.toHaveBeenCalled();
   });
 
   it("creates account and session, sets cookie, and returns success", async () => {
@@ -131,6 +131,6 @@ describe("POST /api/auth/register", () => {
     const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect(body).toEqual({ error: "Service unavailable" });
+    expect(body).toEqual({ error: "Registration failed. Please try again." });
   });
 });

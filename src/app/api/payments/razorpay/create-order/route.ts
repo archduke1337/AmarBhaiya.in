@@ -1,4 +1,4 @@
-import { ID } from "node-appwrite";
+import { ID, Query } from "node-appwrite";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     // SECURITY: Look up the actual course price from the database
     // Never trust client-provided amounts
-    type CourseRow = { price?: number; accessModel?: string };
+    type CourseRow = { price?: number; accessModel?: string; isPublished?: boolean };
     let course: CourseRow;
     try {
       course = (await tablesDB.getRow({
@@ -57,6 +57,36 @@ export async function POST(request: Request) {
       })) as CourseRow;
     } catch {
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    }
+
+    if (course.isPublished === false) {
+      return NextResponse.json(
+        { error: "Course not available" },
+        { status: 404 }
+      );
+    }
+
+    const enrollments = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      queries: [
+        Query.equal("courseId", [parsed.data.courseId]),
+        Query.equal("userId", [user.$id]),
+        Query.limit(10),
+      ],
+    });
+
+    const hasActiveEnrollment = enrollments.rows.some((row) => {
+      const enrollment = row as { isActive?: boolean; status?: string };
+      return enrollment.isActive !== false
+        && String(enrollment.status ?? "active") !== "cancelled";
+    });
+
+    if (hasActiveEnrollment) {
+      return NextResponse.json(
+        { error: "You are already enrolled in this course." },
+        { status: 409 }
+      );
     }
 
     const price = Number(course.price ?? 0);

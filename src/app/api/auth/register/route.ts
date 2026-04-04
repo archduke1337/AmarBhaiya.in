@@ -2,7 +2,7 @@ import { ID } from "node-appwrite";
 import { NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { createPublicClient } from "@/lib/appwrite/server";
 import { registerSchema } from "@/lib/validators/auth";
 
 export const runtime = "nodejs";
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { account } = await createAdminClient();
+    const { account } = await createPublicClient();
 
     await account.create({
       userId: ID.unique(),
@@ -57,6 +57,9 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Registration failed. Please try again." },
+      { status: 500 }
+    );
   }
 }

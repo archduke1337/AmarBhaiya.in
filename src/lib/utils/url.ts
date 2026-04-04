@@ -41,3 +41,16 @@ export function toNotificationActionUrl(value: string): string {
 
   return normalizeHttpUrl(trimmed) || "";
 }
+
+export function sanitizeInternalRedirectPath(value: string | null | undefined): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
+    return null;
+  }
+
+  return trimmed;
+}
