@@ -10,7 +10,76 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 // Community subdomain hostname
 const COMMUNITY_HOST = "community.amarbhaiya.in";
 
-export function proxy(request: NextRequest) {
+const SESSION_VALIDATION_CACHE_TTL_MS = 30 * 1000;
+
+const sessionValidationCache = new Map<
+  string,
+  { valid: boolean; expiresAt: number }
+>();
+
+function getAppwriteSessionValidationConfig(): {
+  endpoint: string;
+  projectId: string;
+} | null {
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.trim();
+  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID?.trim();
+
+  if (!endpoint || !projectId) {
+    return null;
+  }
+
+  return {
+    endpoint: endpoint.replace(/\/$/, ""),
+    projectId,
+  };
+}
+
+async function validateAppwriteSessionSecret(sessionSecret: string): Promise<boolean> {
+  const config = getAppwriteSessionValidationConfig();
+  if (!config) {
+    return false;
+  }
+
+  const cacheKey = `${config.projectId}:${sessionSecret}`;
+  const cached = sessionValidationCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.valid;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
+
+  try {
+    const response = await fetch(`${config.endpoint}/account`, {
+      method: "GET",
+      headers: {
+        "X-Appwrite-Project": config.projectId,
+        "X-Appwrite-Session": sessionSecret,
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    const valid = response.ok;
+    sessionValidationCache.set(cacheKey, {
+      valid,
+      expiresAt: Date.now() + SESSION_VALIDATION_CACHE_TTL_MS,
+    });
+
+    return valid;
+  } catch {
+    sessionValidationCache.set(cacheKey, {
+      valid: false,
+      expiresAt: Date.now() + SESSION_VALIDATION_CACHE_TTL_MS,
+    });
+
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hostname = request.headers.get("host") ?? "";
 
@@ -18,7 +87,8 @@ export function proxy(request: NextRequest) {
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
   const sessionCookieName = `a_session_${projectId}`;
   const session = request.cookies.get(sessionCookieName);
-  const isLoggedIn = !!session?.value;
+  const sessionSecret = session?.value ?? "";
+  const hasSessionSecret = sessionSecret.length > 0;
 
   // ── Community subdomain → rewrite to /app/community ─────────────────
   if (hostname === COMMUNITY_HOST || hostname.startsWith("community.")) {
@@ -30,6 +100,10 @@ export function proxy(request: NextRequest) {
     ) {
       return NextResponse.next();
     }
+
+    const isLoggedIn = hasSessionSecret
+      ? await validateAppwriteSessionSecret(sessionSecret)
+      : false;
 
     const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
     if (isAuthRoute) {
@@ -71,6 +145,11 @@ export function proxy(request: NextRequest) {
 
   // ── Protected routes → redirect to login if not authenticated ─────────
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
+  const isLoggedIn = hasSessionSecret && (isProtected || isAuthRoute)
+    ? await validateAppwriteSessionSecret(sessionSecret)
+    : false;
+
   if (isProtected && !isLoggedIn) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", `${pathname}${search}`);
@@ -78,7 +157,6 @@ export function proxy(request: NextRequest) {
   }
 
   // ── Auth routes → redirect to dashboard if already logged in ──────────
-  const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
   if (isAuthRoute && isLoggedIn) {
     return NextResponse.redirect(new URL("/app/dashboard", request.url));
   }
