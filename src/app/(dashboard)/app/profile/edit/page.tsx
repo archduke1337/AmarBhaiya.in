@@ -5,7 +5,7 @@ import {
 } from "@/actions/profile";
 import { updateDisplayNameAction, changePasswordAction } from "@/actions/account";
 import { sendVerificationEmailAction } from "@/actions/verification";
-import { uploadAvatarAction } from "@/actions/upload";
+import { AvatarUploadForm } from "@/components/profile/avatar-upload-form";
 import { PageHeader } from "@/components/dashboard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -90,25 +90,7 @@ export default async function StudentProfileEditPage() {
             </div>
           </div>
 
-          <form
-            action={uploadAvatarAction}
-            encType="multipart/form-data"
-            className="flex flex-wrap items-center gap-3"
-          >
-            <input
-              type="file"
-              name="file"
-              accept=".jpg,.jpeg,.png,.webp"
-              required
-              className="text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
-            />
-            <button
-              type="submit"
-              className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
-            >
-              Upload Avatar
-            </button>
-          </form>
+          <AvatarUploadForm />
         </div>
       </section>
 
