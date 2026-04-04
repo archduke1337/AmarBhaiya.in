@@ -123,15 +123,57 @@ async function listRowsByFieldValues(
 
   for (const chunk of chunkValues(values, 20)) {
     try {
-      const result = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId,
-        queries: [Query.equal(field, chunk), Query.limit(500)],
-      });
-      rows.push(...(result.rows as AnyRow[]));
+      let offset = 0;
+
+      while (true) {
+        const result = await tablesDB.listRows({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId,
+          queries: [
+            Query.equal(field, chunk),
+            Query.limit(500),
+            Query.offset(offset),
+          ],
+        });
+
+        rows.push(...(result.rows as AnyRow[]));
+
+        if (result.rows.length < 500) {
+          break;
+        }
+
+        offset += result.rows.length;
+      }
     } catch {
       // Skip failing chunks
     }
+  }
+
+  return rows;
+}
+
+async function listAllRows(
+  tableId: string,
+  queries: string[]
+): Promise<AnyRow[]> {
+  const { tablesDB } = await createAdminClient();
+  const rows: AnyRow[] = [];
+  let offset = 0;
+
+  while (true) {
+    const result = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId,
+      queries: [...queries, Query.limit(500), Query.offset(offset)],
+    });
+
+    rows.push(...(result.rows as AnyRow[]));
+
+    if (result.rows.length < 500) {
+      break;
+    }
+
+    offset += result.rows.length;
   }
 
   return rows;
@@ -415,24 +457,18 @@ export async function getInstructorCourseResourceOptions(
   scope: { userId: string; role: string }
 ): Promise<CourseResourceOption[]> {
   try {
-    const { tablesDB } = await createAdminClient();
-
     const courseQueries =
       scope.role === "admin"
-        ? [Query.orderDesc("$updatedAt"), Query.limit(200)]
+        ? [Query.orderDesc("$updatedAt")]
         : [
             Query.equal("instructorId", [scope.userId]),
             Query.orderDesc("$updatedAt"),
-            Query.limit(200),
           ];
 
-    const courseResult = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      queries: courseQueries,
-    });
-
-    const courseRows = courseResult.rows as AnyRow[];
+    const courseRows = await listAllRows(
+      APPWRITE_CONFIG.tables.courses,
+      courseQueries
+    );
     const courseTitleById = new Map(
       courseRows.map((course) => [course.$id, String(course.title ?? "Untitled course")])
     );
@@ -533,25 +569,21 @@ export async function getInstructorResources(
   scope: { userId: string; role: string }
 ): Promise<StandaloneResource[]> {
   try {
-    const { tablesDB } = await createAdminClient();
-
     const queries =
       scope.role === "admin"
-        ? [Query.orderDesc("$createdAt"), Query.limit(100)]
+        ? [Query.orderDesc("$createdAt")]
         : [
             Query.equal("instructorId", [scope.userId]),
             Query.orderDesc("$createdAt"),
-            Query.limit(100),
           ];
 
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.standaloneResources,
-      queries,
-    });
+    const rows = await listAllRows(
+      APPWRITE_CONFIG.tables.standaloneResources,
+      queries
+    );
 
-    return result.rows.map((row) => {
-      const r = row as AnyRow;
+    return rows.map((row) => {
+      const r = row;
       return {
         id: r.$id,
         instructorId: String(r.instructorId ?? ""),
