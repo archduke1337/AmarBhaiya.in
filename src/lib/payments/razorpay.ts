@@ -80,3 +80,22 @@ export function verifyRazorpayWebhookSignature(
 
   return safeEqual(expected, signature);
 }
+
+export function verifyRazorpayPaymentSignature({
+  orderId,
+  paymentId,
+  signature,
+}: {
+  orderId: string;
+  paymentId: string;
+  signature: string;
+}): boolean {
+  const { keySecret } = requireRazorpayConfig();
+
+  const expected = crypto
+    .createHmac("sha256", keySecret)
+    .update(`${orderId}|${paymentId}`)
+    .digest("hex");
+
+  return safeEqual(expected, signature);
+}

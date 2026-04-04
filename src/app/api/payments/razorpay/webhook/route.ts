@@ -1,8 +1,7 @@
-import { ID, Query } from "node-appwrite";
 import { NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { reconcileCoursePayment } from "@/lib/payments/course-payment";
 import { verifyRazorpayWebhookSignature } from "@/lib/payments/razorpay";
 import { generateIdempotencyKey, isIdempotencyKeyProcessed } from "@/lib/utils/sanitize";
 
@@ -20,12 +19,6 @@ type RazorpayPaymentEntity = {
   currency?: string;
   status?: string;
   notes?: Record<string, string>;
-};
-
-type PaymentRow = {
-  $id: string;
-  userId?: string;
-  courseId?: string;
 };
 
 function mapRazorpayStatus(event: string, paymentStatus?: string): PaymentStatus {
@@ -63,14 +56,6 @@ function parseWebhookPayment(rawBody: string): {
   };
 }
 
-function normalizeAccessModel(value: string | undefined): "free" | "paid" | "subscription" {
-  if (value === "free" || value === "subscription") {
-    return value;
-  }
-
-  return "paid";
-}
-
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-razorpay-signature");
@@ -104,89 +89,16 @@ export async function POST(request: Request) {
 
     const { tablesDB } = await createAdminClient();
 
-    const paymentRows = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.payments,
-      queries: [Query.equal("providerRef", [providerRef]), Query.limit(1)],
+    await reconcileCoursePayment({
+      tablesDB,
+      providerRef,
+      status,
+      userId,
+      courseId,
+      accessModel: notes.accessModel,
+      amount: payment.amount,
+      currency: payment.currency,
     });
-
-    const existingPayment = paymentRows.rows[0] as PaymentRow | undefined;
-    let paymentDocumentId = existingPayment?.$id ?? null;
-
-    if (existingPayment) {
-      // Update existing payment record
-      await tablesDB.updateRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.payments,
-        rowId: existingPayment.$id,
-        data: {
-          status,
-          amount: payment.amount,
-          currency: payment.currency,
-        },
-      });
-    } else if (userId && courseId) {
-      // Create new payment record
-      paymentDocumentId = ID.unique();
-      await tablesDB.createRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.payments,
-        rowId: paymentDocumentId,
-        data: {
-          userId,
-          courseId,
-          amount: payment.amount ?? 0,
-          currency: payment.currency ?? "INR",
-          method: "razorpay",
-          status,
-          providerRef,
-          createdAt: new Date().toISOString(),
-        },
-      });
-    }
-
-    // Only create enrollment if payment completed and not already enrolled
-    if (status === "completed") {
-      const enrollmentUserId = existingPayment?.userId ?? userId;
-      const enrollmentCourseId = existingPayment?.courseId ?? courseId;
-
-      if (enrollmentUserId && enrollmentCourseId) {
-        try {
-          // Check if already enrolled (prevent duplicate enrollments)
-          const existingEnrollment = await tablesDB.listRows({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId: APPWRITE_CONFIG.tables.enrollments,
-            queries: [
-              Query.equal("userId", [enrollmentUserId]),
-              Query.equal("courseId", [enrollmentCourseId]),
-              Query.limit(1),
-            ],
-          });
-
-          // Only create if not already enrolled
-          if (existingEnrollment.rows.length === 0) {
-            await tablesDB.createRow({
-              databaseId: APPWRITE_CONFIG.databaseId,
-              tableId: APPWRITE_CONFIG.tables.enrollments,
-              rowId: ID.unique(),
-              data: {
-                userId: enrollmentUserId,
-                courseId: enrollmentCourseId,
-                enrolledAt: new Date().toISOString(),
-                paymentId: paymentDocumentId ?? providerRef,
-                accessModel: normalizeAccessModel(notes.accessModel),
-                isActive: true,
-              },
-            });
-          }
-        } catch (error) {
-          const appwriteError = error as { code?: number };
-          if (appwriteError.code !== 409) {
-            throw error;
-          }
-        }
-      }
-    }
 
     // Mark this webhook as processed to prevent re-processing on retry
     processedWebhooks.add(idempotencyKey);

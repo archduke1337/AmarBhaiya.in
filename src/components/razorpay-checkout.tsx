@@ -10,6 +10,12 @@ type RazorpayCheckoutProps = {
   userEmail: string;
 };
 
+type RazorpayPaymentSuccessResponse = {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+};
+
 declare global {
   interface Window {
     Razorpay: new (options: Record<string, unknown>) => {
@@ -77,10 +83,38 @@ export function RazorpayCheckout({
         theme: {
           color: "#000000",
         },
-        handler: function () {
-          // Payment successful — webhook will handle enrollment
-          // Redirect to courses page
-          window.location.href = "/app/courses?payment=success";
+        handler: async function (response: RazorpayPaymentSuccessResponse) {
+          try {
+            const verifyResponse = await fetch("/api/payments/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                courseId,
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyResponse.json().catch(() => null);
+            if (!verifyResponse.ok) {
+              throw new Error(verifyData?.error || "Payment verification failed.");
+            }
+
+            const nextCourseId =
+              typeof verifyData?.courseId === "string" && verifyData.courseId.length > 0
+                ? verifyData.courseId
+                : courseId;
+
+            window.location.href = `/app/courses/${nextCourseId}?payment=success`;
+          } catch (verifyError) {
+            setError(
+              verifyError instanceof Error
+                ? verifyError.message
+                : "Payment completed, but we could not finalize enrollment."
+            );
+            setLoading(false);
+          }
         },
         modal: {
           ondismiss: function () {

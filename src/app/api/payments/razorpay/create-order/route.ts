@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       notes: {
         userId: user.$id,
         courseId: parsed.data.courseId,
-        accessModel: "paid",
+        accessModel: String(course.accessModel ?? "paid"),
       },
     });
 
