@@ -5,10 +5,16 @@ import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import {
+  listAllRows,
+  listRowsByFieldValues,
+  type AnyAppwriteRow,
+} from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { processInBatches } from "@/lib/utils/batch";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = AnyAppwriteRow;
 
 function isCompletedProgressRow(row: Record<string, unknown>): boolean {
   return typeof row.completedAt === "string" && row.completedAt.trim().length > 0;
@@ -163,26 +169,18 @@ export async function completeLessonForUser({
       return actionSuccess();
     }
 
-    const [lessonsResult, progressRowsResult] = await Promise.all([
-      tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.lessons,
-        queries: [Query.equal("courseId", [courseId]), Query.limit(500)],
-      }),
-      tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.progress,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.equal("userId", [userId]),
-          Query.limit(2000),
-        ],
-      }),
+    const [lessonRows, progressRows] = await Promise.all([
+      listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+        Query.equal("courseId", [courseId]),
+      ]),
+      listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.progress, [
+        Query.equal("courseId", [courseId]),
+        Query.equal("userId", [userId]),
+      ]),
     ]);
 
-    const totalLessons = lessonsResult.total;
-    const completedLessons = progressRowsResult.rows
-      .map((row) => row as AnyRow)
+    const totalLessons = lessonRows.length;
+    const completedLessons = progressRows
       .filter((row) => isCompletedProgressRow(row)).length;
     const progressPercent =
       totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
@@ -342,34 +340,23 @@ export async function getCourseProgress(
   const { tablesDB } = await createAdminClient();
 
   try {
-    const [result, totalLessons] = await Promise.all([
-      tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.progress,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.equal("userId", [userId]),
-          Query.limit(500),
-        ],
-      }),
-      tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.lessons,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.limit(500),
-        ],
-      }),
+    const [progressRows, lessonRows] = await Promise.all([
+      listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.progress, [
+        Query.equal("courseId", [courseId]),
+        Query.equal("userId", [userId]),
+      ]),
+      listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+        Query.equal("courseId", [courseId]),
+      ]),
     ]);
 
-    const completedLessonIds = result.rows
-      .map((row) => row as AnyRow)
+    const completedLessonIds = progressRows
       .filter((row) => isCompletedProgressRow(row))
       .map((row) => String(row.lessonId ?? ""));
 
     const percent =
-      totalLessons.total > 0
-        ? Math.round((completedLessonIds.length / totalLessons.total) * 100)
+      lessonRows.length > 0
+        ? Math.round((completedLessonIds.length / lessonRows.length) * 100)
         : 0;
 
     return { completedLessonIds, percent };
@@ -433,17 +420,11 @@ export async function getStudentEnrollments(
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      queries: [
-        Query.equal("userId", [userId]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(100),
-      ],
-    });
-
-    const enrollmentRows = result.rows as AnyRow[];
+    const enrollmentRows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.enrollments,
+      [Query.equal("userId", [userId]), Query.orderDesc("$createdAt")]
+    );
     const courseIds = Array.from(
       new Set(
         enrollmentRows
@@ -452,31 +433,18 @@ export async function getStudentEnrollments(
       )
     );
 
-    const courseEntries = await Promise.allSettled(
-      courseIds.map(async (courseId) => {
-        const course = (await tablesDB.getRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.courses,
-          rowId: courseId,
-        })) as AnyRow;
-
-        return {
-          courseId,
-          title: String(course.title ?? "Unknown Course"),
-          slug: String(course.slug ?? courseId),
-        };
-      })
+    const courseRows = await listRowsByFieldValues<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.courses,
+      "$id",
+      courseIds
     );
 
     const courseById = new Map<string, { title: string; slug: string }>();
-    for (const entry of courseEntries) {
-      if (entry.status !== "fulfilled") {
-        continue;
-      }
-
-      courseById.set(entry.value.courseId, {
-        title: entry.value.title,
-        slug: entry.value.slug,
+    for (const course of courseRows) {
+      courseById.set(course.$id, {
+        title: String(course.title ?? "Unknown Course"),
+        slug: String(course.slug ?? course.$id),
       });
     }
 
@@ -577,25 +545,19 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
     const courseId = String(enrollment.courseId ?? "");
 
     if (userId && courseId) {
-      const progressRows = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.progress,
-        queries: [
-          Query.equal("userId", [userId]),
-          Query.equal("courseId", [courseId]),
-          Query.limit(2000),
-        ],
-      }).catch(() => ({ rows: [] }));
+      const progressRows = await listAllRows<AnyRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.progress,
+        [Query.equal("userId", [userId]), Query.equal("courseId", [courseId])]
+      ).catch(() => []);
 
-      await Promise.allSettled(
-        (progressRows.rows as AnyRow[]).map((row) =>
-          tablesDB.deleteRow({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId: APPWRITE_CONFIG.tables.progress,
-            rowId: row.$id,
-          })
-        )
-      );
+      await processInBatches(progressRows, 25, async (row) => {
+        await tablesDB.deleteRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.progress,
+          rowId: row.$id,
+        });
+      });
     }
 
     await tablesDB.deleteRow({

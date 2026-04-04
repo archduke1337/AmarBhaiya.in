@@ -10,9 +10,14 @@ import {
 } from "@/lib/appwrite/access";
 import { createNotificationEntry } from "@/actions/notifications";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import {
+  listAllRows,
+  type AnyAppwriteRow,
+} from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { processInBatches } from "@/lib/utils/batch";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = AnyAppwriteRow;
 
 async function getQuizRow(quizId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();
@@ -26,6 +31,16 @@ async function getQuizRow(quizId: string): Promise<AnyRow | null> {
   } catch {
     return null;
   }
+}
+
+async function getQuizQuestionRows(
+  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
+  quizId: string
+): Promise<AnyRow[]> {
+  return listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.quizQuestions, [
+    Query.equal("quizId", [quizId]),
+    Query.orderAsc("order"),
+  ]);
 }
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -72,6 +87,17 @@ export async function createQuizAction(formData: FormData): Promise<void> {
 
   try {
     const { tablesDB } = await createAdminClient();
+    if (lessonId) {
+      const lesson = (await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.lessons,
+        rowId: lessonId,
+      }).catch(() => null)) as AnyRow | null;
+
+      if (!lesson || String(lesson.courseId ?? "") !== courseId) {
+        return;
+      }
+    }
 
     await tablesDB.createRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -168,15 +194,7 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
       return { quiz: null, questions: [] };
     }
 
-    const questionsResult = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.quizQuestions,
-      queries: [
-        Query.equal("quizId", [quizId]),
-        Query.orderAsc("order"),
-        Query.limit(100),
-      ],
-    });
+    const questionRows = await getQuizQuestionRows(tablesDB, quizId);
 
     return {
       quiz: {
@@ -186,10 +204,9 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
         title: String(quiz.title ?? "Quiz"),
         passMark: Number(quiz.passMark ?? 60),
         timeLimit: Number(quiz.timeLimit ?? 0),
-        questionCount: questionsResult.total,
+        questionCount: questionRows.length,
       },
-      questions: questionsResult.rows.map((r) => {
-        const q = r as AnyRow;
+      questions: questionRows.map((q) => {
         return {
           id: q.$id,
           text: String(q.text ?? ""),
@@ -213,17 +230,11 @@ export async function getCourseQuizzes(
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.quizzes,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.limit(50),
-      ],
-    });
+    const rows = await listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.quizzes, [
+      Query.equal("courseId", [courseId]),
+    ]);
 
-    return result.rows.map((r) => {
-      const q = r as AnyRow;
+    return rows.map((q) => {
       return {
         id: q.$id,
         lessonId: String(q.lessonId ?? ""),
@@ -257,16 +268,7 @@ export async function submitQuizAttemptAction(
   }
 
   // Get questions
-  const questionsResult = await tablesDB.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.quizQuestions,
-    queries: [
-      Query.equal("quizId", [quizId]),
-      Query.limit(100),
-    ],
-  });
-
-  const questions = questionsResult.rows as AnyRow[];
+  const questions = await getQuizQuestionRows(tablesDB, quizId);
   if (questions.length === 0) return;
 
   // Get quiz pass mark
@@ -391,23 +393,28 @@ export async function deleteQuizAction(formData: FormData): Promise<void> {
     const { tablesDB } = await createAdminClient();
 
     // Delete questions first
-    const questions = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.quizQuestions,
-      queries: [Query.equal("quizId", [quizId]), Query.limit(200)],
+    const [questionRows, attemptRows] = await Promise.all([
+      getQuizQuestionRows(tablesDB, quizId),
+      listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.quizAttempts, [
+        Query.equal("quizId", [quizId]),
+      ]),
+    ]);
+
+    await processInBatches(questionRows, 25, async (question) => {
+      await tablesDB.deleteRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.quizQuestions,
+        rowId: question.$id,
+      });
     });
 
-    for (const q of questions.rows) {
-      try {
-        await tablesDB.deleteRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.quizQuestions,
-          rowId: (q as AnyRow).$id,
-        });
-      } catch {
-        // Continue
-      }
-    }
+    await processInBatches(attemptRows, 25, async (attempt) => {
+      await tablesDB.deleteRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.quizAttempts,
+        rowId: attempt.$id,
+      });
+    });
 
     await tablesDB.deleteRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -416,6 +423,16 @@ export async function deleteQuizAction(formData: FormData): Promise<void> {
     });
 
     revalidatePath("/instructor");
+    revalidatePath(`/instructor/courses/${String(quiz.courseId ?? "")}/curriculum`);
+    revalidatePath("/app/quizzes");
+    if (String(quiz.courseId ?? "")) {
+      revalidatePath(`/app/courses/${String(quiz.courseId ?? "")}`);
+    }
+    if (String(quiz.lessonId ?? "")) {
+      revalidatePath(
+        `/app/learn/${String(quiz.courseId ?? "")}/${String(quiz.lessonId ?? "")}`
+      );
+    }
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete quiz."

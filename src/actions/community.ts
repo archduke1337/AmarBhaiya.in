@@ -7,6 +7,10 @@ import { z } from "zod";
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import {
+  listAllRows,
+  type AnyAppwriteRow,
+} from "@/lib/appwrite/row-pagination";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
 
@@ -45,7 +49,7 @@ export type ForumThreadDetail = {
   createdAt: string;
 };
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = AnyAppwriteRow;
 
 async function getForumThreadRow(threadId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();
@@ -208,18 +212,12 @@ export async function getForumThreadReplies(
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.forumReplies,
-      queries: [
-        Query.equal("threadId", [threadId]),
-        Query.orderAsc("$createdAt"),
-        Query.limit(200),
-      ],
-    });
+    const rows = await listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.forumReplies, [
+      Query.equal("threadId", [threadId]),
+      Query.orderAsc("$createdAt"),
+    ]);
 
-    return result.rows.map((row) => {
-      const r = row as AnyRow;
+    return rows.map((r) => {
       return {
         id: r.$id,
         threadId: String(r.threadId ?? ""),
