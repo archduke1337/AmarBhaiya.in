@@ -156,6 +156,52 @@ describe("POST /api/payments/razorpay/verify", () => {
     expect(reconcileCoursePaymentMock).not.toHaveBeenCalled();
   });
 
+  it("returns 404 when there is no local pending payment row", async () => {
+    listRowsMock.mockResolvedValueOnce({ rows: [] });
+
+    const request = new Request("http://localhost/api/payments/razorpay/verify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        courseId: "course_1",
+        orderId: "order_1",
+        paymentId: "pay_1",
+        signature: "sig_1",
+      }),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body).toEqual({ error: "Payment session not found." });
+    expect(reconcileCoursePaymentMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 for terminal payment rows", async () => {
+    listRowsMock.mockResolvedValueOnce({
+      rows: [{ $id: "payment_1", userId: "user_1", courseId: "course_1", status: "refunded" }],
+    });
+
+    const request = new Request("http://localhost/api/payments/razorpay/verify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        courseId: "course_1",
+        orderId: "order_1",
+        paymentId: "pay_1",
+        signature: "sig_1",
+      }),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body).toEqual({ error: "This payment can no longer be verified." });
+    expect(reconcileCoursePaymentMock).not.toHaveBeenCalled();
+  });
+
   it("reconciles the payment and revalidates learning surfaces", async () => {
     listRowsMock.mockResolvedValueOnce({
       rows: [{ $id: "payment_1", userId: "user_1", courseId: "course_1", amount: 100, currency: "INR" }],

@@ -182,7 +182,7 @@ async function getStudentDetail(userId: string) {
     const paymentRows = await listAllRows<AnyRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.payments,
-      [Query.equal("userId", [userId]), Query.orderDesc("createdAt")]
+      [Query.equal("userId", [userId]), Query.orderDesc("$createdAt")]
     );
     const paymentCourseIds = Array.from(
       new Set(

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { upsertLessonProgressRow } from "@/lib/appwrite/progress";
 import {
   listAllRows,
   listRowsByFieldValues,
@@ -103,27 +104,6 @@ export async function completeLessonForUser({
     const courseIsFree = String(course.accessModel ?? "free") === "free";
     const completionTimestamp = new Date().toISOString();
 
-    let existingProgressRow: AnyRow | null = null;
-    try {
-      const existing = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.progress,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.equal("userId", [userId]),
-          Query.equal("lessonId", [lessonId]),
-          Query.limit(1),
-        ],
-      });
-
-      existingProgressRow = (existing.rows[0] as AnyRow | undefined) ?? null;
-      if (existingProgressRow && isCompletedProgressRow(existingProgressRow)) {
-        return actionSuccess();
-      }
-    } catch {
-      // Continue
-    }
-
     const enrollments = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.enrollments,
@@ -139,29 +119,16 @@ export async function completeLessonForUser({
       return actionError("Enrollment required");
     }
 
-    if (existingProgressRow) {
-      await tablesDB.updateRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.progress,
-        rowId: existingProgressRow.$id,
-        data: {
-          completedAt: completionTimestamp,
-          percentComplete: 100,
-        },
-      });
-    } else {
-      await tablesDB.createRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.progress,
-        rowId: ID.unique(),
-        data: {
-          courseId,
-          userId,
-          lessonId,
-          completedAt: completionTimestamp,
-          percentComplete: 100,
-        },
-      });
+    const progressWrite = await upsertLessonProgressRow(tablesDB, {
+      userId,
+      courseId,
+      lessonId,
+      percentComplete: 100,
+      completedAt: completionTimestamp,
+    });
+
+    if (progressWrite.alreadyCompleted) {
+      return actionSuccess();
     }
 
     if (!enrollmentRow) {

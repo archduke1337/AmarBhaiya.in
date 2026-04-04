@@ -274,6 +274,9 @@ async function main() {
   await enumCol(T6, "status", ["active", "completed"], false, "active");
   await idx(T6, "idx_userId", ["userId"]);
   await idx(T6, "idx_courseId", ["courseId"]);
+  await idx(T6, "idx_isActive", ["isActive"]);
+  await idx(T6, "idx_user_active", ["userId", "isActive"]);
+  await idx(T6, "idx_course_active", ["courseId", "isActive"]);
   await idx(T6, "idx_user_course", ["userId", "courseId"], "unique");
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -636,6 +639,7 @@ async function main() {
   await idx(T20, "idx_userId", ["userId"]);
   await idx(T20, "idx_courseId", ["courseId"]);
   await idx(T20, "idx_status", ["status"]);
+  await idx(T20, "idx_createdAt", ["createdAt"]);
   await idx(T20, "idx_providerRef", ["providerRef"], "unique");
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -692,6 +696,7 @@ async function main() {
   await idx(T22, "idx_targetUserId", ["targetUserId"]);
   await idx(T22, "idx_moderatorId", ["moderatorId"]);
   await idx(T22, "idx_action", ["action"]);
+  await idx(T22, "idx_createdAt", ["createdAt"]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 23. audit_logs

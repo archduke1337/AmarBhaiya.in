@@ -238,7 +238,7 @@ export async function getBillingPaymentHistory(): Promise<BillingPaymentRecord[]
         tableId: APPWRITE_CONFIG.tables.payments,
         queries: [
           Query.equal("userId", [user.$id]),
-          Query.orderDesc("createdAt"),
+          Query.orderDesc("$createdAt"),
           Query.limit(500),
           Query.offset(offset),
         ],

@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/appwrite/server";
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
 
     const { tablesDB } = await createAdminClient();
 
-    await reconcileCoursePayment({
+    const result = await reconcileCoursePayment({
       tablesDB,
       providerRef,
       status,
@@ -85,6 +86,21 @@ export async function POST(request: Request) {
       amount: payment.amount,
       currency: payment.currency,
     });
+
+    revalidatePath("/app/courses");
+    revalidatePath("/app/dashboard");
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin");
+    revalidatePath("/instructor");
+    revalidatePath("/instructor/earnings");
+
+    if (result.courseId) {
+      revalidatePath(`/app/courses/${result.courseId}`);
+    }
+
+    if (result.courseSlug) {
+      revalidatePath(`/courses/${result.courseSlug}`);
+    }
 
     return NextResponse.json({ received: true, status });
   } catch (error) {

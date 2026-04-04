@@ -19,6 +19,11 @@ type InstructorInfo = {
   totalRevenue: number;
 };
 
+function isActiveEnrollment(row: AnyRow): boolean {
+  return row.isActive !== false
+    && String(row.status ?? "active") !== "cancelled";
+}
+
 async function listAllRows<Row extends AnyRow>(
   tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
   tableId: string,
@@ -100,8 +105,7 @@ async function getInstructorActivity(): Promise<InstructorInfo[]> {
       tablesDB,
       APPWRITE_CONFIG.tables.enrollments,
       "courseId",
-      courseIds,
-      [Query.equal("isActive", [true])]
+      courseIds
     ),
     listRowsByFieldValues<AnyRow>(
       tablesDB,
@@ -113,6 +117,10 @@ async function getInstructorActivity(): Promise<InstructorInfo[]> {
   ]);
 
   for (const row of enrollmentRows) {
+    if (!isActiveEnrollment(row)) {
+      continue;
+    }
+
     const cid = String(row.courseId ?? "");
     if (!cid) {
       continue;

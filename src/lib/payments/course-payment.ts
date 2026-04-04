@@ -28,6 +28,45 @@ type CourseRow = AnyRow & {
   price?: number;
 };
 
+function normalizePaymentStatus(value: unknown): PaymentStatus | null {
+  return value === "pending" ||
+    value === "completed" ||
+    value === "failed" ||
+    value === "refunded"
+    ? value
+    : null;
+}
+
+function canTransitionPaymentStatus(
+  currentStatus: PaymentStatus | null,
+  nextStatus: PaymentStatus
+): boolean {
+  if (currentStatus === null) {
+    return nextStatus === "pending";
+  }
+
+  if (currentStatus === nextStatus) {
+    return true;
+  }
+
+  switch (currentStatus) {
+    case "pending":
+      return nextStatus === "completed" || nextStatus === "failed" || nextStatus === "refunded";
+    case "completed":
+      return nextStatus === "refunded";
+    case "failed":
+      return false;
+    case "refunded":
+      return false;
+    default:
+      return false;
+  }
+}
+
+function isEnrollmentActive(enrollment: EnrollmentRow): boolean {
+  return enrollment.isActive !== false;
+}
+
 async function findPaymentsByProviderRef(
   tablesDB: TablesDbClient,
   providerRef: string
@@ -60,6 +99,24 @@ function toNumberOrNull(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+async function findEnrollmentByUserAndCourse(
+  tablesDB: TablesDbClient,
+  userId: string,
+  courseId: string
+): Promise<EnrollmentRow | null> {
+  const enrollments = await tablesDB.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.enrollments,
+    queries: [
+      Query.equal("userId", [userId]),
+      Query.equal("courseId", [courseId]),
+      Query.limit(1),
+    ],
+  });
+
+  return (enrollments.rows[0] as EnrollmentRow | undefined) ?? null;
+}
+
 export async function reconcileCoursePayment({
   tablesDB,
   providerRef,
@@ -79,11 +136,13 @@ export async function reconcileCoursePayment({
   amount?: number | null;
   currency?: string | null;
 }): Promise<{
-  paymentId: string | null;
-  courseId: string | null;
-  courseSlug: string | null;
-  enrollmentCreated: boolean;
-  enrollmentUpdated: boolean;
+    paymentId: string | null;
+    courseId: string | null;
+    courseSlug: string | null;
+    enrollmentCreated: boolean;
+    enrollmentUpdated: boolean;
+    finalStatus: PaymentStatus | null;
+    paymentFound: boolean;
 }> {
   const paymentRows = await findPaymentsByProviderRef(tablesDB, providerRef);
   if (paymentRows.length > 1) {
@@ -93,7 +152,8 @@ export async function reconcileCoursePayment({
   }
 
   const existingPayment = paymentRows[0];
-  let paymentId = existingPayment?.$id ?? null;
+  const paymentId = existingPayment?.$id ?? null;
+  const currentStatus = normalizePaymentStatus(existingPayment?.status);
   const resolvedUserId =
     typeof existingPayment?.userId === "string" && existingPayment.userId.length > 0
       ? existingPayment.userId
@@ -134,11 +194,31 @@ export async function reconcileCoursePayment({
     }
   }
 
-  if (existingPayment) {
+  const transitionAccepted = existingPayment
+    ? canTransitionPaymentStatus(currentStatus, status)
+    : false;
+  const finalStatus = existingPayment
+    ? transitionAccepted
+      ? status
+      : currentStatus
+    : null;
+
+  if (!existingPayment) {
+    console.warn(
+      `[Payments] Ignoring reconciliation for providerRef ${providerRef} because no local payment row exists.`
+    );
+  } else if (!transitionAccepted) {
+    console.warn(
+      `[Payments] Ignoring disallowed payment transition ${currentStatus ?? "unknown"} -> ${status} for providerRef ${providerRef}.`
+    );
+  } else {
     const paymentData: Record<string, unknown> = {
-      status,
       currency: resolvedCurrency,
     };
+
+    if (status !== currentStatus) {
+      paymentData.status = status;
+    }
 
     if (resolvedAmount !== null) {
       paymentData.amount = resolvedAmount;
@@ -160,65 +240,30 @@ export async function reconcileCoursePayment({
       paymentData.courseId = resolvedCourseId;
     }
 
-    await tablesDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.payments,
-      rowId: existingPayment.$id,
-      data: paymentData,
-    });
-  } else if (resolvedUserId && resolvedCourseId) {
-    paymentId = ID.unique();
-
-    try {
-      await tablesDB.createRow({
+    if (Object.keys(paymentData).length > 0) {
+      await tablesDB.updateRow({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.payments,
-        rowId: paymentId,
-        data: {
-          userId: resolvedUserId,
-          courseId: resolvedCourseId,
-          amount: resolvedAmount ?? 0,
-          currency: resolvedCurrency,
-          method: "razorpay",
-          status,
-          providerRef,
-          createdAt: new Date().toISOString(),
-        },
+        rowId: existingPayment.$id,
+        data: paymentData,
       });
-    } catch (error) {
-      const appwriteError = error as { code?: number };
-      if (appwriteError.code !== 409) {
-        throw error;
-      }
-
-      const conflictedPayment = (await findPaymentsByProviderRef(
-        tablesDB,
-        providerRef
-      ))[0];
-
-      if (!conflictedPayment) {
-        throw error;
-      }
-
-      paymentId = conflictedPayment.$id;
     }
   }
 
   let enrollmentCreated = false;
   let enrollmentUpdated = false;
 
-  if (status === "completed" && resolvedUserId && resolvedCourseId) {
-    const enrollments = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      queries: [
-        Query.equal("userId", [resolvedUserId]),
-        Query.equal("courseId", [resolvedCourseId]),
-        Query.limit(1),
-      ],
-    });
-
-    const existingEnrollment = enrollments.rows[0] as EnrollmentRow | undefined;
+  if (
+    transitionAccepted &&
+    resolvedUserId &&
+    resolvedCourseId &&
+    finalStatus === "completed"
+  ) {
+    const existingEnrollment = await findEnrollmentByUserAndCourse(
+      tablesDB,
+      resolvedUserId,
+      resolvedCourseId
+    );
     const nextPaymentId = paymentId ?? providerRef;
 
     if (existingEnrollment) {
@@ -266,6 +311,39 @@ export async function reconcileCoursePayment({
       });
       enrollmentCreated = true;
     }
+  } else if (
+    transitionAccepted &&
+    resolvedUserId &&
+    resolvedCourseId &&
+    (finalStatus === "failed" || finalStatus === "refunded")
+  ) {
+    const existingEnrollment = await findEnrollmentByUserAndCourse(
+      tablesDB,
+      resolvedUserId,
+      resolvedCourseId
+    );
+
+    if (existingEnrollment) {
+      const nextPaymentId = paymentId ?? providerRef;
+      const shouldUpdate =
+        isEnrollmentActive(existingEnrollment) ||
+        String(existingEnrollment.paymentId ?? "") !== nextPaymentId ||
+        String(existingEnrollment.accessModel ?? "") !== resolvedAccessModel;
+
+      if (shouldUpdate) {
+        await tablesDB.updateRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.enrollments,
+          rowId: existingEnrollment.$id,
+          data: {
+            paymentId: nextPaymentId,
+            accessModel: resolvedAccessModel,
+            isActive: false,
+          },
+        });
+        enrollmentUpdated = true;
+      }
+    }
   }
 
   return {
@@ -274,5 +352,7 @@ export async function reconcileCoursePayment({
     courseSlug,
     enrollmentCreated,
     enrollmentUpdated,
+    finalStatus,
+    paymentFound: Boolean(existingPayment),
   };
 }

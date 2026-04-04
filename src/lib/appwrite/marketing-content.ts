@@ -228,6 +228,11 @@ async function safeListRows<Row extends AnyRow>(
   }
 }
 
+function isActiveEnrollmentRow(row: Partial<EnrollmentRow>): boolean {
+  return row.isActive !== false
+    && String(row.status ?? "active") !== "cancelled";
+}
+
 async function safeCountRows(
   tablesDB: TablesDbClient,
   tableId: string,
@@ -354,14 +359,13 @@ async function getEnrollmentCountsByCourseId(
     tablesDB,
     APPWRITE_CONFIG.tables.enrollments,
     "courseId",
-    courseIds,
-    [Query.equal("isActive", [true])]
+    courseIds
   );
 
   const counts = new Map<string, number>();
 
   for (const row of enrollmentRows) {
-    if (typeof row.courseId !== "string") {
+    if (typeof row.courseId !== "string" || !isActiveEnrollmentRow(row)) {
       continue;
     }
 

@@ -23,6 +23,7 @@ type PaymentRow = {
   courseId?: string;
   amount?: number;
   currency?: string;
+  status?: string;
 };
 
 async function getAuthenticatedUser() {
@@ -74,6 +75,13 @@ export async function POST(request: Request) {
     });
 
     const existingPayment = paymentRows.rows[0] as PaymentRow | undefined;
+    if (!existingPayment) {
+      return NextResponse.json(
+        { error: "Payment session not found." },
+        { status: 404 }
+      );
+    }
+
     if (
       typeof existingPayment?.userId === "string" &&
       existingPayment.userId.length > 0 &&
@@ -82,15 +90,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const existingStatus =
+      typeof existingPayment.status === "string" ? existingPayment.status : "pending";
+    if (existingStatus === "failed" || existingStatus === "refunded") {
+      return NextResponse.json(
+        { error: "This payment can no longer be verified." },
+        { status: 409 }
+      );
+    }
+
     const result = await reconcileCoursePayment({
       tablesDB,
       providerRef: parsed.data.orderId,
       status: "completed",
       userId: user.$id,
       courseId:
-        (typeof existingPayment?.courseId === "string" && existingPayment.courseId.length > 0
+        (typeof existingPayment.courseId === "string" && existingPayment.courseId.length > 0
           ? existingPayment.courseId
-          : parsed.data.courseId) ?? null,
+          : null) ?? null,
       amount: typeof existingPayment?.amount === "number" ? existingPayment.amount : null,
       currency:
         typeof existingPayment?.currency === "string" && existingPayment.currency.length > 0

@@ -557,6 +557,11 @@ function resolveRoleFromLabels(labels: string[] | undefined): string {
   return "student";
 }
 
+function isActiveEnrollmentRow(row: Partial<EnrollmentRow>): boolean {
+  return row.isActive !== false
+    && String(row.status ?? "active") !== "cancelled";
+}
+
 function getInstructorBaseQueries(scope: InstructorScope): string[] {
   if (scope.role === "admin") {
     return [];
@@ -733,9 +738,7 @@ export async function getInstructorDashboardStats(
       courseIds
     );
 
-    const activeEnrollments = activeEnrollmentsRows.filter(
-      (row) => row.isActive !== false
-    ).length;
+    const activeEnrollments = activeEnrollmentsRows.filter(isActiveEnrollmentRow).length;
 
     const liveSessionQueries: string[] = [
       Query.equal("status", ["scheduled", "live"]),
@@ -1596,7 +1599,7 @@ export async function getModeratorDashboardStats(): Promise<ModeratorDashboardSt
     const rows = await safeListAllRows<ModerationActionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.moderationActions,
-      [Query.orderDesc("createdAt")]
+      [Query.orderDesc("$createdAt")]
     );
 
     const openReports = rows.filter(
@@ -1656,7 +1659,7 @@ export async function getModeratorReports(): Promise<ModeratorReportItem[]> {
     const rows = await safeListAllRows<ModerationActionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.moderationActions,
-      [Query.equal("action", ["flag"]), Query.orderDesc("createdAt")]
+      [Query.equal("action", ["flag"]), Query.orderDesc("$createdAt")]
     );
 
     return rows
@@ -1697,7 +1700,7 @@ export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
     const rows = await safeListAllRows<ModerationActionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.moderationActions,
-      [Query.orderDesc("createdAt")]
+      [Query.orderDesc("$createdAt")]
     );
 
     const filteredRows = rows
@@ -1747,7 +1750,7 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
 
     const [actionRows, categoryRows, threadRows] = await Promise.all([
       safeListAllRows<ModerationActionRow>(tablesDB, APPWRITE_CONFIG.tables.moderationActions, [
-        Query.orderDesc("createdAt"),
+        Query.orderDesc("$createdAt"),
       ]),
       safeListAllRows<ForumCategoryRow>(tablesDB, APPWRITE_CONFIG.tables.forumCategories, [
         Query.orderAsc("name"),
@@ -1863,7 +1866,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
         safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses),
       ]);
 
-    const activeEnrollments = enrollmentRows.filter((row) => row.isActive !== false).length;
+    const activeEnrollments = enrollmentRows.filter(isActiveEnrollmentRow).length;
     const completedEnrollments = enrollmentRows.filter(
       (row) => Number((row as AnyRow).progress ?? 0) >= 100
     ).length;
@@ -2030,7 +2033,7 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
     const paymentRows = await safeListAllRows<PaymentRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.payments,
-      [Query.orderDesc("createdAt")]
+      [Query.orderDesc("$createdAt")]
     );
 
     const sortedPaymentRows = paymentRows.sort((left, right) => {
@@ -2193,7 +2196,7 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
     const rows = await safeListAllRows<ModerationActionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.moderationActions,
-      [Query.orderDesc("createdAt")]
+      [Query.orderDesc("$createdAt")]
     );
 
     const actionsToday = rows.filter((row) => isToday(row.createdAt)).length;
@@ -2251,7 +2254,7 @@ export async function getAdminAuditLogs(): Promise<AdminAuditItem[]> {
     const logsResult = await safeListRows<AuditLogRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.auditLogs,
-      [Query.orderDesc("createdAt"), Query.limit(100)]
+      [Query.orderDesc("$createdAt"), Query.limit(100)]
     );
 
     return logsResult.rows.map((log) => ({
@@ -2288,7 +2291,6 @@ export async function getStudentProfileStats(
     const [enrollmentRows, certificateRows, progressRows] = await Promise.all([
       safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
         Query.equal("userId", [userId]),
-        Query.equal("isActive", [true]),
       ]),
       safeListAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.certificates, [
         Query.equal("userId", [userId]),
@@ -2306,9 +2308,11 @@ export async function getStudentProfileStats(
       }
     }
 
+    const activeEnrollments = enrollmentRows.filter(isActiveEnrollmentRow).length;
+
     return {
       currentStreakDays: calculateCurrentStreak(completedDateKeys),
-      activeCourses: enrollmentRows.length,
+      activeCourses: activeEnrollments,
       certificates: certificateRows.length,
     };
   } catch (error) {
@@ -2364,12 +2368,13 @@ export async function getStudentEnrolledCourses(
     const enrollmentRows = await safeListAllRows<EnrollmentRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.enrollments,
-      [Query.equal("userId", [userId]), Query.equal("isActive", [true])]
+      [Query.equal("userId", [userId])]
     );
 
-    if (enrollmentRows.length === 0) return [];
+    const activeEnrollmentRows = enrollmentRows.filter(isActiveEnrollmentRow);
+    if (activeEnrollmentRows.length === 0) return [];
 
-    const courseIds = enrollmentRows
+    const courseIds = activeEnrollmentRows
       .map((e) => (typeof e.courseId === "string" ? e.courseId : ""))
       .filter(Boolean);
 
@@ -2577,15 +2582,14 @@ export async function getStudentStudyQueue(
     const enrollmentRows = await safeListAllRows<EnrollmentRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.enrollments,
-      [
-        Query.equal("userId", [userId]),
-        Query.equal("isActive", [true]),
-      ]
+      [Query.equal("userId", [userId])]
     );
+
+    const activeEnrollmentRows = enrollmentRows.filter(isActiveEnrollmentRow);
 
     const courseIds = [
       ...new Set(
-        enrollmentRows
+        activeEnrollmentRows
           .map((row) =>
             typeof row.courseId === "string" ? row.courseId.trim() : ""
           )
@@ -3090,7 +3094,7 @@ export async function getPublicCourseBySlug(
 
   if (!course || !course.isPublished) return null;
 
-  const [moduleRows, lessonRows, activeEnrollmentRows] = await Promise.all([
+  const [moduleRows, lessonRows, enrollmentRows] = await Promise.all([
     safeListAllRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
       Query.equal("courseId", [course.$id]),
       Query.orderAsc("order"),
@@ -3101,9 +3105,9 @@ export async function getPublicCourseBySlug(
     ]),
     safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
       Query.equal("courseId", [course.$id]),
-      Query.equal("isActive", [true]),
     ]),
   ]);
+  const activeEnrollmentRows = enrollmentRows.filter(isActiveEnrollmentRow);
 
   const lessonsByModuleId = new Map<string, LessonRow[]>();
   for (const lesson of lessonRows) {

@@ -1,9 +1,8 @@
-import { ID, Query } from "node-appwrite";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { userHasCourseAccess } from "@/lib/appwrite/access";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { upsertLessonProgressRow } from "@/lib/appwrite/progress";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 
 export const runtime = "nodejs";
@@ -13,8 +12,6 @@ const updateLessonProgressSchema = z.object({
   lessonId: z.string().trim().min(1),
   percentComplete: z.number().min(0).max(100),
 });
-
-type AnyRow = Record<string, unknown> & { $id: string };
 
 async function getAuthenticatedUser() {
   try {
@@ -54,58 +51,30 @@ export async function POST(request: Request) {
 
   try {
     const { tablesDB } = await createAdminClient();
-    const existing = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.progress,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.equal("userId", [user.$id]),
-        Query.equal("lessonId", [lessonId]),
-        Query.limit(1),
-      ],
+    const progressWrite = await upsertLessonProgressRow(tablesDB, {
+      userId: user.$id,
+      courseId,
+      lessonId,
+      percentComplete,
     });
 
-    const row = (existing.rows[0] as AnyRow | undefined) ?? null;
-    const existingPercent = row ? Number(row.percentComplete ?? 0) : 0;
-    const completedAt =
-      row && typeof row.completedAt === "string" ? row.completedAt.trim() : "";
-
-    if (completedAt) {
+    if (progressWrite.alreadyCompleted) {
       return NextResponse.json({ success: true, completed: true });
     }
 
-    const nextPercent = Math.max(existingPercent, percentComplete);
-    if (row) {
-      if (nextPercent > existingPercent) {
-        await tablesDB.updateRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.progress,
-          rowId: row.$id,
-          data: {
-            percentComplete: nextPercent,
-          },
-        });
-      }
-    } else {
-      await tablesDB.createRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.progress,
-        rowId: ID.unique(),
-        data: {
-          userId: user.$id,
-          courseId,
-          lessonId,
-          completedAt: "",
-          percentComplete: nextPercent,
-        },
-      });
-    }
-
-    return NextResponse.json({ success: true, percentComplete: nextPercent });
+    return NextResponse.json({
+      success: true,
+      percentComplete: progressWrite.percentComplete,
+    });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to save progress.";
+    console.error(
+      "[Lesson Progress]",
+      error instanceof Error ? error.message : error
+    );
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to save progress." },
+      { status: 500 }
+    );
   }
 }

@@ -14,6 +14,11 @@ import { Query } from "node-appwrite";
 
 type AnyRow = Models.Row & Record<string, unknown>;
 
+function isActiveEnrollment(row: AnyRow): boolean {
+  return row.isActive !== false
+    && String(row.status ?? "active") !== "cancelled";
+}
+
 type StudentAssignment = {
   id: string;
   submissionId: string;
@@ -129,12 +134,12 @@ async function getStudentAssignments(
 
   const enrollments = await listAllRows(APPWRITE_CONFIG.tables.enrollments, [
     Query.equal("userId", [userId]),
-    Query.equal("isActive", [true]),
   ]);
 
   const courseIds = Array.from(
     new Set(
       enrollments
+        .filter(isActiveEnrollment)
         .map((r) => String((r as AnyRow).courseId ?? ""))
         .filter((id) => id.length > 0)
     )
