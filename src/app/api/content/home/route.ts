@@ -13,9 +13,10 @@ export async function GET() {
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch homepage content.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[Content Home API]", error);
+    return NextResponse.json(
+      { error: "Failed to fetch homepage content." },
+      { status: 500 }
+    );
   }
 }

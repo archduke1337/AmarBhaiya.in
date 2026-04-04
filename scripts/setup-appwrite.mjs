@@ -634,6 +634,7 @@ async function main() {
   await idx(T20, "idx_userId", ["userId"]);
   await idx(T20, "idx_courseId", ["courseId"]);
   await idx(T20, "idx_status", ["status"]);
+  await idx(T20, "idx_providerRef", ["providerRef"], "unique");
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 21. subscriptions

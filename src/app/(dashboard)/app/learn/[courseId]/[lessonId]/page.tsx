@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/appwrite/server";
 import {
   getFilePreviewUrl,
 } from "@/lib/utils/file-urls";
+import { normalizeHttpUrl } from "@/lib/utils/url";
 import { LessonVideoPlayer } from "@/components/lesson-video-player";
 import { getCourseProgress } from "@/actions/enrollment";
 import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
@@ -185,7 +186,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
       const fileId = String(resource.fileId ?? "");
       const href =
         type === "link"
-          ? url
+          ? normalizeHttpUrl(url) || ""
           : fileId
             ? `/api/course-resource/${resource.$id}`
             : "";

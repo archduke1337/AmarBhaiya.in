@@ -8,11 +8,15 @@ import {
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import {
+  COURSE_RESOURCE_ALLOWED_MIMES,
+  COURSE_THUMBNAIL_ALLOWED_MIMES,
+  STANDALONE_RESOURCE_ALLOWED_MIMES,
   type InstructorUploadKind,
   INSTRUCTOR_UPLOAD_BUCKETS,
   getUploadFileExtension,
   isAllowedInstructorUploadExtension,
 } from "@/lib/uploads/instructor-file";
+import { validateStoredAppwriteFileSignature } from "@/lib/appwrite/file-signature";
 import type { Role } from "@/lib/utils/constants";
 
 type UploadTargetInput = {
@@ -33,6 +37,20 @@ type FinalizeInstructorUploadResult =
 
 function getCourseThumbnailFileId(course: Record<string, unknown>): string {
   return String(course.thumbnailFileId ?? course.thumbnailId ?? "");
+}
+
+function getAllowedMimesForInstructorUpload(
+  kind: InstructorUploadKind
+): readonly string[] {
+  if (kind === "course-thumbnail") {
+    return COURSE_THUMBNAIL_ALLOWED_MIMES;
+  }
+
+  if (kind === "standalone-resource") {
+    return STANDALONE_RESOURCE_ALLOWED_MIMES;
+  }
+
+  return COURSE_RESOURCE_ALLOWED_MIMES;
 }
 
 async function deleteUploadedFileIfPresent(
@@ -115,6 +133,22 @@ export async function finalizeInstructorUpload(
     return { success: false, status: 400, error: "Unsupported file format." };
   }
 
+  const hasValidSignature = await validateStoredAppwriteFileSignature({
+    bucketId,
+    fileId: uploadedFileId,
+    fileName: String(uploadedFile.name ?? ""),
+    allowedMimes: getAllowedMimesForInstructorUpload(kind),
+  });
+
+  if (!hasValidSignature) {
+    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
+    return {
+      success: false,
+      status: 400,
+      error: "Uploaded file content does not match the allowed file type.",
+    };
+  }
+
   if (kind === "course-thumbnail") {
     if (!courseId) {
       return { success: false, status: 400, error: "Missing courseId." };
@@ -147,14 +181,12 @@ export async function finalizeInstructorUpload(
           data: { thumbnailId: uploadedFileId },
         });
       } catch (error) {
+        console.error("[InstructorUpload] Failed to attach uploaded thumbnail:", error);
         await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
         return {
           success: false,
           status: 500,
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to attach uploaded thumbnail.",
+          error: "Failed to attach uploaded thumbnail.",
         };
       }
     }
@@ -195,14 +227,12 @@ export async function finalizeInstructorUpload(
         data: { fileId: uploadedFileId },
       });
     } catch (error) {
+      console.error("[InstructorUpload] Failed to attach uploaded resource file:", error);
       await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
       return {
         success: false,
         status: 500,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to attach uploaded resource file.",
+        error: "Failed to attach uploaded resource file.",
       };
     }
 
@@ -234,14 +264,15 @@ export async function finalizeInstructorUpload(
       data: { fileId: uploadedFileId },
     });
   } catch (error) {
+    console.error(
+      "[InstructorUpload] Failed to attach uploaded course resource file:",
+      error
+    );
     await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
     return {
       success: false,
       status: 500,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to attach uploaded course resource file.",
+      error: "Failed to attach uploaded course resource file.",
     };
   }
 

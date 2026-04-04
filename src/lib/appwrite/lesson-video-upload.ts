@@ -1,9 +1,11 @@
 import { revalidatePath } from "next/cache";
 
+import { validateStoredAppwriteFileSignature } from "@/lib/appwrite/file-signature";
 import { userCanManageCourse } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import {
+  LESSON_VIDEO_ALLOWED_MIMES,
   getFileExtension,
   isAllowedLessonVideoExtension,
 } from "@/lib/uploads/lesson-video";
@@ -113,6 +115,26 @@ export async function finalizeLessonVideoUpload(
     };
   }
 
+  const hasValidSignature = await validateStoredAppwriteFileSignature({
+    bucketId: APPWRITE_CONFIG.buckets.courseVideos,
+    fileId: uploadedFileId,
+    fileName: String(uploadedFile.name ?? ""),
+    allowedMimes: LESSON_VIDEO_ALLOWED_MIMES,
+  });
+
+  if (!hasValidSignature) {
+    await deleteUploadedFileIfPresent(
+      storage,
+      APPWRITE_CONFIG.buckets.courseVideos,
+      uploadedFileId
+    );
+    return {
+      success: false,
+      status: 400,
+      error: "Uploaded video content does not match the allowed file type.",
+    };
+  }
+
   const previousVideoId = getLessonVideoFileId(target.lesson);
 
   try {
@@ -123,6 +145,7 @@ export async function finalizeLessonVideoUpload(
       data: { videoFileId: uploadedFileId },
     });
   } catch (error) {
+    console.error("[LessonVideoUpload] Failed to attach uploaded lesson video:", error);
     await deleteUploadedFileIfPresent(
       storage,
       APPWRITE_CONFIG.buckets.courseVideos,
@@ -132,10 +155,7 @@ export async function finalizeLessonVideoUpload(
     return {
       success: false,
       status: 500,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to attach uploaded lesson video.",
+      error: "Failed to attach uploaded lesson video.",
     };
   }
 

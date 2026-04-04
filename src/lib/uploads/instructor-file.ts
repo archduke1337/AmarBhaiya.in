@@ -15,6 +15,11 @@ export const COURSE_THUMBNAIL_ALLOWED_EXTENSIONS = [
   "png",
   "webp",
 ] as const;
+export const COURSE_THUMBNAIL_ALLOWED_MIMES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
 export const STANDALONE_RESOURCE_ALLOWED_EXTENSIONS = [
   "pdf",
   "zip",
@@ -28,6 +33,19 @@ export const STANDALONE_RESOURCE_ALLOWED_EXTENSIONS = [
   "mov",
   "mkv",
 ] as const;
+export const STANDALONE_RESOURCE_ALLOWED_MIMES = [
+  "application/pdf",
+  "application/zip",
+  "text/plain",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "video/x-matroska",
+] as const;
 export const COURSE_RESOURCE_ALLOWED_EXTENSIONS = [
   "pdf",
   "zip",
@@ -36,10 +54,18 @@ export const COURSE_RESOURCE_ALLOWED_EXTENSIONS = [
   "docx",
   "pptx",
 ] as const;
+export const COURSE_RESOURCE_ALLOWED_MIMES = [
+  "application/pdf",
+  "application/zip",
+  "text/plain",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+] as const;
 
 export const COURSE_THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024;
 export const STANDALONE_RESOURCE_MAX_BYTES = 200 * 1024 * 1024;
-export const COURSE_RESOURCE_MAX_BYTES = 100 * 1024 * 1024;
+export const COURSE_RESOURCE_MAX_BYTES = 50 * 1024 * 1024;
 
 export function getUploadFileExtension(fileName: string): string {
   return fileName.split(".").pop()?.toLowerCase() ?? "";

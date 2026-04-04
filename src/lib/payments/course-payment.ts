@@ -28,6 +28,23 @@ type CourseRow = AnyRow & {
   price?: number;
 };
 
+async function findPaymentsByProviderRef(
+  tablesDB: TablesDbClient,
+  providerRef: string
+): Promise<PaymentRow[]> {
+  const result = await tablesDB.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.payments,
+    queries: [
+      Query.equal("providerRef", [providerRef]),
+      Query.orderDesc("$createdAt"),
+      Query.limit(2),
+    ],
+  });
+
+  return result.rows as PaymentRow[];
+}
+
 function normalizeAccessModel(
   value: string | null | undefined
 ): "free" | "paid" | "subscription" {
@@ -68,13 +85,14 @@ export async function reconcileCoursePayment({
   enrollmentCreated: boolean;
   enrollmentUpdated: boolean;
 }> {
-  const paymentRows = await tablesDB.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.payments,
-    queries: [Query.equal("providerRef", [providerRef]), Query.limit(1)],
-  });
+  const paymentRows = await findPaymentsByProviderRef(tablesDB, providerRef);
+  if (paymentRows.length > 1) {
+    console.warn(
+      `[Payments] Multiple payment rows found for providerRef ${providerRef}. Using the newest row.`
+    );
+  }
 
-  const existingPayment = paymentRows.rows[0] as PaymentRow | undefined;
+  const existingPayment = paymentRows[0];
   let paymentId = existingPayment?.$id ?? null;
   const resolvedUserId =
     typeof existingPayment?.userId === "string" && existingPayment.userId.length > 0
@@ -151,21 +169,39 @@ export async function reconcileCoursePayment({
   } else if (resolvedUserId && resolvedCourseId) {
     paymentId = ID.unique();
 
-    await tablesDB.createRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.payments,
-      rowId: paymentId,
-      data: {
-        userId: resolvedUserId,
-        courseId: resolvedCourseId,
-        amount: resolvedAmount ?? 0,
-        currency: resolvedCurrency,
-        method: "razorpay",
-        status,
-        providerRef,
-        createdAt: new Date().toISOString(),
-      },
-    });
+    try {
+      await tablesDB.createRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.payments,
+        rowId: paymentId,
+        data: {
+          userId: resolvedUserId,
+          courseId: resolvedCourseId,
+          amount: resolvedAmount ?? 0,
+          currency: resolvedCurrency,
+          method: "razorpay",
+          status,
+          providerRef,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      const appwriteError = error as { code?: number };
+      if (appwriteError.code !== 409) {
+        throw error;
+      }
+
+      const conflictedPayment = (await findPaymentsByProviderRef(
+        tablesDB,
+        providerRef
+      ))[0];
+
+      if (!conflictedPayment) {
+        throw error;
+      }
+
+      paymentId = conflictedPayment.$id;
+    }
   }
 
   let enrollmentCreated = false;

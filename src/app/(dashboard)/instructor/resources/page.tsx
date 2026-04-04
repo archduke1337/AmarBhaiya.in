@@ -257,7 +257,7 @@ export default async function InstructorResourcesPage() {
                   statusLabel={resource.fileId ? "✓ File attached" : "No file"}
                   buttonLabel="Upload"
                   successMessage="Course resource file uploaded."
-                  helperText="Direct Appwrite upload. Supports PDF, ZIP, TXT, DOC, DOCX, and PPTX up to 100 MB."
+                  helperText="Direct Appwrite upload. Supports PDF, ZIP, TXT, DOC, DOCX, and PPTX up to 50 MB."
                 />
               </div>
 

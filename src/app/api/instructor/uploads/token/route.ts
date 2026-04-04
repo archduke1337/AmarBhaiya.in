@@ -76,9 +76,10 @@ export async function POST(request: Request) {
       bucketId: target.bucketId,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to create upload token.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[Instructor Upload Token]", error);
+    return NextResponse.json(
+      { error: "Failed to create upload token." },
+      { status: 500 }
+    );
   }
 }

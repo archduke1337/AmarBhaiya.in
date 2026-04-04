@@ -35,9 +35,10 @@ export async function GET() {
       token,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to create Stream token.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[Stream Token API]", error);
+    return NextResponse.json(
+      { error: "Failed to create Stream token." },
+      { status: 500 }
+    );
   }
 }

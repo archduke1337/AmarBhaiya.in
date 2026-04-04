@@ -12,6 +12,7 @@ import {
 } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { normalizeHttpUrl } from "@/lib/utils/url";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -43,12 +44,14 @@ const courseResourceFieldsSchema = z.object({
   }
 
   try {
-    new URL(data.url);
+    if (!normalizeHttpUrl(data.url)) {
+      throw new Error("Invalid URL");
+    }
   } catch {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["url"],
-      message: "Enter a valid URL.",
+      message: "Enter a valid HTTP or HTTPS URL.",
     });
   }
 });
@@ -261,7 +264,10 @@ export async function createCourseResourceAction(
         title: parsed.data.title,
         fileId: "",
         type: parsed.data.type,
-        url: parsed.data.type === "link" ? parsed.data.url || "" : "",
+        url:
+          parsed.data.type === "link"
+            ? normalizeHttpUrl(parsed.data.url) || ""
+            : "",
       },
     });
 
@@ -297,7 +303,10 @@ export async function updateCourseResourceAction(
   const data = {
     title: parsed.data.title,
     type: parsed.data.type,
-    url: parsed.data.type === "link" ? parsed.data.url ?? "" : "",
+    url:
+      parsed.data.type === "link"
+        ? normalizeHttpUrl(parsed.data.url) || ""
+        : "",
   };
 
   try {

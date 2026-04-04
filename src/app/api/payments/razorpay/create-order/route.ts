@@ -108,11 +108,10 @@ export async function POST(request: Request) {
       paymentId,
     });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to create Razorpay order.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[Razorpay Create Order]", error);
+    return NextResponse.json(
+      { error: "Failed to create Razorpay order." },
+      { status: 500 }
+    );
   }
 }

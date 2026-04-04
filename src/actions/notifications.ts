@@ -7,6 +7,7 @@ import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { processInBatches } from "@/lib/utils/batch";
+import { toNotificationActionUrl } from "@/lib/utils/url";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,14 @@ type CreateNotificationInput = {
 type AdminTablesDB = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
 type AdminUsers = Awaited<ReturnType<typeof createAdminClient>>["users"];
 
+function getNotificationBody(row: AnyRow): string {
+  return String(row.message ?? row.body ?? "");
+}
+
+function getNotificationLink(row: AnyRow): string {
+  return String(row.actionUrl ?? row.link ?? "");
+}
+
 async function writeNotificationEntry(
   tablesDB: AdminTablesDB,
   input: CreateNotificationInput
@@ -46,20 +55,39 @@ async function writeNotificationEntry(
     return;
   }
 
-  await tablesDB.createRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.notifications,
-    rowId: ID.unique(),
-    data: {
-      userId,
-      type: input.type.trim() || "info",
-      title,
-      body: input.body?.trim() || "",
-      link: input.link?.trim() || "",
-      isRead: false,
-      createdAt: input.createdAt || new Date().toISOString(),
-    },
-  });
+  const payload = {
+    userId,
+    type: input.type.trim() || "info",
+    title,
+    message: input.body?.trim() || "",
+    actionUrl: toNotificationActionUrl(input.link?.trim() || ""),
+    isRead: false,
+    createdAt: input.createdAt || new Date().toISOString(),
+  };
+
+  try {
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.notifications,
+      rowId: ID.unique(),
+      data: payload,
+    });
+  } catch {
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.notifications,
+      rowId: ID.unique(),
+      data: {
+        userId,
+        type: input.type.trim() || "info",
+        title,
+        body: input.body?.trim() || "",
+        link: input.link?.trim() || "",
+        isRead: false,
+        createdAt: input.createdAt || new Date().toISOString(),
+      },
+    });
+  }
 }
 
 async function listAllAdminUserIds(users: AdminUsers): Promise<string[]> {
@@ -126,8 +154,8 @@ export async function getUserNotifications(): Promise<Notification[]> {
         userId: String(r.userId ?? ""),
         type: String(r.type ?? "info"),
         title: String(r.title ?? ""),
-        body: String(r.body ?? ""),
-        link: String(r.link ?? ""),
+        body: getNotificationBody(r),
+        link: getNotificationLink(r),
         isRead: Boolean(r.isRead),
         createdAt: String(r.createdAt ?? r.$createdAt ?? ""),
       };

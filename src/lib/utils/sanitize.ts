@@ -57,6 +57,32 @@ export function validateFileMimeType(
       mime: "application/pdf",
       matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "25504446",
     },
+    zip: {
+      mime: "application/zip",
+      matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "504B0304",
+    },
+    txt: {
+      mime: "text/plain",
+      matches: (input) => !input.subarray(0, Math.min(input.length, 32)).includes(0),
+    },
+    doc: {
+      mime: "application/msword",
+      matches: (input) =>
+        input.subarray(0, 8).toString("hex").toUpperCase() === "D0CF11E0A1B11AE1",
+    },
+    docx: {
+      mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "504B0304",
+    },
+    ppt: {
+      mime: "application/vnd.ms-powerpoint",
+      matches: (input) =>
+        input.subarray(0, 8).toString("hex").toUpperCase() === "D0CF11E0A1B11AE1",
+    },
+    pptx: {
+      mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      matches: (input) => input.subarray(0, 4).toString("hex").toUpperCase() === "504B0304",
+    },
     jpg: {
       mime: "image/jpeg",
       matches: (input) => input.subarray(0, 3).toString("hex").toUpperCase() === "FFD8FF",

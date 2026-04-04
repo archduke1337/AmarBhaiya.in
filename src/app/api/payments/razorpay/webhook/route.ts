@@ -88,11 +88,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true, status });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to process Razorpay webhook.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[Razorpay Webhook]", error);
+    return NextResponse.json(
+      { error: "Failed to process Razorpay webhook." },
+      { status: 500 }
+    );
   }
 }

@@ -66,7 +66,11 @@ export async function POST(request: Request) {
     const paymentRows = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.payments,
-      queries: [Query.equal("providerRef", [parsed.data.orderId]), Query.limit(1)],
+      queries: [
+        Query.equal("providerRef", [parsed.data.orderId]),
+        Query.orderDesc("$createdAt"),
+        Query.limit(2),
+      ],
     });
 
     const existingPayment = paymentRows.rows[0] as PaymentRow | undefined;
@@ -117,9 +121,10 @@ export async function POST(request: Request) {
       enrollmentUpdated: result.enrollmentUpdated,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to verify Razorpay payment.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[Razorpay Verify]", error);
+    return NextResponse.json(
+      { error: "Failed to verify Razorpay payment." },
+      { status: 500 }
+    );
   }
 }
