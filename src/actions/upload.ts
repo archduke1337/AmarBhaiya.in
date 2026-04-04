@@ -68,22 +68,42 @@ async function deleteUploadedFileIfPresent(
 
 export async function uploadCourseThumbnailAction(
   formData: FormData
-): Promise<void> {
+): Promise<{ success: true } | { success: false; error: string }> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   const file = formData.get("file") as File | null;
 
-  if (!courseId || !file || file.size === 0) return;
+  if (!courseId || !file || file.size === 0) {
+    return {
+      success: false,
+      error: "Choose an image before uploading.",
+    };
+  }
   const course = await userCanManageCourse(courseId, role, user.$id);
-  if (!course) return;
+  if (!course) {
+    return {
+      success: false,
+      error: "You do not have permission to update this course.",
+    };
+  }
 
   // Validate file
   const maxSize = 5 * 1024 * 1024; // 5MB
-  if (file.size > maxSize) return;
+  if (file.size > maxSize) {
+    return {
+      success: false,
+      error: "Images must be 5 MB or smaller.",
+    };
+  }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  if (!["jpg", "jpeg", "png", "webp"].includes(ext)) return;
+  if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
+    return {
+      success: false,
+      error: "Only JPG, PNG, and WEBP images are supported.",
+    };
+  }
 
   try {
     // SECURITY: Verify MIME type using magic bytes to prevent spoofed files
@@ -91,7 +111,10 @@ export async function uploadCourseThumbnailAction(
     const validMimes = ["image/jpeg", "image/png", "image/webp"];
     if (!validateFileMimeType(buffer, file.name, validMimes)) {
       console.error("File MIME type validation failed");
-      return;
+      return {
+        success: false,
+        error: "This file does not look like a valid image.",
+      };
     }
 
     const { storage, tablesDB } = await createAdminClient();
@@ -144,10 +167,16 @@ export async function uploadCourseThumbnailAction(
     if (typeof course.slug === "string" && course.slug) {
       revalidatePath(`/courses/${course.slug}`);
     }
+
+    return { success: true };
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to upload thumbnail."
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to upload thumbnail.";
+    console.error(message);
+    return {
+      success: false,
+      error: message,
+    };
   }
 }
 

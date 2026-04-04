@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
     remotePatterns,
   },
 
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "8mb",
+    },
+  },
+
   // ── Server Packages ───────────────────────────────────────────────────────
   serverExternalPackages: ["node-appwrite"],
 };

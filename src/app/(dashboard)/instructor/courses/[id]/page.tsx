@@ -1,13 +1,16 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Film, Layers, Users } from "lucide-react";
 
 import { updateInstructorCourseAction } from "@/actions/operations";
-import { DirectAppwriteUploadForm } from "@/components/instructor/direct-appwrite-upload-form";
+import { CourseThumbnailUploadForm } from "@/components/instructor/course-thumbnail-upload-form";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { getInstructorCourseSummary } from "@/lib/appwrite/dashboard-data";
+import { getFilePreviewUrl } from "@/lib/utils/file-urls";
 import { formatCurrency, formatDuration } from "@/lib/utils/format";
 import { formatLineSeparatedList } from "@/lib/utils/form-lists";
 
@@ -23,6 +26,15 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
   if (!course) {
     notFound();
   }
+
+  const thumbnailPreviewUrl = course.thumbnailId
+    ? getFilePreviewUrl(
+        APPWRITE_CONFIG.buckets.courseThumbnails,
+        course.thumbnailId,
+        1280,
+        720
+      )
+    : "";
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -241,14 +253,18 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
             ? " Current thumbnail: ✓ uploaded"
             : " No thumbnail uploaded yet."}
         </p>
-        <DirectAppwriteUploadForm
-          kind="course-thumbnail"
-          courseId={course.id}
-          accept=".jpg,.jpeg,.png,.webp"
-          buttonLabel="Upload Thumbnail"
-          successMessage="Course thumbnail uploaded."
-          helperText="Direct Appwrite upload. Supports JPG, PNG, and WEBP up to 5 MB."
-        />
+        {thumbnailPreviewUrl ? (
+          <div className="overflow-hidden border border-border bg-muted/20">
+            <Image
+              src={thumbnailPreviewUrl}
+              alt={`${course.title} thumbnail`}
+              width={1280}
+              height={720}
+              className="aspect-video h-auto w-full object-cover"
+            />
+          </div>
+        ) : null}
+        <CourseThumbnailUploadForm courseId={course.id} />
       </section>
 
       <section className="grid md:grid-cols-2 gap-4">
