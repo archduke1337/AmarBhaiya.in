@@ -229,17 +229,30 @@ export async function getBillingPaymentHistory(): Promise<BillingPaymentRecord[]
   const { tablesDB } = await createAdminClient();
 
   try {
-    const paymentsResult = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.payments,
-      queries: [
-        Query.equal("userId", [user.$id]),
-        Query.orderDesc("createdAt"),
-        Query.limit(50),
-      ],
-    });
+    const paymentRows: AnyRow[] = [];
+    let offset = 0;
 
-    const paymentRows = paymentsResult.rows as AnyRow[];
+    while (true) {
+      const result = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.payments,
+        queries: [
+          Query.equal("userId", [user.$id]),
+          Query.orderDesc("createdAt"),
+          Query.limit(500),
+          Query.offset(offset),
+        ],
+      });
+
+      paymentRows.push(...(result.rows as AnyRow[]));
+
+      if (result.rows.length < 500) {
+        break;
+      }
+
+      offset += result.rows.length;
+    }
+
     const courseIds = Array.from(
       new Set(
         paymentRows
