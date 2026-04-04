@@ -250,11 +250,14 @@ export type AdminCategoryItem = {
 
 export type AdminPaymentItem = {
   id: string;
+  userId: string;
   providerRef: string;
   method: string;
   amount: number;
   currency: string;
   status: string;
+  courseId: string;
+  courseSlug: string;
   userName: string;
   courseTitle: string;
   createdAt: string | null;
@@ -2005,24 +2008,32 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
       ),
     ];
 
-    const courseMap = new Map<string, string>();
-    const courseRows = await listRowsByFieldValues<CourseRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.courses,
-      "$id",
-      courseIds
+      const courseMap = new Map<string, string>();
+      const courseSlugMap = new Map<string, string>();
+      const courseRows = await listRowsByFieldValues<CourseRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.courses,
+        "$id",
+        courseIds
     );
-    for (const row of courseRows) {
-      courseMap.set(
-        row.$id,
-        typeof row.title === "string" ? row.title : row.$id
-      );
-    }
-    for (const courseId of courseIds) {
-      if (!courseMap.has(courseId)) {
-        courseMap.set(courseId, courseId);
+      for (const row of courseRows) {
+        courseMap.set(
+          row.$id,
+          typeof row.title === "string" ? row.title : row.$id
+        );
+        courseSlugMap.set(
+          row.$id,
+          typeof row.slug === "string" ? row.slug : row.$id
+        );
       }
-    }
+      for (const courseId of courseIds) {
+        if (!courseMap.has(courseId)) {
+          courseMap.set(courseId, courseId);
+        }
+        if (!courseSlugMap.has(courseId)) {
+          courseSlugMap.set(courseId, courseId);
+        }
+      }
 
     const userMap = new Map<string, string>();
     await Promise.all(
@@ -2036,17 +2047,23 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
       })
     );
 
-    return paymentRows.map((payment) => ({
-      id: payment.$id,
-      providerRef:
-        typeof payment.providerRef === "string" ? payment.providerRef : payment.$id,
-      method: typeof payment.method === "string" ? payment.method : "unknown",
-      amount: Number(payment.amount ?? 0) / 100,
-      currency: typeof payment.currency === "string" ? payment.currency : "INR",
-      status: typeof payment.status === "string" ? payment.status : "pending",
-      userName:
-        (typeof payment.userId === "string" && userMap.get(payment.userId)) ||
-        "Unknown user",
+      return paymentRows.map((payment) => ({
+        id: payment.$id,
+        userId: typeof payment.userId === "string" ? payment.userId : "",
+        providerRef:
+          typeof payment.providerRef === "string" ? payment.providerRef : payment.$id,
+        method: typeof payment.method === "string" ? payment.method : "unknown",
+        amount: Number(payment.amount ?? 0) / 100,
+        currency: typeof payment.currency === "string" ? payment.currency : "INR",
+        status: typeof payment.status === "string" ? payment.status : "pending",
+        courseId: typeof payment.courseId === "string" ? payment.courseId : "",
+        courseSlug:
+          typeof payment.courseId === "string"
+            ? courseSlugMap.get(payment.courseId) || payment.courseId
+            : "",
+        userName:
+          (typeof payment.userId === "string" && userMap.get(payment.userId)) ||
+          "Unknown user",
       courseTitle:
         (typeof payment.courseId === "string" && courseMap.get(payment.courseId)) ||
         "Unknown course",
