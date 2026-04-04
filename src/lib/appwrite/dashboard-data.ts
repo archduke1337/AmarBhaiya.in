@@ -1968,15 +1968,15 @@ export async function getAdminCourses(): Promise<AdminCourseItem[]> {
 
   const [coursesResult, categoriesResult] = await Promise.all([
     safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses),
-    safeListRows<AnyRow & Partial<Category>>(
+    safeListAllRows<AnyRow & Partial<Category>>(
       tablesDB,
       APPWRITE_CONFIG.tables.categories,
-      [Query.limit(100)]
+      [Query.orderAsc("order")]
     ),
   ]);
 
   const categoryNameById = new Map<string, string>(
-    categoriesResult.rows.map((category) => [
+    categoriesResult.map((category) => [
       category.$id,
       typeof category.name === "string" ? category.name : "Uncategorized",
     ])
@@ -1998,13 +1998,13 @@ export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
   try {
     const { tablesDB } = await createAdminClient();
 
-    const categoriesResult = await safeListRows<AnyRow & Partial<Category>>(
+    const categoriesResult = await safeListAllRows<AnyRow & Partial<Category>>(
       tablesDB,
       APPWRITE_CONFIG.tables.categories,
-      [Query.orderAsc("order"), Query.limit(100)]
+      [Query.orderAsc("order")]
     );
 
-    return categoriesResult.rows.map((category) => ({
+    return categoriesResult.map((category) => ({
       id: category.$id,
       name: typeof category.name === "string" ? category.name : "Unnamed",
       slug: typeof category.slug === "string" ? category.slug : "",
@@ -2380,13 +2380,13 @@ export async function getStudentEnrolledCourses(
 
     const courseMap = new Map(courses.map((c) => [c.$id, c]));
 
-    const categoriesResult = await safeListRows<AnyRow & Partial<Category>>(
+    const categoryRows = await safeListAllRows<AnyRow & Partial<Category>>(
       tablesDB,
       APPWRITE_CONFIG.tables.categories,
-      [Query.limit(100)]
+      [Query.orderAsc("order")]
     );
     const categoryNameById = new Map<string, string>(
-      categoriesResult.rows.map((cat) => [
+      categoryRows.map((cat) => [
         cat.$id,
         typeof cat.name === "string" ? cat.name : "General",
       ])
@@ -3003,13 +3003,13 @@ export async function getPublicCourses(): Promise<PublicCourseCard[]> {
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await safeListRows<CourseRow>(
+    const rows = await safeListAllRows<CourseRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.courses,
-      [Query.equal("isPublished", [true]), Query.orderDesc("$createdAt"), Query.limit(100)]
+      [Query.equal("isPublished", [true]), Query.orderDesc("$createdAt")]
     );
 
-    return result.rows.map((c) => ({
+    return rows.map((c) => ({
       id: c.$id,
       title: typeof c.title === "string" ? c.title : "Untitled",
       slug: typeof c.slug === "string" ? c.slug : c.$id,
@@ -3088,11 +3088,10 @@ export async function getPublicCourseBySlug(
 
   if (!course || !course.isPublished) return null;
 
-  const [modulesResult, lessonRows, activeEnrollmentRows] = await Promise.all([
-    safeListRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
+  const [moduleRows, lessonRows, activeEnrollmentRows] = await Promise.all([
+    safeListAllRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
       Query.equal("courseId", [course.$id]),
       Query.orderAsc("order"),
-      Query.limit(100),
     ]),
     safeListAllRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
       Query.equal("courseId", [course.$id]),
@@ -3117,7 +3116,7 @@ export async function getPublicCourseBySlug(
     lessonsByModuleId.set(moduleId, existing);
   }
 
-  const modules = modulesResult.rows.map((module) => {
+  const modules = moduleRows.map((module) => {
     const moduleLessons = (lessonsByModuleId.get(module.$id) ?? []).sort(
       (left, right) => Number(left.order ?? 0) - Number(right.order ?? 0)
     );
