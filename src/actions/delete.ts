@@ -18,6 +18,7 @@ type AnyRow = AnyAppwriteRow;
 type AdminServices = Awaited<ReturnType<typeof createAdminClient>>;
 type AdminTablesDB = AdminServices["tablesDB"];
 type AdminStorage = AdminServices["storage"];
+type DeleteTarget = { tableId: string; rowId: string };
 
 async function getRowById(
   tablesDB: AdminTablesDB,
@@ -109,6 +110,57 @@ async function deleteRowsByQueries(
       `[Delete] Failed to query ${tableId}:`,
       error instanceof Error ? error.message : error
     );
+  }
+
+  return failedDeletes;
+}
+
+async function listRowsByQueriesForIds(
+  tablesDB: AdminTablesDB,
+  tableId: string,
+  field: string,
+  ids: string[]
+): Promise<AnyRow[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const rows: AnyRow[] = [];
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+
+  for (let index = 0; index < uniqueIds.length; index += 20) {
+    rows.push(
+      ...(await listAllRows(tablesDB, tableId, [
+        Query.equal(field, uniqueIds.slice(index, index + 20)),
+      ]))
+    );
+  }
+
+  return rows;
+}
+
+async function stageDeleteTargets(
+  tablesDB: AdminTablesDB,
+  transactionId: string,
+  targets: DeleteTarget[]
+): Promise<string[]> {
+  const failedDeletes: string[] = [];
+
+  for (const target of targets) {
+    try {
+      await tablesDB.deleteRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: target.tableId,
+        rowId: target.rowId,
+        transactionId,
+      });
+    } catch (error) {
+      failedDeletes.push(`${target.tableId}/${target.rowId}`);
+      console.error(
+        `[Delete] Failed to stage delete for ${target.tableId}/${target.rowId}:`,
+        error instanceof Error ? error.message : error
+      );
+    }
   }
 
   return failedDeletes;
@@ -312,126 +364,188 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
   if (!course) return;
 
   const { tablesDB, storage } = await createAdminClient();
-  const failedDeletes: string[] = [];
-
-  const lessons = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.lessons, [
-    Query.equal("courseId", [courseId]),
-  ]);
-  const quizzes = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.quizzes, [
-    Query.equal("courseId", [courseId]),
-  ]);
-  const assignments = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.assignments, [
-    Query.equal("courseId", [courseId]),
-  ]);
-  const liveSessions = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.liveSessions, [
-    Query.equal("courseId", [courseId]),
-  ]);
+  const [lessons, quizzes, assignments, liveSessions, modules, courseComments, enrollments, progressRows] =
+    await Promise.all([
+      listAllRows(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+        Query.equal("courseId", [courseId]),
+      ]),
+      listAllRows(tablesDB, APPWRITE_CONFIG.tables.quizzes, [
+        Query.equal("courseId", [courseId]),
+      ]),
+      listAllRows(tablesDB, APPWRITE_CONFIG.tables.assignments, [
+        Query.equal("courseId", [courseId]),
+      ]),
+      listAllRows(tablesDB, APPWRITE_CONFIG.tables.liveSessions, [
+        Query.equal("courseId", [courseId]),
+      ]),
+      listAllRows(tablesDB, APPWRITE_CONFIG.tables.modules, [
+        Query.equal("courseId", [courseId]),
+      ]),
+      listAllRows(tablesDB, APPWRITE_CONFIG.tables.courseComments, [
+        Query.equal("courseId", [courseId]),
+      ]),
+      listAllRows(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+        Query.equal("courseId", [courseId]),
+      ]),
+      listAllRows(tablesDB, APPWRITE_CONFIG.tables.progress, [
+        Query.equal("courseId", [courseId]),
+      ]),
+    ]);
 
   const lessonVideoIds = lessons
     .map((lesson) => String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? ""))
     .filter(Boolean);
   const lessonIds = lessons.map((lesson) => lesson.$id);
-
   const quizIds = quizzes.map((quiz) => quiz.$id);
-  for (const quizId of quizIds) {
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.quizAttempts, [
-        Query.equal("quizId", [quizId]),
-      ]))
-    );
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.quizQuestions, [
-        Query.equal("quizId", [quizId]),
-      ]))
-    );
-  }
-
   const assignmentIds = assignments.map((assignment) => assignment.$id);
-  const submissionFileIds: string[] = [];
-  for (const assignmentId of assignmentIds) {
-    const submissions = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.submissions, [
-      Query.equal("assignmentId", [assignmentId]),
-    ]);
-
-    submissionFileIds.push(
-      ...submissions
-        .map((submission) => String(submission.fileId ?? ""))
-        .filter(Boolean)
-    );
-
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.submissions, [
-        Query.equal("assignmentId", [assignmentId]),
-      ]))
-    );
-  }
-
   const liveSessionIds = liveSessions.map((session) => session.$id);
-  for (const sessionId of liveSessionIds) {
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.sessionRsvps, [
-        Query.equal("sessionId", [sessionId]),
-      ]))
-    );
-  }
 
-  const resourceFileIds: string[] = [];
-  for (const lessonId of lessonIds) {
-    const resources = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.resources, [
-      Query.equal("lessonId", [lessonId]),
+  const [quizAttempts, quizQuestions, submissions, sessionRsvps, resources] =
+    await Promise.all([
+      listRowsByQueriesForIds(
+        tablesDB,
+        APPWRITE_CONFIG.tables.quizAttempts,
+        "quizId",
+        quizIds
+      ),
+      listRowsByQueriesForIds(
+        tablesDB,
+        APPWRITE_CONFIG.tables.quizQuestions,
+        "quizId",
+        quizIds
+      ),
+      listRowsByQueriesForIds(
+        tablesDB,
+        APPWRITE_CONFIG.tables.submissions,
+        "assignmentId",
+        assignmentIds
+      ),
+      listRowsByQueriesForIds(
+        tablesDB,
+        APPWRITE_CONFIG.tables.sessionRsvps,
+        "sessionId",
+        liveSessionIds
+      ),
+      listRowsByQueriesForIds(
+        tablesDB,
+        APPWRITE_CONFIG.tables.resources,
+        "lessonId",
+        lessonIds
+      ),
     ]);
 
-    resourceFileIds.push(
-      ...resources
-        .map((resource) => String(resource.fileId ?? ""))
-        .filter(Boolean)
-    );
+  const submissionFileIds: string[] = submissions
+    .map((submission) => String(submission.fileId ?? ""))
+    .filter(Boolean);
+  const resourceFileIds: string[] = resources
+    .map((resource) => String(resource.fileId ?? ""))
+    .filter(Boolean);
 
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.resources, [
-        Query.equal("lessonId", [lessonId]),
-      ]))
-    );
-  }
-
-  const directCourseTables = [
-    APPWRITE_CONFIG.tables.courseComments,
-    APPWRITE_CONFIG.tables.quizzes,
-    APPWRITE_CONFIG.tables.assignments,
-    APPWRITE_CONFIG.tables.liveSessions,
-    APPWRITE_CONFIG.tables.lessons,
-    APPWRITE_CONFIG.tables.modules,
-    APPWRITE_CONFIG.tables.enrollments,
-    APPWRITE_CONFIG.tables.progress,
+  const stagedDeletes: DeleteTarget[] = [
+    ...quizAttempts.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.quizAttempts,
+      rowId: row.$id,
+    })),
+    ...quizQuestions.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.quizQuestions,
+      rowId: row.$id,
+    })),
+    ...submissions.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.submissions,
+      rowId: row.$id,
+    })),
+    ...sessionRsvps.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.sessionRsvps,
+      rowId: row.$id,
+    })),
+    ...resources.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.resources,
+      rowId: row.$id,
+    })),
+    ...courseComments.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.courseComments,
+      rowId: row.$id,
+    })),
+    ...progressRows.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.progress,
+      rowId: row.$id,
+    })),
+    ...enrollments.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      rowId: row.$id,
+    })),
+    ...liveSessions.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.liveSessions,
+      rowId: row.$id,
+    })),
+    ...assignments.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.assignments,
+      rowId: row.$id,
+    })),
+    ...quizzes.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.quizzes,
+      rowId: row.$id,
+    })),
+    ...lessons.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      rowId: row.$id,
+    })),
+    ...modules.map((row) => ({
+      tableId: APPWRITE_CONFIG.tables.modules,
+      rowId: row.$id,
+    })),
+    {
+      tableId: APPWRITE_CONFIG.tables.courses,
+      rowId: courseId,
+    },
   ];
 
-  for (const tableId of directCourseTables) {
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, tableId, [
-        Query.equal("courseId", [courseId]),
-      ]))
-    );
-  }
+  const transaction = await tablesDB
+    .createTransaction({
+      ttl: 300,
+    })
+    .catch(() => null);
 
-  if (failedDeletes.length > 0) {
-    console.warn(
-      `[Delete] Course ${courseId} was not deleted because child cleanup failed:`,
-      failedDeletes
-    );
+  if (!transaction?.$id) {
+    console.error(`[Delete] Failed to create deletion transaction for course ${courseId}.`);
     return;
   }
 
-  // Delete the course itself
+  const failedDeletes = await stageDeleteTargets(
+    tablesDB,
+    transaction.$id,
+    stagedDeletes
+  );
+
+  if (failedDeletes.length > 0) {
+    console.warn(
+      `[Delete] Course ${courseId} was not deleted because transactional staging failed:`,
+      failedDeletes
+    );
+    await tablesDB
+      .updateTransaction({
+        transactionId: transaction.$id,
+        rollback: true,
+      })
+      .catch(() => null);
+    return;
+  }
+
   try {
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
+    await tablesDB.updateTransaction({
+      transactionId: transaction.$id,
+      commit: true,
     });
   } catch (error) {
     console.error(
-      error instanceof Error ? error.message : "Failed to delete course."
+      error instanceof Error ? error.message : "Failed to commit course deletion."
     );
+    await tablesDB
+      .updateTransaction({
+        transactionId: transaction.$id,
+        rollback: true,
+      })
+      .catch(() => null);
     return;
   }
 

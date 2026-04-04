@@ -24,6 +24,8 @@ type StudentAssignment = {
   dueDate: string;
   submitted: boolean;
   submittedAt: string;
+  gradedAt: string;
+  isGraded: boolean;
   grade: number;
   feedback: string;
   fileId: string;
@@ -192,6 +194,11 @@ async function getStudentAssignments(
       dueDate: String(row.dueDate ?? ""),
       submitted: Boolean(submission),
       submittedAt: String(submission?.submittedAt ?? ""),
+      gradedAt: String(submission?.gradedAt ?? ""),
+      isGraded:
+        (typeof submission?.gradedAt === "string" && submission.gradedAt.length > 0) ||
+        (typeof submission?.feedback === "string" && submission.feedback.trim().length > 0) ||
+        Number(submission?.grade ?? 0) !== 0,
       grade: Number(submission?.grade ?? 0),
       feedback: String(submission?.feedback ?? ""),
       fileId: String(submission?.fileId ?? ""),
@@ -324,7 +331,7 @@ export default async function StudentAssignmentsPage() {
                             : ""}
                         </p>
                       </div>
-                      {a.grade > 0 ? (
+                      {a.isGraded ? (
                         <span className="text-sm font-medium tabular-nums">
                           {a.grade}/100
                         </span>

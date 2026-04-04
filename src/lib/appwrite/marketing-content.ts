@@ -228,6 +228,19 @@ async function safeListRows<Row extends AnyRow>(
   }
 }
 
+async function safeCountRows(
+  tablesDB: TablesDbClient,
+  tableId: string,
+  queries: string[] = []
+): Promise<number> {
+  const response = await safeListRows<AnyRow>(tablesDB, tableId, [
+    ...queries,
+    Query.limit(1),
+  ]);
+
+  return response.total;
+}
+
 function chunkValues(values: string[], chunkSize: number): string[][] {
   const chunks: string[][] = [];
   for (let index = 0; index < values.length; index += chunkSize) {
@@ -661,63 +674,67 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     learnRow,
     whyRow,
     metricsRow,
-    coursesResult,
-    enrollmentsResult,
+    publishedCourseCount,
+    studentCount,
+    featuredCoursesResult,
   ] = await Promise.all([
     safeGetSiteCopyRow(tablesDB, "home.domains"),
     safeGetSiteCopyRow(tablesDB, "home.learnItems"),
     safeGetSiteCopyRow(tablesDB, "home.whyItems"),
     safeGetSiteCopyRow(tablesDB, "home.metrics"),
-    safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
+    safeCountRows(tablesDB, APPWRITE_CONFIG.tables.courses, [
       Query.equal("isPublished", [true]),
-      Query.orderDesc("$updatedAt"),
     ]),
-    safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
-      Query.equal("isActive", [true]),
+    safeCountRows(tablesDB, APPWRITE_CONFIG.tables.studentProfiles),
+    safeListRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
+      Query.equal("isPublished", [true]),
+      Query.orderDesc("enrollmentCount"),
+      Query.limit(6),
     ]),
   ]);
 
   const domains = parseJsonPayload<HomeDomainItem[]>(domainsRow?.payload) ?? [];
   const learnItems = parseJsonPayload<HomeLearnItem[]>(learnRow?.payload) ?? [];
   const whyItems = parseJsonPayload<HomeWhyItem[]>(whyRow?.payload) ?? [];
-  const metrics = parseJsonPayload<{ teachingYears?: number }>(metricsRow?.payload);
+  const metrics = parseJsonPayload<{
+    teachingYears?: number;
+    totalHours?: number;
+    totalStudents?: number;
+    totalCourses?: number;
+  }>(metricsRow?.payload);
 
-  const enrolledUserIds = new Set<string>();
-  const enrolledByCourse = new Map<string, number>();
+  const featuredCourseRows =
+    featuredCoursesResult.rows.length > 0
+      ? featuredCoursesResult.rows
+      : (
+          await safeListRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
+            Query.equal("isPublished", [true]),
+            Query.orderDesc("$updatedAt"),
+            Query.limit(6),
+          ])
+        ).rows;
 
-  for (const enrollment of enrollmentsResult) {
-    if (typeof enrollment.userId !== "string") {
-      continue;
-    }
-
-    enrolledUserIds.add(enrollment.userId);
-
-    if (typeof enrollment.courseId === "string") {
-      enrolledByCourse.set(
-        enrollment.courseId,
-        (enrolledByCourse.get(enrollment.courseId) ?? 0) + 1
-      );
-    }
-  }
-
-  const totalHours = Math.max(
-    0,
-    Math.round(
-      coursesResult.reduce(
-        (sum, course) => sum + toNumber(course.totalDuration, 0),
-        0
-      ) / 3600
-    )
-  );
+  const totalHours =
+    toNumber(metrics?.totalHours, -1) >= 0
+      ? Math.max(0, Math.round(toNumber(metrics?.totalHours, 0)))
+      : Math.max(
+          0,
+          Math.round(
+            featuredCourseRows.reduce(
+              (sum, course) => sum + toNumber(course.totalDuration, 0),
+              0
+            ) / 3600
+          )
+        );
 
   const stats: HomeStatItem[] = [
     {
-      end: enrolledUserIds.size,
+      end: Math.max(0, Math.round(toNumber(metrics?.totalStudents, studentCount))),
       suffix: "+",
       label: "Students",
     },
     {
-      end: coursesResult.length,
+      end: Math.max(0, Math.round(toNumber(metrics?.totalCourses, publishedCourseCount))),
       suffix: "+",
       label: "Courses",
     },
@@ -733,15 +750,14 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     },
   ];
 
-  const featuredCourses = [...coursesResult]
+  const featuredCourses = [...featuredCourseRows]
     .sort(
       (left, right) =>
-        (enrolledByCourse.get(right.$id) ?? 0) -
-        (enrolledByCourse.get(left.$id) ?? 0)
+        toNumber(right.enrollmentCount, 0) - toNumber(left.enrollmentCount, 0)
     )
     .slice(0, 3)
     .map((course) => {
-      const enrolled = enrolledByCourse.get(course.$id) ?? 0;
+      const enrolled = toNumber(course.enrollmentCount, 0);
 
       return {
         title:

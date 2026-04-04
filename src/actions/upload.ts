@@ -18,6 +18,12 @@ import {
   getFileExtension,
   isAllowedLessonVideoExtension,
 } from "@/lib/uploads/lesson-video";
+import {
+  COURSE_RESOURCE_ALLOWED_MIMES,
+  COURSE_RESOURCE_MAX_BYTES,
+  STANDALONE_RESOURCE_ALLOWED_MIMES,
+  STANDALONE_RESOURCE_MAX_BYTES,
+} from "@/lib/uploads/instructor-file";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
 
 const STANDALONE_RESOURCE_EXTENSIONS = [
@@ -253,12 +259,16 @@ export async function uploadResourceFileAction(
   const resource = await userCanManageResource(resourceId, role, user.$id);
   if (!resource) return;
 
-  // Validate: 200MB max
-  const maxSize = 200 * 1024 * 1024;
-  if (file.size > maxSize) return;
+  if (file.size > STANDALONE_RESOURCE_MAX_BYTES) return;
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!STANDALONE_RESOURCE_EXTENSIONS.includes(ext as (typeof STANDALONE_RESOURCE_EXTENSIONS)[number])) {
+    return;
+  }
+
+  const standaloneHeader = Buffer.from(await file.slice(0, 32).arrayBuffer());
+  if (!validateFileMimeType(standaloneHeader, file.name, [...STANDALONE_RESOURCE_ALLOWED_MIMES])) {
+    console.error("Standalone resource MIME type validation failed");
     return;
   }
 
@@ -319,11 +329,16 @@ export async function uploadCourseResourceFileAction(
   const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
   if (!resourceContext) return;
 
-  const maxSize = 100 * 1024 * 1024;
-  if (file.size > maxSize) return;
+  if (file.size > COURSE_RESOURCE_MAX_BYTES) return;
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!COURSE_RESOURCE_EXTENSIONS.includes(ext as (typeof COURSE_RESOURCE_EXTENSIONS)[number])) {
+    return;
+  }
+
+  const courseResourceHeader = Buffer.from(await file.slice(0, 32).arrayBuffer());
+  if (!validateFileMimeType(courseResourceHeader, file.name, [...COURSE_RESOURCE_ALLOWED_MIMES])) {
+    console.error("Course resource MIME type validation failed");
     return;
   }
 

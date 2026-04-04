@@ -134,6 +134,7 @@ export interface Submission extends AppwriteRow {
   userId: string;
   fileId: string;
   submittedAt: string;
+  gradedAt?: string;
   grade: number;
   feedback: string;
 }

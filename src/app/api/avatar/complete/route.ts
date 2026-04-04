@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
+import { validateStoredAppwriteFileSignature } from "@/lib/appwrite/file-signature";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 
@@ -65,6 +66,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unsupported avatar format." }, { status: 400 });
     }
 
+    const validSignature = await validateStoredAppwriteFileSignature({
+      bucketId: APPWRITE_CONFIG.buckets.userAvatars,
+      fileId: parsed.data.fileId,
+      fileName: String(uploadedFile.name ?? ""),
+      allowedMimes: ["image/jpeg", "image/png", "image/webp"],
+    });
+    if (!validSignature) {
+      await deleteUploadedFileIfPresent(storage, parsed.data.fileId);
+      return NextResponse.json(
+        { error: "Uploaded avatar content does not match the allowed file type." },
+        { status: 400 }
+      );
+    }
+
     const previousAvatarFileId = String(sessionUser.prefs?.avatarFileId ?? "");
 
     try {
@@ -74,15 +89,10 @@ export async function POST(request: Request) {
           avatarFileId: parsed.data.fileId,
         },
       });
-    } catch (error) {
+    } catch {
       await deleteUploadedFileIfPresent(storage, parsed.data.fileId);
       return NextResponse.json(
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to attach uploaded avatar.",
-        },
+        { error: "Failed to attach uploaded avatar." },
         { status: 500 }
       );
     }

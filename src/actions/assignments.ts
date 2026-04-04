@@ -27,6 +27,69 @@ import { processInBatches } from "@/lib/utils/batch";
 
 type AnyRow = AnyAppwriteRow;
 
+function shouldRetryWithoutGradedAt(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes("gradedat")
+    && (message.includes("attribute") || message.includes("column") || message.includes("unknown"));
+}
+
+async function createSubmissionRecord(
+  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
+  data: Record<string, unknown>
+): Promise<void> {
+  try {
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.submissions,
+      rowId: ID.unique(),
+      data,
+    });
+  } catch (error) {
+    if (!shouldRetryWithoutGradedAt(error)) {
+      throw error;
+    }
+
+    const { gradedAt: _gradedAt, ...legacyData } = data;
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.submissions,
+      rowId: ID.unique(),
+      data: legacyData,
+    });
+  }
+}
+
+async function updateSubmissionRecord(
+  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
+  rowId: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  try {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.submissions,
+      rowId,
+      data,
+    });
+  } catch (error) {
+    if (!shouldRetryWithoutGradedAt(error)) {
+      throw error;
+    }
+
+    const { gradedAt: _gradedAt, ...legacyData } = data;
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.submissions,
+      rowId,
+      data: legacyData,
+    });
+  }
+}
+
 async function getAssignmentRow(assignmentId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();
 
@@ -315,16 +378,12 @@ export async function submitAssignmentAction(
 
   if (existingSubmission) {
     try {
-      await tablesDB.updateRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.submissions,
-        rowId: existingSubmission.$id,
-        data: {
-          fileId: uploadedFileId,
-          submittedAt: new Date().toISOString(),
-          grade: 0,
-          feedback: "",
-        },
+      await updateSubmissionRecord(tablesDB, existingSubmission.$id, {
+        fileId: uploadedFileId,
+        submittedAt: new Date().toISOString(),
+        gradedAt: "",
+        grade: 0,
+        feedback: "",
       });
 
       if (previousFileId && previousFileId !== uploadedFileId) {
@@ -363,18 +422,14 @@ export async function submitAssignmentAction(
   }
 
   try {
-    await tablesDB.createRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.submissions,
-      rowId: ID.unique(),
-      data: {
-        assignmentId,
-        userId: user.$id,
-        fileId: uploadedFileId,
-        submittedAt: new Date().toISOString(),
-        grade: 0,
-        feedback: "",
-      },
+    await createSubmissionRecord(tablesDB, {
+      assignmentId,
+      userId: user.$id,
+      fileId: uploadedFileId,
+      submittedAt: new Date().toISOString(),
+      gradedAt: "",
+      grade: 0,
+      feedback: "",
     });
 
     revalidatePath("/app");
@@ -395,16 +450,12 @@ export async function submitAssignmentAction(
 
         const conflictedSubmission = (conflictRows.rows[0] as AnyRow | undefined) ?? null;
         if (conflictedSubmission) {
-          await tablesDB.updateRow({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId: APPWRITE_CONFIG.tables.submissions,
-            rowId: conflictedSubmission.$id,
-            data: {
-              fileId: uploadedFileId,
-              submittedAt: new Date().toISOString(),
-              grade: 0,
-              feedback: "",
-            },
+          await updateSubmissionRecord(tablesDB, conflictedSubmission.$id, {
+            fileId: uploadedFileId,
+            submittedAt: new Date().toISOString(),
+            gradedAt: "",
+            grade: 0,
+            feedback: "",
           });
 
           const conflictedPreviousFileId = String(conflictedSubmission.fileId ?? "");
@@ -527,11 +578,10 @@ export async function gradeSubmissionAction(
 
     const { tablesDB } = await createAdminClient();
 
-    await tablesDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.submissions,
-      rowId: submissionId,
-      data: { grade, feedback },
+    await updateSubmissionRecord(tablesDB, submissionId, {
+      grade,
+      feedback,
+      gradedAt: new Date().toISOString(),
     });
 
     const assignmentTitle =

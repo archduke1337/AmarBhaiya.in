@@ -24,6 +24,10 @@ import type {
 
 import { APPWRITE_CONFIG } from "./config";
 import { createAdminClient, createSessionClient } from "./server";
+import {
+  getSubmissionReviewedAt,
+  isSubmissionReviewed,
+} from "@/lib/utils/submission-review";
 
 type AnyRow = Models.Row & {
   [key: string]: unknown;
@@ -132,6 +136,7 @@ export type InstructorSubmissionQueueItem = {
   submittedAt: string;
   grade: number;
   feedback: string;
+  isGraded: boolean;
   gradedAt: string | null;
   needsFeedback: boolean;
   isOverdueReview: boolean;
@@ -759,7 +764,7 @@ export async function getInstructorDashboardStats(
       assignmentIds
     );
     const pendingReviews = submissions.filter(
-      (row) => Number(row.grade ?? 0) <= 0
+      (row) => !isSubmissionReviewed(row)
     ).length;
 
     return {
@@ -1132,12 +1137,8 @@ export async function getInstructorSubmissionQueue(
         const grade = Number(row.grade ?? 0);
         const feedback = typeof row.feedback === "string" ? row.feedback : "";
         const submittedTime = toDate(submittedAt)?.getTime() ?? Number.NaN;
-        const gradedAt =
-          grade > 0
-            ? typeof row.$updatedAt === "string" && row.$updatedAt.length > 0
-              ? row.$updatedAt
-              : submittedAt || null
-            : null;
+        const gradedAt = getSubmissionReviewedAt(row);
+        const isGraded = gradedAt !== null;
 
         return {
           id: row.$id,
@@ -1151,10 +1152,11 @@ export async function getInstructorSubmissionQueue(
           submittedAt,
           grade,
           feedback,
+          isGraded,
           gradedAt,
-          needsFeedback: grade > 0 && feedback.trim().length === 0,
+          needsFeedback: isGraded && feedback.trim().length === 0,
           isOverdueReview:
-            grade <= 0 &&
+            !isGraded &&
             Number.isFinite(submittedTime) &&
             Date.now() - submittedTime > REVIEW_OVERDUE_MS,
         } satisfies InstructorSubmissionQueueItem;

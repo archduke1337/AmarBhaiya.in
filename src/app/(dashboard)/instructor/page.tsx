@@ -68,14 +68,14 @@ export default async function InstructorDashboardPage() {
   const sessionsMissingJoinLink = sessions.filter((session) => !session.streamUrl).length;
   const resourceCourseCount = new Set(courseResources.map((resource) => resource.courseId)).size;
   const awaitingGrade = [...submissions]
-    .filter((submission) => submission.grade === 0)
+    .filter((submission) => !submission.isGraded)
     .sort((left, right) => {
       const leftTime = new Date(left.submittedAt).getTime();
       const rightTime = new Date(right.submittedAt).getTime();
       return leftTime - rightTime;
     });
   const recentlyGraded = [...submissions]
-    .filter((submission) => submission.grade > 0)
+    .filter((submission) => submission.isGraded)
     .sort((left, right) => {
       const leftTime = new Date(left.gradedAt ?? left.submittedAt).getTime();
       const rightTime = new Date(right.gradedAt ?? right.submittedAt).getTime();

@@ -6,12 +6,97 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { parseFiniteNumber } from "@/lib/utils/number";
 import { processInBatches } from "@/lib/utils/batch";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 const VALID_SUBSCRIPTION_STATUSES = new Set(["active", "expired", "cancelled"]);
 type AdminTablesDB = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
 type AdminUsers = Awaited<ReturnType<typeof createAdminClient>>["users"];
+
+function toDate(value: unknown): Date | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function deriveSubscriptionStatus(row: AnyRow): "active" | "expired" | "cancelled" {
+  const storedStatus = String(row.status ?? "expired");
+  if (storedStatus !== "active") {
+    return VALID_SUBSCRIPTION_STATUSES.has(storedStatus)
+      ? (storedStatus as "active" | "expired" | "cancelled")
+      : "expired";
+  }
+
+  const endDate = toDate(row.endDate);
+  if (endDate && endDate.getTime() < Date.now()) {
+    return "expired";
+  }
+
+  return "active";
+}
+
+async function normalizeSubscriptionStatuses(
+  tablesDB: AdminTablesDB,
+  rows: AnyRow[]
+): Promise<Map<string, string>> {
+  const normalizedStatuses = new Map<string, string>();
+
+  await processInBatches(rows, 25, async (row) => {
+    const normalizedStatus = deriveSubscriptionStatus(row);
+    normalizedStatuses.set(row.$id, normalizedStatus);
+
+    if (normalizedStatus !== String(row.status ?? "")) {
+      try {
+        await tablesDB.updateRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.subscriptions,
+          rowId: row.$id,
+          data: { status: normalizedStatus },
+        });
+      } catch {
+        // Keep reads resilient even if normalization write fails.
+      }
+    }
+  });
+
+  return normalizedStatuses;
+}
+
+async function deactivateOtherActiveSubscriptions(
+  tablesDB: AdminTablesDB,
+  userId: string,
+  keepSubscriptionId?: string
+): Promise<void> {
+  const existing = await tablesDB.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.subscriptions,
+    queries: [
+      Query.equal("userId", [userId]),
+      Query.equal("status", ["active"]),
+      Query.limit(100),
+    ],
+  }).catch(() => ({ rows: [] as AnyRow[] }));
+
+  const rows = (existing.rows as AnyRow[]).filter(
+    (row) => row.$id !== keepSubscriptionId
+  );
+
+  await processInBatches(rows, 25, async (row) => {
+    const nextStatus =
+      deriveSubscriptionStatus(row) === "expired" ? "expired" : "cancelled";
+
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.subscriptions,
+      rowId: row.$id,
+      data: { status: nextStatus },
+    });
+  });
+}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -95,13 +180,15 @@ export async function getUserSubscription(): Promise<UserSubscription | null> {
       tableId: APPWRITE_CONFIG.tables.subscriptions,
       queries: [
         Query.equal("userId", [user.$id]),
-        Query.equal("status", ["active"]),
         Query.orderDesc("$createdAt"),
-        Query.limit(1),
+        Query.limit(25),
       ],
     });
 
-    const row = result.rows[0] as AnyRow | undefined;
+    const rows = result.rows as AnyRow[];
+    if (rows.length === 0) return null;
+    const normalizedStatuses = await normalizeSubscriptionStatuses(tablesDB, rows);
+    const row = rows.find((candidate) => normalizedStatuses.get(candidate.$id) === "active");
     if (!row) return null;
 
     return {
@@ -112,7 +199,7 @@ export async function getUserSubscription(): Promise<UserSubscription | null> {
       planName: String(row.planName ?? "Unknown Plan"),
       startDate: String(row.startDate ?? ""),
       endDate: String(row.endDate ?? ""),
-      status: String(row.status ?? "active"),
+      status: normalizedStatuses.get(row.$id) ?? String(row.status ?? "active"),
     };
   } catch {
     return null;
@@ -127,6 +214,7 @@ export async function getAllSubscriptions(): Promise<UserSubscription[]> {
 
   try {
     const rows = await listAllSubscriptionRows(tablesDB);
+    const normalizedStatuses = await normalizeSubscriptionStatuses(tablesDB, rows);
     const userIds = Array.from(
       new Set(
         rows
@@ -147,7 +235,7 @@ export async function getAllSubscriptions(): Promise<UserSubscription[]> {
         planName: String(row.planName ?? "Unknown"),
         startDate: String(row.startDate ?? ""),
         endDate: String(row.endDate ?? ""),
-        status: String(row.status ?? "expired"),
+        status: normalizedStatuses.get(row.$id) ?? String(row.status ?? "expired"),
       };
     });
   } catch {
@@ -208,6 +296,21 @@ export async function adminUpdateSubscriptionAction(
   const { tablesDB } = await createAdminClient();
 
   try {
+    const subscription = (await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.subscriptions,
+      rowId: subscriptionId,
+    }).catch(() => null)) as AnyRow | null;
+    if (!subscription) return;
+
+    if (status === "active") {
+      await deactivateOtherActiveSubscriptions(
+        tablesDB,
+        String(subscription.userId ?? ""),
+        subscriptionId
+      );
+    }
+
     await tablesDB.updateRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.subscriptions,
@@ -216,6 +319,7 @@ export async function adminUpdateSubscriptionAction(
     });
 
     revalidatePath("/admin/subscriptions");
+    revalidatePath("/app/billing");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to update subscription."
@@ -232,9 +336,10 @@ export async function adminCreateSubscriptionAction(
 
   const userId = String(formData.get("userId") ?? "").trim();
   const planName = String(formData.get("planName") ?? "").trim();
+  const parsedDurationMonths = parseFiniteNumber(formData.get("durationMonths"));
   const durationMonths = Math.max(
     1,
-    Math.min(36, Math.floor(Number(formData.get("durationMonths") ?? 1) || 1))
+    Math.min(36, Math.floor(parsedDurationMonths ?? 1))
   );
 
   if (!userId || !planName) return;
@@ -246,6 +351,8 @@ export async function adminCreateSubscriptionAction(
   const { tablesDB } = await createAdminClient();
 
   try {
+    await deactivateOtherActiveSubscriptions(tablesDB, userId);
+
     await tablesDB.createRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.subscriptions,
@@ -262,6 +369,7 @@ export async function adminCreateSubscriptionAction(
     });
 
     revalidatePath("/admin/subscriptions");
+    revalidatePath("/app/billing");
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create subscription."

@@ -29,7 +29,7 @@ export default async function InstructorSubmissionsPage() {
   const submissions = await getInstructorSubmissionQueue(scope);
 
   const awaitingGrade = [...submissions]
-    .filter((submission) => submission.grade <= 0)
+    .filter((submission) => !submission.isGraded)
     .sort((left, right) => {
       const leftTime = new Date(left.submittedAt).getTime();
       const rightTime = new Date(right.submittedAt).getTime();
@@ -43,7 +43,7 @@ export default async function InstructorSubmissionsPage() {
       return leftTime - rightTime;
     });
   const graded = [...submissions]
-    .filter((submission) => submission.grade > 0 && !submission.needsFeedback)
+    .filter((submission) => submission.isGraded && !submission.needsFeedback)
     .sort((left, right) => {
       const leftTime = new Date(left.gradedAt ?? left.submittedAt).getTime();
       const rightTime = new Date(right.gradedAt ?? right.submittedAt).getTime();
@@ -232,7 +232,7 @@ function SubmissionCard({
               ) : (
                 <Badge>Graded</Badge>
               )}
-              {submission.grade > 0 && (
+              {submission.isGraded && (
                 <Badge variant="outline">{submission.grade}/100</Badge>
               )}
             </div>
@@ -243,7 +243,7 @@ function SubmissionCard({
               Submitted {submittedAtLabel}
               {submittedRelativeLabel ? ` · ${submittedRelativeLabel}` : ""}
             </p>
-            {submission.grade > 0 && gradedAtLabel ? (
+            {submission.isGraded && gradedAtLabel ? (
               <p className="text-xs text-muted-foreground">
                 Last graded {gradedAtLabel}
               </p>
@@ -294,7 +294,7 @@ function SubmissionCard({
             min={0}
             max={100}
             required
-            defaultValue={submission.grade > 0 ? submission.grade : undefined}
+            defaultValue={submission.isGraded ? submission.grade : undefined}
             placeholder="85"
             className="h-9 border border-border bg-background px-3 text-sm"
           />

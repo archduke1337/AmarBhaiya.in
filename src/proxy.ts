@@ -11,7 +11,7 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 const COMMUNITY_HOST = "community.amarbhaiya.in";
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const hostname = request.headers.get("host") ?? "";
 
   // Build the cookie name dynamically
@@ -31,29 +31,49 @@ export function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
+    const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
+    if (isAuthRoute) {
+      if (isLoggedIn) {
+        const redirectTarget = request.nextUrl.searchParams.get("redirect");
+        if (
+          typeof redirectTarget === "string" &&
+          redirectTarget.startsWith("/") &&
+          !redirectTarget.startsWith("//")
+        ) {
+          return NextResponse.redirect(new URL(redirectTarget, request.url));
+        }
+
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+
+      return NextResponse.next();
+    }
+
     // Check auth — community requires login
     if (!isLoggedIn) {
       const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
+      loginUrl.searchParams.set("redirect", `${pathname}${search}`);
       return NextResponse.redirect(loginUrl);
     }
 
     // Rewrite root → /app/community
     if (pathname === "/") {
-      return NextResponse.rewrite(new URL("/app/community", request.url));
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = "/app/community";
+      return NextResponse.rewrite(rewriteUrl);
     }
 
     // Rewrite /anything → /app/community/anything
-    return NextResponse.rewrite(
-      new URL(`/app/community${pathname}`, request.url)
-    );
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = `/app/community${pathname}`;
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   // ── Protected routes → redirect to login if not authenticated ─────────
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   if (isProtected && !isLoggedIn) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("redirect", `${pathname}${search}`);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -79,4 +99,4 @@ export const config = {
     // Catch-all for subdomain routing
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
-};
+};

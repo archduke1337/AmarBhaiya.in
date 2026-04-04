@@ -414,6 +414,7 @@ async function main() {
   await varchar(T12, "userId", 50, true);
   await varchar(T12, "fileId", 100);
   await dt(T12, "submittedAt");
+  await dt(T12, "gradedAt");
   await int(T12, "grade", false, 0);
   await text(T12, "feedback");
   await idx(T12, "idx_assignmentId", ["assignmentId"]);
@@ -658,6 +659,7 @@ async function main() {
   await varchar(T21, "paymentId", 50);
   await idx(T21, "idx_userId", ["userId"]);
   await idx(T21, "idx_status", ["status"]);
+  await idx(T21, "idx_user_status_endDate", ["userId", "status", "endDate"]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 22. moderation_actions
