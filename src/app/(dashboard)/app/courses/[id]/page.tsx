@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Lock } from "lucide-react";
 
+import { getCourseComments, postCourseCommentAction } from "@/actions/comments";
 import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { getPublicCourseBySlug } from "@/lib/appwrite/dashboard-data";
+import { formatRelativeTime } from "@/lib/utils/format";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -24,6 +26,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
     courseId: course.id,
     userId: user.$id,
   });
+  const courseComments = hasFullAccess ? await getCourseComments(course.id) : [];
 
   const modules = course.modules.map((module) => ({
     id: module.id,
@@ -59,8 +62,9 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           </p>
           <h1 className="text-3xl md:text-4xl mt-2">{course.title}</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Use this overview to navigate into lessons. Attached resources and
-            discussion now live inside the dedicated lesson viewer for each lesson.
+            Use this overview to navigate into lessons. Lesson-specific resources
+            and discussion stay inside each lesson viewer, while the course-wide
+            conversation lives below.
           </p>
         </div>
 
@@ -107,8 +111,8 @@ export default async function CoursePlayerPage({ params }: PageProps) {
               </p>
               <p>
                 You can still access any free preview lessons listed below. The
-                rest of the lesson videos, resources, and discussion stay gated
-                behind course access.
+                rest of the lesson videos, resources, and course discussion stay
+                gated behind course access.
               </p>
             </div>
           </div>
@@ -171,6 +175,70 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           ))}
         </section>
       )}
+
+      <section className="border border-border">
+        <div className="border-b border-border px-5 py-3">
+          <h2 className="text-sm font-medium">
+            Course Discussion ({courseComments.length})
+          </h2>
+        </div>
+
+        {hasFullAccess ? (
+          <>
+            <form
+              action={postCourseCommentAction}
+              className="border-b border-border p-5 space-y-3"
+            >
+              <input type="hidden" name="courseId" value={course.id} />
+              <textarea
+                name="text"
+                required
+                minLength={2}
+                placeholder="Ask about the course overall, planning, pacing, or general doubts..."
+                className="w-full min-h-20 border border-border bg-background px-3 py-2 text-sm"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="h-9 bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
+                >
+                  Post to course discussion
+                </button>
+              </div>
+            </form>
+
+            <div className="divide-y divide-border">
+              {courseComments.length === 0 ? (
+                <p className="px-5 py-4 text-sm text-muted-foreground">
+                  No course-wide comments yet. Start the conversation.
+                </p>
+              ) : null}
+              {courseComments.map((comment) => (
+                <div key={comment.id} className="px-5 py-3">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-xs font-medium">{comment.userName}</span>
+                    {comment.userRole !== "student" ? (
+                      <span className="border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {comment.userRole}
+                      </span>
+                    ) : null}
+                    <span className="text-[10px] text-muted-foreground">
+                      {comment.createdAt ? formatRelativeTime(comment.createdAt) : ""}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {comment.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="px-5 py-4 text-sm text-muted-foreground">
+            Enroll in this course to join the course-wide discussion.
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { sanitizeHtml } from "@/lib/utils/sanitize";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
-export type LessonComment = {
+export type DiscussionComment = {
   id: string;
   userName: string;
   userRole: string;
@@ -20,6 +20,73 @@ export type LessonComment = {
   createdAt: string;
   isPinned: boolean;
 };
+
+export type LessonComment = DiscussionComment;
+export type CourseComment = DiscussionComment;
+
+function mapCommentRow(row: AnyRow): DiscussionComment {
+  return {
+    id: row.$id,
+    userName: String(row.userName ?? "Anonymous"),
+    userRole: String(row.userRole ?? "student"),
+    text: String(row.text ?? ""),
+    createdAt: String(row.createdAt ?? row.$createdAt ?? ""),
+    isPinned: Boolean(row.isPinned),
+  };
+}
+
+async function createComment({
+  userId,
+  userName,
+  userRole,
+  courseId,
+  lessonId,
+  text,
+}: {
+  userId: string;
+  userName: string;
+  userRole: string;
+  courseId: string;
+  lessonId: string;
+  text: string;
+}) {
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.createRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.courseComments,
+    rowId: ID.unique(),
+    data: {
+      lessonId,
+      courseId,
+      userId,
+      userName,
+      userRole,
+      text,
+      parentId: "",
+      createdAt: new Date().toISOString(),
+      isPinned: false,
+      isDeleted: false,
+      likes: 0,
+    },
+  });
+}
+
+async function listComments(queries: string[]): Promise<DiscussionComment[]> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const result = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courseComments,
+      queries,
+    });
+
+    return result.rows.map((row) => mapCommentRow(row as AnyRow));
+  } catch {
+    return [];
+  }
+}
 
 // ── Post Comment ────────────────────────────────────────────────────────────
 
@@ -38,25 +105,13 @@ export async function postLessonCommentAction(
   text = sanitizeHtml(text);
 
   try {
-    const { tablesDB } = await createAdminClient();
-
-    await tablesDB.createRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courseComments,
-      rowId: ID.unique(),
-      data: {
-        lessonId,
-        courseId,
-        userId: user.$id,
-        userName: user.name || "Anonymous",
-        userRole: getUserRole(user),
-        text, // Now sanitized
-        parentId: "",
-        createdAt: new Date().toISOString(),
-        isPinned: false,
-        isDeleted: false,
-        likes: 0,
-      },
+    await createComment({
+      userId: user.$id,
+      userName: user.name || "Anonymous",
+      userRole: getUserRole(user),
+      courseId,
+      lessonId,
+      text,
     });
 
     revalidatePath(`/app/learn/${courseId}/${lessonId}`);
@@ -72,32 +127,52 @@ export async function postLessonCommentAction(
 export async function getLessonComments(
   lessonId: string
 ): Promise<LessonComment[]> {
-  const { tablesDB } = await createAdminClient();
+  return listComments([
+    Query.equal("lessonId", [lessonId]),
+    Query.equal("isDeleted", [false]),
+    Query.orderDesc("$createdAt"),
+    Query.limit(100),
+  ]);
+}
+
+export async function postCourseCommentAction(
+  formData: FormData
+): Promise<void> {
+  const user = await requireAuth();
+  const courseId = String(formData.get("courseId") ?? "");
+  let text = String(formData.get("text") ?? "").trim();
+
+  if (!courseId || !text) return;
+  if (!(await userHasCourseAccess({ courseId, userId: user.$id }))) return;
+
+  text = sanitizeHtml(text);
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courseComments,
-      queries: [
-        Query.equal("lessonId", [lessonId]),
-        Query.equal("isDeleted", [false]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(100),
-      ],
+    await createComment({
+      userId: user.$id,
+      userName: user.name || "Anonymous",
+      userRole: getUserRole(user),
+      courseId,
+      lessonId: "",
+      text,
     });
 
-    return result.rows.map((r) => {
-      const row = r as AnyRow;
-      return {
-        id: row.$id,
-        userName: String(row.userName ?? "Anonymous"),
-        userRole: String(row.userRole ?? "student"),
-        text: String(row.text ?? ""),
-        createdAt: String(row.createdAt ?? row.$createdAt ?? ""),
-        isPinned: Boolean(row.isPinned),
-      };
-    });
-  } catch {
-    return [];
+    revalidatePath(`/app/courses/${courseId}`);
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to post course comment."
+    );
   }
+}
+
+export async function getCourseComments(
+  courseId: string
+): Promise<CourseComment[]> {
+  return listComments([
+    Query.equal("courseId", [courseId]),
+    Query.equal("lessonId", [""]),
+    Query.equal("isDeleted", [false]),
+    Query.orderDesc("$createdAt"),
+    Query.limit(100),
+  ]);
 }
