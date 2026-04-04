@@ -76,17 +76,17 @@ export async function reconcileCoursePayment({
 
   const existingPayment = paymentRows.rows[0] as PaymentRow | undefined;
   let paymentId = existingPayment?.$id ?? null;
-  let resolvedUserId =
+  const resolvedUserId =
     typeof existingPayment?.userId === "string" && existingPayment.userId.length > 0
       ? existingPayment.userId
       : userId ?? null;
-  let resolvedCourseId =
+  const resolvedCourseId =
     typeof existingPayment?.courseId === "string" && existingPayment.courseId.length > 0
       ? existingPayment.courseId
       : courseId ?? null;
   let resolvedAmount =
     toNumberOrNull(existingPayment?.amount) ?? toNumberOrNull(amount) ?? null;
-  let resolvedCurrency =
+  const resolvedCurrency =
     typeof existingPayment?.currency === "string" && existingPayment.currency.length > 0
       ? existingPayment.currency
       : currency ?? "INR";
@@ -127,7 +127,7 @@ export async function reconcileCoursePayment({
     }
 
     if (
-      typeof existingPayment.userId !== "string" &&
+      (typeof existingPayment.userId !== "string" || existingPayment.userId.length === 0) &&
       typeof resolvedUserId === "string" &&
       resolvedUserId.length > 0
     ) {
@@ -135,7 +135,7 @@ export async function reconcileCoursePayment({
     }
 
     if (
-      typeof existingPayment.courseId !== "string" &&
+      (typeof existingPayment.courseId !== "string" || existingPayment.courseId.length === 0) &&
       typeof resolvedCourseId === "string" &&
       resolvedCourseId.length > 0
     ) {
