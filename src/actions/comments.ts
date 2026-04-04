@@ -76,13 +76,26 @@ async function listComments(queries: string[]): Promise<DiscussionComment[]> {
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courseComments,
-      queries,
-    });
+    const rows: AnyRow[] = [];
+    let offset = 0;
 
-    return result.rows.map((row) => mapCommentRow(row as AnyRow));
+    while (true) {
+      const result = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courseComments,
+        queries: [...queries, Query.limit(500), Query.offset(offset)],
+      });
+
+      rows.push(...(result.rows as AnyRow[]));
+
+      if (result.rows.length < 500) {
+        break;
+      }
+
+      offset += result.rows.length;
+    }
+
+    return rows.map(mapCommentRow);
   } catch {
     return [];
   }
@@ -131,7 +144,6 @@ export async function getLessonComments(
     Query.equal("lessonId", [lessonId]),
     Query.equal("isDeleted", [false]),
     Query.orderDesc("$createdAt"),
-    Query.limit(100),
   ]);
 }
 
@@ -173,6 +185,5 @@ export async function getCourseComments(
     Query.equal("lessonId", [""]),
     Query.equal("isDeleted", [false]),
     Query.orderDesc("$createdAt"),
-    Query.limit(100),
   ]);
 }

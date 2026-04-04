@@ -27,6 +27,36 @@ export default async function LessonViewerPage({ params }: PageProps) {
 
   const { tablesDB } = await createAdminClient();
 
+  const listAllRows = async (
+    tableId: string,
+    queries: string[] = []
+  ): Promise<AnyRow[]> => {
+    try {
+      const rows: AnyRow[] = [];
+      let offset = 0;
+
+      while (true) {
+        const result = await tablesDB.listRows({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId,
+          queries: [...queries, Query.limit(500), Query.offset(offset)],
+        });
+
+        rows.push(...(result.rows as AnyRow[]));
+
+        if (result.rows.length < 500) {
+          break;
+        }
+
+        offset += result.rows.length;
+      }
+
+      return rows;
+    } catch {
+      return [];
+    }
+  };
+
   // Get lesson
   let lesson: AnyRow | null = null;
   try {
@@ -80,21 +110,10 @@ export default async function LessonViewerPage({ params }: PageProps) {
   }
 
   // Get all lessons for navigation
-  let allLessons: AnyRow[] = [];
-  try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.orderAsc("order"),
-        Query.limit(200),
-      ],
-    });
-    allLessons = result.rows as AnyRow[];
-  } catch {
-    // No navigation
-  }
+  const allLessons = await listAllRows(APPWRITE_CONFIG.tables.lessons, [
+    Query.equal("courseId", [courseId]),
+    Query.orderAsc("order"),
+  ]);
 
   const currentIndex = allLessons.findIndex((l) => l.$id === lessonId);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
@@ -116,14 +135,12 @@ export default async function LessonViewerPage({ params }: PageProps) {
     : "";
 
   // Get progress, comments, and lesson resources
-  const [{ completedLessonIds }, comments, lessonResourcesResult, lessonProgressResult, enrollmentResult] = await Promise.all([
+  const [{ completedLessonIds }, comments, lessonResources, lessonProgressResult, enrollmentResult] = await Promise.all([
     getCourseProgress(courseId, user.$id),
     getLessonComments(lessonId),
-    tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.resources,
-      queries: [Query.equal("lessonId", [lessonId]), Query.limit(100)],
-    }).catch(() => ({ rows: [] })),
+    listAllRows(APPWRITE_CONFIG.tables.resources, [
+      Query.equal("lessonId", [lessonId]),
+    ]),
     tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.progress,
@@ -161,7 +178,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
           Math.max(0, lessonDurationSeconds - 1)
         )
       : 0;
-  const lessonResources = (lessonResourcesResult.rows as AnyRow[])
+  const lessonResourceItems = lessonResources
     .map((resource) => {
       const type = String(resource.type ?? "file");
       const url = String(resource.url ?? "");
@@ -258,15 +275,15 @@ export default async function LessonViewerPage({ params }: PageProps) {
         )}
       </div>
 
-      {lessonResources.length > 0 && (
+      {lessonResourceItems.length > 0 && (
         <section className="border border-border">
           <div className="border-b border-border px-5 py-3">
             <h2 className="text-sm font-medium">
-              Lesson Resources ({lessonResources.length})
+              Lesson Resources ({lessonResourceItems.length})
             </h2>
           </div>
           <ul className="divide-y divide-border">
-            {lessonResources.map((resource) => (
+            {lessonResourceItems.map((resource) => (
               <li key={resource.id}>
                 <a
                   href={resource.href}
