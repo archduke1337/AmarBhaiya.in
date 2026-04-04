@@ -560,10 +560,6 @@ function getInstructorBaseQueries(scope: InstructorScope): string[] {
   return [Query.equal("instructorId", [scope.userId])];
 }
 
-function getInstructorQueries(scope: InstructorScope): string[] {
-  return [...getInstructorBaseQueries(scope), Query.limit(100)];
-}
-
 async function safeListRows<Row extends AnyRow>(
   tablesDB: AdminClient["tablesDB"] | Awaited<ReturnType<typeof createSessionClient>>["tablesDB"],
   tableId: string,
@@ -645,23 +641,25 @@ export async function getCommunityThreadsData(): Promise<CommunityThreadItem[]> 
   try {
     const { tablesDB } = await createSessionClient();
 
-    const [categoriesResult, threadsResult] = await Promise.all([
-      safeListRows<ForumCategoryRow>(tablesDB, APPWRITE_CONFIG.tables.forumCategories, [
-        Query.limit(100),
-      ]),
-      safeListRows<ForumThreadRow>(tablesDB, APPWRITE_CONFIG.tables.forumThreads, [
-        Query.limit(50),
-      ]),
+    const [categoryRows, threadRows] = await Promise.all([
+      safeListAllRows<ForumCategoryRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.forumCategories
+      ),
+      safeListAllRows<ForumThreadRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.forumThreads
+      ),
     ]);
 
     const categoryNameById = new Map<string, string>(
-      categoriesResult.rows.map((category) => [
+      categoryRows.map((category) => [
         category.$id,
         typeof category.name === "string" ? category.name : "General",
       ])
     );
 
-    return threadsResult.rows
+    return threadRows
       .sort((left, right) => {
         const leftPinned = Boolean(left.isPinned) ? 1 : 0;
         const rightPinned = Boolean(right.isPinned) ? 1 : 0;
@@ -694,13 +692,13 @@ export async function getCommunityThreadsData(): Promise<CommunityThreadItem[]> 
 export async function getCommunityCategoriesData(): Promise<CommunityCategoryItem[]> {
   try {
     const { tablesDB } = await createSessionClient();
-    const categoriesResult = await safeListRows<ForumCategoryRow>(
+    const categoryRows = await safeListAllRows<ForumCategoryRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.forumCategories,
-      [Query.orderAsc("order"), Query.limit(100)]
+      [Query.orderAsc("order")]
     );
 
-    return categoriesResult.rows.map((category) => ({
+    return categoryRows.map((category) => ({
       id: category.$id,
       name: typeof category.name === "string" ? category.name : "General",
     }));
@@ -715,13 +713,13 @@ export async function getInstructorDashboardStats(
   try {
     const { tablesDB } = await createAdminClient();
 
-    const coursesResult = await safeListRows<CourseRow>(
+    const courseRows = await safeListAllRows<CourseRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.courses,
-      getInstructorQueries(scope)
+      getInstructorBaseQueries(scope)
     );
 
-    const courseIds = coursesResult.rows.map((course) => course.$id);
+    const courseIds = courseRows.map((course) => course.$id);
 
     const activeEnrollmentsRows = await listRowsByFieldValues<EnrollmentRow>(
       tablesDB,
@@ -765,7 +763,7 @@ export async function getInstructorDashboardStats(
     ).length;
 
     return {
-      courses: coursesResult.total,
+      courses: courseRows.length,
       activeEnrollments,
       liveSessions,
       pendingReviews,
@@ -819,13 +817,13 @@ export async function getInstructorCourseList(
 ): Promise<InstructorCourseListItem[]> {
   try {
     const { tablesDB } = await createAdminClient();
-    const coursesResult = await safeListRows<CourseRow>(
+    const courseRows = await safeListAllRows<CourseRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.courses,
-      getInstructorQueries(scope)
+      getInstructorBaseQueries(scope)
     );
 
-    const courseIds = coursesResult.rows.map((course) => course.$id);
+    const courseIds = courseRows.map((course) => course.$id);
     const [moduleRows, lessonRows, enrollmentRows] = await Promise.all([
       listRowsByFieldValues<ModuleRow>(
         tablesDB,
@@ -886,7 +884,7 @@ export async function getInstructorCourseList(
       );
     }
 
-    return coursesResult.rows
+    return courseRows
       .sort((left, right) => {
         const leftDate = toDate(left.$updatedAt ?? left.$createdAt)?.getTime() ?? 0;
         const rightDate = toDate(right.$updatedAt ?? right.$createdAt)?.getTime() ?? 0;
@@ -940,13 +938,13 @@ export async function getInstructorStudents(
   try {
     const { tablesDB, users } = await createAdminClient();
 
-    const coursesResult = await safeListRows<CourseRow>(
+    const courseRows = await safeListAllRows<CourseRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.courses,
-      getInstructorQueries(scope)
+      getInstructorBaseQueries(scope)
     );
 
-    const courseById = new Map(coursesResult.rows.map((course) => [course.$id, course]));
+    const courseById = new Map(courseRows.map((course) => [course.$id, course]));
     const courseIds = [...courseById.keys()];
 
     if (courseIds.length === 0) {
@@ -1047,19 +1045,19 @@ export async function getInstructorSubmissionQueue(
   try {
     const { tablesDB, users } = await createAdminClient();
 
-    const coursesResult = await safeListRows<CourseRow>(
+    const courseRows = await safeListAllRows<CourseRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.courses,
-      getInstructorQueries(scope)
+      getInstructorBaseQueries(scope)
     );
 
-    const courseIds = coursesResult.rows.map((course) => course.$id);
+    const courseIds = courseRows.map((course) => course.$id);
     if (courseIds.length === 0) {
       return [];
     }
 
     const courseTitleById = new Map(
-      coursesResult.rows.map((course) => [
+      courseRows.map((course) => [
         course.$id,
         typeof course.title === "string" ? course.title : "Course",
       ])
@@ -2847,46 +2845,57 @@ export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> 
   try {
     const { tablesDB } = await createAdminClient();
 
-    const result = await safeListRows<LiveSessionRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.liveSessions,
-      [
-        Query.equal("status", ["scheduled", "live"]),
-        Query.orderAsc("scheduledAt"),
-        Query.limit(50),
-      ]
-    );
-
     const accessByCourseId = new Map<string, boolean>();
     const visibleSessions: UpcomingSessionItem[] = [];
+    const pageSize = 50;
+    let offset = 0;
 
-    for (const session of result.rows) {
-      const courseId = typeof session.courseId === "string" ? session.courseId : "";
-      if (!courseId) {
-        continue;
+    while (visibleSessions.length < 10) {
+      const result = await safeListRows<LiveSessionRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.liveSessions,
+        [
+          Query.equal("status", ["scheduled", "live"]),
+          Query.orderAsc("scheduledAt"),
+          Query.limit(pageSize),
+          Query.offset(offset),
+        ]
+      );
+
+      for (const session of result.rows) {
+        const courseId = typeof session.courseId === "string" ? session.courseId : "";
+        if (!courseId) {
+          continue;
+        }
+
+        let hasAccess = accessByCourseId.get(courseId);
+        if (hasAccess === undefined) {
+          hasAccess = await userHasCourseAccess({ courseId, userId: user.$id });
+          accessByCourseId.set(courseId, hasAccess);
+        }
+
+        if (!hasAccess) {
+          continue;
+        }
+
+        visibleSessions.push({
+          id: session.$id,
+          title: typeof session.title === "string" ? session.title : "Untitled session",
+          status: typeof session.status === "string" ? session.status : "scheduled",
+          scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+          streamUrl: getSafeHttpUrl(session.streamId),
+        });
+
+        if (visibleSessions.length >= 10) {
+          break;
+        }
       }
 
-      let hasAccess = accessByCourseId.get(courseId);
-      if (hasAccess === undefined) {
-        hasAccess = await userHasCourseAccess({ courseId, userId: user.$id });
-        accessByCourseId.set(courseId, hasAccess);
-      }
-
-      if (!hasAccess) {
-        continue;
-      }
-
-      visibleSessions.push({
-        id: session.$id,
-        title: typeof session.title === "string" ? session.title : "Untitled session",
-        status: typeof session.status === "string" ? session.status : "scheduled",
-        scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
-        streamUrl: getSafeHttpUrl(session.streamId),
-      });
-
-      if (visibleSessions.length >= 10) {
+      if (result.rows.length < pageSize) {
         break;
       }
+
+      offset += result.rows.length;
     }
 
     return visibleSessions;
@@ -2903,52 +2912,72 @@ export async function getUpcomingLiveSessions(): Promise<UpcomingSessionItem[]> 
 
 export async function getRecentLiveRecordings(): Promise<LiveRecordingItem[]> {
   const user = await requireAuth();
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
+    const accessByCourseId = new Map<string, boolean>();
+    const recordings: LiveRecordingItem[] = [];
+    const pageSize = 50;
+    let offset = 0;
 
-  const result = await safeListRows<LiveSessionRow>(
-    tablesDB,
-    APPWRITE_CONFIG.tables.liveSessions,
-    [
-      Query.equal("status", ["ended"]),
-      Query.orderDesc("scheduledAt"),
-      Query.limit(50),
-    ]
-  );
+    while (recordings.length < 10) {
+      const result = await safeListRows<LiveSessionRow>(
+        tablesDB,
+        APPWRITE_CONFIG.tables.liveSessions,
+        [
+          Query.equal("status", ["ended"]),
+          Query.orderDesc("scheduledAt"),
+          Query.limit(pageSize),
+          Query.offset(offset),
+        ]
+      );
 
-  const accessByCourseId = new Map<string, boolean>();
-  const recordings: LiveRecordingItem[] = [];
+      for (const session of result.rows) {
+        const courseId = typeof session.courseId === "string" ? session.courseId : "";
+        const recordingUrl = getSafeHttpUrl(session.recordingUrl);
 
-  for (const session of result.rows) {
-    const courseId = typeof session.courseId === "string" ? session.courseId : "";
-    const recordingUrl = getSafeHttpUrl(session.recordingUrl);
+        if (!courseId || !recordingUrl) {
+          continue;
+        }
 
-    if (!courseId || !recordingUrl) {
-      continue;
+        let hasAccess = accessByCourseId.get(courseId);
+        if (hasAccess === undefined) {
+          hasAccess = await userHasCourseAccess({ courseId, userId: user.$id });
+          accessByCourseId.set(courseId, hasAccess);
+        }
+
+        if (!hasAccess) {
+          continue;
+        }
+
+        recordings.push({
+          id: session.$id,
+          title: typeof session.title === "string" ? session.title : "Session recording",
+          scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
+          recordingUrl,
+        });
+
+        if (recordings.length >= 10) {
+          break;
+        }
+      }
+
+      if (result.rows.length < pageSize) {
+        break;
+      }
+
+      offset += result.rows.length;
     }
 
-    let hasAccess = accessByCourseId.get(courseId);
-    if (hasAccess === undefined) {
-      hasAccess = await userHasCourseAccess({ courseId, userId: user.$id });
-      accessByCourseId.set(courseId, hasAccess);
-    }
+    return recordings;
+  } catch (error) {
+    console.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to load recent live recordings."
+    );
 
-    if (!hasAccess) {
-      continue;
-    }
-
-    recordings.push({
-      id: session.$id,
-      title: typeof session.title === "string" ? session.title : "Session recording",
-      scheduledAt: typeof session.scheduledAt === "string" ? session.scheduledAt : null,
-      recordingUrl,
-    });
-
-    if (recordings.length >= 10) {
-      break;
-    }
+    return [];
   }
-
-  return recordings;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

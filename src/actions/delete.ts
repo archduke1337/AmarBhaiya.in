@@ -6,11 +6,15 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/appwrite/auth";
 import { userCanManageCourse } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import {
+  listAllRows as listAllPaginatedRows,
+  type AnyAppwriteRow,
+} from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = AnyAppwriteRow;
 type AdminServices = Awaited<ReturnType<typeof createAdminClient>>;
 type AdminTablesDB = AdminServices["tablesDB"];
 type AdminStorage = AdminServices["storage"];
@@ -134,14 +138,14 @@ async function syncCourseLessonStats(
   courseId: string
 ): Promise<void> {
   try {
-    const remaining = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      queries: [Query.equal("courseId", [courseId]), Query.limit(2000)],
-    });
+    const remaining = await listAllPaginatedRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.lessons,
+      [Query.equal("courseId", [courseId])]
+    );
 
-    const totalDuration = remaining.rows.reduce((sum, row) => {
-      const duration = Number((row as { duration?: unknown }).duration ?? 0);
+    const totalDuration = remaining.reduce((sum, row) => {
+      const duration = Number(row.duration ?? 0);
       return sum + (Number.isFinite(duration) ? duration : 0);
     }, 0);
 
@@ -149,7 +153,7 @@ async function syncCourseLessonStats(
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.courses,
       rowId: courseId,
-      data: { totalLessons: remaining.total, totalDuration },
+      data: { totalLessons: remaining.length, totalDuration },
     });
   } catch {
     // Non-critical
@@ -607,27 +611,18 @@ export async function deleteForumThreadAction(
 
   const { tablesDB } = await createAdminClient();
 
-  // Delete replies first
-  try {
-    const replies = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.forumReplies,
-      queries: [Query.equal("threadId", [threadId]), Query.limit(2000)],
-    });
+  const failedDeletes = await deleteRowsByQueries(
+    tablesDB,
+    APPWRITE_CONFIG.tables.forumReplies,
+    [Query.equal("threadId", [threadId])]
+  );
 
-    for (const reply of replies.rows) {
-      try {
-        await tablesDB.deleteRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.forumReplies,
-          rowId: (reply as { $id: string }).$id,
-        });
-      } catch {
-        // Continue
-      }
-    }
-  } catch {
-    // No replies
+  if (failedDeletes.length > 0) {
+    console.warn(
+      `[Delete] Aborting forum thread delete for ${threadId} because reply cleanup failed.`,
+      failedDeletes
+    );
+    return;
   }
 
   // Delete the thread
