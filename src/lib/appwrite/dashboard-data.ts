@@ -202,6 +202,9 @@ export type ModeratorStudentItem = {
   name: string;
   latestAction: string;
   latestReason: string;
+  latestScope: string;
+  lastActionAt: string | null;
+  actionCount: number;
   status: "open" | "resolved";
 };
 
@@ -1668,25 +1671,30 @@ export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
         return rightDate - leftDate;
       });
 
-    const latestByUser = new Map<string, ModerationActionRow>();
-    for (const row of rows) {
-      const userId = String(row.targetUserId);
-      if (!latestByUser.has(userId)) {
-        latestByUser.set(userId, row);
+      const latestByUser = new Map<string, ModerationActionRow>();
+      const countByUser = new Map<string, number>();
+      for (const row of rows) {
+        const userId = String(row.targetUserId);
+        if (!latestByUser.has(userId)) {
+          latestByUser.set(userId, row);
+        }
+        countByUser.set(userId, (countByUser.get(userId) ?? 0) + 1);
       }
-    }
 
-    return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => ({
-      id: userId,
-      latestActionId: row.$id,
+      return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => ({
+        id: userId,
+        latestActionId: row.$id,
       name:
         typeof row.targetUserName === "string" && row.targetUserName.length > 0
-          ? row.targetUserName
-          : userId,
-      latestAction: typeof row.action === "string" ? row.action : "unknown",
-      latestReason: typeof row.reason === "string" ? row.reason : "No notes",
-      status: row.revertedAt ? "resolved" : "open",
-    }));
+            ? row.targetUserName
+            : userId,
+        latestAction: typeof row.action === "string" ? row.action : "unknown",
+        latestReason: typeof row.reason === "string" ? row.reason : "No notes",
+        latestScope: typeof row.scope === "string" ? row.scope : "platform",
+        lastActionAt: typeof row.createdAt === "string" ? row.createdAt : null,
+        actionCount: countByUser.get(userId) ?? 1,
+        status: row.revertedAt ? "resolved" : "open",
+      }));
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to load moderator students."

@@ -1,17 +1,25 @@
-import { UserX } from "lucide-react";
+import { UserX, Clock, ShieldAlert, History } from "lucide-react";
 
 import {
   applyModerationActionAction,
   resolveModerationActionAction,
 } from "@/actions/operations";
 import { getModeratorStudents } from "@/lib/appwrite/dashboard-data";
-import { PageHeader, EmptyState } from "@/components/dashboard";
+import {
+  PageHeader,
+  EmptyState,
+  StatGrid,
+  StatCard,
+} from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
+import { formatRelativeTime } from "@/lib/utils/format";
 
 export default async function ModeratorStudentsPage() {
   const students = await getModeratorStudents();
 
   const openCases = students.filter((s) => s.status === "open").length;
+  const resolvedCases = students.filter((s) => s.status === "resolved").length;
+  const totalActions = students.reduce((sum, student) => sum + student.actionCount, 0);
 
   return (
     <div className="flex flex-col gap-8">
@@ -20,6 +28,27 @@ export default async function ModeratorStudentsPage() {
         title="Student Activity Lookup"
         description={`${students.length} users with moderation history — ${openCases} open cases`}
       />
+
+      <StatGrid columns={3}>
+        <StatCard
+          label="Open Cases"
+          value={openCases}
+          icon={ShieldAlert}
+          description={openCases > 0 ? "Need moderator attention" : "No active cases"}
+        />
+        <StatCard
+          label="Resolved Cases"
+          value={resolvedCases}
+          icon={Clock}
+          description="Previously reviewed users"
+        />
+        <StatCard
+          label="Actions Tracked"
+          value={totalActions}
+          icon={History}
+          description="Across all listed users"
+        />
+      </StatGrid>
 
       {students.length === 0 ? (
         <EmptyState
@@ -41,9 +70,16 @@ export default async function ModeratorStudentsPage() {
                     >
                       {student.status}
                     </Badge>
+                    <Badge variant="outline" className="capitalize">
+                      {student.latestScope}
+                    </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Last action: <span className="capitalize">{student.latestAction}</span> — {student.latestReason}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {student.actionCount} action{student.actionCount === 1 ? "" : "s"} on record
+                    {student.lastActionAt ? ` · ${formatRelativeTime(student.lastActionAt)}` : ""}
                   </p>
                 </div>
 

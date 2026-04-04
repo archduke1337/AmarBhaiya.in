@@ -1,14 +1,27 @@
+import Link from "next/link";
+import { CreditCard, Receipt, Clock } from "lucide-react";
+
 import { requireAuth } from "@/lib/appwrite/auth";
-import { upsertBillingInfoAction, getBillingInfo } from "@/actions/profile";
+import {
+  upsertBillingInfoAction,
+  getBillingInfo,
+  getBillingPaymentHistory,
+} from "@/actions/profile";
 import { getUserSubscription, cancelSubscriptionAction } from "@/actions/subscriptions";
-import { PageHeader } from "@/components/dashboard";
+import { PageHeader, StatGrid, StatCard } from "@/components/dashboard";
+import { formatCurrency, formatDateTime } from "@/lib/utils/format";
+import { Badge } from "@/components/ui/badge";
 
 export default async function BillingInfoPage() {
   await requireAuth();
-  const [billing, subscription] = await Promise.all([
+  const [billing, subscription, payments] = await Promise.all([
     getBillingInfo(),
     getUserSubscription(),
+    getBillingPaymentHistory(),
   ]);
+  const completedPayments = payments.filter((payment) => payment.status === "completed");
+  const pendingPayments = payments.filter((payment) => payment.status === "pending");
+  const totalSpent = completedPayments.reduce((sum, payment) => sum + payment.amount, 0);
 
   return (
     <div className="flex flex-col gap-8 max-w-3xl">
@@ -17,6 +30,27 @@ export default async function BillingInfoPage() {
         title="Billing Information"
         description="This information is used when purchasing courses. It will appear on your invoices and receipts."
       />
+
+      <StatGrid columns={3}>
+        <StatCard
+          label="Completed Payments"
+          value={completedPayments.length}
+          icon={Receipt}
+          description={completedPayments.length > 0 ? "Successful purchases" : "No purchases yet"}
+        />
+        <StatCard
+          label="Pending Payments"
+          value={pendingPayments.length}
+          icon={Clock}
+          description={pendingPayments.length > 0 ? "Awaiting confirmation" : "All clear"}
+        />
+        <StatCard
+          label="Total Spent"
+          value={formatCurrency(totalSpent)}
+          icon={CreditCard}
+          description="Across course purchases"
+        />
+      </StatGrid>
 
       {/* Active Subscription */}
       {subscription && (
@@ -52,6 +86,61 @@ export default async function BillingInfoPage() {
           </div>
         </section>
       )}
+
+      <section className="border border-border">
+        <div className="border-b border-border px-5 py-3 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-medium">Payment History</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {payments.length} recorded payment{payments.length === 1 ? "" : "s"}
+            </p>
+          </div>
+        </div>
+
+        {payments.length === 0 ? (
+          <div className="px-5 py-6 text-sm text-muted-foreground text-center">
+            No course payment records yet.
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {payments.map((payment) => (
+              <div
+                key={payment.id}
+                className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    {payment.courseSlug ? (
+                      <Link
+                        href={`/courses/${payment.courseSlug}`}
+                        className="text-sm font-medium underline-offset-4 hover:underline"
+                      >
+                        {payment.courseTitle}
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-medium">{payment.courseTitle}</p>
+                    )}
+                    <Badge
+                      variant={payment.status === "completed" ? "default" : "outline"}
+                      className="w-fit"
+                    >
+                      {payment.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {payment.method} · {payment.providerRef}
+                    {payment.createdAt ? ` · ${formatDateTime(payment.createdAt)}` : ""}
+                  </p>
+                </div>
+
+                <div className="text-sm font-medium tabular-nums">
+                  {formatCurrency(payment.amount, payment.currency)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
 
       <form action={upsertBillingInfoAction} className="flex flex-col gap-6">

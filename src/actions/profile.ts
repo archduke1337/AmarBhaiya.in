@@ -210,3 +210,93 @@ export async function getBillingInfo() {
     zipcode: (row.zipcode as string) || "",
   };
 }
+
+export type BillingPaymentRecord = {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  courseSlug: string;
+  amount: number;
+  currency: string;
+  status: string;
+  method: string;
+  providerRef: string;
+  createdAt: string;
+};
+
+export async function getBillingPaymentHistory(): Promise<BillingPaymentRecord[]> {
+  const user = await requireAuth();
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const paymentsResult = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.payments,
+      queries: [
+        Query.equal("userId", [user.$id]),
+        Query.orderDesc("createdAt"),
+        Query.limit(50),
+      ],
+    });
+
+    const paymentRows = paymentsResult.rows as AnyRow[];
+    const courseIds = Array.from(
+      new Set(
+        paymentRows
+          .map((row) => String(row.courseId ?? ""))
+          .filter((courseId) => courseId.length > 0)
+      )
+    );
+
+    const courseMetaById = new Map<string, { title: string; slug: string }>();
+    if (courseIds.length > 0) {
+      const chunks: string[][] = [];
+      for (let index = 0; index < courseIds.length; index += 20) {
+        chunks.push(courseIds.slice(index, index + 20));
+      }
+
+      const courseResults = await Promise.all(
+        chunks.map(async (chunk) => {
+          try {
+            const result = await tablesDB.listRows({
+              databaseId: APPWRITE_CONFIG.databaseId,
+              tableId: APPWRITE_CONFIG.tables.courses,
+              queries: [Query.equal("$id", chunk), Query.limit(100)],
+            });
+
+            return result.rows as AnyRow[];
+          } catch {
+            return [] as AnyRow[];
+          }
+        })
+      );
+
+      for (const row of courseResults.flat()) {
+        courseMetaById.set(row.$id, {
+          title: String(row.title ?? "Unknown Course"),
+          slug: String(row.slug ?? row.$id),
+        });
+      }
+    }
+
+    return paymentRows.map((row) => {
+      const courseId = String(row.courseId ?? "");
+      const courseMeta = courseMetaById.get(courseId);
+
+      return {
+        id: row.$id,
+        courseId,
+        courseTitle: courseMeta?.title ?? "Unknown Course",
+        courseSlug: courseMeta?.slug ?? courseId,
+        amount: Number(row.amount ?? 0) / 100,
+        currency: String(row.currency ?? "INR"),
+        status: String(row.status ?? "pending"),
+        method: String(row.method ?? "unknown"),
+        providerRef: String(row.providerRef ?? row.$id),
+        createdAt: String(row.createdAt ?? row.$createdAt ?? ""),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
