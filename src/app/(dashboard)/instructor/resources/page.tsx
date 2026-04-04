@@ -12,10 +12,7 @@ import {
   updateCourseResourceAction,
   updateStandaloneResourceAction,
 } from "@/actions/resources";
-import {
-  uploadCourseResourceFileAction,
-  uploadResourceFileAction,
-} from "@/actions/upload";
+import { DirectAppwriteUploadForm } from "@/components/instructor/direct-appwrite-upload-form";
 import { formatCurrency } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -252,28 +249,17 @@ export default async function InstructorResourcesPage() {
                 </div>
               </form>
 
-              <form
-                action={uploadCourseResourceFileAction}
-                encType="multipart/form-data"
-                className="flex items-center gap-3 border-t border-border px-5 py-3"
-              >
-                <input type="hidden" name="resourceId" value={resource.id} />
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {resource.fileId ? "✓ File attached" : "No file"}
-                </span>
-                <input
-                  type="file"
-                  name="file"
+              <div className="border-t border-border px-5 py-3">
+                <DirectAppwriteUploadForm
+                  kind="course-resource"
+                  resourceId={resource.id}
                   accept=".pdf,.zip,.txt,.doc,.docx,.pptx"
-                  className="flex-1 text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
+                  statusLabel={resource.fileId ? "✓ File attached" : "No file"}
+                  buttonLabel="Upload"
+                  successMessage="Course resource file uploaded."
+                  helperText="Direct Appwrite upload. Supports PDF, ZIP, TXT, DOC, DOCX, and PPTX up to 100 MB."
                 />
-                <button
-                  type="submit"
-                  className="h-8 shrink-0 border border-border px-3 text-xs hover:bg-muted transition-colors"
-                >
-                  Upload
-                </button>
-              </form>
+              </div>
 
               <form
                 action={deleteCourseResourceAction}
@@ -532,28 +518,17 @@ export default async function InstructorResourcesPage() {
               </form>
 
               {/* File upload */}
-              <form
-                action={uploadResourceFileAction}
-                encType="multipart/form-data"
-                className="flex items-center gap-3 border-t border-border px-5 py-3"
-              >
-                <input type="hidden" name="resourceId" value={resource.id} />
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {resource.fileId ? "✓ File attached" : "No file"}
-                </span>
-                <input
-                  type="file"
-                  name="file"
+              <div className="border-t border-border px-5 py-3">
+                <DirectAppwriteUploadForm
+                  kind="standalone-resource"
+                  resourceId={resource.id}
                   accept=".pdf,.zip,.txt,.doc,.docx,.ppt,.pptx,.mp4,.webm,.mov,.mkv"
-                  className="flex-1 text-xs file:mr-2 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs"
+                  statusLabel={resource.fileId ? "✓ File attached" : "No file"}
+                  buttonLabel="Upload"
+                  successMessage="Resource file uploaded."
+                  helperText="Direct Appwrite upload. Supports docs, archives, and media up to 200 MB."
                 />
-                <button
-                  type="submit"
-                  className="h-8 shrink-0 border border-border px-3 text-xs hover:bg-muted transition-colors"
-                >
-                  Upload
-                </button>
-              </form>
+              </div>
 
               {/* Delete */}
               <form

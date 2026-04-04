@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Film, Layers, Users } from "lucide-react";
 
 import { updateInstructorCourseAction } from "@/actions/operations";
-import { uploadCourseThumbnailAction } from "@/actions/upload";
+import { DirectAppwriteUploadForm } from "@/components/instructor/direct-appwrite-upload-form";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
@@ -241,26 +241,14 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
             ? " Current thumbnail: ✓ uploaded"
             : " No thumbnail uploaded yet."}
         </p>
-        <form
-          action={uploadCourseThumbnailAction}
-          encType="multipart/form-data"
-          className="flex items-center gap-3"
-        >
-          <input type="hidden" name="courseId" value={course.id} />
-          <input
-            type="file"
-            name="file"
-            accept=".jpg,.jpeg,.png,.webp"
-            required
-            className="text-sm file:mr-2 file:h-9 file:border file:border-border file:bg-background file:px-4 file:text-sm"
-          />
-          <button
-            type="submit"
-            className="h-9 shrink-0 border border-border px-4 text-sm hover:bg-muted transition-colors"
-          >
-            Upload Thumbnail
-          </button>
-        </form>
+        <DirectAppwriteUploadForm
+          kind="course-thumbnail"
+          courseId={course.id}
+          accept=".jpg,.jpeg,.png,.webp"
+          buttonLabel="Upload Thumbnail"
+          successMessage="Course thumbnail uploaded."
+          helperText="Direct Appwrite upload. Supports JPG, PNG, and WEBP up to 5 MB."
+        />
       </section>
 
       <section className="grid md:grid-cols-2 gap-4">
