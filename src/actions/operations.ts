@@ -6,6 +6,10 @@ import { z } from "zod";
 
 import { assignRole, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import {
+  listAllRows,
+  type AnyAppwriteRow,
+} from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import type { Role } from "@/lib/utils/constants";
 import { slugify } from "@/lib/utils/format";
@@ -169,6 +173,8 @@ type CourseRowLike = {
   slug?: string;
 };
 
+type AnyRow = AnyAppwriteRow;
+
 async function getCourseRow(courseId: string): Promise<CourseRowLike | null> {
   const { tablesDB } = await createAdminClient();
 
@@ -194,6 +200,30 @@ async function userCanManageCourse(courseId: string, role: Role, userId: string)
   }
 
   return course.instructorId === userId ? course : null;
+}
+
+async function updateCourseLessonStats(
+  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
+  courseId: string
+): Promise<void> {
+  const lessons = await listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+    Query.equal("courseId", [courseId]),
+  ]);
+
+  const totalDuration = lessons.reduce((sum, row) => {
+    const duration = Number(row.duration ?? 0);
+    return sum + (Number.isFinite(duration) ? duration : 0);
+  }, 0);
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.courses,
+    rowId: courseId,
+    data: {
+      totalLessons: lessons.length,
+      totalDuration,
+    },
+  });
 }
 
 export async function updateUserRoleAction(formData: FormData): Promise<void> {
@@ -483,26 +513,7 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
     },
   });
 
-  const lessons = await tablesDB.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.lessons,
-    queries: [Query.equal("courseId", [parsed.data.courseId]), Query.limit(2000)],
-  });
-
-  const totalDuration = lessons.rows.reduce((sum, row) => {
-    const duration = Number((row as { duration?: unknown }).duration ?? 0);
-    return sum + (Number.isFinite(duration) ? duration : 0);
-  }, 0);
-
-  await tablesDB.updateRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.courses,
-    rowId: parsed.data.courseId,
-    data: {
-      totalLessons: lessons.total,
-      totalDuration,
-    },
-  });
+  await updateCourseLessonStats(tablesDB, parsed.data.courseId);
 
   revalidatePath("/instructor");
   revalidatePath("/instructor/courses");
@@ -625,26 +636,7 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
     },
   });
 
-  const lessons = await tablesDB.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.lessons,
-    queries: [Query.equal("courseId", [parsed.data.courseId]), Query.limit(2000)],
-  });
-
-  const totalDuration = lessons.rows.reduce((sum, row) => {
-    const duration = Number((row as { duration?: unknown }).duration ?? 0);
-    return sum + (Number.isFinite(duration) ? duration : 0);
-  }, 0);
-
-  await tablesDB.updateRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.courses,
-    rowId: parsed.data.courseId,
-    data: {
-      totalLessons: lessons.total,
-      totalDuration,
-    },
-  });
+  await updateCourseLessonStats(tablesDB, parsed.data.courseId);
 
   revalidatePath("/instructor");
   revalidatePath("/instructor/courses");
@@ -976,17 +968,13 @@ export async function getAdminBlogPosts(): Promise<AdminBlogPost[]> {
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.blogPosts,
-      queries: [
-        Query.orderDesc("$createdAt"),
-        Query.limit(100),
-      ],
-    });
+    const rows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.blogPosts,
+      [Query.orderDesc("$createdAt")]
+    );
 
-    return result.rows.map((r) => {
-      const row = r as Record<string, unknown> & { $id: string };
+    return rows.map((row) => {
       return {
         id: row.$id,
         title: String(row.title ?? ""),

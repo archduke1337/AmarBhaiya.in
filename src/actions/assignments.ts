@@ -10,9 +10,14 @@ import {
 } from "@/lib/appwrite/access";
 import { createNotificationEntry } from "@/actions/notifications";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import {
+  listAllRows,
+  type AnyAppwriteRow,
+} from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { processInBatches } from "@/lib/utils/batch";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = AnyAppwriteRow;
 
 async function getAssignmentRow(assignmentId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();
@@ -124,18 +129,13 @@ export async function getCourseAssignments(
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.assignments,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(50),
-      ],
-    });
+    const rows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.assignments,
+      [Query.equal("courseId", [courseId]), Query.orderDesc("$createdAt")]
+    );
 
-    return result.rows.map((r) => {
-      const row = r as AnyRow;
+    return rows.map((row) => {
       return {
         id: row.$id,
         lessonId: String(row.lessonId ?? ""),
@@ -167,7 +167,32 @@ export async function deleteAssignmentAction(
       return;
     }
 
-    const { tablesDB } = await createAdminClient();
+    const { tablesDB, storage } = await createAdminClient();
+    const submissionRows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.submissions,
+      [Query.equal("assignmentId", [assignmentId])]
+    );
+
+    await processInBatches(submissionRows, 25, async (submission) => {
+      const fileId = String(submission.fileId ?? "");
+      if (fileId) {
+        try {
+          await storage.deleteFile({
+            bucketId: APPWRITE_CONFIG.buckets.courseResources,
+            fileId,
+          });
+        } catch {
+          // Continue deleting the row even if file cleanup fails.
+        }
+      }
+
+      await tablesDB.deleteRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.submissions,
+        rowId: submission.$id,
+      });
+    });
 
     await tablesDB.deleteRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -176,6 +201,15 @@ export async function deleteAssignmentAction(
     });
 
     revalidatePath("/instructor");
+    revalidatePath("/instructor/submissions");
+    revalidatePath("/app/assignments");
+    revalidatePath("/app/dashboard");
+    revalidatePath(`/instructor/courses/${String(assignment.courseId ?? "")}/curriculum`);
+    if (String(assignment.lessonId ?? "")) {
+      revalidatePath(
+        `/app/learn/${String(assignment.courseId ?? "")}/${String(assignment.lessonId ?? "")}`
+      );
+    }
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete assignment."
@@ -225,6 +259,7 @@ export async function submitAssignmentAction(
   // Handle file upload
   const file = formData.get("file") as File | null;
   let uploadedFileId = "";
+  const previousFileId = String(existingSubmission?.fileId ?? "");
 
   if (file && file.size > 0) {
     const { storage } = await createAdminClient();
@@ -259,10 +294,35 @@ export async function submitAssignmentAction(
           submittedAt: new Date().toISOString(),
         },
       });
+
+      if (previousFileId && previousFileId !== uploadedFileId) {
+        const { storage } = await createAdminClient();
+        try {
+          await storage.deleteFile({
+            bucketId: APPWRITE_CONFIG.buckets.courseResources,
+            fileId: previousFileId,
+          });
+        } catch {
+          // Submission update already succeeded; ignore old file cleanup failure.
+        }
+      }
+
       revalidatePath("/app");
       revalidatePath("/app/assignments");
       return;
     } catch (error) {
+      if (uploadedFileId) {
+        const { storage } = await createAdminClient();
+        try {
+          await storage.deleteFile({
+            bucketId: APPWRITE_CONFIG.buckets.courseResources,
+            fileId: uploadedFileId,
+          });
+        } catch {
+          // Ignore rollback cleanup failure.
+        }
+      }
+
       console.error(
         error instanceof Error ? error.message : "Failed to update submission."
       );
@@ -288,6 +348,18 @@ export async function submitAssignmentAction(
     revalidatePath("/app");
     revalidatePath("/app/assignments");
   } catch (error) {
+    if (uploadedFileId) {
+      const { storage } = await createAdminClient();
+      try {
+        await storage.deleteFile({
+          bucketId: APPWRITE_CONFIG.buckets.courseResources,
+          fileId: uploadedFileId,
+        });
+      } catch {
+        // Ignore rollback cleanup failure.
+      }
+    }
+
     console.error(
       error instanceof Error ? error.message : "Failed to submit assignment."
     );
@@ -309,42 +381,39 @@ export async function getAssignmentSubmissions(
   const { tablesDB, users } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.submissions,
-      queries: [
-        Query.equal("assignmentId", [assignmentId]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(100),
-      ],
-    });
-
-    const submissions = await Promise.all(
-      result.rows.map(async (entry) => {
-        const row = entry as AnyRow;
-        let userName = "Student";
-
-        try {
-          const u = await users.get(String(row.userId ?? ""));
-          userName = u.name || u.email;
-        } catch {
-          // User may not exist.
-        }
-
-        return {
-          id: row.$id,
-          assignmentId: String(row.assignmentId ?? ""),
-          userId: String(row.userId ?? ""),
-          userName,
-          fileId: String(row.fileId ?? ""),
-          submittedAt: String(row.submittedAt ?? ""),
-          grade: Number(row.grade ?? 0),
-          feedback: String(row.feedback ?? ""),
-        } satisfies SubmissionItem;
-      })
+    const submissionRows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.submissions,
+      [Query.equal("assignmentId", [assignmentId]), Query.orderDesc("$createdAt")]
+    );
+    const userNameById = new Map<string, string>();
+    const userIds = Array.from(
+      new Set(
+        submissionRows
+          .map((row) => String(row.userId ?? ""))
+          .filter((userId) => userId.length > 0)
+      )
     );
 
-    return submissions;
+    await processInBatches(userIds, 25, async (userId) => {
+      try {
+        const userRecord = await users.get(userId);
+        userNameById.set(userId, userRecord.name || userRecord.email || "Student");
+      } catch {
+        // User may not exist.
+      }
+    });
+
+    return submissionRows.map((row) => ({
+      id: row.$id,
+      assignmentId: String(row.assignmentId ?? ""),
+      userId: String(row.userId ?? ""),
+      userName: userNameById.get(String(row.userId ?? "")) ?? "Student",
+      fileId: String(row.fileId ?? ""),
+      submittedAt: String(row.submittedAt ?? ""),
+      grade: Number(row.grade ?? 0),
+      feedback: String(row.feedback ?? ""),
+    }));
   } catch {
     return [];
   }
