@@ -1,5 +1,6 @@
 import { Users } from "lucide-react";
 import { Query } from "node-appwrite";
+import type { Models } from "node-appwrite";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
@@ -7,7 +8,7 @@ import { createAdminClient } from "@/lib/appwrite/server";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { formatCurrency } from "@/lib/utils/format";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = Models.Row & Record<string, unknown>;
 
 type InstructorInfo = {
   userId: string;
@@ -18,19 +19,69 @@ type InstructorInfo = {
   totalRevenue: number;
 };
 
+async function listAllRows<Row extends AnyRow>(
+  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
+  tableId: string,
+  queries: string[] = [],
+  pageSize = 500
+): Promise<Row[]> {
+  const rows: Row[] = [];
+  let offset = 0;
+
+  while (true) {
+    const response = await tablesDB
+      .listRows<Row>({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId,
+        queries: [...queries, Query.limit(pageSize), Query.offset(offset)],
+      })
+      .catch(() => ({ rows: [] as Row[] }));
+
+    rows.push(...response.rows);
+
+    if (response.rows.length < pageSize) {
+      break;
+    }
+
+    offset += response.rows.length;
+  }
+
+  return rows;
+}
+
+function chunkValues(values: string[], chunkSize: number): string[][] {
+  const chunks: string[][] = [];
+  for (let index = 0; index < values.length; index += chunkSize) {
+    chunks.push(values.slice(index, index + chunkSize));
+  }
+  return chunks;
+}
+
+async function listRowsByFieldValues<Row extends AnyRow>(
+  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
+  tableId: string,
+  field: string,
+  values: string[],
+  extraQueries: string[] = []
+): Promise<Row[]> {
+  if (values.length === 0) {
+    return [];
+  }
+
+  const results = await Promise.all(
+    chunkValues(values, 20).map((chunk) =>
+      listAllRows<Row>(tablesDB, tableId, [Query.equal(field, chunk), ...extraQueries])
+    )
+  );
+
+  return results.flatMap((result) => result);
+}
+
 async function getInstructorActivity(): Promise<InstructorInfo[]> {
   const { tablesDB, users: usersClient } = await createAdminClient();
 
-  // Get all courses grouped by instructor
-  const coursesResult = await tablesDB.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.courses,
-    queries: [Query.limit(500)],
-  });
+  const courses = await listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.courses);
 
-  const courses = coursesResult.rows as AnyRow[];
-
-  // Group by instructorId
   const instructorCourses = new Map<string, AnyRow[]>();
   for (const course of courses) {
     const instId = String(course.instructorId ?? "");
@@ -40,73 +91,75 @@ async function getInstructorActivity(): Promise<InstructorInfo[]> {
     instructorCourses.set(instId, existing);
   }
 
-  // Get enrollments count per course
+  const courseIds = courses.map((course) => course.$id);
   const enrollmentsByCourse = new Map<string, number>();
-  try {
-    const enrollResult = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      queries: [Query.limit(1000)],
-    });
-    for (const r of enrollResult.rows) {
-      const row = r as AnyRow;
-      const cid = String(row.courseId ?? "");
-      enrollmentsByCourse.set(cid, (enrollmentsByCourse.get(cid) ?? 0) + 1);
-    }
-  } catch {
-    // skip
-  }
-
-  // Get completed payments by course
   const revenueByCourse = new Map<string, number>();
-  try {
-    const paymentsResult = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.payments,
-      queries: [
-        Query.equal("status", ["completed"]),
-        Query.limit(1000),
-      ],
-    });
-    for (const r of paymentsResult.rows) {
-      const row = r as AnyRow;
-      const cid = String(row.courseId ?? "");
-      const amount = Number(row.amount ?? 0) / 100;
-      revenueByCourse.set(cid, (revenueByCourse.get(cid) ?? 0) + amount);
+
+  const [enrollmentRows, paymentRows] = await Promise.all([
+    listRowsByFieldValues<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.enrollments,
+      "courseId",
+      courseIds,
+      [Query.equal("isActive", [true])]
+    ),
+    listRowsByFieldValues<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.payments,
+      "courseId",
+      courseIds,
+      [Query.equal("status", ["completed"])]
+    ),
+  ]);
+
+  for (const row of enrollmentRows) {
+    const cid = String(row.courseId ?? "");
+    if (!cid) {
+      continue;
     }
-  } catch {
-    // skip
+
+    enrollmentsByCourse.set(cid, (enrollmentsByCourse.get(cid) ?? 0) + 1);
   }
 
-  const instructors: InstructorInfo[] = [];
-
-  for (const [instId, instCourses] of instructorCourses) {
-    let name = instId;
-    let email = "";
-    try {
-      const u = await usersClient.get(instId);
-      name = u.name || u.email;
-      email = u.email;
-    } catch {
-      // skip
+  for (const row of paymentRows) {
+    const cid = String(row.courseId ?? "");
+    if (!cid) {
+      continue;
     }
 
-    let totalEnrollments = 0;
-    let totalRevenue = 0;
-    for (const c of instCourses) {
-      totalEnrollments += enrollmentsByCourse.get(c.$id) ?? 0;
-      totalRevenue += revenueByCourse.get(c.$id) ?? 0;
-    }
-
-    instructors.push({
-      userId: instId,
-      name,
-      email,
-      courseCount: instCourses.length,
-      totalEnrollments,
-      totalRevenue,
-    });
+    const amount = Number(row.amount ?? 0) / 100;
+    revenueByCourse.set(cid, (revenueByCourse.get(cid) ?? 0) + amount);
   }
+
+  const instructors = await Promise.all(
+    [...instructorCourses.entries()].map(async ([instId, instCourses]) => {
+      let name = instId;
+      let email = "";
+      try {
+        const user = await usersClient.get(instId);
+        name = user.name || user.email;
+        email = user.email;
+      } catch {
+        // Keep the fallback identity when the user lookup fails.
+      }
+
+      let totalEnrollments = 0;
+      let totalRevenue = 0;
+      for (const course of instCourses) {
+        totalEnrollments += enrollmentsByCourse.get(course.$id) ?? 0;
+        totalRevenue += revenueByCourse.get(course.$id) ?? 0;
+      }
+
+      return {
+        userId: instId,
+        name,
+        email,
+        courseCount: instCourses.length,
+        totalEnrollments,
+        totalRevenue,
+      };
+    })
+  );
 
   return instructors.sort((a, b) => b.totalRevenue - a.totalRevenue);
 }

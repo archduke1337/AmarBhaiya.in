@@ -3,12 +3,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { reconcileCoursePayment } from "@/lib/payments/course-payment";
 import { verifyRazorpayWebhookSignature } from "@/lib/payments/razorpay";
-import { generateIdempotencyKey, isIdempotencyKeyProcessed } from "@/lib/utils/sanitize";
 
 export const runtime = "nodejs";
-
-// In-memory cache for processed idempotency keys (should be Redis in production)
-const processedWebhooks = new Set<string>();
 
 type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
 
@@ -71,16 +67,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true });
     }
 
-    // SECURITY: Check idempotency to prevent duplicate webhook processing
-    // Razorpay webhooks can retry, so we need to prevent double-charging
-    const eventId = payment.id || payment.order_id || "";
-    const idempotencyKey = generateIdempotencyKey(eventId, event);
-
-    if (isIdempotencyKeyProcessed(idempotencyKey, processedWebhooks)) {
-      console.log("Webhook already processed, skipping:", idempotencyKey);
-      return NextResponse.json({ received: true, duplicate: true });
-    }
-
     const providerRef = payment.order_id ?? payment.id;
     const status = mapRazorpayStatus(event, payment.status);
     const notes = payment.notes ?? {};
@@ -99,9 +85,6 @@ export async function POST(request: Request) {
       amount: payment.amount,
       currency: payment.currency,
     });
-
-    // Mark this webhook as processed to prevent re-processing on retry
-    processedWebhooks.add(idempotencyKey);
 
     return NextResponse.json({ received: true, status });
   } catch (error) {

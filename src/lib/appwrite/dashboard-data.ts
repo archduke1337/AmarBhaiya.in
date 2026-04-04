@@ -1936,11 +1936,29 @@ export async function getAdminUsers(): Promise<AdminUserItem[]> {
   const { users } = await createAdminClient();
 
   try {
-    const userList = await users.list({
-      queries: [Query.orderDesc("registration"), Query.limit(80)],
-    });
+    const allUsers: Models.User<Models.Preferences>[] = [];
+    const pageSize = 100;
+    let offset = 0;
 
-    return userList.users.map((user) => ({
+    while (true) {
+      const page = await users.list({
+        queries: [
+          Query.orderDesc("registration"),
+          Query.limit(pageSize),
+          Query.offset(offset),
+        ],
+      });
+
+      allUsers.push(...page.users);
+
+      if (page.users.length < pageSize) {
+        break;
+      }
+
+      offset += page.users.length;
+    }
+
+    return allUsers.map((user) => ({
       id: user.$id,
       name: user.name || user.$id,
       role: resolveRoleFromLabels(user.labels),

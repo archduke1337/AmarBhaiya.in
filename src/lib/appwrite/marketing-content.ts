@@ -18,6 +18,8 @@ type AnyRow = Models.Row & {
   [key: string]: unknown;
 };
 
+type TablesDbClient = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
+
 type CourseRow = AnyRow & Partial<Course>;
 type CategoryRow = AnyRow & Partial<Category>;
 type EnrollmentRow = AnyRow & Partial<Enrollment>;
@@ -203,11 +205,11 @@ function parseJsonPayload<T>(value: unknown): T | null {
 }
 
 async function safeListRows<Row extends AnyRow>(
+  tablesDB: TablesDbClient,
   tableId: string,
   queries: string[] = []
 ): Promise<{ rows: Row[]; total: number }> {
   try {
-    const { tablesDB } = await createAdminClient();
     const response = await tablesDB.listRows<Row>({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId,
@@ -226,8 +228,71 @@ async function safeListRows<Row extends AnyRow>(
   }
 }
 
-async function safeGetSiteCopyRow(key: string): Promise<SiteCopyRow | null> {
-  const response = await safeListRows<SiteCopyRow>(APPWRITE_CONFIG.tables.siteCopy, [
+function chunkValues(values: string[], chunkSize: number): string[][] {
+  const chunks: string[][] = [];
+  for (let index = 0; index < values.length; index += chunkSize) {
+    chunks.push(values.slice(index, index + chunkSize));
+  }
+  return chunks;
+}
+
+async function safeListAllRows<Row extends AnyRow>(
+  tablesDB: TablesDbClient,
+  tableId: string,
+  queries: string[] = [],
+  pageSize = 500
+): Promise<Row[]> {
+  const rows: Row[] = [];
+  let offset = 0;
+
+  while (true) {
+    const response = await safeListRows<Row>(tablesDB, tableId, [
+      ...queries,
+      Query.limit(pageSize),
+      Query.offset(offset),
+    ]);
+
+    rows.push(...response.rows);
+
+    if (response.rows.length < pageSize) {
+      break;
+    }
+
+    offset += response.rows.length;
+  }
+
+  return rows;
+}
+
+async function safeListRowsByFieldValues<Row extends AnyRow>(
+  tablesDB: TablesDbClient,
+  tableId: string,
+  field: string,
+  values: string[],
+  extraQueries: string[] = []
+): Promise<Row[]> {
+  if (values.length === 0) {
+    return [];
+  }
+
+  const chunks = chunkValues(values, 20);
+  const results = await Promise.all(
+    chunks.map((chunk) =>
+      safeListAllRows<Row>(tablesDB, tableId, [
+        Query.equal(field, chunk),
+        ...extraQueries,
+      ])
+    )
+  );
+
+  return results.flatMap((result) => result);
+}
+
+async function safeGetSiteCopyRow(
+  tablesDB: TablesDbClient,
+  key: string
+): Promise<SiteCopyRow | null> {
+  const response = await safeListRows<SiteCopyRow>(tablesDB, APPWRITE_CONFIG.tables.siteCopy, [
     Query.equal("key", [key]),
     Query.limit(1),
   ]);
@@ -240,14 +305,15 @@ async function safeGetSiteCopyRow(key: string): Promise<SiteCopyRow | null> {
   return row;
 }
 
-async function getCategoryMaps() {
-  const categoriesResult = await safeListRows<CategoryRow>(
+async function getCategoryMaps(tablesDB: TablesDbClient) {
+  const categoriesResult = await safeListAllRows<CategoryRow>(
+    tablesDB,
     APPWRITE_CONFIG.tables.categories,
-    [Query.limit(200)]
+    [Query.orderAsc("name")]
   );
 
   const categoryById = new Map<string, { slug: string; name: string }>();
-  for (const category of categoriesResult.rows) {
+  for (const category of categoriesResult) {
     categoryById.set(category.$id, {
       slug:
         typeof category.slug === "string" && category.slug.length > 0
@@ -263,25 +329,26 @@ async function getCategoryMaps() {
   return categoryById;
 }
 
-async function getEnrollmentCountsByCourseId(courseIds: string[]) {
+async function getEnrollmentCountsByCourseId(
+  tablesDB: TablesDbClient,
+  courseIds: string[]
+) {
   if (courseIds.length === 0) {
     return new Map<string, number>();
   }
 
-  const enrollmentsResult = await safeListRows<EnrollmentRow>(
+  const enrollmentRows = await safeListRowsByFieldValues<EnrollmentRow>(
+    tablesDB,
     APPWRITE_CONFIG.tables.enrollments,
-    [Query.limit(1000)]
+    "courseId",
+    courseIds,
+    [Query.equal("isActive", [true])]
   );
 
-  const validCourseIds = new Set(courseIds);
   const counts = new Map<string, number>();
 
-  for (const row of enrollmentsResult.rows) {
-    if (row.isActive === false || typeof row.courseId !== "string") {
-      continue;
-    }
-
-    if (!validCourseIds.has(row.courseId)) {
+  for (const row of enrollmentRows) {
+    if (typeof row.courseId !== "string") {
       continue;
     }
 
@@ -346,22 +413,23 @@ export async function getPublicCoursesPageData(options: {
   category?: string;
   sort?: CourseSort;
 }): Promise<CoursesPageData> {
+  const { tablesDB } = await createAdminClient();
   const query = (options.query ?? "").trim().toLowerCase();
   const activeCategory = options.category ?? "all";
   const sort = options.sort ?? "popular";
 
-  const [coursesResult, categoryById] = await Promise.all([
-    safeListRows<CourseRow>(APPWRITE_CONFIG.tables.courses, [
+  const [courseRows, categoryById] = await Promise.all([
+    safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
       Query.equal("isPublished", [true]),
-      Query.limit(300),
+      Query.orderDesc("$updatedAt"),
     ]),
-    getCategoryMaps(),
+    getCategoryMaps(tablesDB),
   ]);
 
-  const courseIds = coursesResult.rows.map((row) => row.$id);
-  const enrollmentCounts = await getEnrollmentCountsByCourseId(courseIds);
+  const courseIds = courseRows.map((row) => row.$id);
+  const enrollmentCounts = await getEnrollmentCountsByCourseId(tablesDB, courseIds);
 
-  const normalized = coursesResult.rows.map((row) =>
+  const normalized = courseRows.map((row) =>
     toPublicCourse(row, categoryById, enrollmentCounts)
   );
 
@@ -398,7 +466,8 @@ export async function getPublicCoursesPageData(options: {
 export async function getPublicCourseBySlug(
   slug: string
 ): Promise<PublicCourseDetail | null> {
-  const courseResult = await safeListRows<CourseRow>(APPWRITE_CONFIG.tables.courses, [
+  const { tablesDB } = await createAdminClient();
+  const courseResult = await safeListRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
     Query.equal("slug", [slug]),
     Query.limit(1),
   ]);
@@ -409,21 +478,21 @@ export async function getPublicCourseBySlug(
   }
 
   const [categoryById, enrollmentCounts, modulesResult] = await Promise.all([
-    getCategoryMaps(),
-    getEnrollmentCountsByCourseId([row.$id]),
-    safeListRows<ModuleRow>(APPWRITE_CONFIG.tables.modules, [
+    getCategoryMaps(tablesDB),
+    getEnrollmentCountsByCourseId(tablesDB, [row.$id]),
+    safeListAllRows<ModuleRow>(tablesDB, APPWRITE_CONFIG.tables.modules, [
       Query.equal("courseId", [row.$id]),
-      Query.limit(300),
+      Query.orderAsc("order"),
     ]),
   ]);
 
-  const lessonsResult = await safeListRows<LessonRow>(APPWRITE_CONFIG.tables.lessons, [
+  const lessonRows = await safeListAllRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [
     Query.equal("courseId", [row.$id]),
-    Query.limit(500),
+    Query.orderAsc("order"),
   ]);
 
   const lessonsByModule = new Map<string, LessonRow[]>();
-  for (const lesson of lessonsResult.rows) {
+  for (const lesson of lessonRows) {
     if (typeof lesson.moduleId !== "string") {
       continue;
     }
@@ -433,7 +502,7 @@ export async function getPublicCourseBySlug(
     lessonsByModule.set(lesson.moduleId, current);
   }
 
-  const curriculum = modulesResult.rows
+  const curriculum = modulesResult
     .sort((left, right) => toNumber(left.order, 0) - toNumber(right.order, 0))
     .map((module) => ({
       id: module.$id,
@@ -467,14 +536,15 @@ export async function getPublicCourseBySlug(
 export async function getPublicBlogPageData(options: {
   category?: string;
 }): Promise<BlogPageData> {
+  const { tablesDB } = await createAdminClient();
   const activeCategory = options.category ?? "all";
 
-  const postsResult = await safeListRows<BlogPostRow>(APPWRITE_CONFIG.tables.blogPosts, [
+  const postRows = await safeListAllRows<BlogPostRow>(tablesDB, APPWRITE_CONFIG.tables.blogPosts, [
     Query.equal("isPublished", [true]),
-    Query.limit(300),
+    Query.orderDesc("publishedAt"),
   ]);
 
-  const normalized: PublicBlogPostPreview[] = postsResult.rows
+  const normalized: PublicBlogPostPreview[] = postRows
     .map((post) => ({
       slug: typeof post.slug === "string" ? post.slug : post.$id,
       title: typeof post.title === "string" ? post.title : "Untitled post",
@@ -512,7 +582,8 @@ export async function getPublicBlogPageData(options: {
 export async function getPublicBlogPostBySlug(
   slug: string
 ): Promise<PublicBlogPost | null> {
-  const postResult = await safeListRows<BlogPostRow>(APPWRITE_CONFIG.tables.blogPosts, [
+  const { tablesDB } = await createAdminClient();
+  const postResult = await safeListRows<BlogPostRow>(tablesDB, APPWRITE_CONFIG.tables.blogPosts, [
     Query.equal("slug", [slug]),
     Query.limit(1),
   ]);
@@ -545,10 +616,11 @@ export async function getAboutPageContent(): Promise<{
   journey: AboutJourneyItem[];
   mission: string;
 }> {
+  const { tablesDB } = await createAdminClient();
   const [identityRow, journeyRow, missionRow] = await Promise.all([
-    safeGetSiteCopyRow("about.identityCards"),
-    safeGetSiteCopyRow("about.journey"),
-    safeGetSiteCopyRow("about.mission"),
+    safeGetSiteCopyRow(tablesDB, "about.identityCards"),
+    safeGetSiteCopyRow(tablesDB, "about.journey"),
+    safeGetSiteCopyRow(tablesDB, "about.mission"),
   ]);
 
   const identityCards =
@@ -568,7 +640,8 @@ export async function getAboutPageContent(): Promise<{
 }
 
 export async function getContactChannelsContent(): Promise<ContactChannelItem[]> {
-  const row = await safeGetSiteCopyRow("contact.channels");
+  const { tablesDB } = await createAdminClient();
+  const row = await safeGetSiteCopyRow(tablesDB, "contact.channels");
   const payload = parseJsonPayload<ContactChannelItem[]>(row?.payload);
 
   if (!payload || !Array.isArray(payload)) {
@@ -582,6 +655,7 @@ export async function getContactChannelsContent(): Promise<ContactChannelItem[]>
 }
 
 export async function getHomePageContent(): Promise<HomePageContent> {
+  const { tablesDB } = await createAdminClient();
   const [
     domainsRow,
     learnRow,
@@ -590,15 +664,17 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     coursesResult,
     enrollmentsResult,
   ] = await Promise.all([
-    safeGetSiteCopyRow("home.domains"),
-    safeGetSiteCopyRow("home.learnItems"),
-    safeGetSiteCopyRow("home.whyItems"),
-    safeGetSiteCopyRow("home.metrics"),
-    safeListRows<CourseRow>(APPWRITE_CONFIG.tables.courses, [
+    safeGetSiteCopyRow(tablesDB, "home.domains"),
+    safeGetSiteCopyRow(tablesDB, "home.learnItems"),
+    safeGetSiteCopyRow(tablesDB, "home.whyItems"),
+    safeGetSiteCopyRow(tablesDB, "home.metrics"),
+    safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
       Query.equal("isPublished", [true]),
-      Query.limit(300),
+      Query.orderDesc("$updatedAt"),
     ]),
-    safeListRows<EnrollmentRow>(APPWRITE_CONFIG.tables.enrollments, [Query.limit(1000)]),
+    safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
+      Query.equal("isActive", [true]),
+    ]),
   ]);
 
   const domains = parseJsonPayload<HomeDomainItem[]>(domainsRow?.payload) ?? [];
@@ -609,8 +685,8 @@ export async function getHomePageContent(): Promise<HomePageContent> {
   const enrolledUserIds = new Set<string>();
   const enrolledByCourse = new Map<string, number>();
 
-  for (const enrollment of enrollmentsResult.rows) {
-    if (enrollment.isActive === false || typeof enrollment.userId !== "string") {
+  for (const enrollment of enrollmentsResult) {
+    if (typeof enrollment.userId !== "string") {
       continue;
     }
 
@@ -627,7 +703,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
   const totalHours = Math.max(
     0,
     Math.round(
-      coursesResult.rows.reduce(
+      coursesResult.reduce(
         (sum, course) => sum + toNumber(course.totalDuration, 0),
         0
       ) / 3600
@@ -641,7 +717,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       label: "Students",
     },
     {
-      end: coursesResult.rows.length,
+      end: coursesResult.length,
       suffix: "+",
       label: "Courses",
     },
@@ -657,7 +733,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     },
   ];
 
-  const featuredCourses = [...coursesResult.rows]
+  const featuredCourses = [...coursesResult]
     .sort(
       (left, right) =>
         (enrolledByCourse.get(right.$id) ?? 0) -

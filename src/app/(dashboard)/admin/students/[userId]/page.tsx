@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Query } from "node-appwrite";
+import type { Models } from "node-appwrite";
 
 import { adminUnenrollAction } from "@/actions/enrollment";
 import { requireRole } from "@/lib/appwrite/auth";
@@ -10,7 +11,7 @@ import { PageHeader } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = Models.Row & Record<string, unknown>;
 type TablesDbClient = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
 
 type PageProps = {
@@ -44,6 +45,36 @@ type PaymentInfo = {
   providerRef: string;
   createdAt: string;
 };
+
+async function listAllRows<Row extends AnyRow>(
+  tablesDB: TablesDbClient,
+  tableId: string,
+  queries: string[] = [],
+  pageSize = 500
+): Promise<Row[]> {
+  const rows: Row[] = [];
+  let offset = 0;
+
+  while (true) {
+    const result = await tablesDB
+      .listRows<Row>({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId,
+        queries: [...queries, Query.limit(pageSize), Query.offset(offset)],
+      })
+      .catch(() => ({ rows: [] as Row[] }));
+
+    rows.push(...result.rows);
+
+    if (result.rows.length < pageSize) {
+      break;
+    }
+
+    offset += result.rows.length;
+  }
+
+  return rows;
+}
 
 async function loadCourseMetaByIds(
   tablesDB: TablesDbClient,
@@ -114,13 +145,11 @@ async function getStudentDetail(userId: string) {
 
   const enrollments: EnrollmentInfo[] = [];
   try {
-    const enrollResult = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      queries: [Query.equal("userId", [userId]), Query.limit(50)],
-    });
-
-    const enrollmentRows = enrollResult.rows as AnyRow[];
+    const enrollmentRows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.enrollments,
+      [Query.equal("userId", [userId]), Query.orderDesc("enrolledAt")]
+    );
     const courseIds = Array.from(
       new Set(
         enrollmentRows
@@ -150,13 +179,11 @@ async function getStudentDetail(userId: string) {
 
   const payments: PaymentInfo[] = [];
   try {
-    const payResult = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.payments,
-      queries: [Query.equal("userId", [userId]), Query.limit(50)],
-    });
-
-    const paymentRows = payResult.rows as AnyRow[];
+    const paymentRows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.payments,
+      [Query.equal("userId", [userId]), Query.orderDesc("createdAt")]
+    );
     const paymentCourseIds = Array.from(
       new Set(
         paymentRows
