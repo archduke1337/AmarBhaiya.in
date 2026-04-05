@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { loginAction } from "@/lib/appwrite/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,12 +29,21 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
     setError("");
     setLoading(true);
 
-    const result = await loginAction({ email, password });
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    }).catch(() => null);
 
-    if (result.success) {
+    if (response?.ok) {
       router.push(redirectPath);
     } else {
-      setError(result.error || "Login failed.");
+      const body = await response?.json().catch(() => null);
+      setError(
+        typeof body?.error === "string" ? body.error : "Login failed."
+      );
       setLoading(false);
     }
   }

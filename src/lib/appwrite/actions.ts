@@ -9,6 +9,10 @@ import {
 } from "./server";
 import { APPWRITE_CONFIG } from "./config";
 import {
+  getServerActionExpiredSessionCookieOptions,
+  getServerActionSessionCookieOptions,
+} from "./session-cookie";
+import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
@@ -24,13 +28,7 @@ export type ActionResult = {
 };
 
 function getSessionCookieOptions(expire: string) {
-  return {
-    path: "/",
-    httpOnly: true,
-    sameSite: "strict" as const,
-    secure: process.env.NODE_ENV === "production",
-    expires: new Date(expire),
-  };
+  return getServerActionSessionCookieOptions(expire);
 }
 
 // ── Login ───────────────────────────────────────────────────────────────────
@@ -54,7 +52,7 @@ export async function loginAction(data: LoginInput): Promise<ActionResult> {
     cookieStore.set(
       APPWRITE_CONFIG.sessionCookieName,
       session.secret,
-      getSessionCookieOptions(session.expire)
+      await getSessionCookieOptions(session.expire)
     );
 
     return { success: true };
@@ -98,7 +96,7 @@ export async function registerAction(data: RegisterInput): Promise<ActionResult>
     cookieStore.set(
       APPWRITE_CONFIG.sessionCookieName,
       session.secret,
-      getSessionCookieOptions(session.expire)
+      await getSessionCookieOptions(session.expire)
     );
 
     return { success: true };
@@ -149,6 +147,10 @@ export async function logoutAction(): Promise<void> {
   }
 
   const cookieStore = await cookies();
-  cookieStore.delete(APPWRITE_CONFIG.sessionCookieName);
+  cookieStore.set(
+    APPWRITE_CONFIG.sessionCookieName,
+    "",
+    await getServerActionExpiredSessionCookieOptions()
+  );
   redirect("/login");
 }

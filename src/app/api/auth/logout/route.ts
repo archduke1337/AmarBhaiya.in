@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { buildExpiredSessionCookieOptions } from "@/lib/appwrite/session-cookie";
 import { createSessionClient } from "@/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const { account } = await createSessionClient();
     await account.deleteSession({ sessionId: "current" });
@@ -15,11 +16,7 @@ export async function POST() {
 
   const response = NextResponse.json({ success: true });
   response.cookies.set(APPWRITE_CONFIG.sessionCookieName, "", {
-    path: "/",
-    httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-    expires: new Date(0),
+    ...buildExpiredSessionCookieOptions({ host: request.headers.get("host") }),
   });
 
   return response;

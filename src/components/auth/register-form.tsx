@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { registerAction } from "@/lib/appwrite/actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,12 +33,21 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
     }
 
     setLoading(true);
-    const result = await registerAction({ name, email, password, consent });
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ name, email, password, consent }),
+    }).catch(() => null);
 
-    if (result.success) {
+    if (response?.ok) {
       router.push(redirectPath);
     } else {
-      setError(result.error || "Registration failed.");
+      const body = await response?.json().catch(() => null);
+      setError(
+        typeof body?.error === "string" ? body.error : "Registration failed."
+      );
       setLoading(false);
     }
   }

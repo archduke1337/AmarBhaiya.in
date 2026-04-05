@@ -26,7 +26,14 @@ describe("POST /api/auth/logout", () => {
       },
     });
 
-    const response = await POST();
+    const request = new Request("https://community.amarbhaiya.in/api/auth/logout", {
+      method: "POST",
+      headers: {
+        host: "community.amarbhaiya.in",
+      },
+    });
+
+    const response = await POST(request);
     const body = await response.json();
     const setCookie = response.headers.get("set-cookie") ?? "";
 
@@ -35,12 +42,20 @@ describe("POST /api/auth/logout", () => {
     expect(deleteSessionMock).toHaveBeenCalledWith({ sessionId: "current" });
     expect(setCookie).toContain(`${APPWRITE_CONFIG.sessionCookieName}=`);
     expect(setCookie).toContain("Expires=");
+    expect(setCookie).toContain("Domain=.amarbhaiya.in");
   });
 
   it("still clears cookie when no session client is available", async () => {
     createSessionClientMock.mockRejectedValue(new Error("No session"));
 
-    const response = await POST();
+    const request = new Request("https://amarbhaiya.in/api/auth/logout", {
+      method: "POST",
+      headers: {
+        host: "amarbhaiya.in",
+      },
+    });
+
+    const response = await POST(request);
     const body = await response.json();
     const setCookie = response.headers.get("set-cookie") ?? "";
 
@@ -48,5 +63,6 @@ describe("POST /api/auth/logout", () => {
     expect(body).toEqual({ success: true });
     expect(setCookie).toContain(`${APPWRITE_CONFIG.sessionCookieName}=`);
     expect(setCookie).toContain("Expires=");
+    expect(setCookie).toContain("Domain=.amarbhaiya.in");
   });
 });

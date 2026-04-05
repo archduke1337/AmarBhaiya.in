@@ -164,6 +164,15 @@ export async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
+    const redirectTarget = request.nextUrl.searchParams.get("redirect");
+    if (
+      typeof redirectTarget === "string" &&
+      redirectTarget.startsWith("/") &&
+      !redirectTarget.startsWith("//")
+    ) {
+      return NextResponse.redirect(new URL(redirectTarget, request.url));
+    }
+
     return NextResponse.redirect(new URL("/app/dashboard", request.url));
   }
 
