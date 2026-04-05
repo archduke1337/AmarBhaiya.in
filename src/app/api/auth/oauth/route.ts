@@ -2,6 +2,7 @@ import { Account, Client } from "node-appwrite";
 import { NextRequest, NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { buildSessionCookieOptions } from "@/lib/appwrite/session-cookie";
 
 export const runtime = "nodejs";
 
@@ -42,11 +43,10 @@ export async function GET(request: NextRequest) {
     );
 
     response.cookies.set(APPWRITE_CONFIG.sessionCookieName, session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      expires: new Date(session.expire),
+      ...buildSessionCookieOptions({
+        expire: session.expire,
+        host: request.headers.get("host"),
+      }),
     });
 
     return response;
