@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { buildSessionCookieOptions } from "@/lib/appwrite/session-cookie";
 import { createAdminClient } from "@/lib/appwrite/server";
 
