@@ -35,10 +35,10 @@ import {
 export default async function AdminDashboardPage() {
   const [stats, payments, liveData, moderationData, auditLogs] = await Promise.all([
     getAdminDashboardStats(),
-    getAdminPayments(),
-    getAdminLiveData(),
-    getAdminModerationData(),
-    getAdminAuditLogs(),
+    getAdminPayments({ limit: 4 }),
+    getAdminLiveData({ upcomingLimit: 8 }),
+    getAdminModerationData({ escalationLimit: 2 }),
+    getAdminAuditLogs({ limit: 1 }),
   ]);
 
   const draftCourses = Math.max(0, stats.totalCourses - stats.publishedCourses);
@@ -181,7 +181,7 @@ export default async function AdminDashboardPage() {
             title="Revenue Pulse"
             viewAllHref="/admin/payments"
             emptyText="No recent payments."
-            items={payments.slice(0, 4).map((payment) => ({
+            items={payments.map((payment) => ({
               id: payment.id,
               label: payment.userName,
               description: `${payment.courseTitle} · ${formatCurrency(payment.amount, payment.currency)}`,

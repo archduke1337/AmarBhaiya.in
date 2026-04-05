@@ -2100,15 +2100,27 @@ export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
   }
 }
 
-export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
+export async function getAdminPayments(options?: {
+  limit?: number;
+}): Promise<AdminPaymentItem[]> {
   try {
     const { tablesDB, users } = await createAdminClient();
 
-    const paymentRows = await safeListAllRows<PaymentRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.payments,
-      [Query.orderDesc("$createdAt")]
-    );
+    const limit = options?.limit;
+    const paymentRows =
+      typeof limit === "number" && limit > 0
+        ? (
+            await safeListRows<PaymentRow>(
+              tablesDB,
+              APPWRITE_CONFIG.tables.payments,
+              [Query.orderDesc("$createdAt"), Query.limit(limit)]
+            )
+          ).rows
+        : await safeListAllRows<PaymentRow>(
+            tablesDB,
+            APPWRITE_CONFIG.tables.payments,
+            [Query.orderDesc("$createdAt")]
+          );
 
     const sortedPaymentRows = paymentRows.sort((left, right) => {
       const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
@@ -2202,7 +2214,9 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
   }
 }
 
-export async function getAdminLiveData(): Promise<AdminLiveData> {
+export async function getAdminLiveData(options?: {
+  upcomingLimit?: number;
+}): Promise<AdminLiveData> {
   try {
     const { tablesDB } = await createAdminClient();
 
@@ -2229,8 +2243,15 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
         (!session.recordingUrl || String(session.recordingUrl).trim().length === 0)
     ).length;
 
+    const upcomingLimit = options?.upcomingLimit;
     const upcoming = sortLiveSessionsForDashboard(sessions)
       .filter((session) => session.status === "scheduled" || session.status === "live")
+      .slice(
+        0,
+        typeof upcomingLimit === "number" && upcomingLimit > 0
+          ? upcomingLimit
+          : Number.MAX_SAFE_INTEGER
+      )
       .map((session) => ({
         id: session.$id,
         title: typeof session.title === "string" ? session.title : "Untitled session",
@@ -2264,7 +2285,9 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
   }
 }
 
-export async function getAdminModerationData(): Promise<AdminModerationData> {
+export async function getAdminModerationData(options?: {
+  escalationLimit?: number;
+}): Promise<AdminModerationData> {
   try {
     const { tablesDB } = await createAdminClient();
 
@@ -2289,6 +2312,7 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
         .map((row) => String(row.targetUserId))
     ).size;
 
+    const escalationLimit = options?.escalationLimit;
     const escalationItems = rows
       .filter((row) => row.action === "flag" && !row.revertedAt)
       .sort((left, right) => {
@@ -2296,7 +2320,12 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
         const rightTime = toDate(right.createdAt)?.getTime() ?? 0;
         return rightTime - leftTime;
       })
-      .slice(0, 20)
+      .slice(
+        0,
+        typeof escalationLimit === "number" && escalationLimit > 0
+          ? escalationLimit
+          : Number.MAX_SAFE_INTEGER
+      )
       .map((row) => ({
         id: row.$id,
         moderatorName: typeof row.moderatorName === "string" ? row.moderatorName : "Unknown",
@@ -2329,15 +2358,27 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
   }
 }
 
-export async function getAdminAuditLogs(): Promise<AdminAuditItem[]> {
+export async function getAdminAuditLogs(options?: {
+  limit?: number;
+}): Promise<AdminAuditItem[]> {
   try {
     const { tablesDB } = await createAdminClient();
 
-    const logsResult = await safeListAllRows<AuditLogRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.auditLogs,
-      [Query.orderDesc("$createdAt")]
-    );
+    const limit = options?.limit;
+    const logsResult =
+      typeof limit === "number" && limit > 0
+        ? (
+            await safeListRows<AuditLogRow>(
+              tablesDB,
+              APPWRITE_CONFIG.tables.auditLogs,
+              [Query.orderDesc("$createdAt"), Query.limit(limit)]
+            )
+          ).rows
+        : await safeListAllRows<AuditLogRow>(
+            tablesDB,
+            APPWRITE_CONFIG.tables.auditLogs,
+            [Query.orderDesc("$createdAt")]
+          );
 
     return logsResult.map((log) => ({
       id: log.$id,
