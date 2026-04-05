@@ -11,6 +11,7 @@ import {
   type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -209,6 +210,12 @@ async function syncCourseLessonStats(
     });
   } catch {
     // Non-critical
+  }
+}
+
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
   }
 }
 
@@ -569,6 +576,9 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
   revalidatePath("/app/quizzes");
   revalidatePath("/");
   revalidatePath("/courses");
+  revalidateEach(
+    getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
+  );
 }
 
 // ── Delete Module ───────────────────────────────────────────────────────────
@@ -627,9 +637,9 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
   revalidatePath("/app/dashboard");
   revalidatePath("/app/courses");
   revalidatePath("/courses");
-  if (typeof course.slug === "string" && course.slug) {
-    revalidatePath(`/courses/${course.slug}`);
-  }
+  revalidateEach(
+    getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
+  );
   revalidatePath(`/instructor/courses/${courseId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
 }
@@ -663,9 +673,9 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
   revalidatePath("/app/dashboard");
   revalidatePath("/app/courses");
   revalidatePath("/courses");
-  if (typeof course.slug === "string" && course.slug) {
-    revalidatePath(`/courses/${course.slug}`);
-  }
+  revalidateEach(
+    getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
+  );
   revalidatePath(`/instructor/courses/${courseId}`);
   revalidatePath(`/app/learn/${courseId}/${lessonId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
@@ -766,6 +776,7 @@ export async function deleteLiveSessionAction(
   }
 
   revalidatePath("/admin/live");
+  revalidatePath("/admin");
   revalidatePath("/instructor");
   revalidatePath("/instructor/live");
   revalidatePath("/app/dashboard");

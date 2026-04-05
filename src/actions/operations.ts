@@ -12,6 +12,7 @@ import {
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import type { Role } from "@/lib/utils/constants";
+import { getBlogDetailPaths, getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { slugify } from "@/lib/utils/format";
 import { parseLineSeparatedList } from "@/lib/utils/form-lists";
 
@@ -226,6 +227,12 @@ async function updateCourseLessonStats(
   });
 }
 
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
+
 export async function updateUserRoleAction(formData: FormData): Promise<void> {
   await requireRole(["admin"]);
 
@@ -256,6 +263,11 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
     return;
   }
 
+  const course = await getCourseRow(parsed.data.courseId);
+  if (!course) {
+    return;
+  }
+
   const { tablesDB } = await createAdminClient();
 
   await tablesDB.updateRow({
@@ -271,6 +283,7 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
   revalidatePath("/admin/courses");
   revalidatePath("/courses");
   revalidatePath("/");
+  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
 export async function createCategoryAction(formData: FormData): Promise<void> {
@@ -411,11 +424,7 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
   revalidatePath("/admin/courses");
   revalidatePath("/courses");
-
-  if (typeof course.slug === "string" && course.slug.length > 0) {
-    revalidatePath(`/courses/${course.slug}`);
-    revalidatePath(`/app/courses/${course.slug}`);
-  }
+  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
 export async function createCurriculumModuleAction(formData: FormData): Promise<void> {
@@ -455,6 +464,7 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
   revalidatePath("/instructor/courses");
   revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
 export async function createCurriculumLessonAction(formData: FormData): Promise<void> {
@@ -519,11 +529,7 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
   revalidatePath("/instructor/courses");
   revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
-
-  if (typeof course.slug === "string" && course.slug.length > 0) {
-    revalidatePath(`/courses/${course.slug}`);
-    revalidatePath(`/app/courses/${course.slug}`);
-  }
+  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
 export async function updateCurriculumModuleAction(formData: FormData): Promise<void> {
@@ -577,6 +583,7 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
   revalidatePath("/instructor/courses");
   revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
 export async function updateCurriculumLessonAction(formData: FormData): Promise<void> {
@@ -642,11 +649,7 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
   revalidatePath("/instructor/courses");
   revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
   revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
-
-  if (typeof course.slug === "string" && course.slug.length > 0) {
-    revalidatePath(`/courses/${course.slug}`);
-    revalidatePath(`/app/courses/${course.slug}`);
-  }
+  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
 export async function applyModerationActionAction(formData: FormData): Promise<void> {
@@ -729,8 +732,10 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
   }
 
   revalidatePath("/moderator/reports");
+  revalidatePath("/moderator");
   revalidatePath("/moderator/community");
   revalidatePath("/moderator/students");
+  revalidatePath("/admin");
   revalidatePath("/admin/moderation");
 }
 
@@ -758,7 +763,9 @@ export async function resolveModerationActionAction(formData: FormData): Promise
   });
 
   revalidatePath("/moderator/reports");
+  revalidatePath("/moderator");
   revalidatePath("/moderator/students");
+  revalidatePath("/admin");
   revalidatePath("/admin/moderation");
 }
 
@@ -870,6 +877,7 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
 
       revalidatePath("/blog");
       revalidatePath("/admin/marketing");
+      revalidateEach(getBlogDetailPaths(slug));
       return;
     } catch (error) {
       const appwriteError = error as { code?: number };
@@ -889,6 +897,12 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
   if (!postId) return;
 
   const { tablesDB } = await createAdminClient();
+  const existingPost = (await tablesDB.getRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.blogPosts,
+    rowId: postId,
+  }).catch(() => null)) as AnyRow | null;
+  if (!existingPost) return;
 
   const data: Record<string, unknown> = {};
 
@@ -921,6 +935,7 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
 
     revalidatePath("/blog");
     revalidatePath("/admin/marketing");
+    revalidateEach(getBlogDetailPaths(String(existingPost.slug ?? "")));
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Failed to update blog post.");
   }
@@ -935,6 +950,12 @@ export async function deleteBlogPostAction(formData: FormData): Promise<void> {
   if (!postId) return;
 
   const { tablesDB } = await createAdminClient();
+  const existingPost = (await tablesDB.getRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.blogPosts,
+    rowId: postId,
+  }).catch(() => null)) as AnyRow | null;
+  if (!existingPost) return;
 
   try {
     await tablesDB.deleteRow({
@@ -945,6 +966,7 @@ export async function deleteBlogPostAction(formData: FormData): Promise<void> {
 
     revalidatePath("/blog");
     revalidatePath("/admin/marketing");
+    revalidateEach(getBlogDetailPaths(String(existingPost.slug ?? "")));
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Failed to delete blog post.");
   }

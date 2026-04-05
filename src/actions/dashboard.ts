@@ -116,6 +116,7 @@ export async function createForumThreadAction(
     });
 
     revalidatePath("/app/community");
+    revalidatePath("/moderator");
     revalidatePath("/moderator/community");
   } catch (error) {
     console.error(
@@ -266,8 +267,11 @@ export async function createLiveSessionAction(
       },
     });
 
+    revalidatePath("/instructor");
     revalidatePath("/instructor/live");
+    revalidatePath("/admin");
     revalidatePath("/admin/live");
+    revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
   } catch (error) {
     console.error(
@@ -342,6 +346,7 @@ export async function updateLiveSessionAction(
 
     revalidatePath("/instructor");
     revalidatePath("/instructor/live");
+    revalidatePath("/admin");
     revalidatePath("/admin/live");
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
