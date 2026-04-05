@@ -4,6 +4,7 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
+import { getCourseRow } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { upsertLessonProgressRow } from "@/lib/appwrite/progress";
 import {
@@ -13,12 +14,19 @@ import {
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { processInBatches } from "@/lib/utils/batch";
 
 type AnyRow = AnyAppwriteRow;
 
 function isCompletedProgressRow(row: Record<string, unknown>): boolean {
   return typeof row.completedAt === "string" && row.completedAt.trim().length > 0;
+}
+
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
 }
 
 async function resolveCourseForEnrollment(
@@ -186,7 +194,9 @@ export async function completeLessonForUser({
     revalidatePath(`/app/learn/${courseId}/${lessonId}`);
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
-    revalidatePath(`/app/courses/${courseId}`);
+    revalidateEach(
+      getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
+    );
     return actionSuccess();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to mark complete";
@@ -231,8 +241,7 @@ export async function enrollInCourseAction(
       if (existing.rows.length > 0) {
         revalidatePath("/app/courses");
         revalidatePath("/app/dashboard");
-        revalidatePath(`/courses/${courseSlug}`);
-        revalidatePath(`/app/courses/${courseId}`);
+        revalidateEach(getCourseDetailPaths(courseId, courseSlug));
         return actionSuccess();
       }
     } catch {
@@ -265,8 +274,7 @@ export async function enrollInCourseAction(
 
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
-    revalidatePath(`/courses/${courseSlug}`);
-    revalidatePath(`/app/courses/${courseId}`);
+    revalidateEach(getCourseDetailPaths(courseId, courseSlug));
     return actionSuccess();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to enroll in course";
@@ -539,7 +547,10 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
       revalidatePath(`/admin/students/${userId}`);
     }
     if (courseId) {
-      revalidatePath(`/app/courses/${courseId}`);
+      const course = await getCourseRow(courseId);
+      revalidateEach(
+        getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+      );
       revalidatePath("/app/dashboard");
     }
   } catch (error) {

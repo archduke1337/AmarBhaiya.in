@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/appwrite/server";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/lib/payments/course-payment";
 import { verifyRazorpayWebhookSignature } from "@/lib/payments/razorpay";
 
@@ -53,6 +54,12 @@ function parseWebhookPayment(rawBody: string): {
   };
 }
 
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-razorpay-signature");
@@ -95,11 +102,7 @@ export async function POST(request: Request) {
     revalidatePath("/instructor/earnings");
 
     if (result.courseId) {
-      revalidatePath(`/app/courses/${result.courseId}`);
-    }
-
-    if (result.courseSlug) {
-      revalidatePath(`/courses/${result.courseSlug}`);
+      revalidateEach(getCourseDetailPaths(result.courseId, result.courseSlug ?? ""));
     }
 
     return NextResponse.json({ received: true, status });
