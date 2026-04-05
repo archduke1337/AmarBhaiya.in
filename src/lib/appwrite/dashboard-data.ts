@@ -1787,19 +1787,25 @@ export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
       countByUser.set(userId, (countByUser.get(userId) ?? 0) + 1);
     }
 
-    return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => {
+    return [...latestByUser.entries()].map(([userId, row]) => {
       const openRow = latestOpenByUser.get(userId);
+      const displayRow = openRow ?? row;
       return ({
         id: userId,
         latestActionId: openRow?.$id ?? row.$id,
         name:
-          typeof row.targetUserName === "string" && row.targetUserName.length > 0
-            ? row.targetUserName
+          typeof displayRow.targetUserName === "string" &&
+          displayRow.targetUserName.length > 0
+            ? displayRow.targetUserName
             : userId,
-        latestAction: typeof row.action === "string" ? row.action : "unknown",
-        latestReason: typeof row.reason === "string" ? row.reason : "No notes",
-        latestScope: typeof row.scope === "string" ? row.scope : "platform",
-        lastActionAt: typeof row.createdAt === "string" ? row.createdAt : null,
+        latestAction:
+          typeof displayRow.action === "string" ? displayRow.action : "unknown",
+        latestReason:
+          typeof displayRow.reason === "string" ? displayRow.reason : "No notes",
+        latestScope:
+          typeof displayRow.scope === "string" ? displayRow.scope : "platform",
+        lastActionAt:
+          typeof displayRow.createdAt === "string" ? displayRow.createdAt : null,
         actionCount: countByUser.get(userId) ?? 1,
         status: openRow ? "open" : "resolved",
       });
@@ -1868,7 +1874,6 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
         const rightDate = toDate(right.lastReplyAt ?? right.createdAt)?.getTime() ?? 0;
         return rightDate - leftDate;
       })
-      .slice(0, 8)
       .map((thread) => ({
         id: thread.$id,
         title: typeof thread.title === "string" ? thread.title : "Untitled thread",
@@ -2226,7 +2231,6 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
 
     const upcoming = sortLiveSessionsForDashboard(sessions)
       .filter((session) => session.status === "scheduled" || session.status === "live")
-      .slice(0, 8)
       .map((session) => ({
         id: session.$id,
         title: typeof session.title === "string" ? session.title : "Untitled session",
@@ -2329,13 +2333,13 @@ export async function getAdminAuditLogs(): Promise<AdminAuditItem[]> {
   try {
     const { tablesDB } = await createAdminClient();
 
-    const logsResult = await safeListRows<AuditLogRow>(
+    const logsResult = await safeListAllRows<AuditLogRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.auditLogs,
-      [Query.orderDesc("$createdAt"), Query.limit(100)]
+      [Query.orderDesc("$createdAt")]
     );
 
-    return logsResult.rows.map((log) => ({
+    return logsResult.map((log) => ({
       id: log.$id,
       actor: typeof log.actorName === "string" ? log.actorName : "Unknown actor",
       action: typeof log.action === "string" ? log.action : "unknown action",

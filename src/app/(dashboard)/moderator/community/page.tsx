@@ -40,7 +40,7 @@ export default async function ModeratorCommunityPage() {
         className="scroll-mt-24 flex flex-col gap-4"
       >
         <h2 className="text-lg font-medium">
-          Recent Threads ({data.recentThreads.length})
+          Community Threads ({data.recentThreads.length})
         </h2>
 
         {data.recentThreads.length === 0 ? (

@@ -11,11 +11,11 @@ export default async function AdminLivePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        eyebrow="Admin · Live"
-        title="Live Session Monitoring"
-        description="Overview of all active, scheduled, and recently ended live sessions across the platform."
-      />
+        <PageHeader
+          eyebrow="Admin · Live"
+          title="Live Session Monitoring"
+          description="Overview of all active and scheduled live sessions across the platform."
+        />
 
       <StatGrid columns={3}>
         <StatCard
@@ -42,7 +42,7 @@ export default async function AdminLivePage() {
         id="upcoming-sessions"
         className="scroll-mt-24 flex flex-col gap-4"
       >
-        <h2 className="text-lg font-medium">Upcoming Sessions</h2>
+        <h2 className="text-lg font-medium">Live & Scheduled Sessions</h2>
 
         {data.upcoming.length === 0 ? (
           <EmptyState
