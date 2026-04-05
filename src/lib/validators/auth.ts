@@ -8,7 +8,7 @@ export const passwordSchema = z
   .trim();
 
 export const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().trim().email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
 });
 
@@ -18,7 +18,7 @@ export const registerSchema = z.object({
     .min(2, "Name must be at least 2 characters.")
     .max(100, "Name must be less than 100 characters.")
     .trim(),
-  email: z.string().email("Please enter a valid email address.").trim(),
+  email: z.string().trim().email("Please enter a valid email address."),
   password: passwordSchema,
   consent: z.literal(true, {
     message: "You must agree to the privacy policy.",
@@ -26,7 +26,7 @@ export const registerSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().trim().email("Please enter a valid email address."),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
