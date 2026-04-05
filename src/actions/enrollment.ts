@@ -214,6 +214,10 @@ export async function completeLessonForUser({
 export async function enrollInCourseAction(
   formData: FormData
 ): Promise<ActionResult> {
+  let resolvedCourseForRevalidation:
+    | { courseId: string; courseSlug: string }
+    | null = null;
+
   try {
     const user = await requireAuth();
     const courseInput = String(formData.get("courseId") ?? "").trim();
@@ -226,6 +230,7 @@ export async function enrollInCourseAction(
     }
 
     const { courseId, courseSlug, accessModel, isPublished } = resolvedCourse;
+    resolvedCourseForRevalidation = { courseId, courseSlug };
     if (!isPublished) {
       return actionError("Course not available");
     }
@@ -306,10 +311,15 @@ export async function enrollInCourseAction(
     return actionSuccess();
   } catch (error) {
     const appwriteError = error as { code?: number };
-    if (appwriteError?.code === 409) {
+    if (appwriteError?.code === 409 && resolvedCourseForRevalidation) {
       revalidatePath("/app/courses");
       revalidatePath("/app/dashboard");
-      revalidateEach(getCourseDetailPaths(courseId, courseSlug));
+      revalidateEach(
+        getCourseDetailPaths(
+          resolvedCourseForRevalidation.courseId,
+          resolvedCourseForRevalidation.courseSlug
+        )
+      );
       return actionSuccess();
     }
 
