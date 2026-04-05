@@ -1383,18 +1383,18 @@ export async function getInstructorLiveSessions(
   try {
     const { tablesDB } = await createAdminClient();
 
-    const queries: string[] = [Query.orderAsc("scheduledAt"), Query.limit(50)];
+    const queries: string[] = [];
     if (scope.role !== "admin") {
       queries.push(Query.equal("instructorId", [scope.userId]));
     }
 
-    const sessionsResult = await safeListRows<LiveSessionRow>(
+    const sessions = await safeListAllRows<LiveSessionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.liveSessions,
       queries
     );
 
-    const sessionIds = sessionsResult.rows.map((session) => session.$id);
+    const sessionIds = sessions.map((session) => session.$id);
     const rsvpRows = await listRowsByFieldValues<AnyRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.sessionRsvps,
@@ -1415,7 +1415,48 @@ export async function getInstructorLiveSessions(
       );
     }
 
-    return sessionsResult.rows.map((session) => ({
+    const now = Date.now();
+    const sortedSessions = [...sessions].sort((left, right) => {
+      const leftStatus = typeof left.status === "string" ? left.status : "scheduled";
+      const rightStatus = typeof right.status === "string" ? right.status : "scheduled";
+      const statusPriority = (status: string) => {
+        switch (status) {
+          case "live":
+            return 0;
+          case "scheduled":
+            return 1;
+          case "ended":
+            return 2;
+          default:
+            return 3;
+        }
+      };
+
+      const leftPriority = statusPriority(leftStatus);
+      const rightPriority = statusPriority(rightStatus);
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      const leftTime = toDate(left.scheduledAt)?.getTime() ?? 0;
+      const rightTime = toDate(right.scheduledAt)?.getTime() ?? 0;
+
+      if (leftStatus === "live") {
+        return rightTime - leftTime;
+      }
+
+      if (leftStatus === "scheduled") {
+        const leftDelta = leftTime >= now ? leftTime - now : Number.MAX_SAFE_INTEGER;
+        const rightDelta = rightTime >= now ? rightTime - now : Number.MAX_SAFE_INTEGER;
+        if (leftDelta !== rightDelta) {
+          return leftDelta - rightDelta;
+        }
+      }
+
+      return rightTime - leftTime;
+    });
+
+    return sortedSessions.map((session) => ({
       id: session.$id,
       title: typeof session.title === "string" ? session.title : "Untitled session",
       description:

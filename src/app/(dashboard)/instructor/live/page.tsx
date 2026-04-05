@@ -39,10 +39,10 @@ export default async function InstructorLivePage() {
       </div>
 
       <section className="border border-border p-6 space-y-4">
-        <h2 className="text-xl">Upcoming</h2>
+        <h2 className="text-xl">Sessions</h2>
         {sessions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No upcoming sessions found.
+            No live sessions found yet.
           </p>
         ) : null}
 

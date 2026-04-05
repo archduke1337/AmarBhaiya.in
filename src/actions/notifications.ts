@@ -1,10 +1,12 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
+import type { Models } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { listAllRows } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { processInBatches } from "@/lib/utils/batch";
 import { toNotificationActionUrl } from "@/lib/utils/url";
@@ -22,7 +24,7 @@ export type Notification = {
   createdAt: string;
 };
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = Models.Row & Record<string, unknown>;
 
 type CreateNotificationInput = {
   userId: string;
@@ -137,17 +139,13 @@ export async function getUserNotifications(): Promise<Notification[]> {
   try {
     const { tablesDB } = await createAdminClient();
 
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.notifications,
-      queries: [
-        Query.equal("userId", [user.$id]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(50),
-      ],
-    });
+    const rows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.notifications,
+      [Query.equal("userId", [user.$id]), Query.orderDesc("$createdAt")]
+    );
 
-    return result.rows.map((row) => {
+    return rows.map((row) => {
       const r = row as AnyRow;
       return {
         id: r.$id,

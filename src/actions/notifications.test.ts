@@ -70,6 +70,48 @@ describe("notifications schema compatibility", () => {
     ]);
   });
 
+  it("loads notification history beyond the first page", async () => {
+    const firstPage = Array.from({ length: 500 }, (_, index) => ({
+      $id: `notif_${index + 1}`,
+      userId: "user_1",
+      type: "info",
+      title: `Notification ${index + 1}`,
+      message: `Body ${index + 1}`,
+      actionUrl: `/app/notifications#notification-${index + 1}`,
+      isRead: index % 2 === 0,
+      createdAt: "2026-04-04T00:00:00.000Z",
+    }));
+
+    listRowsMock
+      .mockResolvedValueOnce({ rows: firstPage })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            $id: "notif_501",
+            userId: "user_1",
+            type: "info",
+            title: "Notification 501",
+            message: "Body 501",
+            actionUrl: "/app/notifications#notification-501",
+            isRead: false,
+            createdAt: "2026-04-03T00:00:00.000Z",
+          },
+        ],
+      });
+
+    const notifications = await getUserNotifications();
+
+    expect(notifications).toHaveLength(501);
+    expect(notifications.at(-1)).toEqual(
+      expect.objectContaining({
+        id: "notif_501",
+        body: "Body 501",
+        link: "/app/notifications#notification-501",
+      })
+    );
+    expect(listRowsMock).toHaveBeenCalledTimes(2);
+  });
+
   it("falls back to legacy body/link writes when the deployed table shape has not been migrated", async () => {
     const createRowMock = vi
       .fn()
