@@ -246,6 +246,27 @@ function revalidateEach(paths: string[]): void {
   }
 }
 
+function revalidateHomeContentPaths(): void {
+  revalidatePath("/");
+  revalidatePath("/courses");
+  revalidatePath("/api/content/home");
+}
+
+function revalidateCourseEditorPaths(courseId: string): void {
+  revalidatePath("/instructor");
+  revalidatePath("/instructor/courses");
+  revalidatePath(`/instructor/courses/${courseId}`);
+  revalidatePath(`/instructor/courses/${courseId}/curriculum`);
+  revalidatePath("/admin/courses");
+}
+
+function revalidateCourseAudiencePaths(courseId: string, slug?: string): void {
+  revalidatePath("/app/courses");
+  revalidatePath("/app/dashboard");
+  revalidateHomeContentPaths();
+  revalidateEach(getCourseDetailPaths(courseId, slug));
+}
+
 export async function updateUserRoleAction(formData: FormData): Promise<void> {
   await requireRole(["admin"]);
 
@@ -293,11 +314,12 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
     },
   });
 
+  revalidatePath("/app/courses");
+  revalidatePath("/app/dashboard");
   revalidatePath("/admin/courses");
   revalidatePath("/admin");
   revalidatePath("/instructor");
-  revalidatePath("/courses");
-  revalidatePath("/");
+  revalidateHomeContentPaths();
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
@@ -433,13 +455,9 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
     },
   });
 
-  revalidatePath("/instructor");
-  revalidatePath("/instructor/courses");
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+  revalidateCourseEditorPaths(parsed.data.courseId);
   revalidatePath("/admin/courses");
-  revalidatePath("/courses");
-  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+  revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
 }
 
 export async function createCurriculumModuleAction(formData: FormData): Promise<void> {
@@ -475,10 +493,7 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
     },
   });
 
-  revalidatePath("/instructor");
-  revalidatePath("/instructor/courses");
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+  revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
@@ -540,11 +555,8 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
 
   await updateCourseLessonStats(tablesDB, parsed.data.courseId);
 
-  revalidatePath("/instructor");
-  revalidatePath("/instructor/courses");
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
-  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+  revalidateCourseEditorPaths(parsed.data.courseId);
+  revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
 }
 
 export async function updateCurriculumModuleAction(formData: FormData): Promise<void> {
@@ -594,10 +606,7 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
     },
   });
 
-  revalidatePath("/instructor");
-  revalidatePath("/instructor/courses");
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
+  revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 }
 
@@ -660,11 +669,9 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
 
   await updateCourseLessonStats(tablesDB, parsed.data.courseId);
 
-  revalidatePath("/instructor");
-  revalidatePath("/instructor/courses");
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}`);
-  revalidatePath(`/instructor/courses/${parsed.data.courseId}/curriculum`);
-  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+  revalidateCourseEditorPaths(parsed.data.courseId);
+  revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
+  revalidatePath(`/app/learn/${parsed.data.courseId}/${parsed.data.lessonId}`);
 }
 
 export async function applyModerationActionAction(formData: FormData): Promise<void> {
@@ -845,10 +852,9 @@ export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
     });
   }
 
-  revalidatePath("/");
+  revalidateHomeContentPaths();
   revalidatePath("/about");
   revalidatePath("/contact");
-  revalidatePath("/courses");
   revalidatePath("/blog");
   revalidatePath("/admin/marketing");
 }
@@ -896,6 +902,7 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
         },
       });
 
+      revalidateHomeContentPaths();
       revalidatePath("/blog");
       revalidatePath("/admin/marketing");
       revalidateEach(getBlogDetailPaths(slug));
@@ -954,6 +961,7 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
       data,
     });
 
+    revalidateHomeContentPaths();
     revalidatePath("/blog");
     revalidatePath("/admin/marketing");
     revalidateEach(getBlogDetailPaths(String(existingPost.slug ?? "")));
@@ -985,6 +993,7 @@ export async function deleteBlogPostAction(formData: FormData): Promise<void> {
       rowId: postId,
     });
 
+    revalidateHomeContentPaths();
     revalidatePath("/blog");
     revalidatePath("/admin/marketing");
     revalidateEach(getBlogDetailPaths(String(existingPost.slug ?? "")));
