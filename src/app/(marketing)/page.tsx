@@ -128,9 +128,9 @@ export default function LandingPage() {
   const heroContrastOverlay =
     "radial-gradient(130% 120% at 50% -12%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 54%), linear-gradient(180deg, rgba(3,4,12,0.2) 0%, rgba(3,4,12,0.4) 54%, rgba(3,4,12,0.62) 100%)";
   const heroPalette = {
-    color1: "#579dff",
-    color2: "#ff4f68",
-    color3: "#ffc538",
+    color1: "#0052FF",
+    color2: "#FF3333",
+    color3: "#FFCC00",
     brightness: 0.94,
     reflection: 0.42,
     speed: 0.24,
