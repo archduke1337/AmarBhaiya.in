@@ -1415,46 +1415,7 @@ export async function getInstructorLiveSessions(
       );
     }
 
-    const now = Date.now();
-    const sortedSessions = [...sessions].sort((left, right) => {
-      const leftStatus = typeof left.status === "string" ? left.status : "scheduled";
-      const rightStatus = typeof right.status === "string" ? right.status : "scheduled";
-      const statusPriority = (status: string) => {
-        switch (status) {
-          case "live":
-            return 0;
-          case "scheduled":
-            return 1;
-          case "ended":
-            return 2;
-          default:
-            return 3;
-        }
-      };
-
-      const leftPriority = statusPriority(leftStatus);
-      const rightPriority = statusPriority(rightStatus);
-      if (leftPriority !== rightPriority) {
-        return leftPriority - rightPriority;
-      }
-
-      const leftTime = toDate(left.scheduledAt)?.getTime() ?? 0;
-      const rightTime = toDate(right.scheduledAt)?.getTime() ?? 0;
-
-      if (leftStatus === "live") {
-        return rightTime - leftTime;
-      }
-
-      if (leftStatus === "scheduled") {
-        const leftDelta = leftTime >= now ? leftTime - now : Number.MAX_SAFE_INTEGER;
-        const rightDelta = rightTime >= now ? rightTime - now : Number.MAX_SAFE_INTEGER;
-        if (leftDelta !== rightDelta) {
-          return leftDelta - rightDelta;
-        }
-      }
-
-      return rightTime - leftTime;
-    });
+    const sortedSessions = sortLiveSessionsForDashboard(sessions);
 
     return sortedSessions.map((session) => ({
       id: session.$id,
@@ -1477,6 +1438,65 @@ export async function getInstructorLiveSessions(
 
     return [];
   }
+}
+
+function buildRsvpCountBySessionId(rows: AnyRow[]): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const row of rows) {
+    const sessionId = typeof row.sessionId === "string" ? row.sessionId : "";
+    if (!sessionId) {
+      continue;
+    }
+
+    counts.set(sessionId, (counts.get(sessionId) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+function sortLiveSessionsForDashboard(sessions: LiveSessionRow[]): LiveSessionRow[] {
+  const now = Date.now();
+
+  return [...sessions].sort((left, right) => {
+    const leftStatus = typeof left.status === "string" ? left.status : "scheduled";
+    const rightStatus = typeof right.status === "string" ? right.status : "scheduled";
+    const statusPriority = (status: string) => {
+      switch (status) {
+        case "live":
+          return 0;
+        case "scheduled":
+          return 1;
+        case "ended":
+          return 2;
+        default:
+          return 3;
+      }
+    };
+
+    const leftPriority = statusPriority(leftStatus);
+    const rightPriority = statusPriority(rightStatus);
+    if (leftPriority !== rightPriority) {
+      return leftPriority - rightPriority;
+    }
+
+    const leftTime = toDate(left.scheduledAt)?.getTime() ?? 0;
+    const rightTime = toDate(right.scheduledAt)?.getTime() ?? 0;
+
+    if (leftStatus === "live") {
+      return rightTime - leftTime;
+    }
+
+    if (leftStatus === "scheduled") {
+      const leftDelta = leftTime >= now ? leftTime - now : Number.MAX_SAFE_INTEGER;
+      const rightDelta = rightTime >= now ? rightTime - now : Number.MAX_SAFE_INTEGER;
+      if (leftDelta !== rightDelta) {
+        return leftDelta - rightDelta;
+      }
+    }
+
+    return rightTime - leftTime;
+  });
 }
 
 export async function getInstructorCourseSummary(
@@ -1663,6 +1683,7 @@ export async function getModeratorDashboardStats(): Promise<ModeratorDashboardSt
         .filter(
           (row) =>
             row.action === "flag" &&
+            !row.revertedAt &&
             typeof row.entityType === "string" &&
             row.entityType.toLowerCase().includes("thread") &&
             typeof row.entityId === "string"
@@ -1752,21 +1773,27 @@ export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
         return rightDate - leftDate;
       });
 
-      const latestByUser = new Map<string, ModerationActionRow>();
-      const countByUser = new Map<string, number>();
-      for (const row of filteredRows) {
-        const userId = String(row.targetUserId);
-        if (!latestByUser.has(userId)) {
-          latestByUser.set(userId, row);
-        }
-        countByUser.set(userId, (countByUser.get(userId) ?? 0) + 1);
+    const latestByUser = new Map<string, ModerationActionRow>();
+    const latestOpenByUser = new Map<string, ModerationActionRow>();
+    const countByUser = new Map<string, number>();
+    for (const row of filteredRows) {
+      const userId = String(row.targetUserId);
+      if (!latestByUser.has(userId)) {
+        latestByUser.set(userId, row);
       }
+      if (!row.revertedAt && !latestOpenByUser.has(userId)) {
+        latestOpenByUser.set(userId, row);
+      }
+      countByUser.set(userId, (countByUser.get(userId) ?? 0) + 1);
+    }
 
-      return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => ({
+    return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => {
+      const openRow = latestOpenByUser.get(userId);
+      return ({
         id: userId,
-        latestActionId: row.$id,
-      name:
-        typeof row.targetUserName === "string" && row.targetUserName.length > 0
+        latestActionId: openRow?.$id ?? row.$id,
+        name:
+          typeof row.targetUserName === "string" && row.targetUserName.length > 0
             ? row.targetUserName
             : userId,
         latestAction: typeof row.action === "string" ? row.action : "unknown",
@@ -1774,8 +1801,9 @@ export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
         latestScope: typeof row.scope === "string" ? row.scope : "platform",
         lastActionAt: typeof row.createdAt === "string" ? row.createdAt : null,
         actionCount: countByUser.get(userId) ?? 1,
-        status: row.revertedAt ? "resolved" : "open",
-      }));
+        status: openRow ? "open" : "resolved",
+      });
+    });
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to load moderator students."
@@ -2178,6 +2206,13 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
       APPWRITE_CONFIG.tables.liveSessions,
       [Query.orderAsc("scheduledAt")]
     );
+    const rsvpRows = await listRowsByFieldValues<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.sessionRsvps,
+      "sessionId",
+      sessions.map((session) => session.$id)
+    );
+    const rsvpCountBySessionId = buildRsvpCountBySessionId(rsvpRows);
 
     const activeSessions = sessions.filter((session) => session.status === "live").length;
     const scheduledSessions = sessions.filter(
@@ -2189,13 +2224,8 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
         (!session.recordingUrl || String(session.recordingUrl).trim().length === 0)
     ).length;
 
-    const upcoming = sessions
+    const upcoming = sortLiveSessionsForDashboard(sessions)
       .filter((session) => session.status === "scheduled" || session.status === "live")
-      .sort((left, right) => {
-        const leftDate = toDate(left.scheduledAt)?.getTime() ?? 0;
-        const rightDate = toDate(right.scheduledAt)?.getTime() ?? 0;
-        return leftDate - rightDate;
-      })
       .slice(0, 8)
       .map((session) => ({
         id: session.$id,
@@ -2207,7 +2237,7 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
           typeof session.scheduledAt === "string" ? session.scheduledAt : null,
         streamUrl: getSafeHttpUrl(session.streamId),
         recordingUrl: getSafeHttpUrl(session.recordingUrl),
-        rsvpCount: 0,
+        rsvpCount: rsvpCountBySessionId.get(session.$id) ?? 0,
       }));
 
     return {
@@ -2244,9 +2274,16 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
     const openEscalations = rows.filter(
       (row) => row.action === "flag" && !row.revertedAt
     ).length;
-    const activeTimeouts = rows.filter(
-      (row) => row.action === "timeout" && !row.revertedAt
-    ).length;
+    const activeTimeouts = new Set(
+      rows
+        .filter(
+          (row) =>
+            row.action === "timeout" &&
+            !row.revertedAt &&
+            typeof row.targetUserId === "string"
+        )
+        .map((row) => String(row.targetUserId))
+    ).size;
 
     const escalationItems = rows
       .filter((row) => row.action === "flag" && !row.revertedAt)
