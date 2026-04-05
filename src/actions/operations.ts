@@ -168,6 +168,19 @@ function normalizeDateTime(value: string | undefined): string {
   return parsed.toISOString();
 }
 
+function normalizeJsonPayload(value: string | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) {
+    return "";
+  }
+
+  try {
+    return JSON.stringify(JSON.parse(trimmed));
+  } catch {
+    return null;
+  }
+}
+
 type CourseRowLike = {
   $id: string;
   instructorId?: string;
@@ -281,6 +294,8 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
   });
 
   revalidatePath("/admin/courses");
+  revalidatePath("/admin");
+  revalidatePath("/instructor");
   revalidatePath("/courses");
   revalidatePath("/");
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
@@ -784,6 +799,12 @@ export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
     return;
   }
 
+  const normalizedPayload = normalizeJsonPayload(parsed.data.payload);
+  if (normalizedPayload === null) {
+    console.error("[Marketing] Invalid JSON payload submitted for site copy.");
+    return;
+  }
+
   const { tablesDB } = await createAdminClient();
   const now = new Date().toISOString();
 
@@ -803,7 +824,7 @@ export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
       data: {
         title: parsed.data.title,
         body: parsed.data.body,
-        payload: parsed.data.payload,
+        payload: normalizedPayload,
         updatedAt: now,
         isPublished: parsed.data.isPublished,
       },
@@ -817,7 +838,7 @@ export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
         key: parsed.data.key,
         title: parsed.data.title,
         body: parsed.data.body,
-        payload: parsed.data.payload,
+        payload: normalizedPayload,
         updatedAt: now,
         isPublished: parsed.data.isPublished,
       },

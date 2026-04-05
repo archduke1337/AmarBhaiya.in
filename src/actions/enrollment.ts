@@ -490,6 +490,12 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
 
     revalidatePath("/admin/students");
     revalidatePath("/admin/courses");
+    revalidatePath("/app/courses");
+    revalidatePath("/app/dashboard");
+    const course = await getCourseRow(courseId);
+    revalidateEach(
+      getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+    );
   } catch (error) {
     console.error("[Admin Enroll]", error instanceof Error ? error.message : error);
   }
@@ -547,6 +553,7 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
       revalidatePath(`/admin/students/${userId}`);
     }
     if (courseId) {
+      revalidatePath("/app/courses");
       const course = await getCourseRow(courseId);
       revalidateEach(
         getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")

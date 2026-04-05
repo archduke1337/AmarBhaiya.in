@@ -5,11 +5,13 @@ import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import {
+  getCourseRow,
   userCanManageCourse,
   userHasCourseAccess,
 } from "@/lib/appwrite/access";
 import { createNotificationEntry } from "@/actions/notifications";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import {
   listAllRows,
   type AnyAppwriteRow,
@@ -21,6 +23,7 @@ import {
   ASSIGNMENT_SUBMISSION_MAX_BYTES,
   getAssignmentSubmissionFileExtension,
 } from "@/lib/uploads/assignment-submission";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
 import { processInBatches } from "@/lib/utils/batch";
@@ -246,38 +249,47 @@ export async function deleteAssignmentAction(
       APPWRITE_CONFIG.tables.submissions,
       [Query.equal("assignmentId", [assignmentId])]
     );
-
-    await processInBatches(submissionRows, 25, async (submission) => {
-      const fileId = String(submission.fileId ?? "");
-      if (fileId) {
-        try {
-          await storage.deleteFile({
+    const deleted = await executeDeletePlan({
+      tablesDB,
+      storage,
+      plan: {
+        stagedDeletes: [
+          ...submissionRows.map((submission) => ({
+            tableId: APPWRITE_CONFIG.tables.submissions,
+            rowId: submission.$id,
+          })),
+          {
+            tableId: APPWRITE_CONFIG.tables.assignments,
+            rowId: assignmentId,
+          },
+        ],
+        fileDeletes: [
+          {
             bucketId: APPWRITE_CONFIG.buckets.courseResources,
-            fileId,
-          });
-        } catch {
-          // Continue deleting the row even if file cleanup fails.
-        }
-      }
-
-      await tablesDB.deleteRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.submissions,
-        rowId: submission.$id,
-      });
+            fileIds: submissionRows
+              .map((submission) => String(submission.fileId ?? ""))
+              .filter(Boolean),
+          },
+        ],
+      },
+      label: `assignment ${assignmentId}`,
     });
-
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.assignments,
-      rowId: assignmentId,
-    });
+    if (!deleted) return;
 
     revalidatePath("/instructor");
     revalidatePath("/instructor/submissions");
     revalidatePath("/app/assignments");
     revalidatePath("/app/dashboard");
     revalidatePath(`/instructor/courses/${String(assignment.courseId ?? "")}/curriculum`);
+    const course = await getCourseRow(String(assignment.courseId ?? ""));
+    if (course) {
+      for (const path of getCourseDetailPaths(
+        String(assignment.courseId ?? ""),
+        typeof course.slug === "string" ? course.slug : ""
+      )) {
+        revalidatePath(path);
+      }
+    }
     if (String(assignment.lessonId ?? "")) {
       revalidatePath(
         `/app/learn/${String(assignment.courseId ?? "")}/${String(assignment.lessonId ?? "")}`
