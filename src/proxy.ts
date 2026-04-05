@@ -101,13 +101,16 @@ export async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const isLoggedIn = hasSessionSecret
-      ? await validateAppwriteSessionSecret(sessionSecret)
-      : false;
+    const isLoggedIn = hasSessionSecret;
 
     const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
     if (isAuthRoute) {
-      if (isLoggedIn) {
+      if (hasSessionSecret) {
+        const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
+        if (!isValidSession) {
+          return NextResponse.next();
+        }
+
         const redirectTarget = request.nextUrl.searchParams.get("redirect");
         if (
           typeof redirectTarget === "string" &&
@@ -146,9 +149,7 @@ export async function proxy(request: NextRequest) {
   // ── Protected routes → redirect to login if not authenticated ─────────
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
-  const isLoggedIn = hasSessionSecret && (isProtected || isAuthRoute)
-    ? await validateAppwriteSessionSecret(sessionSecret)
-    : false;
+  const isLoggedIn = hasSessionSecret;
 
   if (isProtected && !isLoggedIn) {
     const loginUrl = new URL("/login", request.url);
@@ -157,7 +158,12 @@ export async function proxy(request: NextRequest) {
   }
 
   // ── Auth routes → redirect to dashboard if already logged in ──────────
-  if (isAuthRoute && isLoggedIn) {
+  if (isAuthRoute && hasSessionSecret) {
+    const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
+    if (!isValidSession) {
+      return NextResponse.next();
+    }
+
     return NextResponse.redirect(new URL("/app/dashboard", request.url));
   }
 
