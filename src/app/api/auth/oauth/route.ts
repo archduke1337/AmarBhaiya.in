@@ -1,8 +1,7 @@
-import { Account, Client } from "node-appwrite";
 import { NextRequest, NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { buildSessionCookieOptions } from "@/lib/appwrite/session-cookie";
+import { createAdminClient } from "@/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -31,12 +30,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const client = new Client()
-      .setEndpoint(APPWRITE_CONFIG.endpoint)
-      .setProject(APPWRITE_CONFIG.projectId);
-
-    const account = new Account(client);
+    const { account } = await createAdminClient();
     const session = await account.createSession({ userId, secret });
+
+    if (!session.secret) {
+      return createLoginRedirect(request, "oauth_callback_failed");
+    }
 
     const response = NextResponse.redirect(
       new URL(getSafeRedirectPath(request), request.url)

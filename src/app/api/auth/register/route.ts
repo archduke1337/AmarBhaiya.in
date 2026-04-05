@@ -3,7 +3,10 @@ import { NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { buildSessionCookieOptions } from "@/lib/appwrite/session-cookie";
-import { createPublicClient } from "@/lib/appwrite/server";
+import {
+  createAdminClient,
+  createPublicClient,
+} from "@/lib/appwrite/server";
 import { registerSchema } from "@/lib/validators/auth";
 
 export const runtime = "nodejs";
@@ -34,19 +37,24 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { account } = await createPublicClient();
+    const { account: publicAccount } = await createPublicClient();
 
-    await account.create({
+    await publicAccount.create({
       userId: ID.unique(),
       email: parsed.data.email,
       password: parsed.data.password,
       name: parsed.data.name,
     });
 
+    const { account } = await createAdminClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
     });
+
+    if (!session.secret) {
+      throw new Error("Missing Appwrite session secret.");
+    }
 
     const response = NextResponse.json({ success: true });
     setSessionCookie(request, response, session.secret, session.expire);

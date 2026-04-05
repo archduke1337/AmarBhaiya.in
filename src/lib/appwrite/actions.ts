@@ -4,6 +4,7 @@ import { ID } from "node-appwrite";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
+  createAdminClient,
   createPublicClient,
   createSessionClient,
 } from "./server";
@@ -41,11 +42,15 @@ export async function loginAction(data: LoginInput): Promise<ActionResult> {
   }
 
   try {
-    const { account } = await createPublicClient();
+    const { account } = await createAdminClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
     });
+
+    if (!session.secret) {
+      throw new Error("Missing Appwrite session secret.");
+    }
 
     // Set session cookie
     const cookieStore = await cookies();
@@ -76,10 +81,10 @@ export async function registerAction(data: RegisterInput): Promise<ActionResult>
   }
 
   try {
-    const { account } = await createPublicClient();
+    const { account: publicAccount } = await createPublicClient();
 
     // Create user account
-    await account.create({
+    await publicAccount.create({
       userId: ID.unique(),
       email: parsed.data.email,
       password: parsed.data.password,
@@ -87,10 +92,15 @@ export async function registerAction(data: RegisterInput): Promise<ActionResult>
     });
 
     // Auto-login after registration
+    const { account } = await createAdminClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
     });
+
+    if (!session.secret) {
+      throw new Error("Missing Appwrite session secret.");
+    }
 
     const cookieStore = await cookies();
     cookieStore.set(

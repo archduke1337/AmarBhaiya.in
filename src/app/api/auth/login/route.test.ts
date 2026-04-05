@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 
-const { createPublicClientMock } = vi.hoisted(() => ({
-  createPublicClientMock: vi.fn(),
+const { createAdminClientMock } = vi.hoisted(() => ({
+  createAdminClientMock: vi.fn(),
 }));
 
 vi.mock("@/lib/appwrite/server", () => ({
-  createPublicClient: createPublicClientMock,
+  createAdminClient: createAdminClientMock,
 }));
 
 import { POST } from "./route";
@@ -17,8 +17,9 @@ describe("POST /api/auth/login", () => {
 
   beforeEach(() => {
     createEmailPasswordSessionMock.mockReset();
+    createAdminClientMock.mockReset();
 
-    createPublicClientMock.mockResolvedValue({
+    createAdminClientMock.mockResolvedValue({
       account: {
         createEmailPasswordSession: createEmailPasswordSessionMock,
       },
@@ -37,7 +38,7 @@ describe("POST /api/auth/login", () => {
 
     expect(response.status).toBe(400);
     expect(body.error).toBe("Please enter a valid email address.");
-    expect(createPublicClientMock).not.toHaveBeenCalled();
+    expect(createAdminClientMock).not.toHaveBeenCalled();
   });
 
   it("creates session, sets cookie, and returns success", async () => {
@@ -66,6 +67,28 @@ describe("POST /api/auth/login", () => {
       password: "password123",
     });
     expect(setCookie).toContain(`${APPWRITE_CONFIG.sessionCookieName}=session-secret`);
+  });
+
+  it("returns 500 if Appwrite does not provide a session secret", async () => {
+    createEmailPasswordSessionMock.mockResolvedValue({
+      secret: "",
+      expire: "2030-01-01T00:00:00.000Z",
+    });
+
+    const request = new Request("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email: "user@example.com",
+        password: "password123",
+      }),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toEqual({ error: "Login failed. Please try again." });
   });
 
   it("maps invalid credential errors to 401", async () => {
