@@ -27,7 +27,7 @@ export function Footer() {
           <div className="md:col-span-2 space-y-4">
             <Link href="/" className="inline-flex items-center" aria-label="Amar Bhaiya home">
               <Image
-                src="/AMAR%20BHAIYA.png"
+                src="/AMAR_BHAIYA.png"
                 alt="Amar Bhaiya"
                 width={220}
                 height={74}

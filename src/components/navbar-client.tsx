@@ -77,7 +77,7 @@ export function NavbarClient({
             aria-label="Amar Bhaiya home"
           >
             <Image
-              src="/AMAR%20BHAIYA.png"
+              src="/AMAR_BHAIYA.png"
               alt="Amar Bhaiya"
               width={180}
               height={60}
