@@ -19,6 +19,8 @@ import {
   StatGrid,
   ActivityFeed,
 } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Button } from "@/components/ui/button";
 
 export default async function ModeratorDashboardPage() {
   const [stats, reports, communityData] = await Promise.all([
@@ -37,19 +39,18 @@ export default async function ModeratorDashboardPage() {
         title="Moderation Dashboard"
         description="Monitor flagged content, manage user behavior, and keep the community healthy."
         actions={
-          <Link
-            href="/moderator/reports"
-            className={`inline-flex h-9 items-center gap-2 px-4 text-sm transition-colors ${
-              pendingReports.length > 0
-                ? "bg-foreground text-background hover:opacity-90"
-                : "border border-border hover:bg-muted"
-            }`}
+          <Button
+            asChild
+            variant={pendingReports.length > 0 ? "default" : "outline"}
+            size="sm"
           >
-            <Flag className="size-4" />
-            {pendingReports.length > 0
-              ? `Review ${pendingReports.length} Reports`
-              : "View Reports"}
-          </Link>
+            <Link href="/moderator/reports">
+              <Flag className="size-4" />
+              {pendingReports.length > 0
+                ? `Review ${pendingReports.length} Reports`
+                : "View Reports"}
+            </Link>
+          </Button>
         }
       />
 
@@ -133,8 +134,8 @@ export default async function ModeratorDashboardPage() {
           />
 
           {/* Moderation Action Breakdown */}
-          <section className="border border-border">
-            <p className="border-b border-border px-5 py-3 text-sm font-medium">
+          <RetroPanel tone="secondary" className="overflow-hidden p-0">
+            <p className="border-b border-border px-5 py-3 font-heading text-sm font-black uppercase tracking-[0.16em]">
               Action Breakdown
             </p>
             <div className="flex flex-col divide-y divide-border">
@@ -152,11 +153,11 @@ export default async function ModeratorDashboardPage() {
                 </div>
               ))}
             </div>
-          </section>
+          </RetroPanel>
 
           {/* Quick navigation */}
-          <nav className="border border-border">
-            <p className="border-b border-border px-5 py-3 text-sm font-medium">
+          <RetroPanel tone="accent" className="overflow-hidden p-0">
+            <p className="border-b border-border px-5 py-3 font-heading text-sm font-black uppercase tracking-[0.16em]">
               Quick Navigation
             </p>
             <div className="flex flex-col divide-y divide-border">
@@ -190,7 +191,7 @@ export default async function ModeratorDashboardPage() {
                 </Link>
               ))}
             </div>
-          </nav>
+          </RetroPanel>
         </aside>
       </div>
     </div>

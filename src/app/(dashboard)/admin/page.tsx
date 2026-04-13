@@ -31,6 +31,8 @@ import {
   StatGrid,
   ActivityFeed,
 } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Button } from "@/components/ui/button";
 
 export default async function AdminDashboardPage() {
   const [stats, payments, liveData, moderationData, auditLogs] = await Promise.all([
@@ -65,13 +67,12 @@ export default async function AdminDashboardPage() {
         title="Platform Control Center"
         description="System-wide overview of users, revenue, content, and platform health."
         actions={
-          <Link
-            href="/admin/marketing"
-            className="inline-flex h-9 items-center gap-2 border border-border px-4 text-sm transition-colors hover:bg-muted"
-          >
-            <TrendingUp className="size-4" />
-            Marketing CMS
-          </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/marketing">
+              <TrendingUp className="size-4" />
+              Marketing CMS
+            </Link>
+          </Button>
         }
       />
 
@@ -104,51 +105,74 @@ export default async function AdminDashboardPage() {
       </StatGrid>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="border border-border p-4">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Courses</p>
-          <p className="text-2xl tabular-nums">{stats.totalCourses}</p>
-          <p className="text-[10px] text-muted-foreground">{stats.publishedCourses} published</p>
-        </div>
-        <div className="border border-border p-4">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Published</p>
-          <p className="text-2xl tabular-nums">{stats.publishedCourses}</p>
-          <p className="text-[10px] text-muted-foreground">of {stats.totalCourses} total</p>
-        </div>
-        <div className="border border-border p-4">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Completion Rate</p>
-          <p className="text-2xl tabular-nums">{stats.completionRate}%</p>
-          <p className="text-[10px] text-muted-foreground">enrolled → completed</p>
-        </div>
-        <div className="border border-border p-4">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Revenue</p>
-          <p className="text-2xl tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
-          <p className="text-[10px] text-muted-foreground">all time</p>
-        </div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[
+          {
+            label: "Total Courses",
+            value: stats.totalCourses,
+            note: `${stats.publishedCourses} published`,
+            tone: "secondary" as const,
+          },
+          {
+            label: "Published",
+            value: stats.publishedCourses,
+            note: `of ${stats.totalCourses} total`,
+            tone: "accent" as const,
+          },
+          {
+            label: "Completion Rate",
+            value: `${stats.completionRate}%`,
+            note: "enrolled → completed",
+            tone: "card" as const,
+          },
+          {
+            label: "Total Revenue",
+            value: formatCurrency(stats.totalRevenue),
+            note: "all time",
+            tone: "muted" as const,
+          },
+        ].map((item) => (
+          <RetroPanel key={item.label} tone={item.tone} className="space-y-1">
+            <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+              {item.label}
+            </p>
+            <p className="font-heading text-3xl font-black tracking-[-0.05em] tabular-nums">
+              {item.value}
+            </p>
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              {item.note}
+            </p>
+          </RetroPanel>
+        ))}
       </div>
 
       {/* Alerts & Quick Navigation */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Quick Actions — takes 2 cols */}
         <section className="flex flex-col gap-4 lg:col-span-2">
-          <h2 className="text-lg font-medium">Quick Actions</h2>
+          <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Quick Actions</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {quickActions.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
-                className="group flex items-start gap-4 border border-border p-4 transition-colors hover:border-foreground/20"
+                className="group"
               >
-                <div className="rounded-md border border-border p-2 text-muted-foreground transition-colors group-hover:text-foreground">
-                  <action.icon className="size-4" />
-                </div>
-                <div className="flex flex-1 flex-col gap-0.5">
-                  <span className="text-sm font-medium">{action.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {action.description}
-                  </span>
-                </div>
-                <ArrowRight className="mt-0.5 size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                <RetroPanel
+                  tone={action.href === "/admin/moderation" ? "secondary" : action.href === "/admin/payments" ? "accent" : "card"}
+                  className="flex items-start gap-4 transition-transform group-hover:-translate-y-1"
+                >
+                  <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card p-2 text-muted-foreground shadow-retro-sm transition-colors group-hover:text-foreground">
+                    <action.icon className="size-4" />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="font-heading text-lg font-black tracking-[-0.03em]">{action.label}</span>
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                      {action.description}
+                    </span>
+                  </div>
+                  <ArrowRight className="mt-0.5 size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </RetroPanel>
               </Link>
             ))}
           </div>
@@ -193,8 +217,8 @@ export default async function AdminDashboardPage() {
             }))}
           />
 
-          <div className="border border-border p-4">
-            <p className="mb-2 text-xs uppercase tracking-[0.15em] text-muted-foreground">
+          <RetroPanel tone="accent" className="space-y-3">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.15em] text-muted-foreground">
               Platform at a Glance
             </p>
             <dl className="flex flex-col gap-2 text-sm">
@@ -211,7 +235,7 @@ export default async function AdminDashboardPage() {
                 <dd className="tabular-nums">Appwrite TablesDB</dd>
               </div>
             </dl>
-          </div>
+          </RetroPanel>
         </aside>
       </div>
     </div>

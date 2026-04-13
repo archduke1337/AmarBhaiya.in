@@ -70,7 +70,7 @@ export function ContactForm() {
   }
 
   return (
-    <RetroPanel asChild tone="card" size="lg">
+    <RetroPanel tone="card" size="lg">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
