@@ -1,7 +1,20 @@
 import type { Metadata } from "next";
+import { Bricolage_Grotesque, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipLink } from "@/components/skip-link";
+
+const bodyFont = Source_Sans_3({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const displayFont = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -50,7 +63,7 @@ export default function RootLayout({
   return (
     <html
       lang="en-IN"
-      className="h-full antialiased font-sans"
+      className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased font-sans`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">

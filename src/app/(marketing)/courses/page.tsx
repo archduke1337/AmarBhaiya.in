@@ -53,6 +53,7 @@ export default async function CoursesPage({
           eyebrow="Course catalogue"
           title="Choose the next skill that will actually change your week."
           description="These courses are built for action, not shelf value. Less inflated curriculum. More direct movement from lesson to result."
+          titleAs="h1"
         />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:translate-y-8">

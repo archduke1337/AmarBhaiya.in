@@ -24,6 +24,7 @@ export default async function ContactPage() {
             eyebrow="Contact"
             title="Bring us the real question, not just the headline."
             description="Whether this is a support issue, a partnership idea, or a course decision, we want the context behind it so we can reply like humans who actually read the message."
+            titleAs="h1"
           />
 
           <RetroPanel tone="secondary" size="lg" className="space-y-5">

@@ -42,6 +42,13 @@
   --sidebar-border: #000000;
   --sidebar-ring: #000000;
 
+  --surface-card: #fffdf9;
+  --surface-muted: #f3e4e4;
+  --surface-secondary: #f4dfa0;
+  --surface-accent: #e1edf4;
+  --surface-primary: #f1d5db;
+  --surface-ink: #f3ede7;
+
   --retro-shadow-sm: 2px 2px 0px #000000;
   --retro-shadow-md: 4px 4px 0px #000000;
   --retro-shadow-lg: 6px 6px 0px #000000;
@@ -83,6 +90,13 @@
   --sidebar-accent-foreground: #000000;
   --sidebar-border: #2a2a2a;
   --sidebar-ring: #f07200;
+
+  --surface-card: #1d1917;
+  --surface-muted: #2b211d;
+  --surface-secondary: #4a351f;
+  --surface-accent: #26323a;
+  --surface-primary: #4a252d;
+  --surface-ink: #161311;
 }
 
 @theme inline {
@@ -122,8 +136,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: "Trebuchet MS", "Verdana", "Segoe UI", sans-serif;
-  --font-heading: "Arial Black", "Trebuchet MS", sans-serif;
+  --font-sans: var(--font-body), "Segoe UI", sans-serif;
+  --font-heading: var(--font-display), "Trebuchet MS", sans-serif;
   --font-mono: "Courier New", monospace;
 
   --radius-sm: calc(var(--radius) * 0.7);
@@ -171,6 +185,7 @@
     @apply bg-background text-foreground;
     min-height: 100%;
     font-feature-settings: "ss01" 1;
+    text-wrap: pretty;
   }
 
   h1,

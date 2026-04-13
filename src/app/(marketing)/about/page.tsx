@@ -20,6 +20,7 @@ export default async function AboutPage() {
           eyebrow="About"
           title="Built for students who want fewer speeches and more signal."
           description="amarbhaiya.in exists to reduce confusion. The point is not to look impressive from a distance. The point is to make the next move clearer when you are in the middle of real decisions."
+          titleAs="h1"
         />
         <RetroPanel tone="accent" size="lg" className="space-y-4 xl:translate-y-8">
           <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
@@ -102,7 +103,7 @@ export default async function AboutPage() {
           <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-primary-foreground/80">
             Mission
           </p>
-          <p className="text-2xl font-bold leading-9 tracking-[-0.04em] text-primary-foreground md:text-3xl md:leading-10">
+          <p className="text-2xl font-bold leading-9 tracking-[-0.04em] text-foreground md:text-3xl md:leading-10">
             {aboutContent.mission || "Mission content is not configured yet."}
           </p>
         </RetroPanel>

@@ -1,15 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight, Mail, MessageSquare, PlayCircle } from "lucide-react";
 
-import { OWNER } from "@/lib/utils/constants";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { OWNER, PUBLIC_NAV_ITEMS } from "@/lib/utils/constants";
 
 export function Footer() {
-  const platformLinks = [
-    { label: "Courses", href: "/courses" },
-    { label: "Blog", href: "/blog" },
-    { label: "Contact", href: "/contact" },
-    { label: "Login", href: "/login" },
-  ];
+  const platformLinks = PUBLIC_NAV_ITEMS.filter((item) => item.href !== "/");
 
   const socialLinks = [
     { label: "YouTube", href: OWNER.social.youtube },
@@ -19,68 +18,118 @@ export function Footer() {
   ];
 
   return (
-    <footer className="mt-12 border-t bg-background px-4 pb-6 pt-4 md:px-6">
+    <footer className="mt-16 px-4 pb-8 pt-2 md:px-6">
       <div className="mx-auto flex max-w-7xl flex-col gap-4">
-        <div className="retro-surface grid gap-6 bg-card p-6 md:grid-cols-[1.35fr_0.75fr_0.75fr]">
-          <div className="retro-dot rounded-[calc(var(--radius)+2px)] border-2 border-border bg-secondary p-5 shadow-retro-sm">
-            <Link href="/" className="inline-flex items-center" aria-label="Amar Bhaiya home">
-              <Image
-                src="/AMAR%20BHAIYA.png"
-                alt="Amar Bhaiya"
-                width={220}
-                height={74}
-                className="h-12 w-auto object-contain"
-              />
+        <RetroPanel tone="card" size="lg" className="space-y-6">
+          <div className="grid gap-5 xl:grid-cols-[1.2fr_0.9fr_0.8fr_0.9fr]">
+            <RetroPanel tone="secondary" className="space-y-4">
+              <Link href="/" className="inline-flex items-center" aria-label="Amar Bhaiya home">
+                <Image
+                  src="/AMAR%20BHAIYA.png"
+                  alt="Amar Bhaiya"
+                  width={220}
+                  height={74}
+                  className="h-12 w-auto object-contain"
+                />
+              </Link>
+              <p className="max-w-sm text-sm font-medium leading-7 text-foreground/80">
+                Practical learning for school, college, and early-career
+                transitions across coding, fitness, academics, and career
+                direction.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">Courses</Badge>
+                <Badge variant="outline">Live sessions</Badge>
+                <Badge variant="outline">Community</Badge>
+              </div>
+            </RetroPanel>
+
+            <RetroPanel tone="accent" className="space-y-4">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Explore
+              </p>
+              <div className="flex flex-col gap-3">
+                {platformLinks.map((link) => (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    className="inline-flex items-center justify-between gap-3 text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                  >
+                    {link.label}
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                ))}
+              </div>
+            </RetroPanel>
+
+            <RetroPanel tone="muted" className="space-y-4">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Contact
+              </p>
+              <a
+                href={`mailto:${OWNER.email}`}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-primary"
+              >
+                <Mail className="size-4" />
+                {OWNER.email}
+              </a>
+              <div className="flex flex-col gap-3">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </RetroPanel>
+
+            <RetroPanel tone="card" className="space-y-4">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Need a starting point?
+              </p>
+              <p className="text-sm font-medium leading-7 text-foreground/80">
+                Browse the course catalogue or send a message if you want help
+                choosing where to begin.
+              </p>
+              <div className="grid gap-3">
+                <Button asChild variant="secondary">
+                  <Link href="/courses">
+                    <PlayCircle className="size-4" />
+                    Browse courses
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/contact">
+                    <MessageSquare className="size-4" />
+                    Contact us
+                  </Link>
+                </Button>
+              </div>
+            </RetroPanel>
+          </div>
+        </RetroPanel>
+
+        <RetroPanel tone="muted" className="flex flex-col items-center justify-between gap-4 md:flex-row">
+          <span className="font-heading text-[0.72rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+            © {new Date().getFullYear()} amarbhaiya.in
+          </span>
+          <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:justify-end">
+            <Link href="/contact" className="transition-colors hover:text-foreground">
+              Privacy
             </Link>
-            <p className="mt-4 max-w-sm text-sm font-semibold leading-relaxed text-secondary-foreground/80">
-              School se college tak — coding, fitness, career, aur life skills.
-              Bina kisi gatekeeping ke. Seedha, practical, kaam ka content.
-            </p>
+            <Link href="/contact" className="transition-colors hover:text-foreground">
+              Terms
+            </Link>
+            <Link href="/contact" className="transition-colors hover:text-foreground">
+              Refund policy
+            </Link>
           </div>
-
-          <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-accent p-5 shadow-retro-sm">
-            <h4 className="font-heading text-xs uppercase tracking-[0.16em] text-accent-foreground/70">Platform</h4>
-            <div className="mt-4 flex flex-col gap-3">
-              {platformLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className="block text-sm font-semibold text-accent-foreground transition-colors hover:text-primary"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-muted p-5 shadow-retro-sm">
-            <h4 className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground">Connect</h4>
-            <div className="mt-4 flex flex-col gap-3">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block text-sm font-semibold text-foreground transition-colors hover:text-primary"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="retro-surface flex flex-col items-center justify-between gap-4 bg-card px-5 py-4 md:flex-row">
-        <span className="font-heading text-xs uppercase tracking-[0.14em] text-muted-foreground">
-          © {new Date().getFullYear()} amarbhaiya.in
-        </span>
-        <div className="flex flex-wrap gap-4 text-xs font-semibold text-muted-foreground">
-          <Link href="/contact" className="hover:text-foreground transition-colors">Privacy</Link>
-          <Link href="/contact" className="hover:text-foreground transition-colors">Terms</Link>
-          <Link href="/contact" className="hover:text-foreground transition-colors">Refund Policy</Link>
-        </div>
-        </div>
+        </RetroPanel>
       </div>
     </footer>
   );

@@ -3,11 +3,12 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const toneClasses = {
-  card: "bg-card text-card-foreground",
-  accent: "bg-accent text-accent-foreground",
-  secondary: "bg-secondary text-secondary-foreground",
-  muted: "bg-muted text-foreground",
-  primary: "bg-primary text-primary-foreground",
+  card: "bg-[color:var(--surface-card)] text-card-foreground",
+  accent: "bg-[color:var(--surface-accent)] text-foreground",
+  secondary: "bg-[color:var(--surface-secondary)] text-foreground",
+  muted: "bg-[color:var(--surface-muted)] text-foreground",
+  primary: "bg-[color:var(--surface-primary)] text-foreground",
+  brand: "bg-primary text-primary-foreground",
 } as const
 
 type RetroPanelProps = React.ComponentProps<"div"> & {

@@ -8,6 +8,7 @@ type SectionHeadingProps = {
   description?: string
   align?: "left" | "center"
   className?: string
+  titleAs?: "h1" | "h2" | "h3"
 }
 
 function SectionHeading({
@@ -16,8 +17,10 @@ function SectionHeading({
   description,
   align = "left",
   className,
+  titleAs = "h2",
 }: SectionHeadingProps) {
   const centered = align === "center"
+  const TitleTag = titleAs
 
   return (
     <div
@@ -32,14 +35,14 @@ function SectionHeading({
           {eyebrow}
         </p>
       ) : null}
-      <h1
+      <TitleTag
         className={cn(
           "font-heading text-4xl leading-[0.94] font-black tracking-[-0.06em] text-balance md:text-6xl",
           centered ? "mx-auto" : ""
         )}
       >
         {title}
-      </h1>
+      </TitleTag>
       {description ? (
         <p
           className={cn(

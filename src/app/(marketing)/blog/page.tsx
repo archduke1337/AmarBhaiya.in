@@ -34,6 +34,7 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
           eyebrow="Blog"
           title="Notes from the learning trenches."
           description="Writing for students and early builders who want frameworks they can apply this week, not abstract motivation that fades by tomorrow."
+          titleAs="h1"
         />
         <RetroPanel tone="secondary" size="lg" className="space-y-4 xl:translate-y-8">
           <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
