@@ -42,10 +42,6 @@ export function NavbarClient({
   }, []);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
     if (!mobileOpen || !mobileMenuRef.current) {
       return;
     }
@@ -186,6 +182,7 @@ export function NavbarClient({
                 <Link
                   key={link.label}
                   href={link.href}
+                  onClick={() => setMobileOpen(false)}
                   className={`rounded-[calc(var(--radius)+2px)] border-2 px-4 py-3 font-heading text-base font-black uppercase tracking-[0.08em] ${
                     isActive(link.href)
                       ? "border-border bg-[color:var(--surface-secondary)] text-foreground shadow-retro-sm"
@@ -200,7 +197,9 @@ export function NavbarClient({
                 {isAuthenticated ? (
                   <>
                     <Button asChild variant="secondary">
-                      <Link href={dashboardHref}>Open dashboard</Link>
+                      <Link href={dashboardHref} onClick={() => setMobileOpen(false)}>
+                        Open dashboard
+                      </Link>
                     </Button>
                     <form action={logoutAction}>
                       <Button type="submit" variant="outline" className="w-full">
@@ -211,10 +210,14 @@ export function NavbarClient({
                 ) : (
                   <>
                     <Button asChild variant="outline">
-                      <Link href="/login">Log in</Link>
+                      <Link href="/login" onClick={() => setMobileOpen(false)}>
+                        Log in
+                      </Link>
                     </Button>
                     <Button asChild>
-                      <Link href="/register">Create account</Link>
+                      <Link href="/register" onClick={() => setMobileOpen(false)}>
+                        Create account
+                      </Link>
                     </Button>
                   </>
                 )}

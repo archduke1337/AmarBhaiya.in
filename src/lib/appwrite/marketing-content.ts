@@ -111,6 +111,7 @@ export type HomeLearnItem = {
 
 export type HomeFeaturedCourseItem = {
   title: string;
+  slug: string;
   sub: string;
   level: string;
   students: string;
