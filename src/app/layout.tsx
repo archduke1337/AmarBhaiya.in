@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipLink } from "@/components/skip-link";
+import { Analytics } from "@vercel/analytics/next";
 
 const bodyFont = Source_Sans_3({
   subsets: ["latin"],
@@ -76,6 +77,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
