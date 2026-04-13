@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
 import { getPublicBlogPostBySlug } from "@/lib/appwrite/marketing-content";
 
 type PageProps = {
@@ -31,27 +35,50 @@ export default async function BlogPostPage({ params }: PageProps) {
   }
 
   return (
-    <article className="px-6 md:px-12 py-20 md:py-28">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <Link href="/blog" className="text-sm text-muted-foreground underline underline-offset-4">
-          Back to blog
-        </Link>
+    <article className="px-6 py-20 md:px-12 md:py-28">
+      <div className="mx-auto max-w-5xl space-y-8">
+        <Button asChild variant="link" size="sm">
+          <Link href="/blog">Back to blog</Link>
+        </Button>
 
-        <header className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            {post.category} - {new Date(post.publishedAt).toLocaleDateString("en-IN")} - {post.readMinutes} min
-          </p>
-          <h1 className="text-4xl md:text-5xl leading-tight">{post.title}</h1>
-          <p className="text-lg text-muted-foreground leading-relaxed">{post.excerpt}</p>
-        </header>
+        <RetroPanel tone="card" size="lg" className="space-y-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant="outline">{post.category}</Badge>
+            <Badge variant="secondary">{post.readMinutes} min read</Badge>
+            <Badge variant="ghost">{new Date(post.publishedAt).toLocaleDateString("en-IN")}</Badge>
+          </div>
 
-        <div className="border-t border-border pt-8 space-y-6">
-          {post.content.map((paragraph) => (
-            <p key={paragraph} className="text-base text-muted-foreground leading-relaxed">
-              {paragraph}
+          <div className="space-y-4">
+            <h1 className="font-heading text-4xl font-black leading-[0.94] tracking-[-0.06em] md:text-6xl">
+              {post.title}
+            </h1>
+            <p className="max-w-3xl text-lg font-medium leading-8 text-muted-foreground">
+              {post.excerpt}
             </p>
-          ))}
-        </div>
+          </div>
+
+          <RetroPanel tone="accent" className="space-y-2">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+              Why this matters
+            </p>
+            <p className="text-base font-semibold leading-7 text-foreground/85">
+              This article is written for people who need a usable mental model, not just a good sentence to remember later.
+            </p>
+          </RetroPanel>
+        </RetroPanel>
+
+        <RetroPanel tone="muted" size="lg">
+          <div className="mx-auto max-w-3xl space-y-6">
+            {post.content.map((paragraph, index) => (
+              <p
+                key={`${index}-${paragraph.slice(0, 24)}`}
+                className="text-base font-medium leading-8 text-foreground/85 md:text-lg"
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </RetroPanel>
       </div>
     </article>
   );
