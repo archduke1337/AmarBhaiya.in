@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+
 type RazorpayCheckoutProps = {
   courseId: string;
   courseTitle: string;
@@ -136,16 +138,20 @@ export function RazorpayCheckout({
   }
 
   return (
-    <div>
-      <button
+    <div className="space-y-3">
+      <Button
         onClick={handleCheckout}
         disabled={loading}
-        className="bg-foreground text-background px-6 py-3 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+        size="lg"
+        variant="secondary"
+        type="button"
       >
         {loading ? "Processing…" : `Enroll — ₹${priceInr}`}
-      </button>
+      </Button>
       {error && (
-        <p className="text-xs text-destructive mt-2">{error}</p>
+        <p className="rounded-[calc(var(--radius)+4px)] border-2 border-destructive bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
+          {error}
+        </p>
       )}
     </div>
   );

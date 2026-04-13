@@ -9,7 +9,9 @@ export default function MarketingLayout({
   return (
     <>
       <Navbar />
-      <main id="main" className="flex-1">{children}</main>
+      <main id="main" className="retro-dot flex-1 bg-background">
+        {children}
+      </main>
       <Footer />
     </>
   );
