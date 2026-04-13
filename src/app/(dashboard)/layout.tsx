@@ -12,11 +12,18 @@ export default async function DashboardLayout({
   const role = getUserRole(user);
 
   return (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[260px_1fr]">
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[280px_1fr]">
       <Sidebar role={role} userId={user.$id} />
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-background">
         <DashboardHeader userName={user.name} userEmail={user.email} role={role} />
-        <main id="main" className="px-6 py-8 md:px-8 md:py-10">{children}</main>
+        <main
+          id="main"
+          className="px-4 py-6 md:px-6 md:py-8 lg:px-8"
+        >
+          <div className="retro-grid">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

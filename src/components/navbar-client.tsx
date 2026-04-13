@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { LayoutDashboard, Menu, X } from "lucide-react";
 
 import { logoutAction } from "@/lib/appwrite/actions";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 import { ThemeToggle } from "./theme-toggle";
 
@@ -64,13 +66,13 @@ export function NavbarClient({
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-background/80 backdrop-blur-md border-b border-border"
-            : "bg-transparent"
-        }`}
+        className="sticky top-0 z-50 px-3 py-3 md:px-4"
       >
-        <div className="flex items-center justify-between px-6 md:px-12 h-14">
+        <div
+          className={`retro-surface mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6 ${
+            scrolled ? "bg-card" : "bg-card"
+          }`}
+        >
           <Link
             href="/"
             className="inline-flex items-center"
@@ -86,12 +88,12 @@ export function NavbarClient({
             />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-10">
+          <nav className="hidden md:flex items-center gap-3">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
+                className="rounded-full border-2 border-border bg-secondary px-3 py-2 font-heading text-[0.68rem] font-black uppercase tracking-[0.14em] text-secondary-foreground shadow-retro-sm transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-accent hover:shadow-none"
               >
                 {link.label}
               </Link>
@@ -103,54 +105,49 @@ export function NavbarClient({
 
             {isAuthenticated ? (
               <>
-                <span className="text-xs uppercase tracking-widest text-muted-foreground hidden lg:inline">
+                <Badge variant="outline" className="hidden lg:inline-flex">
                   Hi {firstName || "Learner"}
-                </span>
+                </Badge>
                 <Link
                   href={dashboardHref}
-                  className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-border bg-accent px-3 py-2 font-heading text-[0.68rem] font-black uppercase tracking-[0.14em] text-accent-foreground shadow-retro-sm transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-secondary hover:shadow-none"
                 >
                   <LayoutDashboard className="size-3.5" />
                   Dashboard
                 </Link>
                 <form action={logoutAction}>
-                  <button
-                    type="submit"
-                    className="text-xs tracking-widest uppercase bg-foreground text-background px-5 py-2 hover:bg-foreground/90 transition-colors"
-                  >
+                  <Button type="submit" variant="outline" size="sm">
                     Sign out
-                  </button>
+                  </Button>
                 </form>
               </>
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
+                  className="font-heading text-[0.72rem] font-black uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Log in
                 </Link>
-                <Link
-                  href="/register"
-                  className="text-xs tracking-widest uppercase bg-foreground text-background px-5 py-2 hover:bg-foreground/90 transition-colors"
-                >
-                  Start Learning
-                </Link>
+                <Button asChild variant="default" size="sm">
+                  <Link href="/register">Start Learning</Link>
+                </Button>
               </>
             )}
           </div>
 
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
-            <button
+            <Button
               ref={menuButtonRef}
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              variant="secondary"
+              size="icon-sm"
               aria-label="Toggle menu"
               aria-expanded={mobileOpen}
             >
               {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -162,57 +159,48 @@ export function NavbarClient({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 bg-background pt-14"
+            className="fixed inset-x-3 top-24 z-40 retro-surface bg-card p-5"
             role="navigation"
             aria-label="Mobile navigation"
           >
-            <nav className="flex flex-col items-start px-6 py-8 gap-6">
+            <nav className="flex flex-col items-start gap-4">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-2xl font-light tracking-tight text-muted-foreground hover:text-foreground transition-colors"
+                  className="w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-secondary px-4 py-3 font-heading text-lg font-black uppercase tracking-[0.08em] text-secondary-foreground shadow-retro-sm transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-accent hover:shadow-none"
                 >
                   {link.label}
                 </Link>
               ))}
 
-              <div className="border-t border-border w-full pt-6 mt-4 flex flex-col gap-4">
+              <div className="mt-2 flex w-full flex-col gap-4 border-t pt-5">
                 {isAuthenticated ? (
                   <>
-                    <Link
-                      href={dashboardHref}
-                      onClick={() => setMobileOpen(false)}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Open Dashboard
-                    </Link>
+                    <Button asChild variant="ghost">
+                      <Link href={dashboardHref} onClick={() => setMobileOpen(false)}>
+                        Open Dashboard
+                      </Link>
+                    </Button>
                     <form action={logoutAction}>
-                      <button
-                        type="submit"
-                        className="inline-block bg-foreground text-background px-6 py-3 text-sm font-medium w-fit"
-                      >
+                      <Button type="submit" variant="outline">
                         Sign out
-                      </button>
+                      </Button>
                     </form>
                   </>
                 ) : (
                   <>
-                    <Link
-                      href="/login"
-                      onClick={() => setMobileOpen(false)}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Log in
-                    </Link>
-                    <Link
-                      href="/register"
-                      onClick={() => setMobileOpen(false)}
-                      className="inline-block bg-foreground text-background px-6 py-3 text-sm font-medium w-fit"
-                    >
-                      Start Learning
-                    </Link>
+                    <Button asChild variant="ghost">
+                      <Link href="/login" onClick={() => setMobileOpen(false)}>
+                        Log in
+                      </Link>
+                    </Button>
+                    <Button asChild>
+                      <Link href="/register" onClick={() => setMobileOpen(false)}>
+                        Start Learning
+                      </Link>
+                    </Button>
                   </>
                 )}
               </div>

@@ -143,15 +143,18 @@ export function Sidebar({ role, userId }: SidebarProps) {
   const navItems = getNavItems(role, userId);
 
   return (
-    <aside className="h-full border-r border-border bg-background">
-      <div className="px-5 py-6 border-b border-border">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+    <aside className="h-full border-r bg-sidebar text-sidebar-foreground">
+      <div className="border-b bg-primary px-5 py-6 text-primary-foreground">
+        <p className="font-heading text-xs uppercase tracking-[0.22em]">
           {role}
         </p>
-        <h2 className="text-xl mt-2">Learning Hub</h2>
+        <h2 className="mt-3 text-3xl">Learning Hub</h2>
+        <p className="mt-3 max-w-[16rem] text-sm font-semibold text-primary-foreground/80">
+          Loud tools. Clear actions. Everything important in one chunky workspace.
+        </p>
       </div>
 
-      <nav className="p-3 space-y-1">
+      <nav className="flex flex-col gap-3 p-4">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = isNavItemActive(pathname, item);
@@ -161,10 +164,10 @@ export function Sidebar({ role, userId }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 text-sm transition-colors border border-transparent",
+                "flex items-center gap-3 rounded-[calc(var(--radius)+2px)] border-2 px-3 py-3 text-sm font-heading font-black uppercase tracking-[0.08em] transition-all",
                 isActive
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground hover:border-border"
+                  ? "border-border bg-accent text-accent-foreground shadow-retro"
+                  : "border-border bg-card text-sidebar-foreground shadow-retro-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-secondary hover:shadow-none"
               )}
             >
               <Icon className="size-4" />
@@ -175,11 +178,11 @@ export function Sidebar({ role, userId }: SidebarProps) {
       </nav>
 
       <div className="px-4 pt-6 pb-8">
-        <div className="border border-border p-4">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+        <div className="retro-surface bg-accent p-4">
+          <p className="font-heading text-xs uppercase tracking-[0.18em] text-accent-foreground/70">
             Workspace
           </p>
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-sm font-semibold leading-relaxed text-accent-foreground">
             {getWorkspaceCopy(role)}
           </p>
         </div>

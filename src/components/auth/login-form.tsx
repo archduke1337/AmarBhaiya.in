@@ -49,26 +49,26 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
   }
 
   return (
-    <div className="w-full max-w-[400px] animate-fade-in">
-      <div className="mb-10">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+    <div className="w-full max-w-[430px] animate-fade-in">
+      <div className="mb-8">
+        <Link href="/" className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground transition-colors">
           ← amarbhaiya.in
         </Link>
-        <h1 className="text-3xl mt-6 mb-2">Sign in</h1>
-        <p className="text-muted-foreground text-sm">
+        <h1 className="mt-6 text-5xl">Sign in</h1>
+        <p className="mt-3 text-sm font-semibold text-muted-foreground">
           Enter your credentials to continue.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-3 border border-destructive/30 bg-destructive/5 text-sm text-destructive">
+        <div className="mb-6 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground shadow-retro-sm">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="email">
             Email
           </Label>
           <Input
@@ -79,18 +79,18 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="h-11 bg-card border-border focus:border-foreground transition-colors"
+            className="bg-card"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-xs uppercase tracking-widest text-muted-foreground">
+            <Label htmlFor="password">
               Password
             </Label>
             <Link
               href={forgotPasswordHref}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs font-heading uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground transition-colors"
             >
               Forgot?
             </Link>
@@ -103,18 +103,19 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
-            className="h-11 bg-card border-border focus:border-foreground transition-colors"
+            className="bg-card"
           />
         </div>
 
         <Button
           type="submit"
           disabled={loading}
-          className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-colors cursor-pointer disabled:opacity-50"
+          className="w-full"
+          size="lg"
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <span className="h-3.5 w-3.5 border border-background/30 border-t-background animate-spin" style={{ borderRadius: "50%" }} />
+              <span className="size-3.5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
               Signing in...
             </span>
           ) : (
@@ -123,9 +124,9 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
         </Button>
       </form>
 
-      <p className="mt-8 text-center text-sm text-muted-foreground">
+      <p className="mt-8 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground shadow-retro-sm">
         Don&apos;t have an account?{" "}
-        <Link href={registerHref} className="text-foreground hover:underline">
+        <Link href={registerHref} className="font-heading uppercase tracking-[0.08em] text-foreground underline">
           Create one
         </Link>
       </p>

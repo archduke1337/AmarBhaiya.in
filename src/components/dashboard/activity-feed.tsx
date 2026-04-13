@@ -23,13 +23,13 @@ export function ActivityFeed({
   viewAllHref,
 }: ActivityFeedProps) {
   return (
-    <section className="border border-border">
-      <div className="flex items-center justify-between border-b border-border px-5 py-3">
-        <h2 className="text-sm font-medium">{title}</h2>
+    <section className="retro-surface overflow-hidden bg-card">
+      <div className="flex items-center justify-between border-b bg-secondary/75 px-5 py-3.5">
+        <h2 className="font-heading text-base font-black">{title}</h2>
         {viewAllHref && (
           <Link
             href={viewAllHref}
-            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="text-xs font-heading uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
           >
             View all →
           </Link>
@@ -37,27 +37,27 @@ export function ActivityFeed({
       </div>
       <div className="divide-y divide-border">
         {items.length === 0 && (
-          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+          <p className="px-5 py-8 text-center text-sm font-semibold text-muted-foreground">
             {emptyText}
           </p>
         )}
         {items.map((item) => {
           const content = (
-            <div className="flex items-start justify-between gap-3 px-5 py-3.5">
+            <div className="flex items-start justify-between gap-3 px-5 py-4">
               <div className="flex flex-col gap-0.5">
-                <p className="text-sm">{item.label}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-semibold">{item.label}</p>
+                <p className="text-xs font-medium text-muted-foreground">
                   {item.description}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {item.badge && (
-                  <span className="border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span className="rounded-full border-2 border-border bg-accent px-2.5 py-1 text-[0.62rem] font-heading font-black uppercase tracking-[0.14em] text-accent-foreground shadow-retro-sm">
                     {item.badge}
                   </span>
                 )}
                 {item.timestamp && (
-                  <span className="text-xs tabular-nums text-muted-foreground">
+                  <span className="text-xs font-semibold tabular-nums text-muted-foreground">
                     {item.timestamp}
                   </span>
                 )}
@@ -69,7 +69,7 @@ export function ActivityFeed({
             <Link
               key={item.id}
               href={item.href}
-              className="block transition-colors hover:bg-muted/50"
+              className="block transition-all hover:bg-accent/40"
             >
               {content}
             </Link>

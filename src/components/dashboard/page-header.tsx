@@ -12,21 +12,21 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="flex flex-col gap-1.5">
-        <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+    <section className="retro-surface flex flex-col gap-5 bg-card px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3">
+        <p className="font-heading text-xs uppercase tracking-[0.18em] text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+        <h1 className="text-4xl md:text-5xl">
           {title}
         </h1>
         {description && (
-          <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed">
+          <p className="max-w-2xl text-sm font-medium text-muted-foreground leading-relaxed">
             {description}
           </p>
         )}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-3">{actions}</div>}
     </section>
   );
 }

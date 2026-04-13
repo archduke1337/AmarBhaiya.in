@@ -15,13 +15,13 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 cursor-pointer"
+        variant="secondary"
+        size="icon-sm"
+        className="cursor-pointer"
         aria-label="Toggle theme"
         disabled
       >
-        <span className="h-4 w-4" />
+        <span className="size-4" />
       </Button>
     );
   }
@@ -30,9 +30,9 @@ export function ThemeToggle() {
 
   return (
     <Button
-      variant="ghost"
-      size="icon"
-      className="h-8 w-8 cursor-pointer hover:bg-accent transition-colors"
+      variant={isDark ? "secondary" : "ghost"}
+      size="icon-sm"
+      className="cursor-pointer"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
