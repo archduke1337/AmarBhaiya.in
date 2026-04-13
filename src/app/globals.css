@@ -253,16 +253,17 @@
     position: relative;
   }
 
-  .retro-dot::after {
-    content: "";
-    position: absolute;
-    top: -0.45rem;
-    right: -0.45rem;
-    size: 0.9rem;
-    border: 2px solid var(--border);
-    background: var(--secondary);
-    box-shadow: var(--retro-shadow-sm);
-  }
+.retro-dot::after {
+  content: "";
+  position: absolute;
+  top: -0.45rem;
+  right: -0.45rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid var(--border);
+  background: var(--secondary);
+  box-shadow: var(--retro-shadow-sm);
+}
 }
 
 body {

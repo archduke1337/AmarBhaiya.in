@@ -30,13 +30,13 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="w-full max-w-[400px] animate-fade-in">
-        <div className="mb-10">
-          <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+      <div className="w-full max-w-[430px] animate-fade-in">
+        <div className="mb-8">
+          <Link href="/login" className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground transition-colors">
             ← Back to sign in
           </Link>
-          <h1 className="text-3xl mt-6 mb-2">Check your email</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="mt-6 text-5xl">Check your email</h1>
+          <p className="mt-3 text-sm font-semibold text-muted-foreground">
             If an account exists for <span className="text-foreground">{email}</span>, 
             we&apos;ve sent a password reset link.
           </p>
@@ -45,7 +45,8 @@ export default function ForgotPasswordPage() {
         <Button
           onClick={() => { setSent(false); setEmail(""); }}
           variant="outline"
-          className="w-full h-11 border-border hover:bg-card transition-colors cursor-pointer"
+          size="lg"
+          className="w-full"
         >
           Try a different email
         </Button>
@@ -54,29 +55,26 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="w-full max-w-[400px] animate-fade-in">
-      {/* Header */}
-      <div className="mb-10">
-        <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+    <div className="w-full max-w-[430px] animate-fade-in">
+      <div className="mb-8">
+        <Link href="/login" className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground transition-colors">
           ← Back to sign in
         </Link>
-        <h1 className="text-3xl mt-6 mb-2">Reset password</h1>
-        <p className="text-muted-foreground text-sm">
+        <h1 className="mt-6 text-5xl">Reset password</h1>
+        <p className="mt-3 text-sm font-semibold text-muted-foreground">
           Enter your email and we&apos;ll send you a reset link.
         </p>
       </div>
 
-      {/* Error */}
       {error && (
-        <div className="mb-6 p-3 border border-destructive/30 bg-destructive/5 text-sm text-destructive">
+        <div className="mb-6 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground shadow-retro-sm">
           {error}
         </div>
       )}
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="email">
             Email
           </Label>
           <Input
@@ -87,18 +85,19 @@ export default function ForgotPasswordPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="h-11 bg-card border-border focus:border-foreground transition-colors"
+            className="bg-card"
           />
         </div>
 
         <Button
           type="submit"
           disabled={loading}
-          className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-colors cursor-pointer disabled:opacity-50"
+          className="w-full"
+          size="lg"
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <span className="h-3.5 w-3.5 border border-background/30 border-t-background animate-spin" style={{ borderRadius: "50%" }} />
+              <span className="size-3.5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
               Sending...
             </span>
           ) : (
@@ -107,10 +106,9 @@ export default function ForgotPasswordPage() {
         </Button>
       </form>
 
-      {/* Footer */}
-      <p className="mt-8 text-center text-sm text-muted-foreground">
+      <p className="mt-8 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground shadow-retro-sm">
         Remember your password?{" "}
-        <Link href="/login" className="text-foreground hover:underline">
+        <Link href="/login" className="font-heading uppercase tracking-[0.08em] text-foreground underline">
           Sign in
         </Link>
       </p>

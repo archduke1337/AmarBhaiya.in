@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { confirmEmailVerificationAction } from "@/actions/verification";
+import { Button } from "@/components/ui/button";
 
 type PageProps = {
   searchParams: Promise<{ userId?: string; secret?: string }>;
@@ -18,31 +19,28 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md border border-border p-8 text-center">
+    <div className="w-full max-w-md text-center">
+      <div className="retro-surface bg-card p-8">
         {result.success ? (
           <>
-            <h1 className="text-2xl font-medium">Email Verified ✓</h1>
-            <p className="mt-3 text-sm text-muted-foreground">
+            <h1 className="text-4xl">Email Verified ✓</h1>
+            <p className="mt-3 text-sm font-semibold text-muted-foreground">
               Your email has been successfully verified. You now have full access
               to all platform features.
             </p>
-            <Link
-              href="/app/dashboard"
-              className="mt-6 inline-block h-10 bg-foreground px-6 text-sm leading-10 text-background transition-opacity hover:opacity-90"
-            >
-              Go to Dashboard
-            </Link>
+            <Button asChild size="lg" className="mt-6">
+              <Link href="/app/dashboard">Go to Dashboard</Link>
+            </Button>
           </>
         ) : (
           <>
-            <h1 className="text-2xl font-medium">Verification Failed</h1>
-            <p className="mt-3 text-sm text-muted-foreground">
+            <h1 className="text-4xl">Verification Failed</h1>
+            <p className="mt-3 text-sm font-semibold text-muted-foreground">
               {result.error}
             </p>
             <Link
               href="/app/profile/edit"
-              className="mt-6 inline-block text-sm underline underline-offset-4"
+              className="mt-6 inline-block font-heading text-xs uppercase tracking-[0.16em] underline underline-offset-4"
             >
               Back to Profile
             </Link>

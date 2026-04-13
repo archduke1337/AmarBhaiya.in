@@ -130,7 +130,10 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             onCheckedChange={(v) => setConsent(v === true)}
             className="mt-0.5"
           />
-          <Label htmlFor="consent" className="cursor-pointer text-[0.68rem] leading-relaxed text-accent-foreground">
+          <Label
+            htmlFor="consent"
+            className="cursor-pointer font-sans text-[0.68rem] font-semibold normal-case tracking-normal leading-relaxed text-accent-foreground"
+          >
             I agree to the{" "}
             <Link href="/privacy" className="underline">
               Privacy Policy
