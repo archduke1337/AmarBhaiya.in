@@ -142,7 +142,7 @@ export function ContactForm() {
             {status === "loading" ? "Sending..." : "Send message"}
           </Button>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Replies usually land within 1-2 business days
+            Replies usually land within 1 to 2 business days
           </p>
         </div>
 

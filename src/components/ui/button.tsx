@@ -12,11 +12,11 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground shadow-retro hover:bg-[color:var(--primary-hover)]",
         outline:
-          "bg-card text-card-foreground shadow-retro-sm hover:bg-accent aria-expanded:bg-accent",
+          "bg-[color:var(--surface-card)] text-card-foreground shadow-retro-sm hover:bg-[color:var(--surface-accent)] aria-expanded:bg-[color:var(--surface-accent)]",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-retro hover:bg-primary hover:text-primary-foreground aria-expanded:bg-primary aria-expanded:text-primary-foreground",
+          "bg-[color:var(--surface-secondary)] text-foreground shadow-retro hover:bg-secondary aria-expanded:bg-secondary",
         ghost:
-          "bg-accent text-accent-foreground shadow-retro-sm hover:bg-muted aria-expanded:bg-muted",
+          "bg-[color:var(--surface-accent)] text-accent-foreground shadow-retro-sm hover:bg-[color:var(--surface-muted)] aria-expanded:bg-[color:var(--surface-muted)]",
         destructive:
           "bg-destructive text-destructive-foreground shadow-retro hover:bg-[color:var(--primary-hover)] focus-visible:ring-destructive/40",
         link:

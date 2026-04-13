@@ -10,26 +10,55 @@ export const metadata: Metadata = {
   description:
     "Know the story behind amarbhaiya.in and the mission to make practical learning accessible for students.",
 };
+
+const workingRules = [
+  {
+    title: "Clarity over performance",
+    detail:
+      "We would rather explain one thing properly than decorate ten things that never become useful.",
+  },
+  {
+    title: "Practice sits inside the lesson",
+    detail:
+      "Students should not need five tabs, three downloads, and guesswork to move from learning to doing.",
+  },
+  {
+    title: "Respect the reality students live in",
+    detail:
+      "Time, money, language, and confidence all matter. The product should respond to that, not ignore it.",
+  },
+];
+
 export default async function AboutPage() {
   const aboutContent = await getAboutPageContent();
 
   return (
-    <div className="space-y-20 px-6 py-20 md:px-12 md:py-28">
-      <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+    <div className="space-y-16 px-4 py-14 md:px-6 md:py-20 xl:space-y-20 xl:py-24">
+      <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.08fr_0.92fr]">
         <SectionHeading
           eyebrow="About"
           title="Built for students who want fewer speeches and more signal."
           description="amarbhaiya.in exists to reduce confusion. The point is not to look impressive from a distance. The point is to make the next move clearer when you are in the middle of real decisions."
           titleAs="h1"
         />
-        <RetroPanel tone="accent" size="lg" className="space-y-4 xl:translate-y-8">
-          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
-            Operating principle
-          </p>
-          <p className="text-lg font-bold leading-8 tracking-[-0.03em]">
-            Practical learning only works when the advice feels close to the mess students are actually living through.
-          </p>
-        </RetroPanel>
+        <div className="grid gap-4 xl:translate-y-8">
+          <RetroPanel tone="accent" size="lg" className="space-y-4">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+              Operating principle
+            </p>
+            <p className="text-lg font-bold leading-8 tracking-[-0.03em]">
+              Practical learning only works when the advice feels close to the actual mess students are navigating.
+            </p>
+          </RetroPanel>
+          <RetroPanel tone="card" className="space-y-3">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+              What that means in practice
+            </p>
+            <p className="text-sm font-medium leading-7 text-foreground/80">
+              Stronger structure, direct language, and fewer decorative promises that collapse the moment a student gets stuck.
+            </p>
+          </RetroPanel>
+        </div>
       </section>
 
       <section className="mx-auto max-w-6xl space-y-8">
@@ -59,6 +88,34 @@ export default async function AboutPage() {
                 {item.title}
               </h3>
               <p className="text-sm font-medium leading-6 text-foreground/80">{item.detail}</p>
+            </RetroPanel>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[0.88fr_1.12fr]">
+        <RetroPanel tone="secondary" size="lg" className="space-y-5">
+          <SectionHeading
+            eyebrow="Working rules"
+            title="The platform should feel rigorous, not loud for the sake of it."
+            description="RetroUI gives the product character, but the behavior still has to feel calm, structured, and trustworthy."
+            titleAs="h2"
+          />
+        </RetroPanel>
+        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
+          {workingRules.map((rule, index) => (
+            <RetroPanel
+              key={rule.title}
+              tone={index === 1 ? "muted" : "card"}
+              className="space-y-3"
+            >
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Rule {index + 1}
+              </p>
+              <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                {rule.title}
+              </h3>
+              <p className="text-sm font-medium leading-7 text-foreground/80">{rule.detail}</p>
             </RetroPanel>
           ))}
         </div>
@@ -98,13 +155,16 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl">
-        <RetroPanel tone="primary" size="lg" className="space-y-4">
-          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-primary-foreground/80">
+      <section className="mx-auto max-w-5xl">
+        <RetroPanel tone="primary" size="lg" className="space-y-5">
+          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
             Mission
           </p>
           <p className="text-2xl font-bold leading-9 tracking-[-0.04em] text-foreground md:text-3xl md:leading-10">
             {aboutContent.mission || "Mission content is not configured yet."}
+          </p>
+          <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
+            If a student leaves with more clarity, more confidence, and one obvious next move, the platform did its job.
           </p>
         </RetroPanel>
       </section>

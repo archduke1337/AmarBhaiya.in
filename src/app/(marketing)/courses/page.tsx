@@ -6,6 +6,7 @@ import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { getPublicCoursesPageData } from "@/lib/appwrite/marketing-content";
@@ -46,9 +47,15 @@ export default async function CoursesPage({
     sort,
   });
 
+  const activeFilters = [
+    query ? `Search: ${query}` : null,
+    category !== "all" ? `Category: ${category}` : null,
+    sort !== "popular" ? `Sort: ${sort}` : "Sort: popular",
+  ].filter(Boolean) as string[];
+
   return (
-    <div className="space-y-12 px-6 py-20 md:px-12 md:py-28">
-      <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:space-y-16 xl:py-24">
+      <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
         <SectionHeading
           eyebrow="Course catalogue"
           title="Choose the next skill that will actually change your week."
@@ -56,34 +63,43 @@ export default async function CoursesPage({
           titleAs="h1"
         />
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:translate-y-8">
-          <RetroPanel tone="secondary" className="space-y-2">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
-              Courses live
+        <div className="grid gap-4 xl:translate-y-8">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <RetroPanel tone="secondary" className="space-y-2">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                Courses live
+              </p>
+              <p className="font-heading text-4xl font-black tracking-[-0.08em]">{courses.length}</p>
+            </RetroPanel>
+            <RetroPanel tone="accent" className="space-y-2">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                Categories
+              </p>
+              <p className="font-heading text-4xl font-black tracking-[-0.08em]">{categories.length}</p>
+            </RetroPanel>
+          </div>
+          <RetroPanel tone="card" className="space-y-3">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+              How this catalogue is shaped
             </p>
-            <p className="font-heading text-4xl font-black tracking-[-0.08em]">{courses.length}</p>
-          </RetroPanel>
-          <RetroPanel tone="accent" className="space-y-2">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
-              Categories
+            <p className="text-sm font-medium leading-7 text-foreground/80">
+              The better courses do three things well: explain the point clearly, make practice feel natural, and give students a clean reason to keep going.
             </p>
-            <p className="font-heading text-4xl font-black tracking-[-0.08em]">{categories.length}</p>
           </RetroPanel>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl">
-        <RetroPanel tone="accent" className="space-y-4">
+        <RetroPanel tone="accent" className="space-y-5">
           <form className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_auto]" method="GET">
             <div className="space-y-2">
               <Label htmlFor="course-search">Search</Label>
-              <input
+              <Input
                 id="course-search"
                 type="search"
                 name="q"
                 defaultValue={params.q}
                 placeholder="Search by title or keyword"
-                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
               />
             </div>
 
@@ -126,10 +142,35 @@ export default async function CoursesPage({
               </Button>
             </div>
           </form>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {activeFilters.map((filter) => (
+              <Badge key={filter} variant="outline">
+                {filter}
+              </Badge>
+            ))}
+          </div>
         </RetroPanel>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-2">
+      <section className="mx-auto max-w-6xl space-y-5">
+        <RetroPanel tone="card" className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+              Results
+            </p>
+            <p className="text-sm font-medium leading-6 text-foreground/80">
+              Showing {courses.length} course{courses.length === 1 ? "" : "s"} that fit the current view.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">Structured lessons</Badge>
+            <Badge variant="ghost">Direct outcomes</Badge>
+            <Badge variant="outline">Student-friendly pricing</Badge>
+          </div>
+        </RetroPanel>
+
+        <div className="grid gap-5 lg:grid-cols-2">
         {courses.map((course) => (
           <RetroPanel
             key={course.slug}
@@ -158,7 +199,10 @@ export default async function CoursesPage({
               </div>
             )}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Badge variant="outline">{course.category}</Badge>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{course.category}</Badge>
+                <Badge variant="ghost">{course.accessModel}</Badge>
+              </div>
               <span className="text-sm font-semibold text-muted-foreground">
                 {course.enrolledStudents.toLocaleString("en-IN")} learners
               </span>
@@ -209,6 +253,7 @@ export default async function CoursesPage({
             </div>
           </RetroPanel>
         ))}
+        </div>
       </section>
 
       {courses.length === 0 && (

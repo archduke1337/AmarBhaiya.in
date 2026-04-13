@@ -28,7 +28,7 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
   });
 
   return (
-    <div className="space-y-12 px-6 py-20 md:px-12 md:py-28">
+    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:py-24">
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
         <SectionHeading
           eyebrow="Blog"
