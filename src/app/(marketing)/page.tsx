@@ -91,8 +91,8 @@ export default async function LandingPage() {
         <RetroPanel tone="card" size="lg" className="space-y-8">
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline">Learn from Bhaiya</Badge>
-            <Badge variant="secondary">Class 6 to 12 first</Badge>
-            <Badge variant="ghost">Skills next</Badge>
+            <Badge variant="secondary">School-first</Badge>
+            <Badge variant="ghost">Notes, courses, live help</Badge>
           </div>
 
           <div className="space-y-5">
@@ -100,14 +100,18 @@ export default async function LandingPage() {
               Learning platform
             </p>
             <h1 className="font-heading max-w-4xl text-5xl font-black leading-[0.92] tracking-[-0.08em] text-balance md:text-7xl">
-              Notes, courses, and live guidance for students who want clarity, not coaching noise.
+              Start with one clear note. Stay for the course, the live class, and the confidence that follows.
             </h1>
             <p className="max-w-2xl text-base font-medium leading-8 text-muted-foreground md:text-lg">
-              The core of the platform is school learning for Indian students from
-              Class 6 to 12. Notes, revision support, board-focused courses, and
-              direct teaching come first. Skills, coding, and career tracks grow
-              on top of that as students move forward. Built by Amar Bhaiya,
-              backed by {homeContent.stats.find((s) => s.label.toLowerCase().includes("student"))?.end.toLocaleString("en-IN") ?? "1,500"}+ students who already use it.
+              amarbhaiya.in is built for Indian students who want a calmer,
+              clearer way to study. Class 6 to 12 learning comes first:
+              chapter-wise notes, board-focused courses, revision support, and
+              direct teaching from Amar Bhaiya. Skill tracks grow on top of that
+              later, not at the cost of the school journey. Trusted by{" "}
+              {homeContent.stats
+                .find((s) => s.label.toLowerCase().includes("student"))
+                ?.end.toLocaleString("en-IN") ?? "1,500"}
+              + students already learning here.
             </p>
           </div>
 
@@ -145,11 +149,11 @@ export default async function LandingPage() {
 
       {/* ── What Amar Bhaiya covers (from backend domains) ─────────── */}
       <section className="mx-auto max-w-7xl space-y-6">
-        <SectionHeading
-          eyebrow="What you'll learn"
-          title="The school-first layer stays at the centre of the product."
-          description="Board subjects, revision material, and chapter-level support come first. Skill tracks expand the system for college students and working learners later."
-        />
+          <SectionHeading
+            eyebrow="What you'll learn"
+            title="The school-first layer stays at the centre of the product."
+            description="The promise is simple: help students do better in the subjects they are already carrying every day, then expand into skills and career growth when the timing is right."
+          />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {homeContent.domains.map((d) => (
@@ -228,11 +232,11 @@ export default async function LandingPage() {
 
       {/* ── Study notes ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl space-y-6">
-        <SectionHeading
-          eyebrow="Study notes"
-          title="For many students, the first useful thing is one clean note."
-          description="Notes should be visible on the homepage because that is often the fastest way a student decides whether Amar Bhaiya is worth trusting."
-        />
+          <SectionHeading
+            eyebrow="Study notes"
+            title="For many students, the first useful thing is one clean note."
+            description="Notes stay visible on the homepage because they are often the first proof that the teaching here is real, practical, and worth coming back to."
+          />
 
         <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
           <RetroPanel tone="secondary" size="lg" className="space-y-5">
@@ -243,7 +247,9 @@ export default async function LandingPage() {
               A student should be able to land here, find a note, and feel helped immediately.
             </h3>
             <p className="text-sm font-medium leading-7 text-foreground/80">
-              That first small win matters. It is how trust starts. Notes make the platform feel useful before the student has committed to a course or even created an account.
+              That first small win matters. A useful note can turn a random visit
+              into trust. It lets a student feel Amar Bhaiya’s teaching before
+              they commit to a course or even create an account.
             </p>
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline">Chapter-wise</Badge>
@@ -414,25 +420,25 @@ export default async function LandingPage() {
         <RetroPanel tone="brand" size="lg" className="space-y-8 text-center">
           <div className="mx-auto max-w-3xl space-y-5">
             <h2 className="mx-auto font-heading text-4xl font-black leading-[0.92] tracking-[-0.06em] text-primary-foreground md:text-6xl">
-              Stop scrolling. Start building.
+              If you are new here, start with something small and useful.
             </h2>
             <p className="mx-auto max-w-xl text-base font-medium leading-8 text-primary-foreground/80">
-              Pick a course. Start a lesson. Do an assignment. That is it.
-              No 40-page sales letter. No limited-seats nonsense.
-              Just start.
+              Open a note. Watch a lesson. Join a course when it makes sense.
+              The platform is meant to feel steady, not overwhelming.
             </p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" variant="secondary">
-              <Link href="/courses">
-                <BookOpen className="size-4" />
-                Browse courses
+              <Link href="/notes">
+                <Download className="size-4" />
+                Explore notes
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
-              <Link href="/register">
-                Create free account
+              <Link href="/courses">
+                <BookOpen className="size-4" />
+                Browse courses
                 <ArrowRight />
               </Link>
             </Button>

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Mail, MessageSquare, PlayCircle } from "lucide-react";
+import { ArrowRight, FileText, Mail, MessageSquare, PlayCircle } from "lucide-react";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
@@ -33,11 +33,12 @@ export function Footer() {
                 />
               </Link>
               <p className="max-w-sm text-sm font-medium leading-7 text-foreground/80">
-                Practical learning for Class 6 to 12 students first, with notes,
-                courses, and live guidance at the core. Skills and career tracks
-                grow on top of that as learners move ahead.
+                amarbhaiya.in is built around the way students actually study:
+                one useful note, one clear lesson, one honest explanation at a
+                time. School learning comes first. Skill tracks grow from there.
               </p>
               <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">Study notes</Badge>
                 <Badge variant="outline">Courses</Badge>
                 <Badge variant="outline">Live sessions</Badge>
                 <Badge variant="outline">Community</Badge>
@@ -93,10 +94,16 @@ export function Footer() {
                 Need a starting point?
               </p>
               <p className="text-sm font-medium leading-7 text-foreground/80">
-                Start with notes if you need quick help, or move into a course if
-                you want the full learning path.
+                New student? Start with the notes library. Ready to commit to a
+                full path? Move into a course and study with structure.
               </p>
               <div className="grid gap-3">
+                <Button asChild variant="ghost">
+                  <Link href="/notes">
+                    <FileText className="size-4" />
+                    Open notes
+                  </Link>
+                </Button>
                 <Button asChild variant="secondary">
                   <Link href="/courses">
                     <PlayCircle className="size-4" />

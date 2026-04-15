@@ -8,11 +8,11 @@
   --radius: 0.5rem;
 
   /* ── Light Mode — Warm paper + bold retro accents ────────── */
-  --background: #f9f5f0;
-  --foreground: #0f0f0f;
+  --background: #f6f1ea;
+  --foreground: #171311;
 
-  --muted: #ecddd1;
-  --muted-foreground: #8c5a3a;
+  --muted: #e6d8cb;
+  --muted-foreground: #815940;
 
   --card: #ffffff;
   --card-foreground: #0f0f0f;
@@ -22,17 +22,17 @@
   --border: #1a1a1a;
   --input: #ffffff;
 
-  --primary: #d44030;
-  --primary-hover: #b83020;
+  --primary: #c95545;
+  --primary-hover: #b24739;
   --primary-foreground: #ffffff;
 
-  --secondary: #f5d04a;
-  --secondary-foreground: #1a1200;
+  --secondary: #e6c86f;
+  --secondary-foreground: #23190a;
 
-  --accent: #c4e3f5;
-  --accent-foreground: #0a1e2a;
+  --accent: #cdddea;
+  --accent-foreground: #11202c;
 
-  --destructive: #c22020;
+  --destructive: #bc3b33;
   --destructive-foreground: #ffffff;
 
   --ring: #1a1a1a;
@@ -43,21 +43,21 @@
   --chart-4: #ecddd1;
   --chart-5: #8c5a3a;
 
-  --sidebar: #f8eedd;
-  --sidebar-foreground: #0f0f0f;
-  --sidebar-primary: #d44030;
+  --sidebar: #f3e8da;
+  --sidebar-foreground: #171311;
+  --sidebar-primary: #c95545;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #c4e3f5;
-  --sidebar-accent-foreground: #0a1e2a;
-  --sidebar-border: #1a1a1a;
-  --sidebar-ring: #1a1a1a;
+  --sidebar-accent: #cdddea;
+  --sidebar-accent-foreground: #11202c;
+  --sidebar-border: #171311;
+  --sidebar-ring: #171311;
 
-  --surface-card: #fefcf8;
-  --surface-muted: #f0e0d2;
-  --surface-secondary: #f5e8b0;
-  --surface-accent: #daedf8;
-  --surface-primary: #f0d0ca;
-  --surface-ink: #f0eae2;
+  --surface-card: #fcf8f2;
+  --surface-muted: #ede0d5;
+  --surface-secondary: #efe3b8;
+  --surface-accent: #dde9f0;
+  --surface-primary: #ead0c8;
+  --surface-ink: #ede7de;
 
   --retro-shadow-sm: 2px 2px 0px #1a1a1a;
   --retro-shadow-md: 4px 4px 0px #1a1a1a;
@@ -66,56 +66,56 @@
 
 .dark {
   /* ── Dark Mode — Deep chocolate + warm orange fire ────────── */
-  --background: #0e0c0a;
-  --foreground: #f0ece8;
+  --background: #14110f;
+  --foreground: #f0ebe4;
 
-  --muted: #2e221a;
-  --muted-foreground: #e8a86a;
+  --muted: #2a221d;
+  --muted-foreground: #d9a176;
 
-  --card: #171412;
-  --card-foreground: #f0ece8;
-  --popover: #171412;
-  --popover-foreground: #f0ece8;
+  --card: #1a1613;
+  --card-foreground: #f0ebe4;
+  --popover: #1a1613;
+  --popover-foreground: #f0ebe4;
 
-  --border: #302820;
-  --input: #252018;
+  --border: #342c26;
+  --input: #241f1a;
 
-  --primary: #e86830;
-  --primary-hover: #f07838;
-  --primary-foreground: #fce8d8;
+  --primary: #d17447;
+  --primary-hover: #df8455;
+  --primary-foreground: #fae8d9;
 
-  --secondary: #d89820;
-  --secondary-foreground: #0f0a00;
+  --secondary: #b88b3d;
+  --secondary-foreground: #130d06;
 
-  --accent: #e05858;
-  --accent-foreground: #0f0a00;
+  --accent: #7f94aa;
+  --accent-foreground: #0f0d0c;
 
-  --destructive: #e83838;
+  --destructive: #d25648;
   --destructive-foreground: #ffffff;
 
-  --ring: #e86830;
+  --ring: #d17447;
 
-  --chart-1: #e86830;
-  --chart-2: #d89820;
-  --chart-3: #e05858;
-  --chart-4: #e8a86a;
-  --chart-5: #fce8d8;
+  --chart-1: #d17447;
+  --chart-2: #b88b3d;
+  --chart-3: #7f94aa;
+  --chart-4: #d9a176;
+  --chart-5: #fae8d9;
 
-  --sidebar: #1e1810;
-  --sidebar-foreground: #f0ece8;
-  --sidebar-primary: #e86830;
-  --sidebar-primary-foreground: #fce8d8;
-  --sidebar-accent: #e05858;
-  --sidebar-accent-foreground: #0f0a00;
-  --sidebar-border: #302820;
-  --sidebar-ring: #e86830;
+  --sidebar: #1f1a16;
+  --sidebar-foreground: #f0ebe4;
+  --sidebar-primary: #d17447;
+  --sidebar-primary-foreground: #fae8d9;
+  --sidebar-accent: #7f94aa;
+  --sidebar-accent-foreground: #0f0d0c;
+  --sidebar-border: #342c26;
+  --sidebar-ring: #d17447;
 
-  --surface-card: #1a1612;
-  --surface-muted: #261e18;
-  --surface-secondary: #3a2e18;
-  --surface-accent: #1e2830;
-  --surface-primary: #3a2018;
-  --surface-ink: #121010;
+  --surface-card: #1d1815;
+  --surface-muted: #29221d;
+  --surface-secondary: #3a2f1f;
+  --surface-accent: #212b33;
+  --surface-primary: #39251f;
+  --surface-ink: #151210;
 
   --retro-shadow-sm: 2px 2px 0px #060504;
   --retro-shadow-md: 3px 3px 0px #060504;

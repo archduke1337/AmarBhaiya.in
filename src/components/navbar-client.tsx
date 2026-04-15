@@ -99,7 +99,7 @@ export function NavbarClient({
                   Learn from Bhaiya
                 </p>
                 <p className="truncate text-sm font-medium text-foreground/75">
-                  School-first learning, with skills and career tracks layered in as students grow.
+                  Notes first. Courses next. Skills and career growth when students are ready for them.
                 </p>
               </div>
             </div>
@@ -178,6 +178,15 @@ export function NavbarClient({
             aria-label="Mobile navigation"
           >
             <nav className="flex flex-col gap-2 p-4">
+              <div className="rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-secondary)] px-4 py-4 shadow-retro-sm">
+                <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                  Student-first
+                </p>
+                <p className="mt-2 text-sm font-medium leading-6 text-foreground/80">
+                  Start with one note, move into a course, and stay close to Amar Bhaiya’s teaching style as you build momentum.
+                </p>
+              </div>
+
               {navItems.map((link) => (
                 <Link
                   key={link.label}
@@ -194,6 +203,11 @@ export function NavbarClient({
               ))}
 
               <div className="mt-2 grid gap-3 border-t-2 border-border pt-4">
+                <Button asChild variant="ghost">
+                  <Link href="/notes" onClick={() => setMobileOpen(false)}>
+                    Open notes
+                  </Link>
+                </Button>
                 {isAuthenticated ? (
                   <>
                     <Button asChild variant="secondary">
