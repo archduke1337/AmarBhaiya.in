@@ -11,6 +11,10 @@ import { getUserSubscription, cancelSubscriptionAction } from "@/actions/subscri
 import { PageHeader, StatGrid, StatCard } from "@/components/dashboard";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 
 export default async function BillingInfoPage() {
   await requireAuth();
@@ -24,11 +28,11 @@ export default async function BillingInfoPage() {
   const totalSpent = completedPayments.reduce((sum, payment) => sum + payment.amount, 0);
 
   return (
-    <div className="flex flex-col gap-8 max-w-3xl">
+    <div className="flex max-w-5xl flex-col gap-8">
       <PageHeader
         eyebrow="Billing"
-        title="Billing Information"
-        description="This information is used when purchasing courses. It will appear on your invoices and receipts."
+        title="Payment records aur billing details ek jagah."
+        description="Course purchase ke time yeh details receipts aur invoices mein use hoti hain. Short, accurate, aur India-friendly rakho."
       />
 
       <StatGrid columns={3}>
@@ -54,55 +58,58 @@ export default async function BillingInfoPage() {
 
       {/* Active Subscription */}
       {subscription && (
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium">Active Subscription</h2>
-            <span className={`text-[10px] uppercase tracking-wider border px-1.5 py-0.5 ${
-              subscription.status === "active"
-                ? "border-emerald-500/30 text-emerald-600"
-                : "border-border text-muted-foreground"
-            }`}>
+        <RetroPanel tone="secondary" className="space-y-0 p-0">
+          <div className="flex items-center justify-between border-b-2 border-border px-5 py-3">
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
+              Active subscription
+            </h2>
+            <Badge variant={subscription.status === "active" ? "default" : "outline"}>
               {subscription.status}
-            </span>
+            </Badge>
           </div>
-          <div className="p-5 flex items-center justify-between">
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium">{subscription.planName}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="font-heading text-xl font-black tracking-[-0.04em]">
+                {subscription.planName}
+              </p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                 {new Date(subscription.startDate).toLocaleDateString("en-IN")} → {new Date(subscription.endDate).toLocaleDateString("en-IN")}
               </p>
             </div>
             {subscription.status === "active" && (
               <form action={cancelSubscriptionAction}>
                 <input type="hidden" name="subscriptionId" value={subscription.id} />
-                <button
+                <Button
                   type="submit"
-                  className="h-8 border border-destructive/30 px-3 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                  variant="destructive"
+                  size="sm"
                 >
-                  Cancel Subscription
-                </button>
+                  Cancel subscription
+                </Button>
               </form>
             )}
           </div>
-        </section>
+        </RetroPanel>
       )}
 
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3 flex items-center justify-between">
+      <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="flex items-center justify-between border-b-2 border-border px-5 py-3">
           <div>
-            <h2 className="text-sm font-medium">Payment History</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
+              Payment history
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
               {payments.length} recorded payment{payments.length === 1 ? "" : "s"}
             </p>
           </div>
         </div>
 
         {payments.length === 0 ? (
-          <div className="px-5 py-6 text-sm text-muted-foreground text-center">
-            No course payment records yet.
+          <div className="px-5 py-6 text-center text-sm font-medium text-muted-foreground">
+            Abhi course payment record nahi hai.
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y-2 divide-border">
             {payments.map((payment) => (
               <div
                 key={payment.id}
@@ -140,134 +147,137 @@ export default async function BillingInfoPage() {
             ))}
           </div>
         )}
-      </section>
+      </RetroPanel>
 
 
       <form action={upsertBillingInfoAction} className="flex flex-col gap-6">
         {/* Name */}
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="text-sm font-medium">Personal Details</h2>
+        <RetroPanel tone="card" className="space-y-0 p-0">
+          <div className="border-b-2 border-border px-5 py-3">
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
+              Personal details
+            </h2>
           </div>
           <div className="grid gap-4 p-5 md:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">First Name</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First name</Label>
+              <Input
+                id="firstName"
                 name="firstName"
                 required
                 placeholder="Gaurav"
                 defaultValue={billing?.firstName ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">Last Name</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last name</Label>
+              <Input
+                id="lastName"
                 name="lastName"
                 required
                 placeholder="Sharma"
                 defaultValue={billing?.lastName ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
-              <span className="text-muted-foreground">Phone Number</span>
-              <input
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="phone">Phone number</Label>
+              <Input
+                id="phone"
                 name="phone"
                 type="tel"
                 required
                 placeholder="+91 98765 43210"
                 defaultValue={billing?.phone ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
           </div>
-        </section>
+        </RetroPanel>
 
         {/* Address */}
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="text-sm font-medium">Billing Address</h2>
+        <RetroPanel tone="card" className="space-y-0 p-0">
+          <div className="border-b-2 border-border px-5 py-3">
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
+              Billing address
+            </h2>
           </div>
           <div className="grid gap-4 p-5 md:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
-              <span className="text-muted-foreground">Address Line 1</span>
-              <input
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="addressLine1">Address line 1</Label>
+              <Input
+                id="addressLine1"
                 name="addressLine1"
                 required
                 placeholder="House/Flat No., Street, Locality"
                 defaultValue={billing?.addressLine1 ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
-              <span className="text-muted-foreground">
-                Address Line 2 (Optional)
-              </span>
-              <input
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="addressLine2">Address line 2 (optional)</Label>
+              <Input
+                id="addressLine2"
                 name="addressLine2"
                 placeholder="Apartment, suite, landmark"
                 defaultValue={billing?.addressLine2 ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">City</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
                 name="city"
                 required
                 placeholder="Mumbai"
                 defaultValue={billing?.city ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">State / Province</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
                 name="state"
                 required
                 placeholder="Maharashtra"
                 defaultValue={billing?.state ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">Country / Region</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
                 name="country"
                 required
                 placeholder="India"
                 defaultValue={billing?.country ?? "India"}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">ZIP / PIN Code</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="zipcode">PIN code</Label>
+              <Input
+                id="zipcode"
                 name="zipcode"
                 required
                 placeholder="400001"
                 defaultValue={billing?.zipcode ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
           </div>
-        </section>
+        </RetroPanel>
 
         <div className="flex justify-end">
-          <button
+          <Button
             type="submit"
-            className="h-10 bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90"
+            variant="secondary"
+            size="lg"
           >
-            Save Billing Info
-          </button>
+            Save billing info
+          </Button>
         </div>
       </form>
     </div>

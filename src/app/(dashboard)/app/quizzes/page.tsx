@@ -6,6 +6,8 @@ import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { PageHeader, EmptyState } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Badge } from "@/components/ui/badge";
 
 type AnyRow = Models.Row & Record<string, unknown>;
 
@@ -148,64 +150,100 @@ export default async function StudentQuizHistoryPage() {
       : 0;
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl">
+    <div className="flex max-w-6xl flex-col gap-6">
       <PageHeader
         eyebrow="Quiz History"
-        title="Your Quiz Attempts"
-        description={`${attempts.length} total · ${passed} passed · Avg score: ${avgScore}%`}
+        title="Quiz results ko pressure nahi, feedback ki tarah dekho."
+        description={`${attempts.length} total · ${passed} passed · Avg score: ${avgScore}%. Galat attempts bhi revision ka signal dete hain.`}
       />
 
       {attempts.length === 0 ? (
         <EmptyState
           icon={Award}
           title="No quiz attempts yet"
-          description="Take a quiz in any of your enrolled courses to see your results here."
+          description="Jab kisi enrolled course ka quiz attempt karoge, result yahin aa jayega."
           action={{ label: "My courses", href: "/app/courses" }}
         />
       ) : (
-        <section className="border border-border">
-          <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_1fr_80px_80px_120px]">
-            <span>Quiz</span>
-            <span>Course</span>
-            <span>Score</span>
-            <span>Result</span>
-            <span>Date</span>
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <RetroPanel tone="secondary" className="space-y-1">
+              <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                Attempts
+              </p>
+              <p className="font-heading text-4xl font-black tracking-[-0.08em]">
+                {attempts.length}
+              </p>
+            </RetroPanel>
+            <RetroPanel tone="accent" className="space-y-1">
+              <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                Passed
+              </p>
+              <p className="font-heading text-4xl font-black tracking-[-0.08em]">
+                {passed}
+              </p>
+            </RetroPanel>
+            <RetroPanel tone="card" className="space-y-1">
+              <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                Average
+              </p>
+              <p className="font-heading text-4xl font-black tracking-[-0.08em]">
+                {avgScore}%
+              </p>
+            </RetroPanel>
           </div>
-          <div className="divide-y divide-border">
+
+          <RetroPanel tone="card" className="space-y-0 p-0">
+            <div className="border-b-2 border-border px-5 py-4">
+              <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+                Attempt history
+              </h2>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Latest attempts first
+              </p>
+            </div>
+            <div className="divide-y-2 divide-border">
             {attempts.map((a) => (
               <div
                 key={a.id}
-                className="flex flex-col gap-2 px-5 py-3 md:grid md:grid-cols-[1fr_1fr_80px_80px_120px] md:items-center md:gap-4"
+                className="grid gap-3 px-5 py-4 md:grid-cols-[1.2fr_1fr_auto_auto] md:items-center"
               >
-                <span className="text-sm font-medium">{a.quizTitle}</span>
-                <span className="text-sm text-muted-foreground">{a.courseTitle}</span>
-                <span className="text-sm tabular-nums font-medium">{a.score}%</span>
-                <span className="inline-flex items-center gap-1">
-                  {a.passed ? (
-                    <>
-                      <CheckCircle className="size-3.5 text-emerald-500" />
-                      <span className="text-xs text-emerald-600">Pass</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="size-3.5 text-destructive" />
-                      <span className="text-xs text-destructive">Fail</span>
-                    </>
-                  )}
-                </span>
-                <span className="text-xs tabular-nums text-muted-foreground">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">{a.quizTitle}</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {a.courseTitle}
+                  </p>
+                </div>
+                <p className="text-xs tabular-nums text-muted-foreground md:text-right">
                   {a.completedAt
                     ? new Date(a.completedAt).toLocaleDateString("en-IN", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
                       })
-                    : "—"}
+                    : "No date"}
+                </p>
+                <Badge variant="outline" className="w-fit tabular-nums">
+                  {a.score}%
+                </Badge>
+                <span className="inline-flex items-center gap-1.5">
+                  {a.passed ? (
+                    <>
+                      <CheckCircle className="size-3.5 text-emerald-500" />
+                      <span className="text-xs font-semibold text-emerald-600">Pass</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="size-3.5 text-destructive" />
+                      <span className="text-xs font-semibold text-destructive">Retry</span>
+                    </>
+                  )}
                 </span>
               </div>
             ))}
-          </div>
-        </section>
+            </div>
+          </RetroPanel>
+        </div>
       )}
     </div>
   );
