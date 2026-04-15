@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, Lock, CheckCircle, Download, MessageSquareMore, PlaySquare } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  FileText,
+  Lock,
+  MessageSquareMore,
+} from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
@@ -13,6 +23,7 @@ import { normalizeHttpUrl } from "@/lib/utils/url";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LessonVideoPlayer } from "@/components/lesson-video-player";
 import { Textarea } from "@/components/ui/textarea";
 import { getCourseProgress } from "@/actions/enrollment";
@@ -200,9 +211,23 @@ export default async function LessonViewerPage({ params }: PageProps) {
         title: String(resource.title ?? "Resource"),
         type,
         href,
+        downloadHref: type === "link" ? href : `${href}?download=1`,
+        isPreviewable: type === "pdf" && href.startsWith("/"),
       };
     })
-    .filter((resource): resource is { id: string; title: string; type: string; href: string } => resource !== null);
+    .filter(
+      (
+        resource
+      ): resource is {
+        id: string;
+        title: string;
+        type: string;
+        href: string;
+        downloadHref: string;
+        isPreviewable: boolean;
+      } => resource !== null
+    );
+  const previewResource = lessonResourceItems.find((resource) => resource.isPreviewable) ?? null;
 
   function canOpenLesson(row: AnyRow | null | undefined): boolean {
     if (!row) {
