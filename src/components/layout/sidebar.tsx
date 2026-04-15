@@ -147,18 +147,21 @@ export function Sidebar({ role, userId }: SidebarProps) {
   const navItems = getNavItems(role, userId);
 
   return (
-    <aside className="h-full border-r bg-sidebar text-sidebar-foreground">
-      <div className="border-b border-border bg-[color:var(--surface-secondary)] px-5 py-6 text-foreground">
-        <p className="font-heading text-xs uppercase tracking-[0.22em]">
+    <aside className="hidden h-full border-r-2 border-border bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:flex md:h-screen md:flex-col">
+      <div className="border-b-2 border-border bg-[color:var(--surface-secondary)] px-3 py-5 text-center text-foreground md:px-2 xl:px-5 xl:text-left">
+        <p className="font-heading text-[0.68rem] uppercase tracking-[0.22em]">
           {role}
         </p>
-        <h2 className="mt-3 text-3xl">Learning Hub</h2>
-        <p className="mt-3 max-w-[16rem] text-sm font-semibold text-foreground/75">
+        <h2 className="mt-3 text-xl md:text-2xl xl:text-3xl">
+          <span className="xl:hidden">AB</span>
+          <span className="hidden xl:inline">Learning Hub</span>
+        </h2>
+        <p className="mt-3 hidden max-w-[16rem] text-sm font-semibold text-foreground/75 xl:block">
           Designed for students who mostly study on phones but still need the workspace to feel calm and organized.
         </p>
       </div>
 
-      <nav className="flex flex-col gap-3 p-4">
+      <nav className="flex flex-1 flex-col gap-3 p-3 xl:p-4">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = isNavItemActive(pathname, item);
@@ -168,34 +171,34 @@ export function Sidebar({ role, userId }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-[calc(var(--radius)+2px)] border-2 px-3 py-3 text-sm font-heading font-black uppercase tracking-[0.08em] transition-all",
+                "flex items-center gap-3 rounded-[calc(var(--radius)+2px)] border-2 text-sm font-heading font-black uppercase tracking-[0.08em] transition-all md:size-14 md:justify-center md:px-0 md:py-0 xl:h-auto xl:w-auto xl:justify-start xl:px-3 xl:py-3",
                 isActive
                   ? "border-border bg-[color:var(--surface-accent)] text-accent-foreground shadow-retro"
                   : "border-border bg-[color:var(--surface-card)] text-sidebar-foreground shadow-retro-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-[color:var(--surface-secondary)] hover:shadow-none"
               )}
             >
-              <Icon className="size-4" />
-              <span>{item.label}</span>
+              <Icon className="size-4 md:size-5" />
+              <span className="hidden xl:inline">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="px-4 pt-6 pb-8">
+      <div className="hidden px-4 pb-8 xl:block">
         <div className="retro-surface bg-accent p-4">
-              <p className="font-heading text-xs uppercase tracking-[0.18em] text-accent-foreground/70">
-                Workspace
-              </p>
-              <p className="mt-3 text-sm font-semibold leading-relaxed text-accent-foreground">
-                {getWorkspaceCopy(role)}
-              </p>
-              {role === "student" ? (
-                <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent-foreground/70">
-                  Start with notes. Stay for the course flow.
-                </p>
-              ) : null}
-            </div>
-          </div>
+          <p className="font-heading text-xs uppercase tracking-[0.18em] text-accent-foreground/70">
+            Workspace
+          </p>
+          <p className="mt-3 text-sm font-semibold leading-relaxed text-accent-foreground">
+            {getWorkspaceCopy(role)}
+          </p>
+          {role === "student" ? (
+            <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent-foreground/70">
+              Start with notes. Stay for the course flow.
+            </p>
+          ) : null}
+        </div>
+      </div>
     </aside>
   );
 }
@@ -211,7 +214,7 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex size-9 items-center justify-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro-sm transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none lg:hidden"
+        className="inline-flex size-9 items-center justify-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro-sm transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none md:hidden"
         aria-label="Open menu"
       >
         <Menu className="size-5" />
@@ -220,11 +223,11 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
       {open && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-foreground/30 lg:hidden"
+            className="fixed inset-0 z-40 bg-foreground/30 md:hidden"
             onClick={closeDrawer}
             aria-hidden="true"
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-[min(86vw,20rem)] overflow-y-auto overscroll-contain bg-sidebar shadow-retro-lg lg:hidden">
+          <div className="fixed inset-y-0 left-0 z-50 w-[min(86vw,20rem)] overflow-y-auto overscroll-contain border-r-2 border-border bg-sidebar shadow-retro-lg md:hidden">
             <div className="absolute right-3 top-4 z-10">
               <button
                 onClick={closeDrawer}

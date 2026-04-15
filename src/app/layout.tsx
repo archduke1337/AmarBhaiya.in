@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Source_Sans_3 } from "next/font/google";
+import { Archivo_Black, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipLink } from "@/components/skip-link";
 import { Analytics } from "@vercel/analytics/next";
 
-const bodyFont = Source_Sans_3({
+const bodyFont = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
 });
 
-const displayFont = Bricolage_Grotesque({
+const displayFont = Archivo_Black({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
+  weight: "400",
 });
 
 export const metadata: Metadata = {

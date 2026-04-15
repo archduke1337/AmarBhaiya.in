@@ -1,9 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  Download,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Download, Eye } from "lucide-react";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
@@ -11,260 +8,113 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPublicNotesPageData } from "@/lib/appwrite/marketing-content";
 
-import type { Metadata } from "next";
-
 export const metadata: Metadata = {
   title: "Study Notes",
   description:
-    "Chapter-wise study notes for Class 6 to 12 — Science, Maths, English, SST. Download, print, revise. By Amar Bhaiya.",
+    "Real published notes from Amar Bhaiya and instructors. Filter, preview, and download from the live notes library.",
 };
 
 export const revalidate = 3600;
 
-const classGroups = [
-  {
-    label: "Middle School",
-    classes: [
-      { grade: "6", subjects: ["Science", "Maths", "English", "SST"] },
-      { grade: "7", subjects: ["Science", "Maths", "English", "SST"] },
-      { grade: "8", subjects: ["Science", "Maths", "English", "SST"] },
-    ],
-  },
-  {
-    label: "Secondary",
-    classes: [
-      { grade: "9", subjects: ["Science", "Maths", "English", "SST"] },
-      { grade: "10", subjects: ["Science", "Maths", "English", "SST"] },
-    ],
-  },
-  {
-    label: "Senior Secondary — Science",
-    classes: [
-      { grade: "11", subjects: ["Physics", "Chemistry", "Maths", "Biology"] },
-      { grade: "12", subjects: ["Physics", "Chemistry", "Maths", "Biology"] },
-    ],
-  },
-  {
-    label: "Senior Secondary — Commerce",
-    classes: [
-      { grade: "11", subjects: ["Accountancy", "BST", "Economics"] },
-      { grade: "12", subjects: ["Accountancy", "BST", "Economics"] },
-    ],
-  },
-];
+type SearchParams = Promise<{
+  class?: string;
+  subject?: string;
+  note?: string;
+}>;
 
-export default async function NotesPage() {
+export default async function NotesPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
+  const classFilter = typeof params.class === "string" ? params.class : "";
+  const subjectFilter = typeof params.subject === "string" ? params.subject : "";
+  const selectedNoteId = typeof params.note === "string" ? params.note : "";
+
   const { notes } = await getPublicNotesPageData();
+
+  const availableClasses = Array.from(
+    new Set(notes.map((note) => note.classTag).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b, "en-IN", { numeric: true }));
+
+  const availableSubjects = Array.from(
+    new Set(
+      notes
+        .filter((note) => !classFilter || note.classTag === classFilter)
+        .map((note) => note.subjectTag)
+        .filter(Boolean)
+    )
+  ).sort();
+
+  const filteredNotes = notes.filter((note) => {
+    const classMatch = !classFilter || note.classTag === classFilter;
+    const subjectMatch = !subjectFilter || note.subjectTag === subjectFilter;
+    return classMatch && subjectMatch;
+  });
+
+  const selectedNote =
+    filteredNotes.find((note) => note.id === selectedNoteId) ?? filteredNotes[0] ?? null;
 
   return (
     <div className="space-y-16 px-4 py-8 md:px-6 md:py-10">
-
-      {/* ── Hero ────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl">
+      <section className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
         <RetroPanel tone="card" size="lg" className="space-y-6">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">Study Notes</Badge>
-            <Badge variant="outline">Class 6–12</Badge>
-            <Badge variant="ghost">Amar Bhaiya library</Badge>
+            <Badge variant="secondary">Notes library</Badge>
+            <Badge variant="outline">Real Appwrite data only</Badge>
+            <Badge variant="ghost">No fake shelves</Badge>
           </div>
 
           <div className="space-y-5">
             <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
-              Resources
+              Study notes
             </p>
-            <h1 className="font-heading max-w-4xl text-5xl font-black leading-[0.92] tracking-[-0.08em] text-balance md:text-7xl">
-              Chapter-wise notes that actually help during revision.
+            <h1 className="font-heading max-w-4xl text-4xl font-black leading-[0.94] tracking-[-0.08em] text-balance sm:text-5xl md:text-6xl">
+              Notes jo actually revision ke time kaam aayein.
             </h1>
-            <p className="max-w-2xl text-base font-medium leading-8 text-muted-foreground md:text-lg">
-              Clean, focused, and built for revision. These are the kind of notes
-              that help on a real study table: chapter-wise, easy to scan, and
-              grounded in how Amar Bhaiya teaches. School notes are the first
-              layer of the product, not an extra.
+            <p className="max-w-2xl text-sm font-medium leading-8 text-muted-foreground sm:text-base md:text-lg">
+              Yeh page sirf published Appwrite notes dikhata hai. Agar class,
+              subject, ya chapter metadata abhi properly filled nahi hai, hum
+              fake directory nahi dikhate. Jo real hai, wahi dikhega.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" variant="secondary">
-              <Link href="#latest-notes">
-                <Download className="size-4" />
-                Browse latest notes
+              <Link href="#notes-library">
+                <BookOpen className="size-4" />
+                Notes library kholo
               </Link>
             </Button>
-            <Button asChild size="lg">
+            <Button asChild size="lg" variant="outline">
               <Link href="/courses">
-                <BookOpen className="size-4" />
-                Browse courses
+                Courses dekho
+                <ArrowRight />
               </Link>
             </Button>
           </div>
         </RetroPanel>
-      </section>
 
-      {/* ── Class-wise Directory ────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl space-y-8">
-        <SectionHeading
-          eyebrow="Notes directory"
-          title="Find notes by class and subject."
-          description="This shows the school-first direction of the library. As more material is published, the live notes shelf below becomes the fastest way to access what is already ready."
-        />
-
-        <div className="space-y-6">
-          {classGroups.map((group) => (
-            <div key={group.label} className="space-y-4">
-              <h3 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
-                {group.label}
-              </h3>
-
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {group.classes.map((cls) => (
-                  <div
-                    key={`${group.label}-${cls.grade}`}
-                    className="group"
-                  >
-                    <RetroPanel
-                      tone="card"
-                      className="flex items-start gap-4 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:shadow-retro-lg"
-                    >
-                      <div className="flex size-14 shrink-0 items-center justify-center rounded-[calc(var(--radius)+4px)] border-2 border-border bg-primary font-heading text-xl font-black text-primary-foreground shadow-retro-sm">
-                        {cls.grade}
-                      </div>
-                      <div className="min-w-0 flex-1 space-y-2">
-                        <p className="font-heading text-base font-black tracking-[-0.02em]">
-                          Class {cls.grade}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {cls.subjects.map((sub) => (
-                            <Badge key={sub} variant="outline">
-                              {sub}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                    </RetroPanel>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="latest-notes" className="mx-auto max-w-7xl space-y-8 scroll-mt-28">
-        <SectionHeading
-          eyebrow="Latest notes"
-          title="Published notes show up here first."
-          description="This is the independent notes shelf. Free published notes can be downloaded directly. Premium notes can still be surfaced here, but their access stays controlled."
-        />
-
-        {notes.length === 0 ? (
-          <RetroPanel tone="muted" className="space-y-3">
-            <h3 className="font-heading text-2xl font-black tracking-[-0.04em]">
-              The first notes are on the way.
-            </h3>
-            <p className="text-sm font-medium leading-7 text-foreground/80">
-              This shelf becomes the public home for independent notes as soon as Amar Bhaiya or other instructors publish them.
-            </p>
-          </RetroPanel>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-            {notes.map((note, index) => (
-              <RetroPanel
-                key={note.id}
-                tone={index % 3 === 1 ? "accent" : index % 3 === 2 ? "secondary" : "card"}
-                className="flex h-full flex-col gap-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Badge variant="outline">{note.accessModel === "free" ? "Free note" : "Premium note"}</Badge>
-                  <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    {note.downloadCount.toLocaleString("en-IN")} downloads
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
-                    {note.title}
-                  </h3>
-                  <p className="text-sm font-medium leading-7 text-foreground/80">
-                    {note.description || "Revision material prepared to be used alongside class learning and self-study."}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {note.tags.length > 0 ? (
-                    note.tags.map((tag) => (
-                      <Badge key={tag} variant="ghost">
-                        {tag}
-                      </Badge>
-                    ))
-                  ) : (
-                    <Badge variant="ghost">{note.instructorName}</Badge>
-                  )}
-                </div>
-
-                <div className="mt-auto flex items-center justify-between gap-3 border-t-2 border-border pt-4">
-                  <div className="space-y-1">
-                    <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
-                      Access
-                    </p>
-                    <p className="text-sm font-semibold">
-                      {note.accessModel === "free" ? "Free download" : `INR ${note.priceInr}`}
-                    </p>
-                  </div>
-                  {note.downloadUrl ? (
-                    <Button asChild size="sm" variant="outline">
-                      <a href={note.downloadUrl} target="_blank" rel="noreferrer">
-                        <Download className="size-4" />
-                        Download
-                      </a>
-                    </Button>
-                  ) : (
-                    <Button asChild size="sm">
-                      <Link href="/contact">Request access</Link>
-                    </Button>
-                  )}
-                </div>
-              </RetroPanel>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── How notes work ──────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl">
-        <RetroPanel tone="secondary" size="lg" className="space-y-8">
-          <SectionHeading
-            eyebrow="How it works"
-            title="Notes are part of the course system."
-          />
-
-          <div className="grid gap-4 md:grid-cols-3">
+        <RetroPanel tone="secondary" size="lg" className="space-y-5 xl:translate-y-8">
+          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+            How to use this
+          </p>
+          <div className="grid gap-3">
             {[
-              {
-                step: "1",
-                title: "Pick a course",
-                body: "Each course covers a class + subject combination. Notes sit alongside the video lessons.",
-              },
-              {
-                step: "2",
-                title: "Access chapter notes",
-                body: "Every module has downloadable notes — PDFs you can print, annotate, and carry to your study table.",
-              },
-              {
-                step: "3",
-                title: "Pair with video",
-                body: "Watch the lesson, read the note, attempt the quiz. That loop is what makes the material stick.",
-              },
-            ].map((item) => (
-              <div key={item.step} className="space-y-3">
-                <div className="flex size-10 items-center justify-center rounded-full border-2 border-border bg-card font-heading text-base font-black shadow-retro-sm">
-                  {item.step}
-                </div>
-                <h3 className="font-heading text-lg font-black tracking-[-0.03em]">
-                  {item.title}
-                </h3>
-                <p className="text-sm font-medium leading-7 text-muted-foreground">
-                  {item.body}
+              "Class filter tab use karo agar notes metadata mein class stored hai.",
+              "Subject filter real tags se aata hai. Data missing hai toh filter bhi nahi dikhega.",
+              "Free PDF notes ko browser mein preview bhi kar sakte ho aur download bhi.",
+            ].map((item, index) => (
+              <div
+                key={item}
+                className="rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-card)] px-4 py-4 shadow-retro-sm"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">
+                  Step {index + 1}
+                </p>
+                <p className="mt-2 text-sm font-medium leading-7 text-foreground/80">
+                  {item}
                 </p>
               </div>
             ))}
@@ -272,34 +122,236 @@ export default async function NotesPage() {
         </RetroPanel>
       </section>
 
-      {/* ── CTA ─────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl">
-        <RetroPanel tone="brand" size="lg" className="space-y-6 text-center">
-          <div className="mx-auto max-w-3xl space-y-5">
-            <h2 className="mx-auto font-heading text-3xl font-black leading-[0.92] tracking-[-0.06em] text-primary-foreground md:text-5xl">
-              Notes get better when paired with courses.
-            </h2>
-            <p className="mx-auto max-w-xl text-base font-medium leading-8 text-primary-foreground/80">
-              Create a free account to track your progress, access quizzes,
-              and join live doubt-clearing sessions alongside the notes.
-            </p>
-          </div>
+      <section id="notes-library" className="mx-auto max-w-7xl space-y-6 scroll-mt-28">
+        <SectionHeading
+          eyebrow="Live notes"
+          title="Class aur subject ke hisaab se filter karo, phir note kholo."
+          description="Filters bhi real note metadata se bante hain. Agar Appwrite data richer hoga, yeh page naturally aur useful hota jayega."
+        />
 
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/courses">
-                <BookOpen className="size-4" />
-                Browse courses
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
-              <Link href="/register">
-                Create free account
-                <ArrowRight />
-              </Link>
-            </Button>
+        <RetroPanel tone="accent" className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Classes
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Badge asChild variant={!classFilter ? "secondary" : "outline"}>
+                  <Link href="/notes">All</Link>
+                </Badge>
+                {availableClasses.map((item) => (
+                  <Badge
+                    key={item}
+                    asChild
+                    variant={classFilter === item ? "secondary" : "outline"}
+                  >
+                    <Link
+                      href={{
+                        pathname: "/notes",
+                        query: { class: item, ...(subjectFilter ? { subject: subjectFilter } : {}) },
+                      }}
+                    >
+                      {item}
+                    </Link>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Subjects
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  asChild
+                  variant={!subjectFilter ? "ghost" : "outline"}
+                >
+                  <Link
+                    href={{
+                      pathname: "/notes",
+                      query: { ...(classFilter ? { class: classFilter } : {}) },
+                    }}
+                  >
+                    All
+                  </Link>
+                </Badge>
+                {availableSubjects.map((item) => (
+                  <Badge
+                    key={item}
+                    asChild
+                    variant={subjectFilter === item ? "ghost" : "outline"}
+                  >
+                    <Link
+                      href={{
+                        pathname: "/notes",
+                        query: {
+                          ...(classFilter ? { class: classFilter } : {}),
+                          subject: item,
+                        },
+                      }}
+                    >
+                      {item}
+                    </Link>
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
         </RetroPanel>
+
+        {filteredNotes.length === 0 ? (
+          <RetroPanel tone="muted" size="lg" className="space-y-3">
+            <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+              Is filter combo ke liye abhi notes live nahi hain.
+            </h2>
+            <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
+              Yeh empty state bhi real hai. Jaisi hi relevant notes Appwrite mein
+              publish honge, woh yahin dikhne lagenge.
+            </p>
+          </RetroPanel>
+        ) : (
+          <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
+            <div className="space-y-4">
+              {filteredNotes.map((note) => (
+                <RetroPanel
+                  key={note.id}
+                  tone={selectedNote?.id === note.id ? "secondary" : "card"}
+                  className="space-y-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {note.classTag ? <Badge variant="outline">{note.classTag}</Badge> : null}
+                      {note.subjectTag ? <Badge variant="ghost">{note.subjectTag}</Badge> : null}
+                    </div>
+                    <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      {note.downloadCount.toLocaleString("en-IN")} downloads
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                      {note.title}
+                    </h2>
+                    <p className="text-sm font-medium leading-7 text-foreground/80">
+                      {note.description || "Clean study material ready for revision."}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {[note.chapterTag, ...note.tags].filter(Boolean).slice(0, 4).map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button asChild size="sm" variant="outline">
+                      <Link
+                        href={{
+                          pathname: "/notes",
+                          query: {
+                            ...(classFilter ? { class: classFilter } : {}),
+                            ...(subjectFilter ? { subject: subjectFilter } : {}),
+                            note: note.id,
+                          },
+                        }}
+                      >
+                        <Eye className="size-4" />
+                        Preview
+                      </Link>
+                    </Button>
+                    {note.downloadUrl ? (
+                      <Button asChild size="sm">
+                        <a href={note.downloadUrl} target="_blank" rel="noreferrer">
+                          <Download className="size-4" />
+                          Download
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button asChild size="sm" variant="secondary">
+                        <Link href="/contact">Request access</Link>
+                      </Button>
+                    )}
+                  </div>
+                </RetroPanel>
+              ))}
+            </div>
+
+            <RetroPanel tone="card" size="lg" className="space-y-4 xl:sticky xl:top-28">
+              {selectedNote ? (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedNote.classTag ? (
+                        <Badge variant="outline">{selectedNote.classTag}</Badge>
+                      ) : null}
+                      {selectedNote.subjectTag ? (
+                        <Badge variant="ghost">{selectedNote.subjectTag}</Badge>
+                      ) : null}
+                      {selectedNote.chapterTag ? (
+                        <Badge variant="outline">{selectedNote.chapterTag}</Badge>
+                      ) : null}
+                    </div>
+                    <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">
+                      {selectedNote.title}
+                    </h2>
+                    <p className="text-sm font-medium leading-7 text-muted-foreground">
+                      {selectedNote.description || "Yeh note abhi live library se aa raha hai."}
+                    </p>
+                  </div>
+
+                  {selectedNote.viewUrl ? (
+                    <div className="overflow-hidden rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-ink)] shadow-retro-sm">
+                      <iframe
+                        title={selectedNote.title}
+                        src={selectedNote.viewUrl}
+                        className="h-[70dvh] min-h-[28rem] w-full bg-white"
+                      />
+                    </div>
+                  ) : (
+                    <RetroPanel tone="muted" className="space-y-3">
+                      <h3 className="font-heading text-xl font-black tracking-[-0.04em]">
+                        Browser preview abhi available nahi hai.
+                      </h3>
+                      <p className="text-sm font-medium leading-7 text-foreground/80">
+                        Yeh usually paid access ya missing PDF-view metadata ki wajah se hota hai.
+                      </p>
+                    </RetroPanel>
+                  )}
+
+                  <div className="flex flex-wrap gap-3">
+                    {selectedNote.downloadUrl ? (
+                      <Button asChild>
+                        <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer">
+                          <Download className="size-4" />
+                          Download note
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button asChild variant="secondary">
+                        <Link href="/contact">Access request bhejo</Link>
+                      </Button>
+                    )}
+                    <Button asChild variant="outline">
+                      <Link href="/courses">Related courses dekho</Link>
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <RetroPanel tone="muted" className="space-y-3">
+                  <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                    Preview karne ke liye note select karo.
+                  </h2>
+                  <p className="text-sm font-medium leading-7 text-foreground/80">
+                    Jab real notes available hote hain, unka browser preview yahin dikhaya jata hai.
+                  </p>
+                </RetroPanel>
+              )}
+            </RetroPanel>
+          </div>
+        )}
       </section>
     </div>
   );

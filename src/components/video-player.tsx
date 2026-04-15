@@ -1,7 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Maximize,
+  Pause,
+  PictureInPicture2,
+  Play,
+  RotateCcw,
+  RotateCw,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -36,6 +45,16 @@ export function VideoPlayer({
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [canUsePictureInPicture, setCanUsePictureInPicture] = useState(false);
+
+  useEffect(() => {
+    setCanUsePictureInPicture(
+      typeof document !== "undefined" &&
+        "pictureInPictureEnabled" in document &&
+        Boolean(document.pictureInPictureEnabled)
+    );
+  }, []);
 
   function emitProgressSnapshot(ended = false) {
     const video = videoRef.current;
@@ -97,6 +116,7 @@ export function VideoPlayer({
   function handleLoadedMetadata() {
     const video = videoRef.current;
     if (!video) return;
+    video.playbackRate = playbackRate;
 
     if (!restoredInitialTimeRef.current && initialTimeSeconds > 0) {
       const resumeAt = Math.min(
@@ -133,6 +153,21 @@ export function VideoPlayer({
     setProgress(percent * 100);
   }
 
+  function seekBy(seconds: number) {
+    const video = videoRef.current;
+    if (!video || !video.duration) return;
+
+    const targetTime = Math.min(
+      Math.max(0, video.currentTime + seconds),
+      video.duration
+    );
+
+    video.currentTime = targetTime;
+    lastUiSyncRef.current = targetTime;
+    setCurrentTime(targetTime);
+    setProgress((targetTime / video.duration) * 100);
+  }
+
   function toggleFullscreen() {
     const video = videoRef.current;
     if (!video) return;
@@ -142,6 +177,34 @@ export function VideoPlayer({
     } else {
       void video.requestFullscreen();
     }
+  }
+
+  async function togglePictureInPicture() {
+    const video = videoRef.current;
+    if (!video || !canUsePictureInPicture) {
+      return;
+    }
+
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        return;
+      }
+
+      if ("requestPictureInPicture" in video) {
+        await video.requestPictureInPicture();
+      }
+    } catch {
+      // Ignore PiP failures on unsupported browsers or restricted devices.
+    }
+  }
+
+  function updatePlaybackRate(nextRate: number) {
+    const video = videoRef.current;
+    if (video) {
+      video.playbackRate = nextRate;
+    }
+    setPlaybackRate(nextRate);
   }
 
   function formatTime(seconds: number): string {
@@ -215,30 +278,61 @@ export function VideoPlayer({
               {formatTime(currentTime)} / {formatTime(duration)}
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => seekBy(-10)}
+              variant="outline"
+              size="icon"
+              aria-label="Rewind 10 seconds"
+            >
+              <RotateCcw className="size-4" />
+            </Button>
             <Button
               type="button"
               onClick={togglePlay}
               variant="secondary"
-              size="icon-sm"
+              size="icon"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
             </Button>
             <Button
               type="button"
+              onClick={() => seekBy(10)}
+              variant="outline"
+              size="icon"
+              aria-label="Forward 10 seconds"
+            >
+              <RotateCw className="size-4" />
+            </Button>
+            <Button
+              type="button"
               onClick={toggleMute}
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
               {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </Button>
+            {canUsePictureInPicture ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  void togglePictureInPicture();
+                }}
+                variant="ghost"
+                size="icon"
+                aria-label="Picture in picture"
+              >
+                <PictureInPicture2 className="size-4" />
+              </Button>
+            ) : null}
             <Button
               type="button"
               onClick={toggleFullscreen}
               variant="outline"
-              size="icon-sm"
+              size="icon"
               aria-label="Fullscreen"
             >
               <Maximize className="size-4" />
@@ -257,6 +351,22 @@ export function VideoPlayer({
               style={{ width: `${progress}%` }}
             />
           </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {[0.75, 1, 1.25, 1.5].map((rate) => (
+            <Button
+              key={rate}
+              type="button"
+              variant={playbackRate === rate ? "secondary" : "outline"}
+              size="sm"
+              className="min-h-11 min-w-[3.5rem]"
+              onClick={() => updatePlaybackRate(rate)}
+              aria-label={`Set playback speed to ${rate}x`}
+            >
+              {rate}x
+            </Button>
+          ))}
         </div>
       </div>
     </div>

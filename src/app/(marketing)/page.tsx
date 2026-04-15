@@ -1,10 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
-  CheckCircle2,
   Download,
-  Layers3,
   Sparkles,
   Video,
 } from "lucide-react";
@@ -15,46 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   getHomePageContent,
+  getPublicCoursesPageData,
   getPublicNotesPageData,
+  type PublicCourseListItem,
 } from "@/lib/appwrite/marketing-content";
 
 export const revalidate = 3600;
-
-const deliverySignals = [
-  {
-    title: "Structured learning",
-    body: "Courses are organized for progression, not just consumption.",
-    icon: Layers3,
-  },
-  {
-    title: "Live interaction",
-    body: "Sessions, questions, and replays keep the learning loop active.",
-    icon: Video,
-  },
-  {
-    title: "Actual practice",
-    body: "Assignments, quizzes, and progress tracking keep things honest.",
-    icon: CheckCircle2,
-  },
-];
-
-const systemSteps = [
-  {
-    title: "Understand the topic clearly",
-    detail:
-      "Every course is designed to remove ambiguity first, so students know what matters before they start memorizing steps.",
-  },
-  {
-    title: "Practice inside the same workflow",
-    detail:
-      "Lessons connect directly to assignments, quizzes, and progress markers instead of scattering practice across random tools.",
-  },
-  {
-    title: "Keep momentum with support",
-    detail:
-      "Live sessions, community, and simple next-step guidance help students continue instead of stalling after the first burst of motivation.",
-  },
-];
 
 function MetricTile({
   value,
@@ -78,202 +43,283 @@ function MetricTile({
   );
 }
 
+function inferTrack(course: PublicCourseListItem): "school" | "skills" | "general" {
+  const values = [course.title, course.category, ...course.tags].map((item) =>
+    item.toLowerCase()
+  );
+
+  if (
+    values.some((value) => /\b(?:class|grade|std)\s*(6|7|8|9|10|11|12)\b/.test(value))
+  ) {
+    return "school";
+  }
+
+  if (
+    values.some((value) =>
+      [
+        "board",
+        "cbse",
+        "science",
+        "maths",
+        "english",
+        "sst",
+        "physics",
+        "chemistry",
+        "biology",
+        "accountancy",
+        "economics",
+      ].some((token) => value.includes(token))
+    )
+  ) {
+    return "school";
+  }
+
+  if (
+    values.some((value) =>
+      [
+        "skill",
+        "coding",
+        "career",
+        "interview",
+        "programming",
+        "communication",
+        "finance",
+        "development",
+        "professional",
+      ].some((token) => value.includes(token))
+    )
+  ) {
+    return "skills";
+  }
+
+  return "general";
+}
+
+function CourseShelf({
+  title,
+  description,
+  courses,
+}: {
+  title: string;
+  description: string;
+  courses: PublicCourseListItem[];
+}) {
+  return (
+    <section className="mx-auto max-w-7xl space-y-6">
+      <SectionHeading
+        eyebrow="Course shelf"
+        title={title}
+        description={description}
+      />
+
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {courses.map((course) => (
+          <Link key={course.id} href={`/courses/${course.slug}`} className="group">
+            <RetroPanel
+              tone={course.accessModel === "free" ? "secondary" : "card"}
+              size="lg"
+              className="flex h-full flex-col gap-5 transition-transform duration-200 group-hover:-translate-y-1"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Badge variant="outline">{course.category}</Badge>
+                <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {course.enrolledStudents.toLocaleString("en-IN")} learners
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="font-heading text-2xl font-black leading-[0.95] tracking-[-0.05em]">
+                  {course.title}
+                </h3>
+                <p className="line-clamp-3 text-sm font-medium leading-7 text-foreground/80">
+                  {course.shortDescription}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 py-3 shadow-retro-sm">
+                  <p className="mb-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                    Lessons
+                  </p>
+                  <p className="font-bold">{course.totalLessons}</p>
+                </div>
+                <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 py-3 shadow-retro-sm">
+                  <p className="mb-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                    Hours
+                  </p>
+                  <p className="font-bold">{course.totalDurationHours}</p>
+                </div>
+                <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 py-3 shadow-retro-sm">
+                  <p className="mb-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                    Price
+                  </p>
+                  <p className="font-bold">
+                    {course.priceInr === 0 ? "Free" : `INR ${course.priceInr}`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-auto flex items-center justify-between border-t-2 border-border pt-4">
+                <span className="text-sm font-semibold text-muted-foreground">
+                  {course.accessModel === "free" ? "Start freely" : "Structured path"}
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[0.72rem] font-black uppercase tracking-[0.1em]">
+                  Explore
+                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+                </span>
+              </div>
+            </RetroPanel>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default async function LandingPage() {
-  const [homeContent, notesContent] = await Promise.all([
+  const [homeContent, notesContent, coursesData] = await Promise.all([
     getHomePageContent(),
-    getPublicNotesPageData({ limit: 3 }),
+    getPublicNotesPageData({ limit: 4 }),
+    getPublicCoursesPageData({ sort: "popular" }),
   ]);
+
+  const schoolCourses = coursesData.courses
+    .filter((course) => inferTrack(course) === "school")
+    .slice(0, 6);
+  const skillCourses = coursesData.courses
+    .filter((course) => inferTrack(course) === "skills")
+    .slice(0, 3);
 
   return (
     <div className="space-y-16 px-4 py-8 md:px-6 md:py-10">
-      {/* ── Hero: Asymmetric Split ─────────────────────────────────── */}
       <section className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
         <RetroPanel tone="card" size="lg" className="space-y-8">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">Learn from Bhaiya</Badge>
+            <Badge variant="outline">Padhai Karo Apne Tareeke Se</Badge>
             <Badge variant="secondary">School-first</Badge>
             <Badge variant="ghost">Notes, courses, live help</Badge>
           </div>
 
           <div className="space-y-5">
             <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
-              Learning platform
+              Learn from Amar Bhaiya
             </p>
-            <h1 className="font-heading max-w-4xl text-5xl font-black leading-[0.92] tracking-[-0.08em] text-balance md:text-7xl">
-              Start with one clear note. Stay for the course, the live class, and the confidence that follows.
+            <h1 className="font-heading max-w-4xl text-4xl font-black leading-[0.94] tracking-[-0.08em] text-balance sm:text-5xl md:text-6xl xl:text-7xl">
+              Padhai ko thoda simple, thoda honest, aur kaafi zyada useful banana tha. Isliye yeh platform bana.
             </h1>
-            <p className="max-w-2xl text-base font-medium leading-8 text-muted-foreground md:text-lg">
-              amarbhaiya.in is built for Indian students who want a calmer,
-              clearer way to study. Class 6 to 12 learning comes first:
-              chapter-wise notes, board-focused courses, revision support, and
-              direct teaching from Amar Bhaiya. Skill tracks grow on top of that
-              later, not at the cost of the school journey. Trusted by{" "}
-              {homeContent.stats
-                .find((s) => s.label.toLowerCase().includes("student"))
-                ?.end.toLocaleString("en-IN") ?? "1,500"}
-              + students already learning here.
+            <p className="max-w-2xl text-sm font-medium leading-8 text-muted-foreground sm:text-base md:text-lg">
+              Yahan Class 6 se 12 tak ki padhai pehle aati hai. Notes,
+              board-focused courses, revision support, aur seedha samjhaane wala
+              teaching style uske centre mein hai. Skills aur career waale
+              tracks bhi hain, lekin school journey ko side pe karke nahi.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" variant="secondary">
               <Link href="/notes">
-                Explore notes
-                <Download />
+                <Download className="size-4" />
+                Notes kholo
               </Link>
             </Button>
             <Button asChild size="lg">
               <Link href="/courses">
-                Browse courses
+                Courses dekho
                 <ArrowRight />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/register">Create free account</Link>
+              <Link href="/register">Free account banao</Link>
             </Button>
           </div>
         </RetroPanel>
 
-        {/* Right column: metrics from real backend */}
-        <div className="grid grid-cols-2 gap-4">
-          {homeContent.stats.map((item) => (
-            <MetricTile
-              key={item.label}
-              value={item.end}
-              label={item.label}
-              suffix={item.suffix}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* ── What Amar Bhaiya covers (from backend domains) ─────────── */}
-      <section className="mx-auto max-w-7xl space-y-6">
-          <SectionHeading
-            eyebrow="What you'll learn"
-            title="The school-first layer stays at the centre of the product."
-            description="The promise is simple: help students do better in the subjects they are already carrying every day, then expand into skills and career growth when the timing is right."
-          />
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {homeContent.domains.map((d) => (
-            <RetroPanel key={d.title} tone="muted" className="space-y-3">
-              <p className="font-heading text-xl font-black tracking-[-0.04em]">
-                {d.title}
+        <div className="grid gap-4">
+          <RetroPanel tone="secondary" size="lg" className="grid gap-4 sm:grid-cols-[0.86fr_1.14fr] sm:items-center">
+            <div className="space-y-3">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Amar Bhaiya
               </p>
-              <p className="text-sm font-medium leading-6 text-muted-foreground">
-                {d.sub}
+              <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">
+                Real guidance. No coaching-noise drama.
+              </h2>
+              <p className="text-sm font-medium leading-7 text-foreground/80">
+                Platform ka mood bhi wahi hai jo teaching ka hai: seedha, garam,
+                aur student ke favour mein.
               </p>
-            </RetroPanel>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Featured courses (from real backend data) ───────────────── */}
-      {homeContent.featuredCourses.length > 0 && (
-        <section className="mx-auto max-w-7xl space-y-6">
-          <SectionHeading
-            eyebrow="Featured courses"
-            title="What students are actually taking right now."
-          />
-
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {homeContent.featuredCourses.map((course, index) => (
-              <Link
-                key={`${course.title}-${index}`}
-                href={course.slug ? `/courses/${course.slug}` : "/courses"}
-                className="group"
-              >
-                <RetroPanel
-                  tone="card"
-                  size="lg"
-                  className="flex h-full flex-col gap-5 transition-transform duration-200 group-hover:-translate-y-1 group-hover:shadow-retro-lg"
-                >
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline">{course.level}</Badge>
-                    <span className="font-heading text-[0.7rem] font-black uppercase tracking-[0.14em] text-muted-foreground">
-                      {course.students} students
-                    </span>
-                  </div>
-
-                  <div className="flex-1 space-y-3">
-                    <h3 className="font-heading text-2xl font-black leading-[0.94] tracking-[-0.05em]">
-                      {course.title}
-                    </h3>
-                    <p className="text-sm font-medium leading-7 text-muted-foreground line-clamp-2">
-                      {course.sub}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t-2 border-border pt-4">
-                    <span className="font-heading text-xl font-black text-primary">
-                      {course.price}
-                    </span>
-                    <span className="flex items-center gap-1.5 font-heading text-[0.72rem] font-black uppercase tracking-[0.1em] text-foreground group-hover:text-primary transition-colors">
-                      Explore
-                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </RetroPanel>
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex justify-start pt-2">
-            <Button asChild variant="outline" size="lg">
-              <Link href="/courses">
-                See all courses
-                <ArrowRight />
-              </Link>
-            </Button>
-          </div>
-        </section>
-      )}
-
-      {/* ── Study notes ─────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl space-y-6">
-          <SectionHeading
-            eyebrow="Study notes"
-            title="For many students, the first useful thing is one clean note."
-            description="Notes stay visible on the homepage because they are often the first proof that the teaching here is real, practical, and worth coming back to."
-          />
-
-        <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-          <RetroPanel tone="secondary" size="lg" className="space-y-5">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
-              Why notes matter here
-            </p>
-            <h3 className="font-heading text-3xl font-black leading-[0.95] tracking-[-0.06em]">
-              A student should be able to land here, find a note, and feel helped immediately.
-            </h3>
-            <p className="text-sm font-medium leading-7 text-foreground/80">
-              That first small win matters. A useful note can turn a random visit
-              into trust. It lets a student feel Amar Bhaiya’s teaching before
-              they commit to a course or even create an account.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">Chapter-wise</Badge>
-              <Badge variant="outline">Revision friendly</Badge>
-              <Badge variant="outline">Built for Indian schooling</Badge>
             </div>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/notes">
-                Open notes library
-                <ArrowRight />
-              </Link>
-            </Button>
+            <div className="overflow-hidden rounded-[calc(var(--radius)+6px)] border-2 border-border bg-[color:var(--surface-card)] shadow-retro-sm">
+              <Image
+                src="/AMAR BHAIYA.png"
+                alt="Amar Bhaiya"
+                width={720}
+                height={720}
+                priority
+                className="aspect-square w-full object-cover"
+              />
+            </div>
           </RetroPanel>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {notesContent.notes.length > 0 ? (
-              notesContent.notes.map((note, index) => (
+          <div className="grid grid-cols-2 gap-4">
+            {homeContent.stats.map((item) => (
+              <MetricTile
+                key={item.label}
+                value={item.end}
+                label={item.label}
+                suffix={item.suffix}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {schoolCourses.length > 0 ? (
+        <CourseShelf
+          title="School courses that match what students are actually trying to clear right now."
+          description="Yeh section only real published Appwrite courses se aata hai. Agar school catalogue grow karega, yahin se sabse pehle dikhega."
+          courses={schoolCourses}
+        />
+      ) : null}
+
+      {notesContent.notes.length > 0 ? (
+        <section className="mx-auto max-w-7xl space-y-6">
+          <SectionHeading
+            eyebrow="Study notes"
+            title="Kabhi kabhi ek achha note hi student ko wapas track pe le aata hai."
+            description="Independent notes homepage par dikhne chahiye, kyunki kai students ke liye wahi pehla reason hota hai dobara lautne ka."
+          />
+
+          <div className="grid gap-5 xl:grid-cols-[0.92fr_1.08fr]">
+            <RetroPanel tone="secondary" size="lg" className="space-y-5">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Why notes matter
+              </p>
+              <h3 className="font-heading text-3xl font-black leading-[0.95] tracking-[-0.06em]">
+                Student ko bina enroll kiye bhi help milni chahiye.
+              </h3>
+              <p className="text-sm font-medium leading-7 text-foreground/80">
+                Agar koi pehli baar aaya hai aur ek note khol ke genuinely help
+                feel karta hai, wahi trust ka start hota hai.
+              </p>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/notes">
+                  Notes library kholo
+                  <ArrowRight />
+                </Link>
+              </Button>
+            </RetroPanel>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {notesContent.notes.map((note, index) => (
                 <RetroPanel
                   key={note.id}
                   tone={index === 1 ? "accent" : "card"}
                   className="flex h-full flex-col gap-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge variant="outline">{note.accessModel === "free" ? "Free note" : "Premium note"}</Badge>
+                    <Badge variant="outline">
+                      {note.classTag || note.subjectTag || "Independent note"}
+                    </Badge>
                     <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                       {note.downloadCount.toLocaleString("en-IN")} downloads
                     </span>
@@ -282,124 +328,80 @@ export default async function LandingPage() {
                     <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
                       {note.title}
                     </h3>
-                    <p className="text-sm font-medium leading-6 text-foreground/80">
-                      {note.description || "Clean revision material prepared for students who need the important parts in one place."}
+                    <p className="text-sm font-medium leading-7 text-foreground/80">
+                      {note.description || "Revision ke waqt kaam aane wala seedha, useful note."}
                     </p>
                   </div>
                   <div className="mt-auto flex flex-wrap gap-2">
-                    {note.tags.map((tag) => (
+                    {[note.subjectTag, note.chapterTag, ...note.tags].filter(Boolean).slice(0, 3).map((tag) => (
                       <Badge key={tag} variant="ghost">
                         {tag}
                       </Badge>
                     ))}
                   </div>
                 </RetroPanel>
-              ))
-            ) : (
-              <RetroPanel tone="card" className="md:col-span-3 space-y-3">
-                <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
-                  Notes are being built alongside the courses.
-                </h3>
-                <p className="text-sm font-medium leading-7 text-foreground/80">
-                  The notes library already has its own public space, and it will keep filling up as Amar Bhaiya expands the school-first catalogue.
-                </p>
-              </RetroPanel>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : (
+        <section className="mx-auto max-w-7xl">
+          <RetroPanel tone="muted" size="lg" className="space-y-3">
+            <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+              Notes shelf abhi fill ho rahi hai.
+            </h2>
+            <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
+              Jaise hi Amar Bhaiya ya guest instructors real notes publish karenge,
+              woh yahin dikhenge. Abhi ke liye directly courses explore kar sakte ho.
+            </p>
+          </RetroPanel>
+        </section>
+      )}
 
-      {/* ── Delivery signals ────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl">
-        <RetroPanel tone="secondary" size="lg" className="space-y-8">
-          <SectionHeading
-            eyebrow="How it works"
-            title="Built for real learning, not just content consumption."
-          />
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {deliverySignals.map((item) => (
-              <div key={item.title} className="space-y-3">
-                <div className="flex size-12 items-center justify-center rounded-[calc(var(--radius)+4px)] border-2 border-border bg-card shadow-retro-sm">
-                  <item.icon className="size-5" />
-                </div>
-                <h3 className="font-heading text-lg font-black tracking-[-0.03em]">
-                  {item.title}
-                </h3>
-                <p className="text-sm font-medium leading-7 text-muted-foreground">
-                  {item.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </RetroPanel>
-      </section>
-
-      {/* ── The system (numbered steps) ─────────────────────────────── */}
-      <section className="mx-auto max-w-7xl space-y-8">
-        <SectionHeading
-          eyebrow="The system"
-          title="Three steps. No fluff. Just execution."
+      {skillCourses.length > 0 ? (
+        <CourseShelf
+          title="Skill tracks for college students, freshers, and working learners."
+          description="Yeh secondary layer hai. Sirf wahi dikhega jo Appwrite mein real published skill course ke form mein available hai."
+          courses={skillCourses}
         />
+      ) : null}
 
-        <div className="grid gap-5 md:grid-cols-3">
-          {systemSteps.map((step, i) => (
-            <RetroPanel key={step.title} tone="card" className="space-y-4">
-              <div className="flex size-10 items-center justify-center rounded-full border-2 border-border bg-primary font-heading text-base font-black text-primary-foreground shadow-retro-sm">
-                {i + 1}
-              </div>
-              <h3 className="font-heading text-lg font-black tracking-[-0.03em]">
-                {step.title}
-              </h3>
-              <p className="text-sm font-medium leading-7 text-muted-foreground">
-                {step.detail}
-              </p>
-            </RetroPanel>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Learn items from backend ────────────────────────────────── */}
-      {homeContent.learnItems.length > 0 && (
+      {homeContent.domains.length > 0 ? (
         <section className="mx-auto max-w-7xl space-y-6">
           <SectionHeading
-            eyebrow="Course catalog"
-            title="What you can learn here."
+            eyebrow="Learning areas"
+            title="Platform kis direction mein grow kar raha hai."
+            description="Yeh blocks bhi Appwrite-backed site copy se aate hain. Agar backend mein configured nahi hain, yeh section hide ho jata hai."
           />
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {homeContent.learnItems.map((item) => (
-              <RetroPanel key={item.title} tone="card" className="flex gap-5">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-heading text-lg font-black tracking-[-0.03em]">
-                      {item.title}
-                    </h3>
-                    <Badge variant="outline">{item.who}</Badge>
-                  </div>
-                  <p className="text-sm font-medium leading-7 text-muted-foreground">
-                    {item.desc}
-                  </p>
-                </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {homeContent.domains.map((item) => (
+              <RetroPanel key={item.title} tone="muted" className="space-y-3">
+                <p className="font-heading text-xl font-black tracking-[-0.04em]">
+                  {item.title}
+                </p>
+                <p className="text-sm font-medium leading-7 text-muted-foreground">
+                  {item.sub}
+                </p>
               </RetroPanel>
             ))}
           </div>
         </section>
-      )}
+      ) : null}
 
-      {/* ── Why this works (from backend whyItems) ──────────────────── */}
-      {homeContent.whyItems.length > 0 && (
+      {homeContent.whyItems.length > 0 ? (
         <section className="mx-auto max-w-7xl space-y-6">
           <SectionHeading
-            eyebrow="Why this is different"
-            title="The approach matters more than the topic list."
+            eyebrow="Why learn here"
+            title="Reason sirf content ka nahi hota. Feeling ka bhi hota hai."
+            description="Agar Appwrite mein genuine positioning blocks configured hain, woh yahin se show hote hain."
           />
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {homeContent.whyItems.map((item, index) => (
               <RetroPanel
                 key={item.title}
-                tone={index % 2 === 0 ? "accent" : "muted"}
+                tone={index % 2 === 0 ? "accent" : "card"}
                 className="space-y-3"
               >
                 <Sparkles className="size-5 text-primary" />
@@ -413,18 +415,17 @@ export default async function LandingPage() {
             ))}
           </div>
         </section>
-      )}
+      ) : null}
 
-      {/* ── Final CTA ──────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl">
         <RetroPanel tone="brand" size="lg" className="space-y-8 text-center">
           <div className="mx-auto max-w-3xl space-y-5">
             <h2 className="mx-auto font-heading text-4xl font-black leading-[0.92] tracking-[-0.06em] text-primary-foreground md:text-6xl">
-              If you are new here, start with something small and useful.
+              Start chhota rakho. Consistency badi ho jayegi.
             </h2>
-            <p className="mx-auto max-w-xl text-base font-medium leading-8 text-primary-foreground/80">
-              Open a note. Watch a lesson. Join a course when it makes sense.
-              The platform is meant to feel steady, not overwhelming.
+            <p className="mx-auto max-w-2xl text-base font-medium leading-8 text-primary-foreground/80">
+              Ek note kholo. Ek lesson dekho. Phir dekhna flow kaise banne lagta
+              hai. Platform ka kaam overwhelm karna nahi, momentum dilana hai.
             </p>
           </div>
 
@@ -432,13 +433,18 @@ export default async function LandingPage() {
             <Button asChild size="lg" variant="secondary">
               <Link href="/notes">
                 <Download className="size-4" />
-                Explore notes
+                Notes explore karo
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"
+            >
               <Link href="/courses">
                 <BookOpen className="size-4" />
-                Browse courses
+                Courses dekho
                 <ArrowRight />
               </Link>
             </Button>

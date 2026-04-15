@@ -48,6 +48,7 @@ export type PublicCourseListItem = {
   title: string;
   shortDescription: string;
   category: string;
+  tags: string[];
   priceInr: number;
   rating: number;
   totalLessons: number;
@@ -165,6 +166,10 @@ export type PublicNoteItem = {
   instructorName: string;
   createdAt: string;
   downloadUrl: string;
+  viewUrl: string;
+  classTag: string;
+  subjectTag: string;
+  chapterTag: string;
 };
 
 export type NotesPageData = {
@@ -211,6 +216,94 @@ function parseStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
+function normalizeTag(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function extractClassTag(values: string[]): string {
+  for (const value of values) {
+    const match = value.match(/\b(?:class|grade|std)\s*[-:]?\s*(6|7|8|9|10|11|12)\b/i);
+    if (match?.[1]) {
+      return `Class ${match[1]}`;
+    }
+  }
+
+  return "";
+}
+
+function extractSubjectTag(values: string[]): string {
+  const knownSubjects = [
+    "maths",
+    "mathematics",
+    "science",
+    "english",
+    "sst",
+    "social science",
+    "physics",
+    "chemistry",
+    "biology",
+    "accountancy",
+    "economics",
+    "business studies",
+    "bst",
+    "history",
+    "geography",
+    "civics",
+    "computer",
+    "hindi",
+  ];
+
+  for (const value of values) {
+    const normalized = normalizeTag(value);
+    const matched = knownSubjects.find((subject) => normalized.includes(subject));
+    if (matched) {
+      if (matched === "mathematics") return "Maths";
+      if (matched === "social science") return "Social Science";
+      if (matched === "business studies") return "Business Studies";
+      return toTitleCase(matched);
+    }
+  }
+
+  return "";
+}
+
+function extractChapterTag(values: string[]): string {
+  for (const value of values) {
+    const match = value.match(/\b(chapter|ch)\s*[-:]?\s*([a-z0-9]+)/i);
+    if (match?.[2]) {
+      return `Chapter ${match[2].toUpperCase()}`;
+    }
+  }
+
+  return "";
+}
+
+function inferCourseTrack(course: { title: string; category: string; tags: string[] }): "school" | "skills" | "general" {
+  const values = [course.title, course.category, ...course.tags].map(normalizeTag);
+
+  if (values.some((value) => /\b(?:class|grade|std)\s*(6|7|8|9|10|11|12)\b/.test(value))) {
+    return "school";
+  }
+
+  if (values.some((value) => ["board", "cbse", "science", "maths", "english", "sst", "physics", "chemistry", "biology", "accountancy", "economics"].some((token) => value.includes(token)))) {
+    return "school";
+  }
+
+  if (values.some((value) => ["coding", "web", "career", "communication", "finance", "skill", "programming", "development", "interview"].some((token) => value.includes(token)))) {
+    return "skills";
+  }
+
+  return "general";
+}
+
 function parseParagraphs(content: unknown): string[] {
   if (typeof content !== "string" || content.trim().length === 0) {
     return [];
@@ -237,6 +330,12 @@ function parseJsonPayload<T>(value: unknown): T | null {
 function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
   const accessModel = row.accessModel === "paid" ? "paid" : "free";
   const fileId = typeof row.fileId === "string" ? row.fileId : "";
+  const tags = parseStringArray(row.tags);
+  const metadataSources = [
+    ...tags,
+    typeof row.title === "string" ? row.title : "",
+    typeof row.description === "string" ? row.description : "",
+  ];
 
   return {
     id: row.$id,
@@ -246,7 +345,7 @@ function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
         : "Untitled note",
     description:
       typeof row.description === "string" ? row.description.trim() : "",
-    tags: parseStringArray(row.tags).slice(0, 3),
+    tags: tags.slice(0, 4),
     accessModel,
     priceInr: Math.max(0, toNumber(row.price, 0)),
     downloadCount: Math.max(0, Math.round(toNumber(row.downloadCount, 0))),
@@ -259,6 +358,13 @@ function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
       accessModel === "free" && fileId
         ? getFileDownloadUrl(APPWRITE_CONFIG.buckets.resourceFiles, fileId)
         : "",
+    viewUrl:
+      accessModel === "free" && fileId
+        ? `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.buckets.resourceFiles}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`
+        : "",
+    classTag: extractClassTag(metadataSources),
+    subjectTag: extractSubjectTag(metadataSources),
+    chapterTag: extractChapterTag(metadataSources),
   };
 }
 
@@ -466,6 +572,7 @@ function toPublicCourse(
           ? row.description
           : "",
     category: categoryEntry?.slug ?? "uncategorized",
+    tags: parseStringArray(row.tags),
     priceInr: toNumber(row.price, 0),
     rating: toNumber(row.rating, 0),
     totalLessons: toNumber(row.totalLessons, 0),
@@ -871,38 +978,11 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       };
     });
 
-  const DEFAULT_DOMAINS = [
-    { title: "Board Prep", sub: "Class 6-12, CBSE & State boards" },
-    { title: "Coding", sub: "Web dev, basics, projects" },
-    { title: "Career", sub: "Guidance for college & jobs" },
-    { title: "Life Skills", sub: "Communication, money, habits" },
-  ];
-
-  const DEFAULT_LEARN_ITEMS = [
-    { title: "Class 10 Board Prep", who: "Class 10", desc: "Complete syllabus coverage — Science, Maths, English, SST with revision notes." },
-    { title: "Class 12 Science", who: "Class 12", desc: "Physics, Chemistry, Maths, Biology — chapter-wise video lessons and practice." },
-    { title: "Coding Basics", who: "Class 8+", desc: "HTML, CSS, JavaScript — build your first website from scratch." },
-    { title: "Career Guidance", who: "Class 8–12", desc: "Which stream, which college, which skills — honest advice, no sugar-coating." },
-    { title: "Communication Skills", who: "Everyone", desc: "Speak confidently in English or Hindi. Presentation skills for school and college." },
-    { title: "Personal Finance", who: "18+", desc: "Saving, investing, budgeting — things school should teach but doesn't." },
-  ];
-
-  const DEFAULT_WHY_ITEMS = [
-    { title: "No Filler", body: "Every lesson is there because it matters. No 40-hour courses padded with repeat content." },
-    { title: "Built from Experience", body: "I teach what I've done, not what I read in a book. Real problems, real solutions." },
-    { title: "Your Language", body: "Explanations in Hindi when it clicks better, practice in English when you need it." },
-    { title: "Priced for Students", body: "Some courses are free. Paid ones are priced so a student can afford them, not just working professionals." },
-  ];
-
-  const resolvedDomains = Array.isArray(domains) && domains.length > 0 ? domains : DEFAULT_DOMAINS;
-  const resolvedLearnItems = Array.isArray(learnItems) && learnItems.length > 0 ? learnItems : DEFAULT_LEARN_ITEMS;
-  const resolvedWhyItems = Array.isArray(whyItems) && whyItems.length > 0 ? whyItems : DEFAULT_WHY_ITEMS;
-
   return {
     stats,
-    domains: resolvedDomains,
-    learnItems: resolvedLearnItems,
+    domains: Array.isArray(domains) ? domains : [],
+    learnItems: Array.isArray(learnItems) ? learnItems : [],
     featuredCourses,
-    whyItems: resolvedWhyItems,
+    whyItems: Array.isArray(whyItems) ? whyItems : [],
   };
 }
