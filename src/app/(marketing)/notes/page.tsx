@@ -5,225 +5,211 @@ import {
   Download,
   FileText,
   GraduationCap,
-  Search,
 } from "lucide-react";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getPublicCoursesPageData } from "@/lib/appwrite/marketing-content";
 
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Free Study Notes — Class 6 to 12 | amarbhaiya.in",
+  title: "Study Notes",
   description:
-    "Download free chapter-wise study notes for Class 6 to 12. Science, Maths, English, SST — clean, exam-focused notes by Amar Bhaiya. No login needed for previews.",
+    "Chapter-wise study notes for Class 6 to 12 — Science, Maths, English, SST. Download, print, revise. By Amar Bhaiya.",
 };
 
 export const revalidate = 3600;
 
-// Notes are a curated view of resources attached to courses.
-// For now, we display a structured notes directory organized by class.
-// When instructors upload resources to courses, they appear here automatically.
+// Notes are resources attached to courses in the backend.
+// This page is a structured directory that links into the course system.
+// As instructors upload resources, they surface here.
 
-const notesDirectory = [
+const classGroups = [
   {
-    grade: "Class 6",
-    subjects: [
-      { name: "Science", chapters: 16, status: "coming" as const },
-      { name: "Maths", chapters: 15, status: "coming" as const },
-      { name: "English", chapters: 10, status: "coming" as const },
-      { name: "SST", chapters: 20, status: "coming" as const },
+    label: "Middle School",
+    classes: [
+      { grade: "6", subjects: ["Science", "Maths", "English", "SST"] },
+      { grade: "7", subjects: ["Science", "Maths", "English", "SST"] },
+      { grade: "8", subjects: ["Science", "Maths", "English", "SST"] },
     ],
   },
   {
-    grade: "Class 7",
-    subjects: [
-      { name: "Science", chapters: 18, status: "coming" as const },
-      { name: "Maths", chapters: 15, status: "coming" as const },
-      { name: "English", chapters: 10, status: "coming" as const },
-      { name: "SST", chapters: 22, status: "coming" as const },
+    label: "Secondary",
+    classes: [
+      { grade: "9", subjects: ["Science", "Maths", "English", "SST"] },
+      { grade: "10", subjects: ["Science", "Maths", "English", "SST"] },
     ],
   },
   {
-    grade: "Class 8",
-    subjects: [
-      { name: "Science", chapters: 18, status: "coming" as const },
-      { name: "Maths", chapters: 16, status: "coming" as const },
-      { name: "English", chapters: 12, status: "coming" as const },
-      { name: "SST", chapters: 24, status: "coming" as const },
+    label: "Senior Secondary — Science",
+    classes: [
+      { grade: "11", subjects: ["Physics", "Chemistry", "Maths", "Biology"] },
+      { grade: "12", subjects: ["Physics", "Chemistry", "Maths", "Biology"] },
     ],
   },
   {
-    grade: "Class 9",
-    subjects: [
-      { name: "Science", chapters: 15, status: "coming" as const },
-      { name: "Maths", chapters: 15, status: "coming" as const },
-      { name: "English", chapters: 12, status: "coming" as const },
-      { name: "SST", chapters: 20, status: "coming" as const },
-    ],
-  },
-  {
-    grade: "Class 10",
-    subjects: [
-      { name: "Science", chapters: 16, status: "coming" as const },
-      { name: "Maths", chapters: 15, status: "coming" as const },
-      { name: "English", chapters: 12, status: "coming" as const },
-      { name: "SST", chapters: 20, status: "coming" as const },
-    ],
-  },
-  {
-    grade: "Class 11 (Science)",
-    subjects: [
-      { name: "Physics", chapters: 15, status: "coming" as const },
-      { name: "Chemistry", chapters: 14, status: "coming" as const },
-      { name: "Maths", chapters: 16, status: "coming" as const },
-      { name: "Biology", chapters: 22, status: "coming" as const },
-    ],
-  },
-  {
-    grade: "Class 11 (Commerce)",
-    subjects: [
-      { name: "Accountancy", chapters: 14, status: "coming" as const },
-      { name: "Business Studies", chapters: 12, status: "coming" as const },
-      { name: "Economics", chapters: 10, status: "coming" as const },
-    ],
-  },
-  {
-    grade: "Class 12 (Science)",
-    subjects: [
-      { name: "Physics", chapters: 15, status: "coming" as const },
-      { name: "Chemistry", chapters: 16, status: "coming" as const },
-      { name: "Maths", chapters: 13, status: "coming" as const },
-      { name: "Biology", chapters: 16, status: "coming" as const },
-    ],
-  },
-  {
-    grade: "Class 12 (Commerce)",
-    subjects: [
-      { name: "Accountancy", chapters: 12, status: "coming" as const },
-      { name: "Business Studies", chapters: 12, status: "coming" as const },
-      { name: "Economics", chapters: 10, status: "coming" as const },
+    label: "Senior Secondary — Commerce",
+    classes: [
+      { grade: "11", subjects: ["Accountancy", "BST", "Economics"] },
+      { grade: "12", subjects: ["Accountancy", "BST", "Economics"] },
     ],
   },
 ];
 
 export default async function NotesPage() {
   return (
-    <div className="space-y-16 px-4 pb-12 pt-6 md:px-6 md:pt-8">
-      {/* Hero */}
-      <section className="mx-auto max-w-4xl text-center space-y-6">
-        <Badge variant="secondary">100% Free</Badge>
-        <h1 className="text-4xl font-black leading-tight tracking-tight text-balance sm:text-5xl md:text-6xl">
-          Study notes jo{" "}
-          <span className="text-primary">exam ke din</span> kaam aayein.
-        </h1>
-        <p className="mx-auto max-w-xl text-base font-medium leading-relaxed text-muted-foreground sm:text-lg">
-          Chapter-wise, topic-wise, clean and focused. Board exam ke liye bane hain —
-          download karo, print karo, revise karo. Sign up karne ki zaroorat nahi.
-        </p>
-        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Button asChild size="lg">
-            <Link href="#notes-directory">
-              <Search className="size-4" />
-              Find your class
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/register">
-              Get notified for new notes
-            </Link>
-          </Button>
-        </div>
-      </section>
+    <div className="space-y-16 px-4 py-8 md:px-6 md:py-10">
 
-      {/* Notes Directory */}
-      <section id="notes-directory" className="mx-auto max-w-6xl space-y-6 scroll-mt-20">
-        <SectionHeading
-          eyebrow="Notes Directory"
-          title="Apni class choose karo, subject choose karo."
-          description="Notes jaise jaise ready hote jayenge, yahan pe available ho jayenge. Abhi hum actively upload kar rahe hain."
-          titleAs="h2"
-        />
+      {/* ── Hero ────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl">
+        <RetroPanel tone="card" size="lg" className="space-y-6">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">Study Notes</Badge>
+            <Badge variant="outline">Class 6–12</Badge>
+          </div>
 
-        <div className="space-y-4">
-          {notesDirectory.map((classItem) => (
-            <RetroPanel key={classItem.grade} tone="card" className="space-y-4">
-              <div className="flex items-center gap-3">
-                <GraduationCap className="size-5 text-primary" />
-                <h3 className="text-lg font-black tracking-tight">{classItem.grade}</h3>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {classItem.subjects.map((subject) => (
-                  <div
-                    key={`${classItem.grade}-${subject.name}`}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3"
-                  >
-                    <FileText className="size-4 shrink-0 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold">{subject.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {subject.chapters} chapters
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="shrink-0 text-xs">
-                      Coming soon
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </RetroPanel>
-          ))}
-        </div>
-      </section>
+          <div className="space-y-5">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+              Resources
+            </p>
+            <h1 className="font-heading max-w-4xl text-5xl font-black leading-[0.92] tracking-[-0.08em] text-balance md:text-7xl">
+              Chapter-wise notes that actually help during revision.
+            </h1>
+            <p className="max-w-2xl text-base font-medium leading-8 text-muted-foreground md:text-lg">
+              Clean, focused, and organized by chapter. Made for students who
+              want to revise efficiently — not wade through 50 pages of
+              filler. Notes are added as courses get built, so this library
+              keeps growing.
+            </p>
+          </div>
 
-      {/* How notes work */}
-      <section className="mx-auto max-w-4xl">
-        <RetroPanel tone="accent" size="lg" className="space-y-5">
-          <SectionHeading
-            eyebrow="How it works"
-            title="Notes kaise use karein?"
-            titleAs="h2"
-          />
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2 text-center">
-              <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-primary/10 font-heading text-base font-black text-primary">
-                1
-              </div>
-              <h3 className="text-sm font-black">Choose your class & subject</h3>
-              <p className="text-xs text-muted-foreground">Select the chapter you want to revise</p>
-            </div>
-            <div className="space-y-2 text-center">
-              <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-primary/10 font-heading text-base font-black text-primary">
-                2
-              </div>
-              <h3 className="text-sm font-black">Read online or download PDF</h3>
-              <p className="text-xs text-muted-foreground">Free — no signup needed for preview</p>
-            </div>
-            <div className="space-y-2 text-center">
-              <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-primary/10 font-heading text-base font-black text-primary">
-                3
-              </div>
-              <h3 className="text-sm font-black">Pair with video lessons</h3>
-              <p className="text-xs text-muted-foreground">Notes + course together = best results</p>
-            </div>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link href="/courses">
+                <BookOpen className="size-4" />
+                Browse courses with notes
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/register">Create free account</Link>
+            </Button>
           </div>
         </RetroPanel>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-4xl">
-        <RetroPanel tone="brand" size="lg" className="text-center space-y-5">
-          <h2 className="text-2xl font-black leading-tight tracking-tight text-primary-foreground sm:text-3xl">
-            Notes ke saath courses bhi try karo — revision aur samajh dono improve hogi.
-          </h2>
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+      {/* ── Class-wise Directory ────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl space-y-8">
+        <SectionHeading
+          eyebrow="Notes directory"
+          title="Find notes by class and subject."
+          description="Notes are attached to courses. As Bhaiya builds out each course, the chapter-wise notes become available here."
+        />
+
+        <div className="space-y-6">
+          {classGroups.map((group) => (
+            <div key={group.label} className="space-y-4">
+              <h3 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
+                {group.label}
+              </h3>
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {group.classes.map((cls) => (
+                  <Link
+                    key={`${group.label}-${cls.grade}`}
+                    href={`/courses?class=${cls.grade}`}
+                    className="group"
+                  >
+                    <RetroPanel
+                      tone="card"
+                      className="flex items-start gap-4 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:shadow-retro-lg"
+                    >
+                      <div className="flex size-14 shrink-0 items-center justify-center rounded-[calc(var(--radius)+4px)] border-2 border-border bg-primary font-heading text-xl font-black text-primary-foreground shadow-retro-sm">
+                        {cls.grade}
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <p className="font-heading text-base font-black tracking-[-0.02em]">
+                          Class {cls.grade}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {cls.subjects.map((sub) => (
+                            <Badge key={sub} variant="outline">
+                              {sub}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                    </RetroPanel>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── How notes work ──────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl">
+        <RetroPanel tone="secondary" size="lg" className="space-y-8">
+          <SectionHeading
+            eyebrow="How it works"
+            title="Notes are part of the course system."
+          />
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                step: "1",
+                title: "Pick a course",
+                body: "Each course covers a class + subject combination. Notes sit alongside the video lessons.",
+              },
+              {
+                step: "2",
+                title: "Access chapter notes",
+                body: "Every module has downloadable notes — PDFs you can print, annotate, and carry to your study table.",
+              },
+              {
+                step: "3",
+                title: "Pair with video",
+                body: "Watch the lesson, read the note, attempt the quiz. That loop is what makes the material stick.",
+              },
+            ].map((item) => (
+              <div key={item.step} className="space-y-3">
+                <div className="flex size-10 items-center justify-center rounded-full border-2 border-border bg-card font-heading text-base font-black shadow-retro-sm">
+                  {item.step}
+                </div>
+                <h3 className="font-heading text-lg font-black tracking-[-0.03em]">
+                  {item.title}
+                </h3>
+                <p className="text-sm font-medium leading-7 text-muted-foreground">
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </RetroPanel>
+      </section>
+
+      {/* ── CTA ─────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl">
+        <RetroPanel tone="brand" size="lg" className="space-y-6 text-center">
+          <div className="mx-auto max-w-3xl space-y-5">
+            <h2 className="mx-auto font-heading text-3xl font-black leading-[0.92] tracking-[-0.06em] text-primary-foreground md:text-5xl">
+              Notes get better when paired with courses.
+            </h2>
+            <p className="mx-auto max-w-xl text-base font-medium leading-8 text-primary-foreground/80">
+              Create a free account to track your progress, access quizzes,
+              and join live doubt-clearing sessions alongside the notes.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" variant="secondary">
               <Link href="/courses">
                 <BookOpen className="size-4" />
-                Explore courses
+                Browse courses
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
