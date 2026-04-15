@@ -799,19 +799,19 @@ export async function getHomePageContent(): Promise<HomePageContent> {
   ];
 
   const DEFAULT_LEARN_ITEMS = [
-    { title: "Full-Stack Web Dev", who: "Class 10+", desc: "HTML, CSS, JS, React, Node — build real projects, not toy apps." },
-    { title: "DSA for Placements", who: "College", desc: "200+ problems solved step-by-step. Crack any coding round." },
-    { title: "Fitness at Home", who: "Everyone", desc: "No gym needed. Bodyweight routines, diet plans, transformation roadmaps." },
-    { title: "Career Guidance", who: "Class 8–12", desc: "Which stream, which college, which skills — sorted." },
-    { title: "Money & Investing", who: "18+", desc: "Mutual funds, taxes, budgeting — what school never taught." },
-    { title: "Communication", who: "Everyone", desc: "Speak confidently in English, Hindi, or Hinglish. No judgement." },
+    { title: "Class 10 Board Prep", who: "Class 10", desc: "Complete syllabus coverage — Science, Maths, English, SST with revision notes." },
+    { title: "Class 12 Science", who: "Class 12", desc: "Physics, Chemistry, Maths, Biology — chapter-wise video lessons and practice." },
+    { title: "Coding Basics", who: "Class 8+", desc: "HTML, CSS, JavaScript — build your first website from scratch." },
+    { title: "Career Guidance", who: "Class 8–12", desc: "Which stream, which college, which skills — honest advice, no sugar-coating." },
+    { title: "Communication Skills", who: "Everyone", desc: "Speak confidently in English or Hindi. Presentation skills for school and college." },
+    { title: "Personal Finance", who: "18+", desc: "Saving, investing, budgeting — things school should teach but doesn't." },
   ];
 
   const DEFAULT_WHY_ITEMS = [
-    { title: "No Filler Content", body: "Every lesson is picked because it matters. No 40-hour filler courses." },
-    { title: "Real Experience", body: "I teach what I've done — not what I read in a textbook." },
-    { title: "Hindi + English", body: "Learn in the language you think in. Code comments in English, explanations in Hindi." },
-    { title: "Affordable", body: "Most content is free. Paid courses are priced for students, not corporates." },
+    { title: "No Filler", body: "Har lesson zaroori hai. Koi 40-hour filler course nahi hai." },
+    { title: "Real Experience", body: "Main wahi sikhata hoon jo maine khud kiya hai — textbook copy nahi." },
+    { title: "Hindi + English", body: "Apni language mein padho. Concepts Hindi mein, practice English mein." },
+    { title: "Student-Friendly", body: "Zyaadatar content free hai. Paid courses bhi students ke budget mein hain." },
   ];
 
   const resolvedDomains = Array.isArray(domains) && domains.length > 0 ? domains : DEFAULT_DOMAINS;
