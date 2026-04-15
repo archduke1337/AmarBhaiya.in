@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   ExternalLink,
+  Heart,
   Mail,
 } from "lucide-react";
 
@@ -13,8 +14,8 @@ export function Footer() {
   const platformLinks = PUBLIC_NAV_ITEMS.filter((item) => item.href !== "/");
 
   const socialLinks = [
-    { label: "YouTube", href: OWNER.social.youtube, icon: Youtube },
-    { label: "Instagram", href: OWNER.social.instagram, icon: Instagram },
+    { label: "YouTube", href: OWNER.social.youtube, icon: ExternalLink },
+    { label: "Instagram", href: OWNER.social.instagram, icon: ExternalLink },
     { label: "LinkedIn", href: OWNER.social.linkedin, icon: ExternalLink },
     { label: "Twitter", href: OWNER.social.twitter, icon: ExternalLink },
   ];
