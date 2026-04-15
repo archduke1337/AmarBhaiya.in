@@ -2,14 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  BookOpen,
-  FileText,
-  Heart,
-  Instagram,
-  Linkedin,
+  ExternalLink,
   Mail,
-  Twitter,
-  Youtube,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,8 +15,8 @@ export function Footer() {
   const socialLinks = [
     { label: "YouTube", href: OWNER.social.youtube, icon: Youtube },
     { label: "Instagram", href: OWNER.social.instagram, icon: Instagram },
-    { label: "LinkedIn", href: OWNER.social.linkedin, icon: Linkedin },
-    { label: "Twitter", href: OWNER.social.twitter, icon: Twitter },
+    { label: "LinkedIn", href: OWNER.social.linkedin, icon: ExternalLink },
+    { label: "Twitter", href: OWNER.social.twitter, icon: ExternalLink },
   ];
 
   return (

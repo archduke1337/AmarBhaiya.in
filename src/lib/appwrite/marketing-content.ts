@@ -792,10 +792,10 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     });
 
   const DEFAULT_DOMAINS = [
-    { title: "Coding", sub: "Web, App, DSA" },
-    { title: "Fitness", sub: "Home workouts & nutrition" },
-    { title: "Career", sub: "Interviews & growth" },
-    { title: "Life Skills", sub: "Money, habits, mindset" },
+    { title: "Board Prep", sub: "Class 6-12, CBSE & State boards" },
+    { title: "Coding", sub: "Web dev, basics, projects" },
+    { title: "Career", sub: "Guidance for college & jobs" },
+    { title: "Life Skills", sub: "Communication, money, habits" },
   ];
 
   const DEFAULT_LEARN_ITEMS = [
