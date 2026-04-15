@@ -39,6 +39,7 @@ export const DASHBOARD_NAV_ITEMS = {
   student: [
     { label: "Dashboard", href: "/app/dashboard", icon: "layout-dashboard" },
     { label: "My Courses", href: "/app/courses", icon: "book-open" },
+    { label: "Notes", href: "/notes", icon: "file-text" },
     { label: "Assignments", href: "/app/assignments", icon: "file-text" },
     { label: "Community", href: "/app/community", icon: "users" },
     { label: "Live Sessions", href: "/app/live", icon: "video" },

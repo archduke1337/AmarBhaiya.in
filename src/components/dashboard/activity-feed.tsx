@@ -23,8 +23,8 @@ export function ActivityFeed({
   viewAllHref,
 }: ActivityFeedProps) {
   return (
-    <section className="retro-surface overflow-hidden bg-card">
-      <div className="flex items-center justify-between border-b bg-secondary/75 px-5 py-3.5">
+    <section className="retro-surface overflow-hidden bg-[color:var(--surface-card)]">
+      <div className="flex items-center justify-between gap-3 border-b-2 border-border bg-[color:var(--surface-secondary)] px-4 py-3.5 sm:px-5">
         <h2 className="font-heading text-base font-black">{title}</h2>
         {viewAllHref && (
           <Link
@@ -37,22 +37,22 @@ export function ActivityFeed({
       </div>
       <div className="divide-y divide-border">
         {items.length === 0 && (
-          <p className="px-5 py-8 text-center text-sm font-semibold text-muted-foreground">
+          <p className="px-5 py-8 text-center text-sm font-semibold leading-7 text-muted-foreground">
             {emptyText}
           </p>
         )}
         {items.map((item) => {
           const content = (
-            <div className="flex items-start justify-between gap-3 px-5 py-4">
-              <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">
+              <div className="flex min-w-0 flex-col gap-0.5">
                 <p className="text-sm font-semibold">{item.label}</p>
                 <p className="text-xs font-medium text-muted-foreground">
                   {item.description}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
                 {item.badge && (
-                  <span className="rounded-full border-2 border-border bg-accent px-2.5 py-1 text-[0.62rem] font-heading font-black uppercase tracking-[0.14em] text-accent-foreground shadow-retro-sm">
+                  <span className="rounded-full border-2 border-border bg-[color:var(--surface-accent)] px-2.5 py-1 text-[0.62rem] font-heading font-black uppercase tracking-[0.14em] text-accent-foreground shadow-retro-sm">
                     {item.badge}
                   </span>
                 )}

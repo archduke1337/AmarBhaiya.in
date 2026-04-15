@@ -19,18 +19,18 @@ export function StatCard({
   trend,
 }: StatCardProps) {
   return (
-    <article className="group relative flex flex-col gap-4 rounded-[calc(var(--radius)+4px)] border-2 border-border bg-card p-5 shadow-retro transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:bg-secondary/60">
+    <article className="group relative flex flex-col gap-4 rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-card)] p-4 shadow-retro transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:bg-[color:var(--surface-secondary)] sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <p className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground">
             {label}
           </p>
-          <p className="text-3xl tabular-nums">
+          <p className="text-2xl tabular-nums sm:text-3xl">
             {value}
           </p>
         </div>
         {Icon && (
-          <div className="rounded-[calc(var(--radius)-1px)] border-2 border-border bg-accent p-3 text-accent-foreground shadow-retro-sm transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+          <div className="rounded-[calc(var(--radius)-1px)] border-2 border-border bg-[color:var(--surface-accent)] p-2.5 text-accent-foreground shadow-retro-sm transition-colors group-hover:bg-primary group-hover:text-primary-foreground sm:p-3">
             <Icon className="size-4" />
           </div>
         )}
@@ -68,7 +68,7 @@ export function StatGrid({ children, columns = 4 }: StatGridProps) {
       ? "grid gap-4 sm:grid-cols-2"
       : columns === 3
         ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        : "grid gap-4 sm:grid-cols-2 lg:grid-cols-4";
+        : "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
 
   return <section className={colClass}>{children}</section>;
 }

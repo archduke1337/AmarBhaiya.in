@@ -92,6 +92,7 @@ function getNavItems(role: Role, userId: string): NavItem[] {
       icon: BookOpen,
       matchPrefixes: ["/app/courses", "/app/learn"],
     },
+    { label: "Notes", href: "/notes", icon: FileText, exact: true },
     { label: "Assignments", href: "/app/assignments", icon: ClipboardCheck },
     {
       label: "Quizzes",
