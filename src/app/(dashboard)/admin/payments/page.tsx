@@ -22,6 +22,7 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 
 type CourseRevenueItem = {
@@ -86,7 +87,7 @@ export default async function AdminPaymentsPage() {
       <PageHeader
         eyebrow="Admin · Payments"
         title="Transactions & Revenue"
-        description={`${payments.length} total transaction records across all courses and users.`}
+        description={`${payments.length} total transaction records across all courses and users. Use this view to spot pending confirmations, failed payments, refunds, and course revenue health.`}
       />
 
       <StatGrid columns={4}>
@@ -124,21 +125,24 @@ export default async function AdminPaymentsPage() {
         />
       ) : (
         <div className="grid gap-6 xl:grid-cols-3">
-          <section
+          <RetroPanel
             id="payments-list"
-            className="scroll-mt-24 border border-border xl:col-span-2"
+            tone="card"
+            className="scroll-mt-24 overflow-hidden p-0 xl:col-span-2"
           >
-            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+            <div className="flex flex-col gap-3 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-sm font-medium">All Transactions</h2>
-                <p className="text-xs text-muted-foreground">
+                <h2 className="font-heading text-lg font-black tracking-[-0.04em]">
+                  All Transactions
+                </h2>
+                <p className="text-xs font-semibold leading-6 text-muted-foreground">
                   Newest records first, with direct student and course drill-down.
                 </p>
               </div>
               <Badge variant="outline">{payments.length} records</Badge>
             </div>
 
-            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1.1fr_1.1fr_1fr_90px_100px_100px]">
+            <div className="hidden items-center gap-4 border-b-2 border-border bg-[color:var(--surface-muted)] px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1.1fr_1.1fr_1fr_90px_100px_100px]">
               <span>Student</span>
               <span>Course</span>
               <span>Reference</span>
@@ -152,20 +156,20 @@ export default async function AdminPaymentsPage() {
                 <div
                   key={payment.id}
                   id={`payment-${payment.id}`}
-                  className="flex flex-col gap-3 px-5 py-4 md:grid md:grid-cols-[1.1fr_1.1fr_1fr_90px_100px_100px] md:items-center md:gap-4"
+                  className="flex scroll-mt-24 flex-col gap-3 px-5 py-4 transition-colors hover:bg-accent/30 md:grid md:grid-cols-[1.1fr_1.1fr_1fr_90px_100px_100px] md:items-center md:gap-4"
                 >
                   <div className="min-w-0">
                     {payment.userId ? (
                       <Link
                         href={`/admin/students/${payment.userId}`}
-                        className="text-sm font-medium underline-offset-4 hover:underline"
+                        className="text-sm font-semibold underline-offset-4 hover:underline"
                       >
                         {payment.userName}
                       </Link>
                     ) : (
-                      <p className="text-sm font-medium">{payment.userName}</p>
+                      <p className="text-sm font-semibold">{payment.userName}</p>
                     )}
-                    <p className="text-[10px] text-muted-foreground md:hidden">
+                    <p className="text-[10px] font-semibold text-muted-foreground md:hidden">
                       {payment.providerRef}
                     </p>
                   </div>
@@ -176,31 +180,31 @@ export default async function AdminPaymentsPage() {
                         href={`/courses/${payment.courseSlug}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="line-clamp-1 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                        className="line-clamp-1 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                       >
                         {payment.courseTitle}
                       </Link>
                     ) : (
-                      <p className="line-clamp-1 text-sm text-muted-foreground">
+                      <p className="line-clamp-1 text-sm font-medium text-muted-foreground">
                         {payment.courseTitle}
                       </p>
                     )}
                   </div>
 
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-xs text-muted-foreground">
+                    <p className="truncate font-mono text-xs font-semibold text-muted-foreground">
                       {payment.providerRef}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[10px] font-semibold text-muted-foreground">
                       {payment.createdAt ? formatDateTime(payment.createdAt) : "Unknown time"}
                     </p>
                   </div>
 
-                  <span className="text-xs capitalize text-muted-foreground">
+                  <span className="text-xs font-semibold capitalize text-muted-foreground">
                     {payment.method}
                   </span>
 
-                  <span className="text-sm font-medium tabular-nums">
+                  <span className="text-sm font-semibold tabular-nums">
                     {formatCurrency(payment.amount, payment.currency)}
                   </span>
 
@@ -213,7 +217,7 @@ export default async function AdminPaymentsPage() {
                 </div>
               ))}
             </div>
-          </section>
+          </RetroPanel>
 
           <aside className="flex flex-col gap-6">
             <ActivityFeed
@@ -242,13 +246,15 @@ export default async function AdminPaymentsPage() {
               }))}
             />
 
-            <section className="border border-border">
-              <div className="border-b border-border px-5 py-3">
-                <h2 className="text-sm font-medium">Top Grossing Courses</h2>
+            <RetroPanel tone="secondary" className="overflow-hidden p-0">
+              <div className="border-b-2 border-border px-5 py-3">
+                <h2 className="font-heading text-base font-black tracking-[-0.03em]">
+                  Top Grossing Courses
+                </h2>
               </div>
               <div className="divide-y divide-border">
                 {topCourseItems.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+                  <p className="px-5 py-8 text-center text-sm font-semibold leading-7 text-muted-foreground">
                     No course revenue yet.
                   </p>
                 ) : (
@@ -263,19 +269,19 @@ export default async function AdminPaymentsPage() {
                             href={`/courses/${course.courseSlug}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="line-clamp-1 text-sm underline-offset-4 hover:underline"
+                            className="line-clamp-1 text-sm font-semibold underline-offset-4 hover:underline"
                           >
                             {course.courseTitle}
                           </Link>
                         ) : (
-                          <p className="line-clamp-1 text-sm">{course.courseTitle}</p>
+                          <p className="line-clamp-1 text-sm font-semibold">{course.courseTitle}</p>
                         )}
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs font-semibold text-muted-foreground">
                           {course.payments} completed payment{course.payments === 1 ? "" : "s"}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium tabular-nums">
+                        <p className="text-sm font-semibold tabular-nums">
                           {formatCurrency(course.revenue)}
                         </p>
                       </div>
@@ -283,11 +289,13 @@ export default async function AdminPaymentsPage() {
                   ))
                 )}
               </div>
-            </section>
+            </RetroPanel>
 
-            <section className="border border-border">
-              <div className="border-b border-border px-5 py-3">
-                <h2 className="text-sm font-medium">Status Breakdown</h2>
+            <RetroPanel tone="card" className="overflow-hidden p-0">
+              <div className="border-b-2 border-border px-5 py-3">
+                <h2 className="font-heading text-base font-black tracking-[-0.03em]">
+                  Status Breakdown
+                </h2>
               </div>
               <div className="divide-y divide-border">
                 {[
@@ -320,18 +328,18 @@ export default async function AdminPaymentsPage() {
                     key={item.label}
                     className="flex items-center justify-between gap-3 px-5 py-3.5"
                   >
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
                       <item.icon className="size-4 text-muted-foreground" />
                       {item.label}
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium tabular-nums">{item.count}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.value}</p>
+                      <p className="text-sm font-semibold tabular-nums">{item.count}</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground">{item.value}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </section>
+            </RetroPanel>
           </aside>
         </div>
       )}

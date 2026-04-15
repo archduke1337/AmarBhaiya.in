@@ -4,7 +4,9 @@ import { deleteCourseAction } from "@/actions/delete";
 import { updateCourseVisibilityAction } from "@/actions/operations";
 import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default async function AdminCoursesPage() {
   const courses = await getAdminCourses();
@@ -18,7 +20,7 @@ export default async function AdminCoursesPage() {
       <PageHeader
         eyebrow="Admin · Courses"
         title="Course Oversight"
-        description="Manage publication status, featuring, and visibility across the catalogue."
+        description="Review every course before it reaches students. Keep publication, featured placement, and catalogue quality in one calm control room."
       />
 
       <StatGrid columns={3}>
@@ -44,9 +46,9 @@ export default async function AdminCoursesPage() {
           description="Instructors can create courses from their dashboard. They will appear here for admin review."
         />
         ) : (
-          <section className="border border-border">
+          <RetroPanel tone="card" className="overflow-hidden p-0">
             {/* Table header */}
-            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_100px_100px_220px]">
+            <div className="hidden items-center gap-4 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_100px_100px_220px]">
               <span>Course</span>
               <span>Category</span>
               <span>Status</span>
@@ -64,53 +66,55 @@ export default async function AdminCoursesPage() {
                 <input type="hidden" name="courseId" value={course.id} />
 
                 <div>
-                  <h3 className="text-sm font-medium">{course.title}</h3>
+                  <h3 className="text-sm font-semibold">{course.title}</h3>
                 </div>
 
                 <Badge variant="outline" className="w-fit text-xs">
                   {course.category}
                 </Badge>
 
-                <label className="inline-flex items-center gap-2 text-sm">
+                <label className="inline-flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3 shadow-retro-sm">
                   <input
                     type="checkbox"
                     name="isPublished"
                     defaultChecked={course.state === "published"}
                     className="size-4 accent-foreground"
                   />
-                  <span className="text-xs text-muted-foreground">Published</span>
+                  <span className="text-xs font-semibold text-muted-foreground">Published</span>
                 </label>
 
-                <label className="inline-flex items-center gap-2 text-sm">
+                <label className="inline-flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3 shadow-retro-sm">
                   <input
                     type="checkbox"
                     name="isFeatured"
                     defaultChecked={course.featured === "yes"}
                     className="size-4 accent-foreground"
                   />
-                  <span className="text-xs text-muted-foreground">Featured</span>
+                  <span className="text-xs font-semibold text-muted-foreground">Featured</span>
                 </label>
 
-                <div className="flex items-center gap-2">
-                  <button
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+                  <Button
                     type="submit"
-                    className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
+                    variant="secondary"
+                    size="xs"
                   >
                     Save
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
                     formAction={deleteCourseAction}
                     formNoValidate
-                    className="h-8 border border-destructive/30 px-3 text-xs text-destructive transition-colors hover:bg-destructive/10"
+                    variant="destructive"
+                    size="xs"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </form>
             ))}
           </div>
-        </section>
+        </RetroPanel>
       )}
     </div>
   );

@@ -15,7 +15,12 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getInstructorSubmissionQueue,
@@ -58,14 +63,11 @@ export default async function InstructorSubmissionsPage() {
       <PageHeader
         eyebrow="Instructor · Submissions"
         title="Assignment Review Queue"
-        description={`${awaitingGrade.length} awaiting grade · ${feedbackMissing.length} missing feedback · ${graded.length} fully graded`}
+        description={`${awaitingGrade.length} awaiting grade · ${feedbackMissing.length} missing feedback · ${graded.length} fully graded. Start with the oldest work so students do not wait silently.`}
         actions={
-          <Link
-            href="/instructor"
-            className="inline-flex h-9 items-center px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Back to dashboard
-          </Link>
+          <Button asChild variant="outline" size="sm" className="w-full min-[420px]:w-auto">
+            <Link href="/instructor">Back to dashboard</Link>
+          </Button>
         }
       />
 
@@ -180,12 +182,16 @@ function SubmissionSection({
   return (
     <section id={id} className="scroll-mt-24">
       <div className="mb-3 flex flex-col gap-1">
-        <h2 className="text-base font-medium">{title}</h2>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+          {title}
+        </h2>
+        <p className="text-sm font-medium leading-7 text-muted-foreground">
+          {description}
+        </p>
       </div>
 
       {childCount === 0 ? (
-        <div className="border border-dashed border-border px-5 py-6 text-sm text-muted-foreground">
+        <div className="rounded-[calc(var(--radius)+6px)] border-2 border-dashed border-border bg-[color:var(--surface-card)] px-5 py-6 text-sm font-semibold leading-7 text-muted-foreground">
           {emptyText}
         </div>
       ) : (
@@ -214,15 +220,18 @@ function SubmissionCard({
   const isOverdue = variant === "pending" && submission.isOverdueReview;
 
   return (
-    <article
+    <RetroPanel
       id={`submission-${submission.id}`}
-      className="scroll-mt-24 border border-border bg-card"
+      tone={variant === "pending" ? "accent" : "card"}
+      className="scroll-mt-24 overflow-hidden p-0"
     >
       <div className="flex flex-col gap-4 px-5 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-medium">{submission.assignmentTitle}</h3>
+              <h3 className="font-heading text-lg font-black tracking-[-0.04em]">
+                {submission.assignmentTitle}
+              </h3>
               {variant === "pending" ? (
                 <Badge variant={isOverdue ? "destructive" : "outline"}>
                   {isOverdue ? "Overdue" : "Pending"}
@@ -236,43 +245,43 @@ function SubmissionCard({
                 <Badge variant="outline">{submission.grade}/100</Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               {submission.courseTitle} · {submission.userName}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs font-semibold text-muted-foreground">
               Submitted {submittedAtLabel}
               {submittedRelativeLabel ? ` · ${submittedRelativeLabel}` : ""}
             </p>
             {submission.isGraded && gradedAtLabel ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs font-semibold text-muted-foreground">
                 Last graded {gradedAtLabel}
               </p>
             ) : null}
           </div>
 
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <Link
-              href={`/instructor/courses/${submission.courseId}/curriculum`}
-              className="inline-flex h-8 items-center border border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-            >
-              Open course
-            </Link>
+          <div className="grid w-full shrink-0 grid-cols-1 gap-2 min-[420px]:w-auto min-[420px]:grid-cols-2 sm:flex sm:items-center">
+            <Button asChild variant="outline" size="xs">
+              <Link href={`/instructor/courses/${submission.courseId}/curriculum`}>
+                Open course
+              </Link>
+            </Button>
             {submission.fileId ? (
-              <a
-                href={`/api/submission-file/${submission.id}?download=1`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-8 items-center gap-1 border border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-              >
-                <Download className="size-3" />
-                Download
-              </a>
+              <Button asChild variant="secondary" size="xs">
+                <a
+                  href={`/api/submission-file/${submission.id}?download=1`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download className="size-3" />
+                  Download
+                </a>
+              </Button>
             ) : null}
           </div>
         </div>
 
         {submission.feedback ? (
-          <div className="border border-border/70 bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-muted)] px-3 py-2 text-sm font-medium leading-7 text-muted-foreground shadow-retro-sm">
             {submission.feedback}
           </div>
         ) : null}
@@ -280,15 +289,13 @@ function SubmissionCard({
 
       <form
         action={gradeSubmissionAction}
-        className="grid gap-3 border-t border-border px-5 py-4 md:grid-cols-[120px_minmax(0,1fr)_auto]"
+        className="grid gap-4 border-t-2 border-border bg-[color:var(--surface-muted)] px-5 py-4 md:grid-cols-[120px_minmax(0,1fr)_auto]"
       >
         <input type="hidden" name="submissionId" value={submission.id} />
 
-        <label className="flex flex-col gap-1">
-          <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-            Grade
-          </span>
-          <input
+        <label className="flex flex-col gap-2">
+          <Label>Grade</Label>
+          <Input
             name="grade"
             type="number"
             min={0}
@@ -296,35 +303,33 @@ function SubmissionCard({
             required
             defaultValue={submission.isGraded ? submission.grade : undefined}
             placeholder="85"
-            className="h-9 border border-border bg-background px-3 text-sm"
+            className="h-10"
           />
         </label>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-            Feedback
-          </span>
-          <input
+        <label className="flex flex-col gap-2">
+          <Label>Feedback</Label>
+          <Textarea
             name="feedback"
             defaultValue={submission.feedback}
-            placeholder="Share what went well and what should improve next."
-            className="h-9 border border-border bg-background px-3 text-sm"
+            placeholder="Write like a teacher: what went well, what to fix, and what to attempt next."
+            className="min-h-24"
           />
         </label>
 
         <div className="flex items-end">
-          <button
+          <Button
             type="submit"
-            className="inline-flex h-9 items-center justify-center bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
+            className="w-full md:w-auto"
           >
             {variant === "pending"
               ? "Submit grade"
               : variant === "feedback"
                 ? "Add feedback"
                 : "Update review"}
-          </button>
+          </Button>
         </div>
       </form>
-    </article>
+    </RetroPanel>
   );
 }
