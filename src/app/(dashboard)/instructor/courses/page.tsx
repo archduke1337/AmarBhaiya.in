@@ -9,7 +9,9 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getInstructorCourseList,
@@ -35,22 +37,20 @@ export default async function InstructorCoursesPage() {
       <PageHeader
         eyebrow="Instructor · Courses"
         title="Your Course Library"
-        description={`${courses.length} total courses. Review launch blockers, draft readiness, and curriculum health from one place.`}
+        description={`${courses.length} total courses. Fix launch blockers, polish drafts, and keep every class ready before students see it.`}
         actions={
-          <div className="flex items-center gap-2">
-            <Link
-              href="/instructor/categories"
-              className="inline-flex h-9 items-center gap-2 border border-border px-4 text-sm transition-colors hover:bg-muted"
-            >
+          <div className="flex w-full flex-col gap-2 min-[420px]:flex-row lg:w-auto">
+            <Button asChild variant="outline" size="sm" className="w-full min-[420px]:w-auto">
+              <Link href="/instructor/categories">
               Categories
-            </Link>
-            <Link
-              href="/instructor/courses/new"
-              className="inline-flex h-9 items-center gap-2 bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
-            >
-              <Plus className="size-4" />
-              New Course
-            </Link>
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="w-full min-[420px]:w-auto">
+              <Link href="/instructor/courses/new">
+                <Plus className="size-4" />
+                New Course
+              </Link>
+            </Button>
           </div>
         }
       />
@@ -78,9 +78,9 @@ export default async function InstructorCoursesPage() {
         />
       </StatGrid>
 
-      <section className="border border-border bg-muted/30 px-5 py-3 text-sm text-muted-foreground">
-        Strong launch baseline: thumbnail uploaded, at least one module, at least one lesson, and at least one lesson video. Paid and subscription courses also benefit from a free preview lesson.
-      </section>
+      <RetroPanel tone="accent" className="text-sm font-semibold leading-7 text-muted-foreground">
+        Before publishing, keep the course promise simple: clear thumbnail, one useful module, one real lesson, and at least one playable video. For paid courses, add a free preview so students can trust the teaching style before paying.
+      </RetroPanel>
 
       {courses.length === 0 ? (
         <EmptyState
@@ -133,15 +133,18 @@ export default async function InstructorCoursesPage() {
 
 function CourseCard({ course }: { course: InstructorCourseListItem }) {
   return (
-    <article
+    <RetroPanel
       id={`course-${course.id}`}
-      className="group scroll-mt-24 border border-border transition-colors hover:border-foreground/20"
+      tone={course.status === "Published" ? "secondary" : "card"}
+      className="group scroll-mt-24 transition-transform hover:-translate-y-1"
     >
-      <div className="flex flex-col gap-4 p-5">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-medium">{course.title}</h2>
+              <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+                {course.title}
+              </h2>
               <Badge variant={course.status === "Published" ? "default" : "outline"}>
                 {course.status}
               </Badge>
@@ -154,16 +157,16 @@ function CourseCard({ course }: { course: InstructorCourseListItem }) {
             </div>
 
             {course.shortDescription ? (
-              <p className="line-clamp-2 text-sm text-muted-foreground">
+              <p className="line-clamp-2 max-w-3xl text-sm font-medium leading-7 text-muted-foreground">
                 {course.shortDescription}
               </p>
             ) : (
-              <p className="text-sm italic text-muted-foreground">
-                No description yet
+              <p className="text-sm font-medium text-muted-foreground">
+                Add a short promise for students: what will they understand better after this course?
               </p>
             )}
 
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               {course.moduleCount} module{course.moduleCount === 1 ? "" : "s"} ·{" "}
               {course.totalLessons} lesson{course.totalLessons === 1 ? "" : "s"} ·{" "}
               {formatDuration(course.totalDuration)} · {course.activeEnrollments} enrollment
@@ -196,35 +199,35 @@ function CourseCard({ course }: { course: InstructorCourseListItem }) {
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-3">
-            <Link
-              href={`/instructor/courses/${course.id}`}
-              className="inline-flex h-8 items-center gap-1.5 border border-border px-3 text-xs transition-colors hover:bg-muted"
-            >
-              Edit Details
-            </Link>
-            <Link
-              href={`/instructor/courses/${course.id}/curriculum`}
-              className="inline-flex h-8 items-center gap-1.5 border border-border px-3 text-xs transition-colors hover:bg-muted"
-            >
-              Curriculum
-              <ArrowRight className="size-3" />
-            </Link>
+          <div className="grid shrink-0 grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:flex sm:items-center">
+            <Button asChild variant="outline" size="xs">
+              <Link href={`/instructor/courses/${course.id}`}>
+                Edit Details
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="xs">
+              <Link href={`/instructor/courses/${course.id}/curriculum`}>
+                Curriculum
+                <ArrowRight className="size-3" />
+              </Link>
+            </Button>
             <form action={deleteCourseAction}>
               <input type="hidden" name="courseId" value={course.id} />
-              <button
+              <Button
                 type="submit"
-                className="inline-flex h-8 items-center border border-destructive/30 px-3 text-xs text-destructive transition-colors hover:bg-destructive/10"
+                variant="destructive"
+                size="xs"
+                className="w-full sm:w-auto"
               >
                 Delete
-              </button>
+              </Button>
             </form>
           </div>
         </div>
 
         {course.publishBlockers.length > 0 ? (
-          <div className="border border-destructive/20 bg-destructive/5 px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.12em] text-destructive">
+          <div className="rounded-[calc(var(--radius)+2px)] border-2 border-destructive bg-destructive/10 px-4 py-3 shadow-retro-sm">
+            <p className="font-heading text-xs font-black uppercase tracking-[0.14em] text-destructive">
               Publish blockers
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -238,8 +241,8 @@ function CourseCard({ course }: { course: InstructorCourseListItem }) {
         ) : null}
 
         {course.attentionFlags.length > 0 ? (
-          <div className="border border-border bg-muted/30 px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+          <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-muted)] px-4 py-3 shadow-retro-sm">
+            <p className="font-heading text-xs font-black uppercase tracking-[0.14em] text-muted-foreground">
               Watch list
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -252,6 +255,6 @@ function CourseCard({ course }: { course: InstructorCourseListItem }) {
           </div>
         ) : null}
       </div>
-    </article>
+    </RetroPanel>
   );
 }
