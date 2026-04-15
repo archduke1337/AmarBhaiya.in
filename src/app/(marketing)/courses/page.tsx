@@ -10,18 +10,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { getPublicCoursesPageData } from "@/lib/appwrite/marketing-content";
+import {
+  getPublicCoursesPageData,
+  type PublicCourseListItem,
+} from "@/lib/appwrite/marketing-content";
 
 type SearchParams = Promise<{
   q?: string;
   category?: string;
   sort?: string;
+  track?: string;
+  class?: string;
 }>;
 
 export const metadata: Metadata = {
   title: "Courses",
   description:
-    "Browse all courses across coding, board prep, fitness, and career growth.",
+    "Browse school-first courses for Classes 6 to 12, plus skill courses when they are available.",
 };
 
 function normalizeSort(value: string | undefined): "popular" | "newest" | "price" {
@@ -30,6 +35,79 @@ function normalizeSort(value: string | undefined): "popular" | "newest" | "price
   }
 
   return "popular";
+}
+
+function normalizeTrack(value: string | undefined): "all" | "school" | "skills" | "general" {
+  if (value === "school" || value === "skills" || value === "general") {
+    return value;
+  }
+
+  return "all";
+}
+
+function inferTrack(course: PublicCourseListItem): "school" | "skills" | "general" {
+  const values = [course.title, course.category, ...course.tags].map((item) =>
+    item.toLowerCase()
+  );
+
+  if (
+    values.some((value) => /\b(?:class|grade|std)\s*(6|7|8|9|10|11|12)\b/.test(value))
+  ) {
+    return "school";
+  }
+
+  if (
+    values.some((value) =>
+      [
+        "board",
+        "cbse",
+        "science",
+        "maths",
+        "english",
+        "sst",
+        "physics",
+        "chemistry",
+        "biology",
+        "accountancy",
+        "economics",
+      ].some((token) => value.includes(token))
+    )
+  ) {
+    return "school";
+  }
+
+  if (
+    values.some((value) =>
+      [
+        "skill",
+        "coding",
+        "career",
+        "interview",
+        "programming",
+        "communication",
+        "finance",
+        "development",
+        "professional",
+      ].some((token) => value.includes(token))
+    )
+  ) {
+    return "skills";
+  }
+
+  return "general";
+}
+
+function getClassLabel(course: PublicCourseListItem): string {
+  const values = [course.title, course.category, ...course.tags];
+
+  for (const value of values) {
+    const match = value.match(/\b(?:class|grade|std)\s*[-:]?\s*(6|7|8|9|10|11|12)\b/i);
+    if (match?.[1]) {
+      return `Class ${match[1]}`;
+    }
+  }
+
+  return "";
 }
 
 export default async function CoursesPage({
@@ -41,15 +119,35 @@ export default async function CoursesPage({
   const query = typeof params.q === "string" ? params.q.trim().toLowerCase() : "";
   const category = typeof params.category === "string" ? params.category : "all";
   const sort = normalizeSort(params.sort);
+  const track = normalizeTrack(params.track);
+  const classFilter = typeof params.class === "string" ? params.class : "all";
 
-  const { courses, categories } = await getPublicCoursesPageData({
+  const { courses: allCourses, categories } = await getPublicCoursesPageData({
     query,
     category,
     sort,
   });
+  const trackOptions = Array.from(
+    new Set(allCourses.map((course) => inferTrack(course)))
+  ).sort((left, right) => {
+    const order = ["school", "skills", "general"];
+    return order.indexOf(left) - order.indexOf(right);
+  });
+  const classOptions = Array.from(
+    new Set(allCourses.map(getClassLabel).filter(Boolean))
+  ).sort((left, right) => left.localeCompare(right, "en-IN", { numeric: true }));
+  const courses = allCourses.filter((course) => {
+    const trackMatch = track === "all" || inferTrack(course) === track;
+    const classMatch =
+      classFilter === "all" || getClassLabel(course) === classFilter;
+
+    return trackMatch && classMatch;
+  });
 
   const activeFilters = [
     query ? `Search: ${query}` : null,
+    track !== "all" ? `Track: ${track}` : null,
+    classFilter !== "all" ? classFilter : null,
     category !== "all" ? `Category: ${category}` : null,
     sort !== "popular" ? `Sort: ${sort}` : "Sort: popular",
   ].filter(Boolean) as string[];
@@ -93,7 +191,7 @@ export default async function CoursesPage({
 
       <section className="mx-auto max-w-6xl">
         <RetroPanel tone="accent" className="space-y-5">
-          <form className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_auto]" method="GET">
+          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]" method="GET">
             <div className="space-y-2">
               <Label htmlFor="course-search">Search</Label>
               <Input
@@ -103,6 +201,46 @@ export default async function CoursesPage({
                 defaultValue={params.q}
                 placeholder="Search by title or keyword"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="course-track">Track</Label>
+              <select
+                id="course-track"
+                name="track"
+                aria-label="Filter by course track"
+                defaultValue={track}
+                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+              >
+                <option value="all">All tracks</option>
+                {trackOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item === "school"
+                      ? "School"
+                      : item === "skills"
+                        ? "Skills"
+                        : "General"}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="course-class">Class</Label>
+              <select
+                id="course-class"
+                name="class"
+                aria-label="Filter by class"
+                defaultValue={classFilter}
+                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+              >
+                <option value="all">All classes</option>
+                {classOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
@@ -295,8 +433,8 @@ export default async function CoursesPage({
       {courses.length === 0 && (
         <section className="mx-auto max-w-6xl">
           <RetroPanel tone="muted" className="text-center">
-            <p className="text-sm font-medium text-muted-foreground">
-              No courses matched your filters. Try resetting search or category.
+            <p className="text-sm font-medium leading-7 text-muted-foreground">
+              Is filter ke saath abhi koi real published course nahi mila. Search hata ke dekho, ya notes library se quick revision start kar lo.
             </p>
           </RetroPanel>
         </section>

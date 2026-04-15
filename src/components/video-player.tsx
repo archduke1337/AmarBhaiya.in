@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Maximize,
   Pause,
@@ -46,15 +46,6 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [canUsePictureInPicture, setCanUsePictureInPicture] = useState(false);
-
-  useEffect(() => {
-    setCanUsePictureInPicture(
-      typeof document !== "undefined" &&
-        "pictureInPictureEnabled" in document &&
-        Boolean(document.pictureInPictureEnabled)
-    );
-  }, []);
 
   function emitProgressSnapshot(ended = false) {
     const video = videoRef.current;
@@ -181,7 +172,12 @@ export function VideoPlayer({
 
   async function togglePictureInPicture() {
     const video = videoRef.current;
-    if (!video || !canUsePictureInPicture) {
+    if (
+      !video ||
+      typeof document === "undefined" ||
+      !("pictureInPictureEnabled" in document) ||
+      !document.pictureInPictureEnabled
+    ) {
       return;
     }
 
@@ -315,19 +311,17 @@ export function VideoPlayer({
             >
               {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </Button>
-            {canUsePictureInPicture ? (
-              <Button
-                type="button"
-                onClick={() => {
-                  void togglePictureInPicture();
-                }}
-                variant="ghost"
-                size="icon"
-                aria-label="Picture in picture"
-              >
-                <PictureInPicture2 className="size-4" />
-              </Button>
-            ) : null}
+            <Button
+              type="button"
+              onClick={() => {
+                void togglePictureInPicture();
+              }}
+              variant="ghost"
+              size="icon"
+              aria-label="Picture in picture"
+            >
+              <PictureInPicture2 className="size-4" />
+            </Button>
             <Button
               type="button"
               onClick={toggleFullscreen}

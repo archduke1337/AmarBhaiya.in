@@ -5,7 +5,6 @@ import {
   BookOpen,
   Download,
   Sparkles,
-  Video,
 } from "lucide-react";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
@@ -276,7 +275,7 @@ export default async function LandingPage() {
       {schoolCourses.length > 0 ? (
         <CourseShelf
           title="School courses that match what students are actually trying to clear right now."
-          description="Yeh section only real published Appwrite courses se aata hai. Agar school catalogue grow karega, yahin se sabse pehle dikhega."
+          description="Yahan wahi published school courses dikhte hain jo library mein sach mein live hain. Catalogue grow hoga toh yeh shelf naturally grow karegi."
           courses={schoolCourses}
         />
       ) : null}
@@ -361,7 +360,7 @@ export default async function LandingPage() {
       {skillCourses.length > 0 ? (
         <CourseShelf
           title="Skill tracks for college students, freshers, and working learners."
-          description="Yeh secondary layer hai. Sirf wahi dikhega jo Appwrite mein real published skill course ke form mein available hai."
+          description="Yeh secondary layer hai. Sirf wahi skill courses dikhenge jo actually publish ho chuke hain."
           courses={skillCourses}
         />
       ) : null}
@@ -371,7 +370,7 @@ export default async function LandingPage() {
           <SectionHeading
             eyebrow="Learning areas"
             title="Platform kis direction mein grow kar raha hai."
-            description="Yeh blocks bhi Appwrite-backed site copy se aate hain. Agar backend mein configured nahi hain, yeh section hide ho jata hai."
+            description="Yeh blocks tabhi dikhte hain jab team ne unhe properly publish kiya ho. Empty promises dikhane ka koi fayda nahi."
           />
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -394,7 +393,7 @@ export default async function LandingPage() {
           <SectionHeading
             eyebrow="Why learn here"
             title="Reason sirf content ka nahi hota. Feeling ka bhi hota hai."
-            description="Agar Appwrite mein genuine positioning blocks configured hain, woh yahin se show hote hain."
+            description="Jab team genuine reasons publish karegi, woh yahin clearly dikhte hain. Hype nahi, bas useful clarity."
           />
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

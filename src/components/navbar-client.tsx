@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Menu, X } from "lucide-react";
+import { LayoutDashboard, Menu, Search, X } from "lucide-react";
 
 import { PUBLIC_NAV_ITEMS } from "@/lib/utils/constants";
 import { logoutAction } from "@/lib/appwrite/actions";
@@ -153,6 +153,16 @@ export function NavbarClient({
             </div>
 
             <div className="flex items-center gap-2 md:hidden">
+              <Button
+                asChild
+                variant="outline"
+                size="icon-sm"
+                aria-label="Search courses and notes"
+              >
+                <Link href="/courses">
+                  <Search className="size-4" />
+                </Link>
+              </Button>
               <ThemeToggle />
               <Button
                 ref={menuButtonRef}
@@ -183,7 +193,7 @@ export function NavbarClient({
                   Student-first
                 </p>
                 <p className="mt-2 text-sm font-medium leading-6 text-foreground/80">
-                  Start with one note, move into a course, and stay close to Amar Bhaiya’s teaching style as you build momentum.
+                  Notes se start karo. Course mein structure milta hai. Doubt aaye toh Bhaiya ke style mein seedha samjho.
                 </p>
               </div>
 

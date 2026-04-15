@@ -286,24 +286,6 @@ function extractChapterTag(values: string[]): string {
   return "";
 }
 
-function inferCourseTrack(course: { title: string; category: string; tags: string[] }): "school" | "skills" | "general" {
-  const values = [course.title, course.category, ...course.tags].map(normalizeTag);
-
-  if (values.some((value) => /\b(?:class|grade|std)\s*(6|7|8|9|10|11|12)\b/.test(value))) {
-    return "school";
-  }
-
-  if (values.some((value) => ["board", "cbse", "science", "maths", "english", "sst", "physics", "chemistry", "biology", "accountancy", "economics"].some((token) => value.includes(token)))) {
-    return "school";
-  }
-
-  if (values.some((value) => ["coding", "web", "career", "communication", "finance", "skill", "programming", "development", "interview"].some((token) => value.includes(token)))) {
-    return "skills";
-  }
-
-  return "general";
-}
-
 function parseParagraphs(content: unknown): string[] {
   if (typeof content !== "string" || content.trim().length === 0) {
     return [];

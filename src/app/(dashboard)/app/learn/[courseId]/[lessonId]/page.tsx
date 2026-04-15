@@ -9,7 +9,6 @@ import {
   ExternalLink,
   FileText,
   Lock,
-  MessageSquareMore,
 } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
@@ -238,7 +237,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex max-w-5xl flex-col gap-6 pb-6">
+    <div className="flex max-w-6xl flex-col gap-6 pb-6">
       {/* Back to course */}
       <Link
         href={`/courses/${String(course.slug ?? courseId)}`}
@@ -276,269 +275,369 @@ export default async function LessonViewerPage({ params }: PageProps) {
         canAutoComplete={canMarkComplete}
       />
 
-      {/* Lesson info + mark complete */}
-      <RetroPanel tone="card" className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">{String(course.title ?? "Course")}</Badge>
-          <Badge variant="ghost">
-            {lessonCompleted ? "Completed" : canMarkComplete ? "In progress" : "Preview"}
-          </Badge>
-          {lessonPercentComplete > 0 && !lessonCompleted ? (
-            <Badge variant="secondary">{lessonPercentComplete}% watched</Badge>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-2">
-            <h1 className="font-heading text-3xl font-black tracking-[-0.05em]">
-              {String(lesson.title ?? "Lesson")}
-            </h1>
-            {typeof lesson.description === "string" && lesson.description.length > 0 && (
-              <p className="text-sm font-medium leading-7 text-muted-foreground">
-                {lesson.description}
-              </p>
-            )}
-            {!lessonCompleted && lessonPercentComplete > 0 && (
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                Resume available from about {lessonPercentComplete}% of the lesson.
-              </p>
-            )}
-          </div>
-          {lessonCompleted ? (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-600 shrink-0 pt-1">
-              <CheckCircle className="size-4" />
-              Completed
-            </span>
-          ) : canMarkComplete ? (
-            <form action={markLessonCompleteFormAction} className="shrink-0">
-              <input type="hidden" name="courseId" value={courseId} />
-              <input type="hidden" name="lessonId" value={lessonId} />
-              <Button type="submit" variant="secondary" size="sm">
-                Mark as complete
-              </Button>
-            </form>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground shrink-0 pt-1">
-              Preview lesson
-            </span>
-          )}
-        </div>
-      </RetroPanel>
-
-      <section className="grid gap-4 lg:grid-cols-3">
-        <RetroPanel tone="card" className="space-y-3">
-          <PlaySquare className="size-4" />
-          <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
-            Watch with context
-          </h2>
-          <p className="text-sm font-medium leading-7 text-foreground/80">
-            The lesson title, progress, and resume state stay visible so students can come back without starting from zero.
-          </p>
-        </RetroPanel>
-        <RetroPanel tone="accent" className="space-y-3">
-          <Download className="size-4" />
-          <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
-            Pull resources fast
-          </h2>
-          <p className="text-sm font-medium leading-7 text-foreground/80">
-            Notes and files stay below the player so students can find them immediately during revision or homework.
-          </p>
-        </RetroPanel>
-        <RetroPanel tone="card" className="space-y-3">
-          <MessageSquareMore className="size-4" />
-          <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
-            Ask lesson-level doubts
-          </h2>
-          <p className="text-sm font-medium leading-7 text-foreground/80">
-            Lesson discussion is for doubts from this exact topic, not for broad course planning or unrelated questions.
-          </p>
-        </RetroPanel>
-      </section>
-
-      {lessonResourceItems.length > 0 && (
-        <RetroPanel tone="secondary" className="space-y-0 p-0">
-          <div className="border-b-2 border-border px-5 py-3">
-            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
-              Lesson Resources ({lessonResourceItems.length})
-            </h2>
-            <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Notes, downloads, and supporting links for this lesson
-            </p>
-          </div>
-          <ul className="divide-y-2 divide-border">
-            {lessonResourceItems.map((resource) => (
-              <li key={resource.id}>
-                <a
-                  href={resource.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between gap-3 px-5 py-4 text-sm transition-colors hover:bg-background/60"
-                >
-                  <span className="font-semibold">{resource.title}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {resource.type}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </RetroPanel>
-      )}
-
-      {/* Navigation */}
-      <RetroPanel tone="accent" className="flex flex-wrap items-center justify-between gap-3">
-        {prevLesson ? (
-          canOpenLesson(prevLesson) ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/app/learn/${courseId}/${prevLesson.$id}`}>
-                <ChevronLeft className="size-4" />
-                Previous
-              </Link>
-            </Button>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-              <Lock className="size-4" />
-              Previous locked
-            </span>
-          )
-        ) : (
-          <span />
-        )}
-
-        <span className="text-xs text-muted-foreground">
-          {currentIndex + 1} / {allLessons.length}
-        </span>
-
-        {nextLesson ? (
-          canOpenLesson(nextLesson) ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/app/learn/${courseId}/${nextLesson.$id}`}>
-                Next
-                <ChevronRight className="size-4" />
-              </Link>
-            </Button>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-              Next locked
-              <Lock className="size-4" />
-            </span>
-          )
-        ) : (
-          <span />
-        )}
-      </RetroPanel>
-
-      {/* Lesson sidebar */}
-      {allLessons.length > 1 && (
-        <RetroPanel tone="card" className="space-y-0 p-0">
-          <div className="border-b-2 border-border px-5 py-3">
-            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
-              Course Lessons ({allLessons.length})
-            </h2>
-            <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Jump across the lesson path without losing your study flow
-            </p>
-          </div>
-          <ul className="divide-y-2 divide-border">
-            {allLessons.map((l, i) => {
-              const isActive = l.$id === lessonId;
-              const isAccessible = canOpenLesson(l);
-
-              return (
-                <li key={l.$id}>
-                  {isAccessible ? (
-                    <Link
-                      href={`/app/learn/${courseId}/${l.$id}`}
-                      className={`flex items-center gap-3 px-5 py-3 text-sm transition-colors ${
-                        isActive
-                          ? "bg-[color:var(--surface-accent)] font-medium"
-                          : "hover:bg-[color:var(--surface-ink)]"
-                      }`}
-                    >
-                      <span className="text-xs text-muted-foreground w-6">
-                        {completedLessonIds.includes(l.$id) ? (
-                          <CheckCircle className="size-3.5 text-emerald-600" />
-                        ) : (
-                          i + 1
-                        )}
-                      </span>
-                      <span className="flex-1 truncate">
-                        {String(l.title ?? `Lesson ${i + 1}`)}
-                      </span>
-                    </Link>
-                  ) : (
-                    <div className="flex items-center gap-3 px-5 py-3 text-sm text-muted-foreground">
-                      <span className="text-xs w-6">{i + 1}</span>
-                      <span className="flex-1 truncate">
-                        {String(l.title ?? `Lesson ${i + 1}`)}
-                      </span>
-                      <Lock className="size-3.5 shrink-0" />
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </RetroPanel>
-      )}
-
-      {/* Comments section */}
-      <RetroPanel tone="muted" className="space-y-0 p-0">
-        <div className="border-b-2 border-border px-5 py-3">
-          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Discussion ({comments.length})</h2>
-          <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Ask about this lesson only
-          </p>
-        </div>
-
-        <form action={postLessonCommentAction} className="border-b-2 border-border p-5 space-y-3">
-          <input type="hidden" name="courseId" value={courseId} />
-          <input type="hidden" name="lessonId" value={lessonId} />
-          <Textarea
-            name="text"
-            required
-            minLength={2}
-            placeholder="Ask a doubt or share an insight from this lesson..."
-          />
-          <Button type="submit" size="sm">
-            Post comment
-          </Button>
-        </form>
-
-        <div className="divide-y-2 divide-border">
-          {comments.length === 0 && (
-            <p className="px-5 py-4 text-sm text-muted-foreground">
-              No comments yet. Be the first to start the discussion.
-            </p>
-          )}
-          {comments.map((c) => (
-            <div key={c.id} className="px-5 py-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium">{c.userName}</span>
-                {c.userRole !== "student" && (
-                  <span className="border-2 border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {c.userRole}
-                  </span>
-                )}
-                {c.isPinned && (
-                  <span className="text-[10px] text-amber-600">📌 Pinned</span>
-                )}
-                <span className="text-[10px] text-muted-foreground ml-auto">
-                  {new Date(c.createdAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+      <div className="sticky bottom-[5.7rem] z-10 md:static">
+        <RetroPanel tone="accent" className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 py-3 md:flex md:justify-between">
+          <div className="justify-self-start">
+            {prevLesson ? (
+              canOpenLesson(prevLesson) ? (
+                <Button asChild variant="outline" size="sm" className="min-h-11">
+                  <Link href={`/app/learn/${courseId}/${prevLesson.$id}`}>
+                    <ChevronLeft className="size-4" />
+                    Previous
+                  </Link>
+                </Button>
+              ) : (
+                <span className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-muted-foreground">
+                  <Lock className="size-4" />
+                  Locked
                 </span>
+              )
+            ) : (
+              <span />
+            )}
+          </div>
+
+          <div className="min-w-0 text-center">
+            <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+              Lesson {currentIndex + 1} / {allLessons.length}
+            </p>
+            <p className="hidden text-xs font-semibold text-foreground/75 sm:block">
+              {lessonCompleted ? "Completed" : lessonPercentComplete > 0 ? `${lessonPercentComplete}% watched` : "Ready to study"}
+            </p>
+          </div>
+
+          <div className="justify-self-end">
+            {nextLesson ? (
+              canOpenLesson(nextLesson) ? (
+                <Button asChild variant="secondary" size="sm" className="min-h-11">
+                  <Link href={`/app/learn/${courseId}/${nextLesson.$id}`}>
+                    Next
+                    <ChevronRight className="size-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <span className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-muted-foreground">
+                  Locked
+                  <Lock className="size-4" />
+                </span>
+              )
+            ) : (
+              <span />
+            )}
+          </div>
+        </RetroPanel>
+      </div>
+
+      <Tabs defaultValue="study" className="gap-4">
+        <TabsList variant="line" className="grid w-full grid-cols-4">
+          <TabsTrigger value="study">Study</TabsTrigger>
+          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="doubts">Doubts</TabsTrigger>
+          <TabsTrigger value="path">Path</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="study" className="space-y-4">
+          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+            <RetroPanel tone="card" className="space-y-5">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{String(course.title ?? "Course")}</Badge>
+                <Badge variant="ghost">
+                  {lessonCompleted ? "Completed" : canMarkComplete ? "In progress" : "Preview"}
+                </Badge>
+                {lessonPercentComplete > 0 && !lessonCompleted ? (
+                  <Badge variant="secondary">{lessonPercentComplete}% watched</Badge>
+                ) : null}
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {c.text}
+
+              <div className="space-y-3">
+                <h1 className="font-heading text-3xl font-black tracking-[-0.05em] md:text-4xl">
+                  {String(lesson.title ?? "Lesson")}
+                </h1>
+                {typeof lesson.description === "string" && lesson.description.length > 0 ? (
+                  <p className="text-sm font-medium leading-7 text-muted-foreground md:text-base">
+                    {lesson.description}
+                  </p>
+                ) : (
+                  <p className="text-sm font-medium leading-7 text-muted-foreground md:text-base">
+                    Video ko ek baar flow mein dekho, phir notes tab se supporting material open kar lena. Agar doubt aaye toh wahi lesson-level discussion mein poochna.
+                  </p>
+                )}
+                {!lessonCompleted && lessonPercentComplete > 0 ? (
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Resume available from about {lessonPercentComplete}% of the lesson.
+                  </p>
+                ) : null}
+              </div>
+
+              {lessonCompleted ? (
+                <span className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-accent)] px-4 text-xs font-semibold uppercase tracking-[0.14em] text-foreground shadow-retro-sm">
+                  <CheckCircle className="size-4" />
+                  Completed
+                </span>
+              ) : canMarkComplete ? (
+                <form action={markLessonCompleteFormAction} className="w-fit">
+                  <input type="hidden" name="courseId" value={courseId} />
+                  <input type="hidden" name="lessonId" value={lessonId} />
+                  <Button type="submit" variant="secondary">
+                    Mark as complete
+                  </Button>
+                </form>
+              ) : (
+                <span className="inline-flex min-h-11 w-fit items-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-muted)] px-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground shadow-retro-sm">
+                  Preview lesson
+                </span>
+              )}
+            </RetroPanel>
+
+            <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
+              <RetroPanel tone="secondary" className="space-y-2">
+                <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                  Progress
+                </p>
+                <p className="text-3xl font-heading font-black tracking-[-0.06em]">
+                  {lessonCompleted ? "100%" : `${lessonPercentComplete}%`}
+                </p>
+                <p className="text-sm font-medium leading-6 text-foreground/75">
+                  Saved while you watch, so budget-phone study breaks do not reset the flow.
+                </p>
+              </RetroPanel>
+              <RetroPanel tone="accent" className="space-y-2">
+                <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                  Resources
+                </p>
+                <p className="text-3xl font-heading font-black tracking-[-0.06em]">
+                  {lessonResourceItems.length}
+                </p>
+                <p className="text-sm font-medium leading-6 text-foreground/75">
+                  PDFs, files, and useful links attached to this exact lesson.
+                </p>
+              </RetroPanel>
+              <RetroPanel tone="muted" className="space-y-2">
+                <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                  Study tip
+                </p>
+                <p className="text-sm font-medium leading-6 text-foreground/75">
+                  Pehle video samjho. Phir notes kholke 10-minute revision karo. Doubt bache toh tabhi pooch do.
+                </p>
+              </RetroPanel>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="notes" className="space-y-4">
+          {lessonResourceItems.length > 0 ? (
+            <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
+              <RetroPanel tone="card" size="lg" className="space-y-4">
+                {previewResource ? (
+                  <>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <Badge variant="outline">PDF preview</Badge>
+                        <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                          {previewResource.title}
+                        </h2>
+                      </div>
+                      <Button asChild variant="outline" size="sm" className="min-h-11">
+                        <a href={previewResource.downloadHref} target="_blank" rel="noreferrer">
+                          <Download className="size-4" />
+                          Download
+                        </a>
+                      </Button>
+                    </div>
+                    <div className="overflow-hidden rounded-[calc(var(--radius)+4px)] border-2 border-border bg-white shadow-retro-sm">
+                      <iframe
+                        title={previewResource.title}
+                        src={previewResource.href}
+                        className="h-[68dvh] min-h-[24rem] w-full bg-white"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <RetroPanel tone="muted" className="space-y-3">
+                    <FileText className="size-5" />
+                    <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                      Preview ke liye PDF attached nahi hai.
+                    </h2>
+                    <p className="text-sm font-medium leading-7 text-foreground/80">
+                      Is lesson ke resources available hain, lekin browser preview sirf PDF files ke liye dikhaya jata hai.
+                    </p>
+                  </RetroPanel>
+                )}
+              </RetroPanel>
+
+              <RetroPanel tone="secondary" className="space-y-0 p-0">
+                <div className="border-b-2 border-border px-5 py-4">
+                  <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+                    Lesson resources ({lessonResourceItems.length})
+                  </h2>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Open, preview, or download what you need
+                  </p>
+                </div>
+                <ul className="divide-y-2 divide-border">
+                  {lessonResourceItems.map((resource) => (
+                    <li key={resource.id} className="space-y-3 px-5 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{resource.title}</p>
+                          <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.14em] text-muted-foreground">
+                            {resource.type}
+                          </p>
+                        </div>
+                        {resource.isPreviewable ? <Badge variant="outline">Preview</Badge> : null}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button asChild variant="outline" size="sm" className="min-h-11">
+                          <a href={resource.href} target="_blank" rel="noreferrer">
+                            <ExternalLink className="size-4" />
+                            Open
+                          </a>
+                        </Button>
+                        {resource.type !== "link" ? (
+                          <Button asChild variant="secondary" size="sm" className="min-h-11">
+                            <a href={resource.downloadHref} target="_blank" rel="noreferrer">
+                              <Download className="size-4" />
+                              Download
+                            </a>
+                          </Button>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </RetroPanel>
+            </div>
+          ) : (
+            <RetroPanel tone="muted" size="lg" className="space-y-3">
+              <FileText className="size-6" />
+              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                Is lesson mein abhi notes attach nahi hue hain.
+              </h2>
+              <p className="max-w-2xl text-sm font-medium leading-7 text-foreground/80">
+                Jab instructor PDF ya resource attach karega, woh yahin preview aur download ke saath dikhega.
+              </p>
+            </RetroPanel>
+          )}
+        </TabsContent>
+
+        <TabsContent value="doubts" className="space-y-4">
+          <RetroPanel tone="muted" className="space-y-0 p-0">
+            <div className="border-b-2 border-border px-5 py-4">
+              <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+                Lesson discussion ({comments.length})
+              </h2>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Is topic ka doubt yahin poochna
               </p>
             </div>
-          ))}
-        </div>
-      </RetroPanel>
+
+            <form action={postLessonCommentAction} className="space-y-3 border-b-2 border-border p-5">
+              <input type="hidden" name="courseId" value={courseId} />
+              <input type="hidden" name="lessonId" value={lessonId} />
+              <Textarea
+                name="text"
+                required
+                minLength={2}
+                placeholder="Doubt likho. Short bhi chalega, bas topic clear rakho..."
+              />
+              <Button type="submit">Post doubt</Button>
+            </form>
+
+            <div className="divide-y-2 divide-border">
+              {comments.length === 0 ? (
+                <p className="px-5 py-5 text-sm font-medium leading-7 text-muted-foreground">
+                  Abhi koi doubt nahi hai. Agar kuch atka hai toh yahin pooch do, warna next lesson continue karo.
+                </p>
+              ) : null}
+              {comments.map((c) => (
+                <div key={c.id} className="px-5 py-4">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold">{c.userName}</span>
+                    {c.userRole !== "student" ? (
+                      <span className="border-2 border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {c.userRole}
+                      </span>
+                    ) : null}
+                    {c.isPinned ? (
+                      <span className="border-2 border-border bg-[color:var(--surface-secondary)] px-1.5 py-0.5 text-[10px] uppercase tracking-wider">
+                        Pinned
+                      </span>
+                    ) : null}
+                    <span className="ml-auto text-[10px] text-muted-foreground">
+                      {new Date(c.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {c.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </RetroPanel>
+        </TabsContent>
+
+        <TabsContent value="path" className="space-y-4">
+          <RetroPanel tone="card" className="space-y-0 p-0">
+            <div className="border-b-2 border-border px-5 py-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-4" />
+                <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+                  Course path ({allLessons.length})
+                </h2>
+              </div>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Lesson sequence ko clean rakho. Jump karo, lekin context mat khona.
+              </p>
+            </div>
+            <ul className="divide-y-2 divide-border">
+              {allLessons.map((l, i) => {
+                const isActive = l.$id === lessonId;
+                const isAccessible = canOpenLesson(l);
+
+                return (
+                  <li key={l.$id}>
+                    {isAccessible ? (
+                      <Link
+                        href={`/app/learn/${courseId}/${l.$id}`}
+                        className={`flex min-h-14 items-center gap-3 px-5 py-3 text-sm transition-colors ${
+                          isActive
+                            ? "bg-[color:var(--surface-accent)] font-semibold"
+                            : "hover:bg-[color:var(--surface-ink)]"
+                        }`}
+                      >
+                        <span className="flex w-7 justify-center text-xs text-muted-foreground">
+                          {completedLessonIds.includes(l.$id) ? (
+                            <CheckCircle className="size-4 text-emerald-600" />
+                          ) : (
+                            i + 1
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">
+                          {String(l.title ?? `Lesson ${i + 1}`)}
+                        </span>
+                        {isActive ? <Badge variant="outline">Now</Badge> : null}
+                      </Link>
+                    ) : (
+                      <div className="flex min-h-14 items-center gap-3 px-5 py-3 text-sm text-muted-foreground">
+                        <span className="w-7 text-center text-xs">{i + 1}</span>
+                        <span className="min-w-0 flex-1 truncate">
+                          {String(l.title ?? `Lesson ${i + 1}`)}
+                        </span>
+                        <Lock className="size-4 shrink-0" />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </RetroPanel>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

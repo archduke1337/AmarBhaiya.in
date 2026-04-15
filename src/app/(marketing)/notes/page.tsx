@@ -11,7 +11,7 @@ import { getPublicNotesPageData } from "@/lib/appwrite/marketing-content";
 export const metadata: Metadata = {
   title: "Study Notes",
   description:
-    "Real published notes from Amar Bhaiya and instructors. Filter, preview, and download from the live notes library.",
+    "Published study notes from Amar Bhaiya and instructors. Filter, preview, and download from the live notes library.",
 };
 
 export const revalidate = 3600;
@@ -62,8 +62,8 @@ export default async function NotesPage({
         <RetroPanel tone="card" size="lg" className="space-y-6">
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">Notes library</Badge>
-            <Badge variant="outline">Real Appwrite data only</Badge>
-            <Badge variant="ghost">No fake shelves</Badge>
+            <Badge variant="outline">Published notes only</Badge>
+            <Badge variant="ghost">Preview + download</Badge>
           </div>
 
           <div className="space-y-5">
@@ -74,9 +74,9 @@ export default async function NotesPage({
               Notes jo actually revision ke time kaam aayein.
             </h1>
             <p className="max-w-2xl text-sm font-medium leading-8 text-muted-foreground sm:text-base md:text-lg">
-              Yeh page sirf published Appwrite notes dikhata hai. Agar class,
-              subject, ya chapter metadata abhi properly filled nahi hai, hum
-              fake directory nahi dikhate. Jo real hai, wahi dikhega.
+              Yahan sirf wahi notes dikhte hain jo actually publish ho chuke
+              hain. Agar class, subject, ya chapter tags missing hain, page
+              guess nahi karta. Jo clear hai, wahi saamne rakhta hai.
             </p>
           </div>
 
@@ -102,9 +102,9 @@ export default async function NotesPage({
           </p>
           <div className="grid gap-3">
             {[
-              "Class filter tab use karo agar notes metadata mein class stored hai.",
-              "Subject filter real tags se aata hai. Data missing hai toh filter bhi nahi dikhega.",
-              "Free PDF notes ko browser mein preview bhi kar sakte ho aur download bhi.",
+              "Class filter tab dikhega jab notes properly class ke saath tagged honge.",
+              "Subject filter se revision fast ho jata hai, especially exam ke time.",
+              "Free PDF notes ko browser mein preview karo, phir zarurat ho toh download kar lo.",
             ].map((item, index) => (
               <div
                 key={item}
@@ -126,7 +126,7 @@ export default async function NotesPage({
         <SectionHeading
           eyebrow="Live notes"
           title="Class aur subject ke hisaab se filter karo, phir note kholo."
-          description="Filters bhi real note metadata se bante hain. Agar Appwrite data richer hoga, yeh page naturally aur useful hota jayega."
+          description="Filters note ke actual tags se bante hain. Jitna better tagging hogi, library utni easy ho jayegi."
         />
 
         <RetroPanel tone="accent" className="space-y-5">
@@ -206,8 +206,8 @@ export default async function NotesPage({
               Is filter combo ke liye abhi notes live nahi hain.
             </h2>
             <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
-              Yeh empty state bhi real hai. Jaisi hi relevant notes Appwrite mein
-              publish honge, woh yahin dikhne lagenge.
+              Iska matlab bas itna hai ki is class-subject combo ke liye notes
+              abhi live nahi hue. Jaise hi publish honge, woh yahin aa jayenge.
             </p>
           </RetroPanel>
         ) : (
@@ -298,7 +298,7 @@ export default async function NotesPage({
                       {selectedNote.title}
                     </h2>
                     <p className="text-sm font-medium leading-7 text-muted-foreground">
-                      {selectedNote.description || "Yeh note abhi live library se aa raha hai."}
+                      {selectedNote.description || "Yeh note live library se selected hai."}
                     </p>
                   </div>
 
@@ -316,7 +316,7 @@ export default async function NotesPage({
                         Browser preview abhi available nahi hai.
                       </h3>
                       <p className="text-sm font-medium leading-7 text-foreground/80">
-                        Yeh usually paid access ya missing PDF-view metadata ki wajah se hota hai.
+                        Yeh usually paid access ya non-PDF file ki wajah se hota hai. Download option available ho toh wahan se open kar lo.
                       </p>
                     </RetroPanel>
                   )}
