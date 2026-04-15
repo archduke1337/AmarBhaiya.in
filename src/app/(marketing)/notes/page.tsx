@@ -3,14 +3,13 @@ import {
   ArrowRight,
   BookOpen,
   Download,
-  FileText,
-  GraduationCap,
 } from "lucide-react";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getPublicNotesPageData } from "@/lib/appwrite/marketing-content";
 
 import type { Metadata } from "next";
 
@@ -21,10 +20,6 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 3600;
-
-// Notes are resources attached to courses in the backend.
-// This page is a structured directory that links into the course system.
-// As instructors upload resources, they surface here.
 
 const classGroups = [
   {
@@ -59,6 +54,8 @@ const classGroups = [
 ];
 
 export default async function NotesPage() {
+  const { notes } = await getPublicNotesPageData();
+
   return (
     <div className="space-y-16 px-4 py-8 md:px-6 md:py-10">
 
@@ -68,6 +65,7 @@ export default async function NotesPage() {
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">Study Notes</Badge>
             <Badge variant="outline">Class 6–12</Badge>
+            <Badge variant="ghost">Amar Bhaiya library</Badge>
           </div>
 
           <div className="space-y-5">
@@ -78,22 +76,25 @@ export default async function NotesPage() {
               Chapter-wise notes that actually help during revision.
             </h1>
             <p className="max-w-2xl text-base font-medium leading-8 text-muted-foreground md:text-lg">
-              Clean, focused, and organized by chapter. Made for students who
-              want to revise efficiently — not wade through 50 pages of
-              filler. Notes are added as courses get built, so this library
-              keeps growing.
+              Clean, focused, and built for revision. These are the kind of notes
+              that help on a real study table: chapter-wise, easy to scan, and
+              grounded in how Amar Bhaiya teaches. School notes are the first
+              layer of the product, not an extra.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <Button asChild size="lg" variant="secondary">
+              <Link href="#latest-notes">
+                <Download className="size-4" />
+                Browse latest notes
+              </Link>
+            </Button>
             <Button asChild size="lg">
               <Link href="/courses">
                 <BookOpen className="size-4" />
-                Browse courses with notes
+                Browse courses
               </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/register">Create free account</Link>
             </Button>
           </div>
         </RetroPanel>
@@ -104,7 +105,7 @@ export default async function NotesPage() {
         <SectionHeading
           eyebrow="Notes directory"
           title="Find notes by class and subject."
-          description="Notes are attached to courses. As Bhaiya builds out each course, the chapter-wise notes become available here."
+          description="This shows the school-first direction of the library. As more material is published, the live notes shelf below becomes the fastest way to access what is already ready."
         />
 
         <div className="space-y-6">
@@ -116,9 +117,8 @@ export default async function NotesPage() {
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {group.classes.map((cls) => (
-                  <Link
+                  <div
                     key={`${group.label}-${cls.grade}`}
-                    href={`/courses?class=${cls.grade}`}
                     className="group"
                   >
                     <RetroPanel
@@ -142,12 +142,92 @@ export default async function NotesPage() {
                       </div>
                       <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
                     </RetroPanel>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </div>
           ))}
         </div>
+      </section>
+
+      <section id="latest-notes" className="mx-auto max-w-7xl space-y-8 scroll-mt-28">
+        <SectionHeading
+          eyebrow="Latest notes"
+          title="Published notes show up here first."
+          description="This is the independent notes shelf. Free published notes can be downloaded directly. Premium notes can still be surfaced here, but their access stays controlled."
+        />
+
+        {notes.length === 0 ? (
+          <RetroPanel tone="muted" className="space-y-3">
+            <h3 className="font-heading text-2xl font-black tracking-[-0.04em]">
+              The first notes are on the way.
+            </h3>
+            <p className="text-sm font-medium leading-7 text-foreground/80">
+              This shelf becomes the public home for independent notes as soon as Amar Bhaiya or other instructors publish them.
+            </p>
+          </RetroPanel>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            {notes.map((note, index) => (
+              <RetroPanel
+                key={note.id}
+                tone={index % 3 === 1 ? "accent" : index % 3 === 2 ? "secondary" : "card"}
+                className="flex h-full flex-col gap-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Badge variant="outline">{note.accessModel === "free" ? "Free note" : "Premium note"}</Badge>
+                  <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {note.downloadCount.toLocaleString("en-IN")} downloads
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                    {note.title}
+                  </h3>
+                  <p className="text-sm font-medium leading-7 text-foreground/80">
+                    {note.description || "Revision material prepared to be used alongside class learning and self-study."}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {note.tags.length > 0 ? (
+                    note.tags.map((tag) => (
+                      <Badge key={tag} variant="ghost">
+                        {tag}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge variant="ghost">{note.instructorName}</Badge>
+                  )}
+                </div>
+
+                <div className="mt-auto flex items-center justify-between gap-3 border-t-2 border-border pt-4">
+                  <div className="space-y-1">
+                    <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                      Access
+                    </p>
+                    <p className="text-sm font-semibold">
+                      {note.accessModel === "free" ? "Free download" : `INR ${note.priceInr}`}
+                    </p>
+                  </div>
+                  {note.downloadUrl ? (
+                    <Button asChild size="sm" variant="outline">
+                      <a href={note.downloadUrl} target="_blank" rel="noreferrer">
+                        <Download className="size-4" />
+                        Download
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild size="sm">
+                      <Link href="/contact">Request access</Link>
+                    </Button>
+                  )}
+                </div>
+              </RetroPanel>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── How notes work ──────────────────────────────────────── */}

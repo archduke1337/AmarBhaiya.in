@@ -3,7 +3,7 @@
 export const SITE_NAME = "amarbhaiya.in";
 export const SITE_TAGLINE = "Learn from Bhaiya";
 export const SITE_DESCRIPTION =
-  "Amarnath Pandey's unified platform — Education, Fitness, Career Guidance, Entrepreneurship & Personal Development.";
+  "Amar Bhaiya's learning platform for Class 6 to 12 students first, with notes, courses, and practical guidance that later expands into skills, career, and life growth.";
 
 export const OWNER = {
   name: "Amarnath Pandey",

@@ -59,7 +59,7 @@ export default async function CoursesPage({
         <SectionHeading
           eyebrow="Course catalogue"
           title="Choose the next skill that will actually change your week."
-          description="These courses are built for action, not shelf value. Less inflated curriculum. More direct movement from lesson to result."
+          description="The biggest focus is school and board-oriented learning for Indian students. Skills, coding, and career tracks are growing too, but the catalogue still has to feel useful first, not impressive first."
           titleAs="h1"
         />
 

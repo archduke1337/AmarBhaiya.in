@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+
 export type VideoProgressSnapshot = {
   currentTime: number;
   duration: number;
@@ -158,109 +160,104 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="group relative overflow-hidden border border-border bg-black">
-      <video
-        ref={videoRef}
-        src={src}
-        poster={poster}
-        className="aspect-video w-full cursor-pointer"
-        playsInline
-        onClick={togglePlay}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => {
-          setIsPlaying(false);
-          emitProgressSnapshot();
-        }}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => {
-          const video = videoRef.current;
-          setIsPlaying(false);
-          if (!video || !video.duration) return;
-          lastUiSyncRef.current = video.duration;
-          lastProgressEmitRef.current = video.duration;
-          setCurrentTime(video.duration);
-          setProgress(100);
-          emitProgressSnapshot(true);
-        }}
-        preload="metadata"
-      />
+    <div className="overflow-hidden rounded-[calc(var(--radius)+8px)] border-2 border-border bg-[color:var(--surface-card)] shadow-retro">
+      <div className="relative border-b-2 border-border bg-black">
+        <video
+          ref={videoRef}
+          src={src}
+          poster={poster}
+          className="aspect-video w-full cursor-pointer bg-black object-contain"
+          playsInline
+          onClick={togglePlay}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => {
+            setIsPlaying(false);
+            emitProgressSnapshot();
+          }}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={() => {
+            const video = videoRef.current;
+            setIsPlaying(false);
+            if (!video || !video.duration) return;
+            lastUiSyncRef.current = video.duration;
+            lastProgressEmitRef.current = video.duration;
+            setCurrentTime(video.duration);
+            setProgress(100);
+            emitProgressSnapshot(true);
+          }}
+          preload="metadata"
+        />
 
-      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-4 py-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-        <div
-          className="mb-3 h-1 w-full cursor-pointer bg-white/20"
-          onClick={handleSeek}
-        >
-          <div
-            className="h-full bg-white transition-[width] duration-100"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        {!isPlaying && (
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="absolute inset-0 flex items-center justify-center bg-black/10"
+            aria-label="Play video"
+          >
+            <div className="flex size-16 items-center justify-center rounded-[calc(var(--radius)+6px)] border-2 border-border bg-[color:var(--surface-secondary)] shadow-retro transition-transform hover:-translate-y-1">
+              <Play className="ml-1 size-7 text-foreground" />
+            </div>
+          </button>
+        )}
+      </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
+      <div className="space-y-3 bg-[color:var(--surface-card)] px-3 py-3 sm:px-4 sm:py-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            {title ? (
+              <p className="font-heading text-lg font-black tracking-[-0.04em]">
+                {title}
+              </p>
+            ) : null}
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
               type="button"
               onClick={togglePlay}
-              className="text-white transition-opacity hover:opacity-80"
+              variant="secondary"
+              size="icon-sm"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying ? (
-                <Pause className="size-5" />
-              ) : (
-                <Play className="size-5" />
-              )}
-            </button>
-
-            <button
+              {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+            </Button>
+            <Button
               type="button"
               onClick={toggleMute}
-              className="text-white transition-opacity hover:opacity-80"
+              variant="ghost"
+              size="icon-sm"
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? (
-                <VolumeX className="size-5" />
-              ) : (
-                <Volume2 className="size-5" />
-              )}
-            </button>
-
-            <span className="text-xs text-white/80 tabular-nums">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {title && (
-              <span className="text-xs text-white/60 hidden sm:block">
-                {title}
-              </span>
-            )}
-
-            <button
+              {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            </Button>
+            <Button
               type="button"
               onClick={toggleFullscreen}
-              className="text-white transition-opacity hover:opacity-80"
+              variant="outline"
+              size="icon-sm"
               aria-label="Fullscreen"
             >
               <Maximize className="size-4" />
-            </button>
+            </Button>
+          </div>
+        </div>
+
+        <div
+          className="h-4 cursor-pointer rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-ink)] p-[3px]"
+          onClick={handleSeek}
+        >
+          <div className="h-full rounded-full bg-background/70">
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-100"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
       </div>
-
-      {!isPlaying && (
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center"
-          aria-label="Play video"
-        >
-          <div className="flex size-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-transform hover:scale-110">
-            <Play className="ml-1 size-7 text-white" />
-          </div>
-        </button>
-      )}
     </div>
   );
 }

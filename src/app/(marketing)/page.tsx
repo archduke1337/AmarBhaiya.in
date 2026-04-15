@@ -3,11 +3,9 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
+  Download,
   Layers3,
-  MessagesSquare,
-  PlayCircle,
   Sparkles,
-  Users,
   Video,
 } from "lucide-react";
 
@@ -15,7 +13,10 @@ import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getHomePageContent } from "@/lib/appwrite/marketing-content";
+import {
+  getHomePageContent,
+  getPublicNotesPageData,
+} from "@/lib/appwrite/marketing-content";
 
 export const revalidate = 3600;
 
@@ -78,7 +79,10 @@ function MetricTile({
 }
 
 export default async function LandingPage() {
-  const homeContent = await getHomePageContent();
+  const [homeContent, notesContent] = await Promise.all([
+    getHomePageContent(),
+    getPublicNotesPageData({ limit: 3 }),
+  ]);
 
   return (
     <div className="space-y-16 px-4 py-8 md:px-6 md:py-10">
@@ -87,8 +91,8 @@ export default async function LandingPage() {
         <RetroPanel tone="card" size="lg" className="space-y-8">
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline">Learn from Bhaiya</Badge>
-            <Badge variant="secondary">School to career</Badge>
-            <Badge variant="ghost">Practical first</Badge>
+            <Badge variant="secondary">Class 6 to 12 first</Badge>
+            <Badge variant="ghost">Skills next</Badge>
           </div>
 
           <div className="space-y-5">
@@ -96,17 +100,24 @@ export default async function LandingPage() {
               Learning platform
             </p>
             <h1 className="font-heading max-w-4xl text-5xl font-black leading-[0.92] tracking-[-0.08em] text-balance md:text-7xl">
-              Practical learning for students who are done with vague advice.
+              Notes, courses, and live guidance for students who want clarity, not coaching noise.
             </h1>
             <p className="max-w-2xl text-base font-medium leading-8 text-muted-foreground md:text-lg">
-              Coding, board prep, career direction, and execution habits —
-              built by someone who's walked the same road.
-              Not a coaching institute. Just an honest system by Amar Bhaiya,
+              The core of the platform is school learning for Indian students from
+              Class 6 to 12. Notes, revision support, board-focused courses, and
+              direct teaching come first. Skills, coding, and career tracks grow
+              on top of that as students move forward. Built by Amar Bhaiya,
               backed by {homeContent.stats.find((s) => s.label.toLowerCase().includes("student"))?.end.toLocaleString("en-IN") ?? "1,500"}+ students who already use it.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <Button asChild size="lg" variant="secondary">
+              <Link href="/notes">
+                Explore notes
+                <Download />
+              </Link>
+            </Button>
             <Button asChild size="lg">
               <Link href="/courses">
                 Browse courses
@@ -136,8 +147,8 @@ export default async function LandingPage() {
       <section className="mx-auto max-w-7xl space-y-6">
         <SectionHeading
           eyebrow="What you'll learn"
-          title="Subjects and skills that actually move the needle."
-          description="From board exams to coding to career skills — each course is built for outcomes, not for padding a catalog."
+          title="The school-first layer stays at the centre of the product."
+          description="Board subjects, revision material, and chapter-level support come first. Skill tracks expand the system for college students and working learners later."
         />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -214,6 +225,83 @@ export default async function LandingPage() {
           </div>
         </section>
       )}
+
+      {/* ── Study notes ─────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl space-y-6">
+        <SectionHeading
+          eyebrow="Study notes"
+          title="For many students, the first useful thing is one clean note."
+          description="Notes should be visible on the homepage because that is often the fastest way a student decides whether Amar Bhaiya is worth trusting."
+        />
+
+        <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+          <RetroPanel tone="secondary" size="lg" className="space-y-5">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+              Why notes matter here
+            </p>
+            <h3 className="font-heading text-3xl font-black leading-[0.95] tracking-[-0.06em]">
+              A student should be able to land here, find a note, and feel helped immediately.
+            </h3>
+            <p className="text-sm font-medium leading-7 text-foreground/80">
+              That first small win matters. It is how trust starts. Notes make the platform feel useful before the student has committed to a course or even created an account.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">Chapter-wise</Badge>
+              <Badge variant="outline">Revision friendly</Badge>
+              <Badge variant="outline">Built for Indian schooling</Badge>
+            </div>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/notes">
+                Open notes library
+                <ArrowRight />
+              </Link>
+            </Button>
+          </RetroPanel>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {notesContent.notes.length > 0 ? (
+              notesContent.notes.map((note, index) => (
+                <RetroPanel
+                  key={note.id}
+                  tone={index === 1 ? "accent" : "card"}
+                  className="flex h-full flex-col gap-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Badge variant="outline">{note.accessModel === "free" ? "Free note" : "Premium note"}</Badge>
+                    <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      {note.downloadCount.toLocaleString("en-IN")} downloads
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                      {note.title}
+                    </h3>
+                    <p className="text-sm font-medium leading-6 text-foreground/80">
+                      {note.description || "Clean revision material prepared for students who need the important parts in one place."}
+                    </p>
+                  </div>
+                  <div className="mt-auto flex flex-wrap gap-2">
+                    {note.tags.map((tag) => (
+                      <Badge key={tag} variant="ghost">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </RetroPanel>
+              ))
+            ) : (
+              <RetroPanel tone="card" className="md:col-span-3 space-y-3">
+                <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                  Notes are being built alongside the courses.
+                </h3>
+                <p className="text-sm font-medium leading-7 text-foreground/80">
+                  The notes library already has its own public space, and it will keep filling up as Amar Bhaiya expands the school-first catalogue.
+                </p>
+              </RetroPanel>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* ── Delivery signals ────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl">
@@ -329,8 +417,8 @@ export default async function LandingPage() {
               Stop scrolling. Start building.
             </h2>
             <p className="mx-auto max-w-xl text-base font-medium leading-8 text-primary-foreground/80">
-              Pick a course. Start a lesson. Do an assignment. That's it.
-              No 40-page sales letter. No "limited seats" nonsense.
+              Pick a course. Start a lesson. Do an assignment. That is it.
+              No 40-page sales letter. No limited-seats nonsense.
               Just start.
             </p>
           </div>

@@ -10,7 +10,11 @@ import {
   getFilePreviewUrl,
 } from "@/lib/utils/file-urls";
 import { normalizeHttpUrl } from "@/lib/utils/url";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { LessonVideoPlayer } from "@/components/lesson-video-player";
+import { Textarea } from "@/components/ui/textarea";
 import { getCourseProgress } from "@/actions/enrollment";
 import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
 import { postLessonCommentAction, getLessonComments } from "@/actions/comments";
@@ -93,20 +97,16 @@ export default async function LessonViewerPage({ params }: PageProps) {
 
   if (!hasAccess) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-20">
+      <RetroPanel tone="muted" size="lg" className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 py-14 text-center">
         <Lock className="size-10 text-muted-foreground" />
-        <h1 className="text-xl font-medium">Lesson Locked</h1>
-        <p className="text-sm text-muted-foreground max-w-md text-center">
-          This lesson is part of a paid course. Enroll to get access to all
-          lessons and course materials.
+        <h1 className="font-heading text-3xl font-black tracking-[-0.05em]">Lesson Locked</h1>
+        <p className="max-w-md text-sm font-medium leading-7 text-muted-foreground">
+          This lesson sits inside a paid course. Enroll to access the full lesson sequence, downloadable resources, and discussion.
         </p>
-        <Link
-          href={`/courses/${String(course.slug ?? courseId)}`}
-          className="h-10 inline-flex items-center bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90"
-        >
-          View Course
-        </Link>
-      </div>
+        <Button asChild size="lg">
+          <Link href={`/courses/${String(course.slug ?? courseId)}`}>View Course</Link>
+        </Button>
+      </RetroPanel>
     );
   }
 
@@ -213,11 +213,11 @@ export default async function LessonViewerPage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl">
+    <div className="flex max-w-5xl flex-col gap-6 pb-6">
       {/* Back to course */}
       <Link
         href={`/courses/${String(course.slug ?? courseId)}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
+        className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeft className="size-4" />
         {String(course.title ?? "Back to Course")}
@@ -237,13 +237,35 @@ export default async function LessonViewerPage({ params }: PageProps) {
       />
 
       {/* Lesson info + mark complete */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-medium">
-            {String(lesson.title ?? "Lesson")}
-          </h1>
+      <RetroPanel tone="card" className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline">{String(course.title ?? "Course")}</Badge>
+          <Badge variant="ghost">
+            {lessonCompleted ? "Completed" : canMarkComplete ? "In progress" : "Preview"}
+          </Badge>
+          {lessonPercentComplete > 0 && !lessonCompleted ? (
+            <Badge variant="secondary">{lessonPercentComplete}% watched</Badge>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <h1 className="font-heading text-3xl font-black tracking-[-0.05em]">
+              {String(lesson.title ?? "Lesson")}
+            </h1>
+            {typeof lesson.description === "string" && lesson.description.length > 0 && (
+              <p className="text-sm font-medium leading-7 text-muted-foreground">
+                {lesson.description}
+              </p>
+            )}
+            {!lessonCompleted && lessonPercentComplete > 0 && (
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Resume available from about {lessonPercentComplete}% of the lesson.
+              </p>
+            )}
+          </div>
           {lessonCompleted ? (
-            <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 shrink-0 pt-1">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-600 shrink-0 pt-1">
               <CheckCircle className="size-4" />
               Completed
             </span>
@@ -251,46 +273,33 @@ export default async function LessonViewerPage({ params }: PageProps) {
             <form action={markLessonCompleteFormAction} className="shrink-0">
               <input type="hidden" name="courseId" value={courseId} />
               <input type="hidden" name="lessonId" value={lessonId} />
-              <button
-                type="submit"
-                className="h-9 border border-border px-4 text-xs transition-colors hover:bg-muted"
-              >
+              <Button type="submit" variant="secondary" size="sm">
                 Mark as complete
-              </button>
+              </Button>
             </form>
           ) : (
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 pt-1">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground shrink-0 pt-1">
               Preview lesson
             </span>
           )}
         </div>
-        {typeof lesson.description === "string" && lesson.description.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {lesson.description}
-          </p>
-        )}
-        {!lessonCompleted && lessonPercentComplete > 0 && (
-          <p className="text-xs text-muted-foreground">
-            Resume available from about {lessonPercentComplete}% of the lesson.
-          </p>
-        )}
-      </div>
+      </RetroPanel>
 
       {lessonResourceItems.length > 0 && (
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="text-sm font-medium">
+        <RetroPanel tone="secondary" className="space-y-0 p-0">
+          <div className="border-b-2 border-border px-5 py-3">
+            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
               Lesson Resources ({lessonResourceItems.length})
             </h2>
           </div>
-          <ul className="divide-y divide-border">
+          <ul className="divide-y-2 divide-border">
             {lessonResourceItems.map((resource) => (
               <li key={resource.id}>
                 <a
                   href={resource.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-muted/40"
+                  className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-background/60"
                 >
                   <span>{resource.title}</span>
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -300,20 +309,19 @@ export default async function LessonViewerPage({ params }: PageProps) {
               </li>
             ))}
           </ul>
-        </section>
+        </RetroPanel>
       )}
 
       {/* Navigation */}
-      <nav className="flex items-center justify-between border-t border-border pt-4">
+      <RetroPanel tone="accent" className="flex flex-wrap items-center justify-between gap-3">
         {prevLesson ? (
           canOpenLesson(prevLesson) ? (
-            <Link
-              href={`/app/learn/${courseId}/${prevLesson.$id}`}
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="size-4" />
-              Previous
-            </Link>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/app/learn/${courseId}/${prevLesson.$id}`}>
+                <ChevronLeft className="size-4" />
+                Previous
+              </Link>
+            </Button>
           ) : (
             <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
               <Lock className="size-4" />
@@ -330,13 +338,12 @@ export default async function LessonViewerPage({ params }: PageProps) {
 
         {nextLesson ? (
           canOpenLesson(nextLesson) ? (
-            <Link
-              href={`/app/learn/${courseId}/${nextLesson.$id}`}
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Next
-              <ChevronRight className="size-4" />
-            </Link>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/app/learn/${courseId}/${nextLesson.$id}`}>
+                Next
+                <ChevronRight className="size-4" />
+              </Link>
+            </Button>
           ) : (
             <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
               Next locked
@@ -346,17 +353,17 @@ export default async function LessonViewerPage({ params }: PageProps) {
         ) : (
           <span />
         )}
-      </nav>
+      </RetroPanel>
 
       {/* Lesson sidebar */}
       {allLessons.length > 1 && (
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="text-sm font-medium">
+        <RetroPanel tone="card" className="space-y-0 p-0">
+          <div className="border-b-2 border-border px-5 py-3">
+            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
               Course Lessons ({allLessons.length})
             </h2>
           </div>
-          <ul className="divide-y divide-border">
+          <ul className="divide-y-2 divide-border">
             {allLessons.map((l, i) => {
               const isActive = l.$id === lessonId;
               const isAccessible = canOpenLesson(l);
@@ -368,8 +375,8 @@ export default async function LessonViewerPage({ params }: PageProps) {
                       href={`/app/learn/${courseId}/${l.$id}`}
                       className={`flex items-center gap-3 px-5 py-3 text-sm transition-colors ${
                         isActive
-                          ? "bg-muted font-medium"
-                          : "hover:bg-muted/50"
+                          ? "bg-[color:var(--surface-accent)] font-medium"
+                          : "hover:bg-[color:var(--surface-ink)]"
                       }`}
                     >
                       <span className="text-xs text-muted-foreground w-6">
@@ -396,34 +403,30 @@ export default async function LessonViewerPage({ params }: PageProps) {
               );
             })}
           </ul>
-        </section>
+        </RetroPanel>
       )}
 
       {/* Comments section */}
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3">
-          <h2 className="text-sm font-medium">Discussion ({comments.length})</h2>
+      <RetroPanel tone="muted" className="space-y-0 p-0">
+        <div className="border-b-2 border-border px-5 py-3">
+          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Discussion ({comments.length})</h2>
         </div>
 
-        <form action={postLessonCommentAction} className="p-5 space-y-3 border-b border-border">
+        <form action={postLessonCommentAction} className="border-b-2 border-border p-5 space-y-3">
           <input type="hidden" name="courseId" value={courseId} />
           <input type="hidden" name="lessonId" value={lessonId} />
-          <textarea
+          <Textarea
             name="text"
             required
             minLength={2}
             placeholder="Ask a doubt or share an insight from this lesson..."
-            className="w-full min-h-20 border border-border bg-background px-3 py-2 text-sm"
           />
-          <button
-            type="submit"
-            className="h-9 px-4 bg-foreground text-background text-xs transition-opacity hover:opacity-90"
-          >
+          <Button type="submit" size="sm">
             Post comment
-          </button>
+          </Button>
         </form>
 
-        <div className="divide-y divide-border">
+        <div className="divide-y-2 divide-border">
           {comments.length === 0 && (
             <p className="px-5 py-4 text-sm text-muted-foreground">
               No comments yet. Be the first to start the discussion.
@@ -434,7 +437,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-medium">{c.userName}</span>
                 {c.userRole !== "student" && (
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border px-1.5 py-0.5">
+                  <span className="border-2 border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                     {c.userRole}
                   </span>
                 )}
@@ -456,7 +459,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
             </div>
           ))}
         </div>
-      </section>
+      </RetroPanel>
     </div>
   );
 }

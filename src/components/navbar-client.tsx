@@ -99,7 +99,7 @@ export function NavbarClient({
                   Learn from Bhaiya
                 </p>
                 <p className="truncate text-sm font-medium text-foreground/75">
-                  Practical learning for school, college, and career transitions.
+                  School-first learning, with skills and career tracks layered in as students grow.
                 </p>
               </div>
             </div>

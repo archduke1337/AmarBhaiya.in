@@ -3,7 +3,7 @@ import type { Models } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { getFilePreviewUrl } from "@/lib/utils/file-urls";
+import { getFileDownloadUrl, getFilePreviewUrl } from "@/lib/utils/file-urls";
 import type {
   BlogPostRecord,
   Category,
@@ -27,6 +27,18 @@ type ModuleRow = AnyRow & Partial<Module>;
 type LessonRow = AnyRow & Partial<Lesson>;
 type BlogPostRow = AnyRow & Partial<BlogPostRecord>;
 type SiteCopyRow = AnyRow & Partial<SiteCopyRecord>;
+type StandaloneResourceRow = AnyRow & {
+  instructorName?: string;
+  title?: string;
+  description?: string;
+  type?: string;
+  accessModel?: string;
+  price?: number;
+  fileId?: string;
+  downloadCount?: number;
+  isPublished?: boolean;
+  tags?: string[];
+};
 
 export type CourseSort = "popular" | "newest" | "price";
 
@@ -142,6 +154,23 @@ export type BlogPageData = {
   categories: string[];
 };
 
+export type PublicNoteItem = {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  accessModel: "free" | "paid";
+  priceInr: number;
+  downloadCount: number;
+  instructorName: string;
+  createdAt: string;
+  downloadUrl: string;
+};
+
+export type NotesPageData = {
+  notes: PublicNoteItem[];
+};
+
 function toDate(value: unknown): Date | null {
   if (typeof value !== "string") {
     return null;
@@ -203,6 +232,34 @@ function parseJsonPayload<T>(value: unknown): T | null {
   } catch {
     return null;
   }
+}
+
+function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
+  const accessModel = row.accessModel === "paid" ? "paid" : "free";
+  const fileId = typeof row.fileId === "string" ? row.fileId : "";
+
+  return {
+    id: row.$id,
+    title:
+      typeof row.title === "string" && row.title.trim().length > 0
+        ? row.title.trim()
+        : "Untitled note",
+    description:
+      typeof row.description === "string" ? row.description.trim() : "",
+    tags: parseStringArray(row.tags).slice(0, 3),
+    accessModel,
+    priceInr: Math.max(0, toNumber(row.price, 0)),
+    downloadCount: Math.max(0, Math.round(toNumber(row.downloadCount, 0))),
+    instructorName:
+      typeof row.instructorName === "string" && row.instructorName.trim().length > 0
+        ? row.instructorName.trim()
+        : "Amar Bhaiya",
+    createdAt: typeof row.$createdAt === "string" ? row.$createdAt : new Date().toISOString(),
+    downloadUrl:
+      accessModel === "free" && fileId
+        ? getFileDownloadUrl(APPWRITE_CONFIG.buckets.resourceFiles, fileId)
+        : "",
+  };
 }
 
 async function safeListRows<Row extends AnyRow>(
@@ -670,6 +727,29 @@ export async function getContactChannelsContent(): Promise<ContactChannelItem[]>
     (item): item is ContactChannelItem =>
       typeof item?.label === "string" && typeof item?.value === "string"
   );
+}
+
+export async function getPublicNotesPageData(options?: {
+  limit?: number;
+}): Promise<NotesPageData> {
+  const { tablesDB } = await createAdminClient();
+  const noteRows = await safeListAllRows<StandaloneResourceRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.standaloneResources,
+    [
+      Query.equal("isPublished", [true]),
+      Query.equal("type", ["notes"]),
+      Query.orderDesc("$createdAt"),
+    ]
+  );
+
+  const normalized = noteRows.map(toPublicNote);
+  const limited =
+    typeof options?.limit === "number" && options.limit > 0
+      ? normalized.slice(0, options.limit)
+      : normalized;
+
+  return { notes: limited };
 }
 
 export async function getHomePageContent(): Promise<HomePageContent> {

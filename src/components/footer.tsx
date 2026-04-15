@@ -33,9 +33,9 @@ export function Footer() {
                 />
               </Link>
               <p className="max-w-sm text-sm font-medium leading-7 text-foreground/80">
-                Practical learning for school, college, and early-career
-                transitions across coding, fitness, academics, and career
-                direction.
+                Practical learning for Class 6 to 12 students first, with notes,
+                courses, and live guidance at the core. Skills and career tracks
+                grow on top of that as learners move ahead.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline">Courses</Badge>
@@ -93,8 +93,8 @@ export function Footer() {
                 Need a starting point?
               </p>
               <p className="text-sm font-medium leading-7 text-foreground/80">
-                Browse the course catalogue or send a message if you want help
-                choosing where to begin.
+                Start with notes if you need quick help, or move into a course if
+                you want the full learning path.
               </p>
               <div className="grid gap-3">
                 <Button asChild variant="secondary">

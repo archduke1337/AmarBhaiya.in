@@ -147,13 +147,13 @@ export function Sidebar({ role, userId }: SidebarProps) {
 
   return (
     <aside className="h-full border-r bg-sidebar text-sidebar-foreground">
-      <div className="border-b bg-primary px-5 py-6 text-primary-foreground">
+      <div className="border-b border-border bg-[color:var(--surface-secondary)] px-5 py-6 text-foreground">
         <p className="font-heading text-xs uppercase tracking-[0.22em]">
           {role}
         </p>
         <h2 className="mt-3 text-3xl">Learning Hub</h2>
-        <p className="mt-3 max-w-[16rem] text-sm font-semibold text-primary-foreground/80">
-          Loud tools. Clear actions. Everything important in one chunky workspace.
+        <p className="mt-3 max-w-[16rem] text-sm font-semibold text-foreground/75">
+          Clear actions, cleaner hierarchy, and a workspace that still feels comfortable on smaller screens.
         </p>
       </div>
 
@@ -169,8 +169,8 @@ export function Sidebar({ role, userId }: SidebarProps) {
               className={cn(
                 "flex items-center gap-3 rounded-[calc(var(--radius)+2px)] border-2 px-3 py-3 text-sm font-heading font-black uppercase tracking-[0.08em] transition-all",
                 isActive
-                  ? "border-border bg-accent text-accent-foreground shadow-retro"
-                  : "border-border bg-card text-sidebar-foreground shadow-retro-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-secondary hover:shadow-none"
+                  ? "border-border bg-[color:var(--surface-accent)] text-accent-foreground shadow-retro"
+                  : "border-border bg-[color:var(--surface-card)] text-sidebar-foreground shadow-retro-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-[color:var(--surface-secondary)] hover:shadow-none"
               )}
             >
               <Icon className="size-4" />
@@ -199,8 +199,6 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
   const [open, setOpen] = useState(false);
   const navItems = getNavItems(role, userId);
 
-  // Auto-close on navigation
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const closeDrawer = () => setOpen(false);
 
   return (
@@ -220,7 +218,7 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
             onClick={closeDrawer}
             aria-hidden="true"
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-sidebar shadow-retro-lg lg:hidden">
+          <div className="fixed inset-y-0 left-0 z-50 w-[min(86vw,20rem)] overflow-y-auto overscroll-contain bg-sidebar shadow-retro-lg lg:hidden">
             <div className="absolute right-3 top-4 z-10">
               <button
                 onClick={closeDrawer}
@@ -231,7 +229,7 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
               </button>
             </div>
 
-            <div className="border-b bg-primary px-5 py-6 text-primary-foreground">
+            <div className="border-b border-border bg-[color:var(--surface-secondary)] px-5 py-6 text-foreground">
               <p className="font-heading text-xs uppercase tracking-[0.22em]">
                 {role}
               </p>
@@ -251,8 +249,8 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
                     className={cn(
                       "flex items-center gap-3 rounded-[calc(var(--radius)+2px)] border-2 px-3 py-3 text-sm font-heading font-black uppercase tracking-[0.08em] transition-all",
                       isActive
-                        ? "border-border bg-accent text-accent-foreground shadow-retro"
-                        : "border-border bg-card text-sidebar-foreground shadow-retro-sm hover:bg-secondary hover:shadow-none"
+                        ? "border-border bg-[color:var(--surface-accent)] text-accent-foreground shadow-retro"
+                        : "border-border bg-[color:var(--surface-card)] text-sidebar-foreground shadow-retro-sm hover:bg-[color:var(--surface-secondary)] hover:shadow-none"
                     )}
                   >
                     <Icon className="size-4" />
@@ -261,6 +259,17 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
                 );
               })}
             </nav>
+
+            <div className="px-4 pb-6">
+              <div className="retro-surface bg-[color:var(--surface-accent)] p-4">
+                <p className="font-heading text-xs uppercase tracking-[0.18em] text-accent-foreground/70">
+                  Workspace
+                </p>
+                <p className="mt-3 text-sm font-semibold leading-relaxed text-accent-foreground">
+                  {getWorkspaceCopy(role)}
+                </p>
+              </div>
+            </div>
           </div>
         </>
       )}

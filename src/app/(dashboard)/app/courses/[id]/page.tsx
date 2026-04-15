@@ -4,6 +4,10 @@ import { Lock } from "lucide-react";
 
 import { getCourseComments, postCourseCommentAction } from "@/actions/comments";
 import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { getPublicCourseBySlug } from "@/lib/appwrite/dashboard-data";
@@ -54,55 +58,57 @@ export default async function CoursePlayerPage({ params }: PageProps) {
   const isPaidCourse = course.accessModel !== "free";
 
   return (
-    <div className="space-y-6">
-      <section className="border border-border p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+    <div className="space-y-6 pb-6">
+      <RetroPanel tone="card" size="lg" className="space-y-5">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="ghost">{course.accessModel}</Badge>
+          <Badge variant="secondary">{course.totalLessons} lessons</Badge>
+        </div>
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Course overview
-          </p>
-          <h1 className="text-3xl md:text-4xl mt-2">{course.title}</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Use this overview to navigate into lessons. Lesson-specific resources
-            and discussion stay inside each lesson viewer, while the course-wide
-            conversation lives below.
-          </p>
+            </p>
+            <h1 className="font-heading text-3xl font-black tracking-[-0.05em] md:text-5xl">
+              {course.title}
+            </h1>
+            <p className="max-w-3xl text-sm font-medium leading-7 text-muted-foreground">
+              Use this page to understand the structure before jumping in. Lesson-specific
+              resources and doubts stay inside each lesson. Course-wide planning and
+              general questions stay here.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {firstVisibleLessonId ? (
+              <Button asChild size="lg">
+                <Link href={`/app/learn/${course.id}/${firstVisibleLessonId}`}>
+                  {hasFullAccess ? "Start course" : "Start preview"}
+                </Link>
+              </Button>
+            ) : null}
+
+            {course.price === 0 && (
+              <form action={enrollInCourseFormAction}>
+                <input type="hidden" name="courseId" value={course.id} />
+                <Button type="submit" variant="secondary" size="lg">
+                  Ensure free enrollment
+                </Button>
+              </form>
+            )}
+
+            {!hasFullAccess && isPaidCourse ? (
+              <Button asChild variant="outline" size="lg">
+                <Link href={courseHref}>View enrollment options</Link>
+              </Button>
+            ) : null}
+          </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {firstVisibleLessonId ? (
-            <Link
-              href={`/app/learn/${course.id}/${firstVisibleLessonId}`}
-              className="inline-flex h-10 items-center bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
-            >
-              {hasFullAccess ? "Start course" : "Start preview"}
-            </Link>
-          ) : null}
-
-          {course.price === 0 && (
-            <form action={enrollInCourseFormAction}>
-              <input type="hidden" name="courseId" value={course.id} />
-              <button
-                type="submit"
-                className="h-10 px-4 border border-border text-sm hover:bg-accent"
-              >
-                Ensure free enrollment
-              </button>
-            </form>
-          )}
-
-          {!hasFullAccess && isPaidCourse ? (
-            <Link
-              href={courseHref}
-              className="inline-flex h-10 items-center border border-border px-4 text-sm transition-colors hover:bg-accent"
-            >
-              View enrollment options
-            </Link>
-          ) : null}
-        </div>
-      </section>
+      </RetroPanel>
 
       {!hasFullAccess && isPaidCourse ? (
-        <section className="border border-border bg-muted/20 p-5 text-sm text-muted-foreground">
+        <RetroPanel tone="muted" className="text-sm text-muted-foreground">
           <div className="flex items-start gap-3">
             <Lock className="mt-0.5 size-4 shrink-0" />
             <div className="space-y-1">
@@ -116,32 +122,34 @@ export default async function CoursePlayerPage({ params }: PageProps) {
               </p>
             </div>
           </div>
-        </section>
+        </RetroPanel>
       ) : null}
 
       {visibleModules.length === 0 ? (
-        <section className="border border-border p-5 text-sm text-muted-foreground">
+        <RetroPanel tone="muted" className="text-sm text-muted-foreground">
           {hasFullAccess
             ? "This course does not have any lessons yet."
             : "No free preview lessons are available for this course yet."}
-        </section>
+        </RetroPanel>
       ) : (
         <section className="space-y-4">
           {visibleModules.map((module, moduleIndex) => (
-            <article key={module.id} className="border border-border">
-              <div className="border-b border-border px-5 py-4">
+            <RetroPanel key={module.id} tone={moduleIndex % 2 === 0 ? "card" : "accent"} className="space-y-0 p-0">
+              <div className="border-b-2 border-border px-5 py-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Module {moduleIndex + 1}
                 </p>
-                <h2 className="mt-1 text-lg font-medium">{module.title}</h2>
+                <h2 className="mt-1 font-heading text-2xl font-black tracking-[-0.04em]">
+                  {module.title}
+                </h2>
               </div>
 
-              <ul className="divide-y divide-border">
+              <ul className="divide-y-2 divide-border">
                 {module.lessons.map((lesson, lessonIndex) => (
                   <li key={lesson.id}>
-                    <div className="flex items-center justify-between gap-3 px-5 py-4">
-                      <div>
-                        <p className="text-sm font-medium">
+                    <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold">
                           Lesson {lessonIndex + 1}: {lesson.title}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -155,12 +163,9 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                       </div>
 
                       {hasFullAccess || lesson.isFree || lesson.isFreePreview ? (
-                        <Link
-                          href={`/app/learn/${course.id}/${lesson.id}`}
-                          className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          Open lesson
-                        </Link>
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/app/learn/${course.id}/${lesson.id}`}>Open lesson</Link>
+                        </Button>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                           <Lock className="size-3" />
@@ -171,14 +176,14 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                   </li>
                 ))}
               </ul>
-            </article>
+            </RetroPanel>
           ))}
         </section>
       )}
 
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3">
-          <h2 className="text-sm font-medium">
+      <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="border-b-2 border-border px-5 py-3">
+          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
             Course Discussion ({courseComments.length})
           </h2>
         </div>
@@ -187,27 +192,23 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           <>
             <form
               action={postCourseCommentAction}
-              className="border-b border-border p-5 space-y-3"
+              className="border-b-2 border-border p-5 space-y-3"
             >
               <input type="hidden" name="courseId" value={course.id} />
-              <textarea
+              <Textarea
                 name="text"
                 required
                 minLength={2}
                 placeholder="Ask about the course overall, planning, pacing, or general doubts..."
-                className="w-full min-h-20 border border-border bg-background px-3 py-2 text-sm"
               />
               <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="h-9 bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
-                >
+                <Button type="submit" size="sm">
                   Post to course discussion
-                </button>
+                </Button>
               </div>
             </form>
 
-            <div className="divide-y divide-border">
+            <div className="divide-y-2 divide-border">
               {courseComments.length === 0 ? (
                 <p className="px-5 py-4 text-sm text-muted-foreground">
                   No course-wide comments yet. Start the conversation.
@@ -218,7 +219,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                   <div className="mb-1 flex items-center gap-2">
                     <span className="text-xs font-medium">{comment.userName}</span>
                     {comment.userRole !== "student" ? (
-                      <span className="border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span className="border-2 border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                         {comment.userRole}
                       </span>
                     ) : null}
@@ -238,7 +239,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
             Enroll in this course to join the course-wide discussion.
           </div>
         )}
-      </section>
+      </RetroPanel>
     </div>
   );
 }
