@@ -15,7 +15,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[280px_1fr]">
       <Sidebar role={role} userId={user.$id} />
       <div className="min-h-screen bg-background">
-        <DashboardHeader userName={user.name} userEmail={user.email} role={role} />
+        <DashboardHeader userName={user.name} userEmail={user.email} role={role} userId={user.$id} />
         <main
           id="main"
           className="px-4 py-6 md:px-6 md:py-8 lg:px-8"
