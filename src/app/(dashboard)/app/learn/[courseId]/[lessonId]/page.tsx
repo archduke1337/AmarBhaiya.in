@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, Lock, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, CheckCircle, Download, MessageSquareMore, PlaySquare } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
@@ -223,6 +223,21 @@ export default async function LessonViewerPage({ params }: PageProps) {
         {String(course.title ?? "Back to Course")}
       </Link>
 
+      <RetroPanel tone="secondary" className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">Lesson view</Badge>
+          <Badge variant="ghost">
+            {currentIndex + 1} of {allLessons.length}
+          </Badge>
+          {lessonResourceItems.length > 0 ? (
+            <Badge variant="secondary">{lessonResourceItems.length} resources</Badge>
+          ) : null}
+        </div>
+        <p className="text-sm font-medium leading-7 text-foreground/80">
+          This page is designed for actual studying on smaller screens: watch the video, grab the notes or files you need, then move to the next lesson without losing your place.
+        </p>
+      </RetroPanel>
+
       {/* Video player */}
       <LessonVideoPlayer
         courseId={courseId}
@@ -285,12 +300,45 @@ export default async function LessonViewerPage({ params }: PageProps) {
         </div>
       </RetroPanel>
 
+      <section className="grid gap-4 lg:grid-cols-3">
+        <RetroPanel tone="card" className="space-y-3">
+          <PlaySquare className="size-4" />
+          <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+            Watch with context
+          </h2>
+          <p className="text-sm font-medium leading-7 text-foreground/80">
+            The lesson title, progress, and resume state stay visible so students can come back without starting from zero.
+          </p>
+        </RetroPanel>
+        <RetroPanel tone="accent" className="space-y-3">
+          <Download className="size-4" />
+          <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+            Pull resources fast
+          </h2>
+          <p className="text-sm font-medium leading-7 text-foreground/80">
+            Notes and files stay below the player so students can find them immediately during revision or homework.
+          </p>
+        </RetroPanel>
+        <RetroPanel tone="card" className="space-y-3">
+          <MessageSquareMore className="size-4" />
+          <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+            Ask lesson-level doubts
+          </h2>
+          <p className="text-sm font-medium leading-7 text-foreground/80">
+            Lesson discussion is for doubts from this exact topic, not for broad course planning or unrelated questions.
+          </p>
+        </RetroPanel>
+      </section>
+
       {lessonResourceItems.length > 0 && (
         <RetroPanel tone="secondary" className="space-y-0 p-0">
           <div className="border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
               Lesson Resources ({lessonResourceItems.length})
             </h2>
+            <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Notes, downloads, and supporting links for this lesson
+            </p>
           </div>
           <ul className="divide-y-2 divide-border">
             {lessonResourceItems.map((resource) => (
@@ -299,9 +347,9 @@ export default async function LessonViewerPage({ params }: PageProps) {
                   href={resource.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-background/60"
+                  className="flex items-center justify-between gap-3 px-5 py-4 text-sm transition-colors hover:bg-background/60"
                 >
-                  <span>{resource.title}</span>
+                  <span className="font-semibold">{resource.title}</span>
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     {resource.type}
                   </span>
@@ -362,6 +410,9 @@ export default async function LessonViewerPage({ params }: PageProps) {
             <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
               Course Lessons ({allLessons.length})
             </h2>
+            <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Jump across the lesson path without losing your study flow
+            </p>
           </div>
           <ul className="divide-y-2 divide-border">
             {allLessons.map((l, i) => {
@@ -410,6 +461,9 @@ export default async function LessonViewerPage({ params }: PageProps) {
       <RetroPanel tone="muted" className="space-y-0 p-0">
         <div className="border-b-2 border-border px-5 py-3">
           <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Discussion ({comments.length})</h2>
+          <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Ask about this lesson only
+          </p>
         </div>
 
         <form action={postLessonCommentAction} className="border-b-2 border-border p-5 space-y-3">

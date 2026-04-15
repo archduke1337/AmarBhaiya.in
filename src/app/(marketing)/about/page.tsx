@@ -13,19 +13,19 @@ export const metadata: Metadata = {
 
 const workingRules = [
   {
-    title: "Clarity over performance",
+    title: "Clarity over showing off",
     detail:
-      "We would rather explain one thing properly than decorate ten things that never become useful.",
+      "It is better to explain one chapter properly than to impress students with ten vague promises that do not survive real study pressure.",
   },
   {
-    title: "Practice sits inside the lesson",
+    title: "Practice sits close to the explanation",
     detail:
-      "Students should not need five tabs, three downloads, and guesswork to move from learning to doing.",
+      "Students should not need five tabs, three downloads, and guesswork to move from understanding to doing.",
   },
   {
-    title: "Respect the reality students live in",
+    title: "Respect the life a student is actually living",
     detail:
-      "Time, money, language, and confidence all matter. The product should respond to that, not ignore it.",
+      "Time, money, language, confidence, parents, school pressure, and tired evenings all matter. The product should respond to that reality.",
   },
 ];
 
@@ -38,7 +38,7 @@ export default async function AboutPage() {
         <SectionHeading
           eyebrow="About"
           title="Built for students who want fewer speeches and more signal."
-          description="amarbhaiya.in exists to reduce confusion. The point is not to look impressive from a distance. The point is to make the next move clearer when you are in the middle of real decisions."
+          description="amarbhaiya.in exists to reduce confusion at the exact moment students need help. The goal is not to sound big from a distance. The goal is to make the next move feel clearer when the pressure is real."
           titleAs="h1"
         />
         <div className="grid gap-4 xl:translate-y-8">
@@ -47,7 +47,7 @@ export default async function AboutPage() {
               Operating principle
             </p>
             <p className="text-lg font-bold leading-8 tracking-[-0.03em]">
-              Practical learning only works when the advice feels close to the actual mess students are navigating.
+              Practical learning only works when the teaching feels close to the actual mess students are navigating, not detached from it.
             </p>
           </RetroPanel>
           <RetroPanel tone="card" className="space-y-3">
@@ -55,7 +55,7 @@ export default async function AboutPage() {
               What that means in practice
             </p>
             <p className="text-sm font-medium leading-7 text-foreground/80">
-              Stronger structure, direct language, and fewer decorative promises that collapse the moment a student gets stuck.
+              Stronger structure, direct language, and fewer decorative promises that collapse the moment a student gets stuck or loses momentum.
             </p>
           </RetroPanel>
         </div>
@@ -64,8 +64,8 @@ export default async function AboutPage() {
       <section className="mx-auto max-w-6xl space-y-8">
         <SectionHeading
           eyebrow="Identity layers"
-          title="Not one lane. A stacked worldview."
-          description="The brand works because it combines teaching, execution, and lived context rather than pretending every learner starts from the same place."
+          title="More than a teacher. Still grounded in teaching."
+          description="The platform works because Amar Bhaiya is not presented as a distant expert. The voice comes from teaching, building, and understanding the real trade-offs students live with."
         />
         {aboutContent.identityCards.length === 0 ? (
           <RetroPanel tone="muted">
@@ -98,7 +98,7 @@ export default async function AboutPage() {
           <SectionHeading
             eyebrow="Working rules"
             title="The platform should feel rigorous, not loud for the sake of it."
-            description="RetroUI gives the product character, but the behavior still has to feel calm, structured, and trustworthy."
+            description="The design can have character. The experience still has to feel calm, structured, and trustworthy enough for school students, parents, and serious learners."
             titleAs="h2"
           />
         </RetroPanel>
@@ -164,7 +164,7 @@ export default async function AboutPage() {
             {aboutContent.mission || "Mission content is not configured yet."}
           </p>
           <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
-            If a student leaves with more clarity, more confidence, and one obvious next move, the platform did its job.
+            If a student leaves with more clarity, more confidence, and one obvious next move, the platform did its job. If they also start believing a little more in themselves because of that experience, it did something even better.
           </p>
         </RetroPanel>
       </section>

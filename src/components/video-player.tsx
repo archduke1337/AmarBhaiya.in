@@ -204,7 +204,7 @@ export function VideoPlayer({
       </div>
 
       <div className="space-y-3 bg-[color:var(--surface-card)] px-3 py-3 sm:px-4 sm:py-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             {title ? (
               <p className="font-heading text-lg font-black tracking-[-0.04em]">
@@ -215,7 +215,7 @@ export function VideoPlayer({
               {formatTime(currentTime)} / {formatTime(duration)}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
             <Button
               type="button"
               onClick={togglePlay}
@@ -249,6 +249,7 @@ export function VideoPlayer({
         <div
           className="h-4 cursor-pointer rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-ink)] p-[3px]"
           onClick={handleSeek}
+          aria-label="Seek through lesson video"
         >
           <div className="h-full rounded-full bg-background/70">
             <div

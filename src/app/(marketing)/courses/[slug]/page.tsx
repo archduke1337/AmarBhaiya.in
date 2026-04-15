@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Lock, Play } from "lucide-react";
+import { BookOpenCheck, Download, Lock, Play, Video } from "lucide-react";
 
 import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 import { getLoggedInUser } from "@/lib/appwrite/auth";
@@ -47,9 +47,26 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   // Find first lesson for "Start learning" button
   const firstLesson = course.curriculum?.[0]?.lessons?.[0];
+  const learningSignals = [
+    {
+      icon: Download,
+      title: "Notes and support material",
+      body: "Lessons are designed to sit alongside notes, resources, and revision-friendly study flow.",
+    },
+    {
+      icon: Video,
+      title: "Video-first explanation",
+      body: "The teaching style aims to feel close, direct, and usable when a student is learning from a phone.",
+    },
+    {
+      icon: BookOpenCheck,
+      title: "Practice with structure",
+      body: "Assignments, quizzes, and lesson order help the topic stay organized instead of scattered.",
+    },
+  ];
 
   return (
-    <div className="space-y-14 px-6 py-20 md:px-12 md:py-28">
+    <div className="space-y-14 px-4 py-10 md:px-6 md:py-16 xl:space-y-18 xl:py-20">
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
         <RetroPanel tone="card" size="lg" className="space-y-6">
           <div className="flex flex-wrap items-center gap-3">
@@ -70,9 +87,12 @@ export default async function CourseDetailPage({ params }: PageProps) {
             <p className="max-w-3xl text-lg font-medium leading-8 text-muted-foreground">
               {course.shortDescription}
             </p>
+            <p className="max-w-2xl text-sm font-medium leading-7 text-foreground/80">
+              This page is here so a student can understand the shape of the course before spending money, time, or attention on it. The goal is trust first, then enrollment.
+            </p>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-5 text-sm">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5 text-sm">
             <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-secondary px-3 py-3 shadow-retro-sm">
               <p className="mb-1 font-heading text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Category
@@ -171,6 +191,24 @@ export default async function CourseDetailPage({ params }: PageProps) {
               Students who want structure, not noise. The curriculum is designed to move from clarity to repetition to real execution without padding the path.
             </p>
           </div>
+          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            {learningSignals.map((item, index) => (
+              <div
+                key={item.title}
+                className={`rounded-[calc(var(--radius)+4px)] border-2 border-border px-4 py-4 shadow-retro-sm ${
+                  index === 1 ? "bg-[color:var(--surface-accent)]" : "bg-[color:var(--surface-card)]"
+                }`}
+              >
+                <item.icon className="size-4" />
+                <h2 className="mt-3 font-heading text-lg font-black tracking-[-0.04em]">
+                  {item.title}
+                </h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-foreground/80">
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </div>
         </RetroPanel>
       </section>
 
@@ -219,6 +257,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
             <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">
               See the path before you commit to it.
             </h2>
+            <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
+              On mobile especially, a student should be able to scan the structure quickly: what comes first, what is free to preview, and how long the learning path feels before starting.
+            </p>
           </div>
         {course.curriculum.length === 0 ? (
           <p className="text-sm font-medium text-muted-foreground">Curriculum will appear once modules are published.</p>

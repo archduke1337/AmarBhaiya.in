@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Lock } from "lucide-react";
+import { BookOpenCheck, Download, Lock, MessageSquareMore } from "lucide-react";
 
 import { getCourseComments, postCourseCommentAction } from "@/actions/comments";
 import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
@@ -56,6 +56,23 @@ export default async function CoursePlayerPage({ params }: PageProps) {
     visibleModules.flatMap((module) => module.lessons)[0]?.id ?? "";
   const courseHref = `/courses/${course.slug || course.id}`;
   const isPaidCourse = course.accessModel !== "free";
+  const courseSignals = [
+    {
+      icon: BookOpenCheck,
+      title: "Learn in order",
+      body: "Modules and lessons are arranged to keep the next step obvious, even on a phone.",
+    },
+    {
+      icon: Download,
+      title: "Find notes inside lessons",
+      body: "Lesson notes and files stay with the lesson resources instead of being hidden somewhere else.",
+    },
+    {
+      icon: MessageSquareMore,
+      title: "Ask at the right level",
+      body: "Course discussion stays here. Lesson-specific doubts stay inside each lesson page.",
+    },
+  ];
 
   return (
     <div className="space-y-6 pb-6">
@@ -68,7 +85,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Course overview
+              Course overview
             </p>
             <h1 className="font-heading text-3xl font-black tracking-[-0.05em] md:text-5xl">
               {course.title}
@@ -106,6 +123,22 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           </div>
         </div>
       </RetroPanel>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        {courseSignals.map((item, index) => (
+          <RetroPanel
+            key={item.title}
+            tone={index === 1 ? "accent" : "card"}
+            className="space-y-3"
+          >
+            <item.icon className="size-4" />
+            <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+              {item.title}
+            </h2>
+            <p className="text-sm font-medium leading-7 text-foreground/80">{item.body}</p>
+          </RetroPanel>
+        ))}
+      </section>
 
       {!hasFullAccess && isPaidCourse ? (
         <RetroPanel tone="muted" className="text-sm text-muted-foreground">
@@ -149,7 +182,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                   <li key={lesson.id}>
                     <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="space-y-1">
-                        <p className="text-sm font-semibold">
+                        <p className="text-sm font-semibold leading-6">
                           Lesson {lessonIndex + 1}: {lesson.title}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -186,6 +219,9 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
             Course Discussion ({courseComments.length})
           </h2>
+          <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Use this for pacing, planning, and course-level questions
+          </p>
         </div>
 
         {hasFullAccess ? (

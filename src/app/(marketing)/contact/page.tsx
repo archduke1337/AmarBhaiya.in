@@ -19,6 +19,21 @@ const contactChecklist = [
   "What a useful reply would help you do next",
 ];
 
+const contactContexts = [
+  {
+    title: "School student",
+    body: "Ask about notes, courses, doubts, or where to begin if you feel stuck between too many options.",
+  },
+  {
+    title: "Parent or guardian",
+    body: "Share the class, subject, and the kind of support your child actually needs so we can guide you well.",
+  },
+  {
+    title: "Collaboration or teaching",
+    body: "If you want to collaborate, teach, or build with Amar Bhaiya, tell us the context and what would make the fit meaningful.",
+  },
+];
+
 export default async function ContactPage() {
   const channels = await getContactChannelsContent();
 
@@ -28,16 +43,16 @@ export default async function ContactPage() {
         <div className="space-y-6">
           <SectionHeading
             eyebrow="Contact"
-            title="Bring us the real question, not just the headline."
-            description="Whether this is a support issue, a partnership idea, or a course decision, we want the context behind it so we can reply like humans who actually read the message."
+            title="Bring the real question, not just the headline."
+            description="Whether this is a support issue, a course decision, or a partnership idea, context helps us reply like people who actually read the message instead of a ticket system that skims it."
             titleAs="h1"
           />
 
           <RetroPanel tone="secondary" size="lg" className="space-y-5">
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline">Support</Badge>
+              <Badge variant="outline">School guidance</Badge>
               <Badge variant="outline">Collaborations</Badge>
-              <Badge variant="outline">Mentoring</Badge>
             </div>
             <p className="text-sm font-semibold leading-6 text-foreground/80">
               Good messages usually include your goal, where you are stuck, and what timeline you are working with.
@@ -64,6 +79,22 @@ export default async function ContactPage() {
           </RetroPanel>
 
           <div className="grid gap-4 md:grid-cols-2">
+            {contactContexts.map((item, index) => (
+              <RetroPanel
+                key={item.title}
+                tone={index === 1 ? "accent" : "card"}
+                className="space-y-2 md:col-span-1"
+              >
+                <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                  Best for
+                </p>
+                <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+                  {item.title}
+                </h2>
+                <p className="text-sm font-medium leading-6 text-foreground/80">{item.body}</p>
+              </RetroPanel>
+            ))}
+
             {channels.length === 0 ? (
               <RetroPanel tone="muted" className="md:col-span-2">
                 <p className="text-sm font-medium text-muted-foreground">

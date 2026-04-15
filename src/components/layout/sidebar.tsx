@@ -139,7 +139,7 @@ function getWorkspaceCopy(role: Role): string {
     return "Review reports, moderate community threads, and keep track of active sanctions.";
   }
 
-  return "Continue learning, manage assignments, join live sessions, and stay on top of notifications.";
+  return "Move between notes, courses, assignments, and live sessions without losing your place or your study rhythm.";
 }
 
 export function Sidebar({ role, userId }: SidebarProps) {
@@ -154,7 +154,7 @@ export function Sidebar({ role, userId }: SidebarProps) {
         </p>
         <h2 className="mt-3 text-3xl">Learning Hub</h2>
         <p className="mt-3 max-w-[16rem] text-sm font-semibold text-foreground/75">
-          Clear actions, cleaner hierarchy, and a workspace that still feels comfortable on smaller screens.
+          Designed for students who mostly study on phones but still need the workspace to feel calm and organized.
         </p>
       </div>
 
@@ -183,14 +183,19 @@ export function Sidebar({ role, userId }: SidebarProps) {
 
       <div className="px-4 pt-6 pb-8">
         <div className="retro-surface bg-accent p-4">
-          <p className="font-heading text-xs uppercase tracking-[0.18em] text-accent-foreground/70">
-            Workspace
-          </p>
-          <p className="mt-3 text-sm font-semibold leading-relaxed text-accent-foreground">
-            {getWorkspaceCopy(role)}
-          </p>
-        </div>
-      </div>
+              <p className="font-heading text-xs uppercase tracking-[0.18em] text-accent-foreground/70">
+                Workspace
+              </p>
+              <p className="mt-3 text-sm font-semibold leading-relaxed text-accent-foreground">
+                {getWorkspaceCopy(role)}
+              </p>
+              {role === "student" ? (
+                <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent-foreground/70">
+                  Start with notes. Stay for the course flow.
+                </p>
+              ) : null}
+            </div>
+          </div>
     </aside>
   );
 }

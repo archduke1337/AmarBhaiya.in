@@ -23,18 +23,17 @@ export const metadata: Metadata = {
     template: "%s | amarbhaiya.in",
   },
   description:
-    "Amarnath Pandey's unified platform — Education, Fitness, Career Guidance, Entrepreneurship & Personal Development. Learn from Bhaiya.",
+    "School-first learning from Amar Bhaiya — notes, courses, and practical guidance for Class 6 to 12 students, with skills and career growth layered in later.",
   keywords: [
     "Amarnath Pandey",
     "amarbhaiya",
     "Learn from Bhaiya",
     "online courses",
-    "tech education",
-    "fitness training",
-    "career coaching",
-    "entrepreneurship",
-    "personal development",
-    "LMS",
+    "class 6 to 12 notes",
+    "board exam preparation",
+    "student courses",
+    "career guidance",
+    "skill courses",
   ],
   authors: [{ name: "Amarnath Pandey" }],
   creator: "Amarnath Pandey",
@@ -44,7 +43,7 @@ export const metadata: Metadata = {
     siteName: "amarbhaiya.in",
     title: "amarbhaiya.in — Learn from Bhaiya",
     description:
-      "Amarnath Pandey's unified platform for education, fitness, career guidance, and personal growth.",
+      "School-first learning from Amar Bhaiya with notes, courses, and practical guidance for Indian students.",
   },
   twitter: {
     card: "summary_large_image",

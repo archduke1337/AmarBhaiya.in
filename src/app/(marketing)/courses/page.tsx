@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight, Download } from "lucide-react";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
@@ -58,8 +59,8 @@ export default async function CoursesPage({
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
         <SectionHeading
           eyebrow="Course catalogue"
-          title="Choose the next skill that will actually change your week."
-          description="The biggest focus is school and board-oriented learning for Indian students. Skills, coding, and career tracks are growing too, but the catalogue still has to feel useful first, not impressive first."
+          title="Courses for school now, with skills layered in for what comes next."
+          description="The catalogue is built around real student priorities. Board-focused learning and chapter-level support come first. Skill and career tracks are here too, but they sit behind the school-first foundation."
           titleAs="h1"
         />
 
@@ -83,7 +84,8 @@ export default async function CoursesPage({
               How this catalogue is shaped
             </p>
             <p className="text-sm font-medium leading-7 text-foreground/80">
-              The better courses do three things well: explain the point clearly, make practice feel natural, and give students a clean reason to keep going.
+              The better courses do three things well: explain the point clearly,
+              make practice feel natural, and give students a clean reason to keep going even on tired days.
             </p>
           </RetroPanel>
         </div>
@@ -151,6 +153,37 @@ export default async function CoursesPage({
             ))}
           </div>
         </RetroPanel>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <RetroPanel tone="secondary" className="space-y-3">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+              New here?
+            </p>
+            <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+              Start with notes if you want quick clarity before choosing a full course.
+            </h2>
+            <p className="text-sm font-medium leading-7 text-foreground/80">
+              Many students first discover Amar Bhaiya through one clean note or one straightforward explanation. That path is still valid here.
+            </p>
+            <Button asChild variant="outline">
+              <Link href="/notes">
+                <Download className="size-4" />
+                Open notes library
+              </Link>
+            </Button>
+          </RetroPanel>
+
+          <RetroPanel tone="card" className="space-y-3">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+              What you will find here
+            </p>
+            <div className="grid gap-2 text-sm font-medium text-foreground/80">
+              <p>School and board support for Classes 6 to 12</p>
+              <p>Structured course paths with lessons, quizzes, and assignments</p>
+              <p>Secondary skill tracks for college students and professionals</p>
+            </div>
+          </RetroPanel>
+        </div>
       </section>
 
       <section className="mx-auto max-w-6xl space-y-5">
@@ -248,7 +281,10 @@ export default async function CoursesPage({
                 </p>
               </div>
               <Button asChild variant="outline" size="lg">
-                <Link href={`/courses/${course.slug}`}>View details</Link>
+                <Link href={`/courses/${course.slug}`}>
+                  View details
+                  <ArrowRight className="size-4" />
+                </Link>
               </Button>
             </div>
           </RetroPanel>
