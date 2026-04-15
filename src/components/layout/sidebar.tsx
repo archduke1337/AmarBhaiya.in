@@ -14,6 +14,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Megaphone,
+  Menu,
   MessageSquare,
   Repeat,
   Shield,
@@ -23,6 +24,7 @@ import {
   UserRound,
   Users,
   Video,
+  X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -189,5 +191,79 @@ export function Sidebar({ role, userId }: SidebarProps) {
         </div>
       </div>
     </aside>
+  );
+}
+
+export function MobileSidebar({ role, userId }: SidebarProps) {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const navItems = getNavItems(role, userId);
+
+  // Auto-close on navigation
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const closeDrawer = () => setOpen(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex size-9 items-center justify-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro-sm transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none lg:hidden"
+        aria-label="Open menu"
+      >
+        <Menu className="size-5" />
+      </button>
+
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-foreground/30 lg:hidden"
+            onClick={closeDrawer}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-sidebar shadow-retro-lg lg:hidden">
+            <div className="absolute right-3 top-4 z-10">
+              <button
+                onClick={closeDrawer}
+                className="inline-flex size-8 items-center justify-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro-sm"
+                aria-label="Close menu"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="border-b bg-primary px-5 py-6 text-primary-foreground">
+              <p className="font-heading text-xs uppercase tracking-[0.22em]">
+                {role}
+              </p>
+              <h2 className="mt-3 text-2xl">Learning Hub</h2>
+            </div>
+
+            <nav className="flex flex-col gap-3 p-4">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = isNavItemActive(pathname, item);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeDrawer}
+                    className={cn(
+                      "flex items-center gap-3 rounded-[calc(var(--radius)+2px)] border-2 px-3 py-3 text-sm font-heading font-black uppercase tracking-[0.08em] transition-all",
+                      isActive
+                        ? "border-border bg-accent text-accent-foreground shadow-retro"
+                        : "border-border bg-card text-sidebar-foreground shadow-retro-sm hover:bg-secondary hover:shadow-none"
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </>
+      )}
+    </>
   );
 }
