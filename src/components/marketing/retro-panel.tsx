@@ -25,9 +25,9 @@ function RetroPanel({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border border-border shadow-retro-sm",
+        "relative overflow-hidden rounded-[calc(var(--radius)+6px)] border-2 border-border shadow-retro",
         toneClasses[tone],
-        size === "lg" ? "px-5 py-5 md:px-7 md:py-7" : "px-4 py-4 md:px-5 md:py-5",
+        size === "lg" ? "px-6 py-6 md:px-8 md:py-8" : "px-5 py-5 md:px-6 md:py-6",
         className
       )}
       {...props}

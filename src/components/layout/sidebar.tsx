@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import {
   Bell,
   BookOpen,
@@ -15,7 +13,6 @@ import {
   GraduationCap,
   LayoutDashboard,
   Megaphone,
-  Menu,
   MessageSquare,
   Repeat,
   Shield,
@@ -25,12 +22,10 @@ import {
   UserRound,
   Users,
   Video,
-  X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/utils/constants";
-import { Button } from "@/components/ui/button";
 
 type SidebarProps = {
   role: Role;
@@ -127,147 +122,71 @@ function isNavItemActive(pathname: string, item: NavItem): boolean {
   return prefixes.some((prefix) => pathname.startsWith(`${prefix}/`));
 }
 
-function getRoleLabel(role: Role): string {
-  if (role === "admin") return "Admin Panel";
-  if (role === "instructor") return "Instructor Panel";
-  if (role === "moderator") return "Moderator Panel";
-  return "My Learning";
-}
+function getWorkspaceCopy(role: Role): string {
+  if (role === "admin") {
+    return "Run the platform, review operational alerts, and oversee users, content, and revenue.";
+  }
 
-function NavItemLink({
-  item,
-  isActive,
-  onClick,
-}: {
-  item: NavItem;
-  isActive: boolean;
-  onClick?: () => void;
-}) {
-  const Icon = item.icon;
+  if (role === "instructor") {
+    return "Manage your courses, resources, students, submissions, and live sessions from one place.";
+  }
 
-  return (
-    <Link
-      href={item.href}
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all",
-        isActive
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-      )}
-    >
-      <Icon className="size-[18px] shrink-0" />
-      <span>{item.label}</span>
-    </Link>
-  );
-}
+  if (role === "moderator") {
+    return "Review reports, moderate community threads, and keep track of active sanctions.";
+  }
 
-function SidebarContent({
-  role,
-  userId,
-  pathname,
-  onNavigate,
-}: {
-  role: Role;
-  userId: string;
-  pathname: string;
-  onNavigate?: () => void;
-}) {
-  const navItems = getNavItems(role, userId);
-
-  return (
-    <>
-      <div className="border-b border-border bg-card px-5 py-5">
-        <Link href="/" className="inline-flex items-center" aria-label="Amar Bhaiya home">
-          <Image
-            src="/AMAR%20BHAIYA.png"
-            alt="Amar Bhaiya"
-            width={140}
-            height={46}
-            priority
-            className="h-8 w-auto object-contain"
-          />
-        </Link>
-        <p className="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          {getRoleLabel(role)}
-        </p>
-      </div>
-
-      <nav className="flex flex-col gap-1 p-3">
-        {navItems.map((item) => (
-          <NavItemLink
-            key={item.href}
-            item={item}
-            isActive={isNavItemActive(pathname, item)}
-            onClick={onNavigate}
-          />
-        ))}
-      </nav>
-    </>
-  );
+  return "Continue learning, manage assignments, join live sessions, and stay on top of notifications.";
 }
 
 export function Sidebar({ role, userId }: SidebarProps) {
   const pathname = usePathname();
+  const navItems = getNavItems(role, userId);
 
   return (
-    <aside className="hidden lg:block h-full overflow-y-auto border-r border-border bg-card">
-      <SidebarContent role={role} userId={userId} pathname={pathname} />
+    <aside className="h-full border-r bg-sidebar text-sidebar-foreground">
+      <div className="border-b bg-primary px-5 py-6 text-primary-foreground">
+        <p className="font-heading text-xs uppercase tracking-[0.22em]">
+          {role}
+        </p>
+        <h2 className="mt-3 text-3xl">Learning Hub</h2>
+        <p className="mt-3 max-w-[16rem] text-sm font-semibold text-primary-foreground/80">
+          Loud tools. Clear actions. Everything important in one chunky workspace.
+        </p>
+      </div>
+
+      <nav className="flex flex-col gap-3 p-4">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = isNavItemActive(pathname, item);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-[calc(var(--radius)+2px)] border-2 px-3 py-3 text-sm font-heading font-black uppercase tracking-[0.08em] transition-all",
+                isActive
+                  ? "border-border bg-accent text-accent-foreground shadow-retro"
+                  : "border-border bg-card text-sidebar-foreground shadow-retro-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-secondary hover:shadow-none"
+              )}
+            >
+              <Icon className="size-4" />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="px-4 pt-6 pb-8">
+        <div className="retro-surface bg-accent p-4">
+          <p className="font-heading text-xs uppercase tracking-[0.18em] text-accent-foreground/70">
+            Workspace
+          </p>
+          <p className="mt-3 text-sm font-semibold leading-relaxed text-accent-foreground">
+            {getWorkspaceCopy(role)}
+          </p>
+        </div>
+      </div>
     </aside>
-  );
-}
-
-export function MobileSidebar({ role, userId }: SidebarProps) {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <Button
-        variant="outline"
-        size="icon-sm"
-        onClick={() => setOpen(true)}
-        className="lg:hidden"
-        aria-label="Open menu"
-      >
-        <Menu className="size-5" />
-      </Button>
-
-      {open && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Drawer */}
-          <div
-            className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-card shadow-xl lg:hidden animate-in slide-in-from-left duration-200"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation menu"
-          >
-            <div className="absolute right-3 top-3 z-10">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setOpen(false)}
-                aria-label="Close menu"
-              >
-                <X className="size-5" />
-              </Button>
-            </div>
-            <SidebarContent
-              role={role}
-              userId={userId}
-              pathname={pathname}
-              onNavigate={() => setOpen(false)}
-            />
-          </div>
-        </>
-      )}
-    </>
   );
 }
