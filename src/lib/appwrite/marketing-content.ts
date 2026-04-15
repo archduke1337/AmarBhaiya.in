@@ -808,10 +808,10 @@ export async function getHomePageContent(): Promise<HomePageContent> {
   ];
 
   const DEFAULT_WHY_ITEMS = [
-    { title: "No Filler", body: "Har lesson zaroori hai. Koi 40-hour filler course nahi hai." },
-    { title: "Real Experience", body: "Main wahi sikhata hoon jo maine khud kiya hai — textbook copy nahi." },
-    { title: "Hindi + English", body: "Apni language mein padho. Concepts Hindi mein, practice English mein." },
-    { title: "Student-Friendly", body: "Zyaadatar content free hai. Paid courses bhi students ke budget mein hain." },
+    { title: "No Filler", body: "Every lesson is there because it matters. No 40-hour courses padded with repeat content." },
+    { title: "Built from Experience", body: "I teach what I've done, not what I read in a book. Real problems, real solutions." },
+    { title: "Your Language", body: "Explanations in Hindi when it clicks better, practice in English when you need it." },
+    { title: "Priced for Students", body: "Some courses are free. Paid ones are priced so a student can afford them, not just working professionals." },
   ];
 
   const resolvedDomains = Array.isArray(domains) && domains.length > 0 ? domains : DEFAULT_DOMAINS;
