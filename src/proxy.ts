@@ -146,15 +146,27 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
-  // ── Protected routes → redirect to login if not authenticated ─────────
+  // ── Protected routes → validate session, not just cookie presence ─────
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
-  const isLoggedIn = hasSessionSecret;
 
-  if (isProtected && !isLoggedIn) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", `${pathname}${search}`);
-    return NextResponse.redirect(loginUrl);
+  if (isProtected) {
+    if (!hasSessionSecret) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", `${pathname}${search}`);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Actually validate the session against Appwrite (cached 30s)
+    const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
+    if (!isValidSession) {
+      // Expired/invalid cookie → clear it and redirect to login
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", `${pathname}${search}`);
+      const response = NextResponse.redirect(loginUrl);
+      response.cookies.delete(sessionCookieName);
+      return response;
+    }
   }
 
   // ── Auth routes → redirect to dashboard if already logged in ──────────

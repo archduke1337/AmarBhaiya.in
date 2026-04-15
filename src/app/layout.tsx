@@ -3,7 +3,6 @@ import { Bricolage_Grotesque, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipLink } from "@/components/skip-link";
-import { Analytics } from "@vercel/analytics/next";
 
 const bodyFont = Source_Sans_3({
   subsets: ["latin"],
@@ -19,22 +18,26 @@ const displayFont = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: {
-    default: "amarbhaiya.in — Learn from Bhaiya",
+    default: "Amar Bhaiya — Padhai, Skills, aur Zindagi",
     template: "%s | amarbhaiya.in",
   },
   description:
-    "Amarnath Pandey's unified platform — Education, Fitness, Career Guidance, Entrepreneurship & Personal Development. Learn from Bhaiya.",
+    "Free study notes, video courses, live sessions & career guidance for Class 6 to 12 students. Coding, communication, and life skills for college students. By Amarnath Pandey (Amar Bhaiya).",
   keywords: [
+    "Amar Bhaiya",
     "Amarnath Pandey",
-    "amarbhaiya",
-    "Learn from Bhaiya",
-    "online courses",
-    "tech education",
-    "fitness training",
-    "career coaching",
-    "entrepreneurship",
-    "personal development",
-    "LMS",
+    "class 6 to 12 notes",
+    "free study notes",
+    "CBSE notes",
+    "board exam preparation",
+    "online courses for students",
+    "coding for beginners",
+    "career guidance India",
+    "learn from bhaiya",
+    "Hindi education",
+    "Indian students",
+    "school courses online",
+    "free learning platform",
   ],
   authors: [{ name: "Amarnath Pandey" }],
   creator: "Amarnath Pandey",
@@ -42,9 +45,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     siteName: "amarbhaiya.in",
-    title: "amarbhaiya.in — Learn from Bhaiya",
+    title: "Amar Bhaiya — Padhai, Skills, aur Zindagi",
     description:
-      "Amarnath Pandey's unified platform for education, fitness, career guidance, and personal growth.",
+      "Free study notes, video courses & career guidance for Class 6 to 12 students. By Amarnath Pandey.",
   },
   twitter: {
     card: "summary_large_image",
@@ -77,7 +80,6 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
-        <Analytics />
       </body>
     </html>
   );

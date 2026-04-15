@@ -9,7 +9,6 @@ import { LayoutDashboard, Menu, X } from "lucide-react";
 import { PUBLIC_NAV_ITEMS } from "@/lib/utils/constants";
 import { logoutAction } from "@/lib/appwrite/actions";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 import { ThemeToggle } from "./theme-toggle";
 
@@ -41,6 +40,11 @@ export function NavbarClient({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   useEffect(() => {
     if (!mobileOpen || !mobileMenuRef.current) {
       return;
@@ -62,6 +66,18 @@ export function NavbarClient({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [mobileOpen]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
   function isActive(path: string) {
     if (path === "/") {
       return pathname === "/";
@@ -72,133 +88,134 @@ export function NavbarClient({
 
   return (
     <>
-      <header className="sticky top-0 z-50 px-3 pt-3 md:px-4">
-        <div
-          className={`mx-auto max-w-7xl rounded-[calc(var(--radius)+8px)] border-2 border-border bg-[color:var(--surface-card)] transition-all ${
-            scrolled ? "shadow-retro" : "shadow-retro-sm"
-          }`}
-        >
-          <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-5">
-            <div className="flex min-w-0 items-center gap-3">
+      <header
+        className={`sticky top-0 z-50 border-b bg-card/95 backdrop-blur-sm transition-shadow ${
+          scrolled ? "shadow-sm" : ""
+        }`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:px-6">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="inline-flex shrink-0 items-center"
+            aria-label="Amar Bhaiya home"
+          >
+            <Image
+              src="/AMAR%20BHAIYA.png"
+              alt="Amar Bhaiya"
+              width={160}
+              height={53}
+              priority
+              className="h-8 w-auto object-contain md:h-9"
+            />
+          </Link>
+
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-1 lg:flex">
+            {navItems.map((link) => (
               <Link
-                href="/"
-                className="inline-flex items-center"
-                aria-label="Amar Bhaiya home"
+                key={link.label}
+                href={link.href}
+                className={`inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold transition-colors ${
+                  isActive(link.href)
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
               >
-                <Image
-                  src="/AMAR%20BHAIYA.png"
-                  alt="Amar Bhaiya"
-                  width={180}
-                  height={60}
-                  priority
-                  className="h-10 w-auto object-contain md:h-11"
-                />
+                {link.label}
               </Link>
-              <div className="hidden min-w-0 xl:block">
-                <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
-                  Learn from Bhaiya
-                </p>
-                <p className="truncate text-sm font-medium text-foreground/75">
-                  Practical learning for school, college, and career transitions.
-                </p>
-              </div>
-            </div>
+            ))}
+          </nav>
 
-            <nav className="hidden items-center gap-2 lg:flex">
-              {navItems.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className={`inline-flex h-10 items-center rounded-[calc(var(--radius)+2px)] border-2 px-3.5 font-heading text-[0.72rem] font-black uppercase tracking-[0.14em] transition-all ${
-                    isActive(link.href)
-                      ? "border-border bg-[color:var(--surface-secondary)] text-foreground shadow-retro-sm"
-                      : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-[color:var(--surface-accent)] hover:text-foreground hover:shadow-retro-sm"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
+          {/* Desktop actions */}
+          <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
 
-            <div className="hidden items-center gap-3 md:flex">
-              <ThemeToggle />
-
-              {isAuthenticated ? (
-                <>
-                  <Badge variant="outline" className="hidden xl:inline-flex">
-                    Hi {firstName || "Learner"}
-                  </Badge>
-                  <Button asChild variant="secondary" size="sm">
-                    <Link href={dashboardHref}>
-                      <LayoutDashboard className="size-3.5" />
-                      Dashboard
-                    </Link>
+            {isAuthenticated ? (
+              <>
+                <span className="hidden text-sm font-semibold text-muted-foreground xl:inline">
+                  Hi, {firstName || "Learner"}
+                </span>
+                <Button asChild variant="default" size="sm">
+                  <Link href={dashboardHref}>
+                    <LayoutDashboard className="size-3.5" />
+                    Dashboard
+                  </Link>
+                </Button>
+                <form action={logoutAction}>
+                  <Button type="submit" variant="outline" size="sm">
+                    Sign out
                   </Button>
-                  <form action={logoutAction}>
-                    <Button type="submit" variant="outline" size="sm">
-                      Sign out
-                    </Button>
-                  </form>
-                </>
-              ) : (
-                <>
-                  <Button asChild variant="link" size="sm">
-                    <Link href="/login">Log in</Link>
-                  </Button>
-                  <Button asChild size="sm">
-                    <Link href="/register">Start learning</Link>
-                  </Button>
-                </>
-              )}
-            </div>
+                </form>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/login">Log in</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link href="/register">Start free</Link>
+                </Button>
+              </>
+            )}
+          </div>
 
-            <div className="flex items-center gap-2 md:hidden">
-              <ThemeToggle />
-              <Button
-                ref={menuButtonRef}
-                onClick={() => setMobileOpen((current) => !current)}
-                variant="secondary"
-                size="icon-sm"
-                aria-label="Toggle menu"
-                aria-expanded={mobileOpen}
-              >
-                {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-              </Button>
-            </div>
+          {/* Mobile right side */}
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <Button
+              ref={menuButtonRef}
+              onClick={() => setMobileOpen((current) => !current)}
+              variant="outline"
+              size="icon-sm"
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </Button>
           </div>
         </div>
       </header>
 
+      {/* Mobile menu overlay */}
       {mobileOpen ? (
-        <div className="fixed inset-x-3 top-[5.6rem] z-40 md:hidden">
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Menu */}
           <div
             ref={mobileMenuRef}
-            className="rounded-[calc(var(--radius)+8px)] border-2 border-border bg-[color:var(--surface-card)] shadow-retro"
+            className="fixed inset-x-0 top-[57px] z-50 max-h-[calc(100dvh-57px)] overflow-y-auto bg-card border-b border-border shadow-lg md:hidden animate-in fade-in slide-in-from-top-2 duration-200"
             role="navigation"
             aria-label="Mobile navigation"
           >
-            <nav className="flex flex-col gap-2 p-4">
+            <nav className="flex flex-col p-4 pb-safe">
               {navItems.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`rounded-[calc(var(--radius)+2px)] border-2 px-4 py-3 font-heading text-base font-black uppercase tracking-[0.08em] ${
+                  className={`rounded-lg px-4 py-3 text-base font-semibold transition-colors ${
                     isActive(link.href)
-                      ? "border-border bg-[color:var(--surface-secondary)] text-foreground shadow-retro-sm"
-                      : "border-border bg-[color:var(--surface-card)] text-foreground"
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted"
                   }`}
                 >
                   {link.label}
                 </Link>
               ))}
 
-              <div className="mt-2 grid gap-3 border-t-2 border-border pt-4">
+              <div className="mt-3 grid gap-2 border-t border-border pt-4">
                 {isAuthenticated ? (
                   <>
-                    <Button asChild variant="secondary">
-                      <Link href={dashboardHref} onClick={() => setMobileOpen(false)}>
-                        Open dashboard
+                    <Button asChild variant="default">
+                      <Link href={dashboardHref}>
+                        <LayoutDashboard className="size-4" />
+                        Open Dashboard
                       </Link>
                     </Button>
                     <form action={logoutAction}>
@@ -210,13 +227,13 @@ export function NavbarClient({
                 ) : (
                   <>
                     <Button asChild variant="outline">
-                      <Link href="/login" onClick={() => setMobileOpen(false)}>
+                      <Link href="/login">
                         Log in
                       </Link>
                     </Button>
                     <Button asChild>
-                      <Link href="/register" onClick={() => setMobileOpen(false)}>
-                        Create account
+                      <Link href="/register">
+                        Create free account
                       </Link>
                     </Button>
                   </>
@@ -224,7 +241,7 @@ export function NavbarClient({
               </div>
             </nav>
           </div>
-        </div>
+        </>
       ) : null}
     </>
   );

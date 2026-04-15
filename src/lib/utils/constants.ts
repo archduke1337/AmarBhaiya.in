@@ -1,20 +1,19 @@
 // ── Platform Constants ──────────────────────────────────────────────────────
 
 export const SITE_NAME = "amarbhaiya.in";
-export const SITE_TAGLINE = "Learn from Bhaiya";
+export const SITE_TAGLINE = "Padhai, Skills, aur Zindagi — Bhaiya ke saath";
 export const SITE_DESCRIPTION =
-  "Amarnath Pandey's unified platform — Education, Fitness, Career Guidance, Entrepreneurship & Personal Development.";
+  "Class 6 to 12 board exams, competitive prep, coding, career skills & personal growth — guided by Amarnath Pandey (Amar Bhaiya). Free notes, video courses, live sessions & community support.";
 
 export const OWNER = {
   name: "Amarnath Pandey",
   shortName: "Amar Bhaiya",
   email: "contact@amarbhaiya.in",
   roles: [
-    { title: "Tech Expert", icon: "code" },
-    { title: "Fitness Trainer", icon: "dumbbell" },
-    { title: "Career Coach", icon: "compass" },
-    { title: "Entrepreneur", icon: "rocket" },
-    { title: "Life Mentor", icon: "heart" },
+    { title: "Educator", icon: "book-open" },
+    { title: "Mentor", icon: "heart" },
+    { title: "Career Guide", icon: "compass" },
+    { title: "Tech Instructor", icon: "code" },
   ],
   social: {
     youtube: "https://youtube.com/@amarbhaiya",
@@ -28,8 +27,9 @@ export const OWNER = {
 
 export const PUBLIC_NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
   { label: "Courses", href: "/courses" },
+  { label: "Notes", href: "/notes" },
+  { label: "About", href: "/about" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ] as const;
@@ -87,7 +87,6 @@ export const ACCESS_MODELS = {
 } as const;
 
 // ── Role Configuration ──────────────────────────────────────────────────────
-// Monochrome — no color badges, using border/text contrast instead.
 
 export const ROLES = {
   admin: { label: "Admin", showBadge: false },
@@ -97,3 +96,25 @@ export const ROLES = {
 } as const;
 
 export type Role = keyof typeof ROLES;
+
+// ── Class/Grade Configuration ───────────────────────────────────────────────
+
+export const CLASS_GRADES = [
+  { value: "6", label: "Class 6" },
+  { value: "7", label: "Class 7" },
+  { value: "8", label: "Class 8" },
+  { value: "9", label: "Class 9" },
+  { value: "10", label: "Class 10" },
+  { value: "11-science", label: "Class 11 (Science)" },
+  { value: "11-commerce", label: "Class 11 (Commerce)" },
+  { value: "12-science", label: "Class 12 (Science)" },
+  { value: "12-commerce", label: "Class 12 (Commerce)" },
+] as const;
+
+export const SKILL_CATEGORIES = [
+  { value: "coding", label: "Coding & Tech" },
+  { value: "career", label: "Career & Interviews" },
+  { value: "communication", label: "Communication" },
+  { value: "finance", label: "Personal Finance" },
+  { value: "fitness", label: "Health & Fitness" },
+] as const;
