@@ -8,6 +8,11 @@ import { sendVerificationEmailAction } from "@/actions/verification";
 import { AvatarUploadForm } from "@/components/profile/avatar-upload-form";
 import { PageHeader } from "@/components/dashboard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Textarea } from "@/components/ui/textarea";
 
 function getInitials(value: string): string {
   const parts = value
@@ -31,43 +36,42 @@ export default async function StudentProfileEditPage() {
   const avatarFallback = getInitials(user.name || user.email || "User");
 
   return (
-    <div className="flex flex-col gap-8 max-w-3xl">
+    <div className="flex max-w-5xl flex-col gap-8">
       <PageHeader
         eyebrow="Profile"
-        title="Your Personal Information"
-        description="This information helps your instructors and the admin understand you better. Fields marked with * are optional."
+        title="Profile ko student context ke hisaab se rakho."
+        description="Yeh details instructors ko tumhari class, school, city, aur learning context samajhne mein help karti hain. Optional fields blank chhod sakte ho."
       />
 
       {/* Email verification banner */}
       {!user.emailVerification && (
-        <div className="flex items-center justify-between border border-amber-500/30 bg-amber-500/5 px-5 py-3">
+        <RetroPanel tone="secondary" className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-medium">Email not verified</p>
-            <p className="text-xs text-muted-foreground">
-              Verify your email ({user.email}) to unlock all features.
+            <p className="text-sm font-semibold">Email verify karna baaki hai</p>
+            <p className="mt-1 text-xs font-medium text-muted-foreground">
+              {user.email} verify kar loge toh account updates aur recovery safer ho jayegi.
             </p>
           </div>
           <form action={sendVerificationEmailAction}>
-            <button
+            <Button
               type="submit"
-              className="h-9 border border-border px-4 text-xs transition-colors hover:bg-muted"
+              variant="outline"
             >
-              Send Verification Email
-            </button>
+              Send verification email
+            </Button>
           </form>
-        </div>
+        </RetroPanel>
       )}
 
       {user.emailVerification && (
-        <div className="flex items-center gap-2 border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 text-sm">
-          <span>✓</span>
-          <span>Email verified — {user.email}</span>
-        </div>
+        <RetroPanel tone="accent" className="text-sm font-semibold">
+          Email verified · {user.email}
+        </RetroPanel>
       )}
 
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3">
-          <h2 className="text-sm font-medium">Avatar</h2>
+      <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="border-b-2 border-border px-5 py-3">
+          <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Avatar</h2>
         </div>
         <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
@@ -81,10 +85,10 @@ export default async function StudentProfileEditPage() {
               <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
             <div className="space-y-1">
-              <p className="text-sm font-medium">
+              <p className="text-sm font-semibold">
                 {avatarFileId ? "Current avatar uploaded" : "No avatar uploaded yet"}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 JPG, PNG, or WEBP up to 2 MB.
               </p>
             </div>
@@ -92,220 +96,215 @@ export default async function StudentProfileEditPage() {
 
           <AvatarUploadForm />
         </div>
-      </section>
+      </RetroPanel>
 
       <form
         action={upsertStudentProfileAction}
         className="flex flex-col gap-6"
       >
         {/* Basic Info */}
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="text-sm font-medium">Basic Information</h2>
+        <RetroPanel tone="card" className="space-y-0 p-0">
+          <div className="border-b-2 border-border px-5 py-3">
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Basic information</h2>
           </div>
           <div className="grid gap-4 p-5 md:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">Date of Birth</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of birth</Label>
+              <Input
+                id="dateOfBirth"
                 name="dateOfBirth"
                 type="date"
                 defaultValue={profile?.dateOfBirth ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">
-                Class / Grade / Year
-              </span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="grade">Class / grade / year</Label>
+              <Input
+                id="grade"
                 name="grade"
                 placeholder="e.g. Class 10, B.Tech 2nd Year"
                 defaultValue={profile?.grade ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
-              <span className="text-muted-foreground">School / College</span>
-              <input
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="school">School / college</Label>
+              <Input
+                id="school"
                 name="school"
                 placeholder="Your school or college name"
                 defaultValue={profile?.school ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
-              <span className="text-muted-foreground">
-                Hobbies / Interests *
-              </span>
-              <input
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="hobby">Hobbies / interests</Label>
+              <Input
+                id="hobby"
                 name="hobby"
                 placeholder="e.g. coding, cricket, reading, gaming"
                 defaultValue={profile?.hobby ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
-              <span className="text-muted-foreground">Short Bio *</span>
-              <textarea
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="bio">Short bio</Label>
+              <Textarea
+                id="bio"
                 name="bio"
                 rows={3}
-                placeholder="Tell us a bit about yourself..."
+                placeholder="Class, goal, favourite subject, ya jis cheez mein help chahiye woh likh sakte ho..."
                 defaultValue={profile?.bio ?? ""}
-                className="border border-border bg-background px-3 py-2 text-sm"
               />
-            </label>
+            </div>
           </div>
-        </section>
+        </RetroPanel>
 
         {/* Location */}
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="text-sm font-medium">Location</h2>
+        <RetroPanel tone="card" className="space-y-0 p-0">
+          <div className="border-b-2 border-border px-5 py-3">
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Location</h2>
           </div>
           <div className="grid gap-4 p-5 md:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">City</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
                 name="city"
                 placeholder="Your city"
                 defaultValue={profile?.city ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">State / Province</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
                 name="state"
                 placeholder="Your state"
                 defaultValue={profile?.state ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
           </div>
-        </section>
+        </RetroPanel>
 
         {/* Guardian */}
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="text-sm font-medium">Guardian Information *</h2>
+        <RetroPanel tone="card" className="space-y-0 p-0">
+          <div className="border-b-2 border-border px-5 py-3">
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Guardian information</h2>
           </div>
           <div className="grid gap-4 p-5 md:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">
-                Parent / Guardian Name
-              </span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="guardianName">Parent / guardian name</Label>
+              <Input
+                id="guardianName"
                 name="guardianName"
                 placeholder="Parent or guardian name"
                 defaultValue={profile?.guardianName ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">
-                Guardian Phone Number
-              </span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="guardianPhone">Guardian phone number</Label>
+              <Input
+                id="guardianPhone"
                 name="guardianPhone"
                 type="tel"
                 placeholder="+91 98765 43210"
                 defaultValue={profile?.guardianPhone ?? ""}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
           </div>
-        </section>
+        </RetroPanel>
 
         <div className="flex justify-end">
-          <button
+          <Button
             type="submit"
-            className="h-10 bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90"
+            variant="secondary"
+            size="lg"
           >
-            Save Profile
-          </button>
+            Save profile
+          </Button>
         </div>
       </form>
 
       {/* Account Settings */}
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3">
-          <h2 className="text-sm font-medium">Account Settings</h2>
+      <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="border-b-2 border-border px-5 py-3">
+          <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Account settings</h2>
         </div>
 
         {/* Update Name */}
-        <form action={updateDisplayNameAction} className="border-b border-border p-5">
+        <form action={updateDisplayNameAction} className="border-b-2 border-border p-5">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">Display Name</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display name</Label>
+              <Input
+                id="displayName"
                 name="name"
                 required
                 minLength={2}
                 defaultValue={user.name}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
             <div className="flex items-end">
-              <button
+              <Button
                 type="submit"
-                className="h-10 border border-border px-4 text-sm transition-colors hover:bg-muted"
+                variant="outline"
               >
-                Update Name
-              </button>
+                Update name
+              </Button>
             </div>
           </div>
         </form>
 
         {/* Change Password */}
         <form action={changePasswordAction} className="p-5">
-          <h3 className="mb-3 text-sm font-medium">Change Password</h3>
+          <h3 className="mb-4 font-heading text-sm font-black uppercase tracking-[0.14em]">
+            Change password
+          </h3>
           <div className="grid gap-4 md:grid-cols-3">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">Current Password</span>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current password</Label>
+              <Input
+                id="currentPassword"
                 name="currentPassword"
                 type="password"
                 required
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">New Password</span>
-              <input
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New password</Label>
+              <Input
+                id="newPassword"
                 name="newPassword"
                 type="password"
                 required
                 minLength={8}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">Confirm Password</span>
-              <input
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Input
+                id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 required
                 minLength={8}
-                className="h-10 border border-border bg-background px-3 text-sm"
               />
-            </label>
+            </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button
+            <Button
               type="submit"
-              className="h-10 border border-border px-4 text-sm transition-colors hover:bg-muted"
+              variant="outline"
             >
-              Change Password
-            </button>
+              Change password
+            </Button>
           </div>
         </form>
-      </section>
+      </RetroPanel>
     </div>
   );
 }

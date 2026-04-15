@@ -5,6 +5,10 @@ import { requireAuth } from "@/lib/appwrite/auth";
 import { getStudentProfileStats } from "@/lib/appwrite/dashboard-data";
 import { getStudentProfile } from "@/actions/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import Link from "next/link";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -54,8 +58,8 @@ export default async function ProfilePage({ params }: PageProps) {
     : [];
 
   return (
-    <div className="space-y-8">
-      <section className="border border-border p-6 md:p-8">
+    <div className="max-w-5xl space-y-8">
+      <RetroPanel tone="card" size="lg">
         <div className="flex flex-col gap-5 md:flex-row md:items-center">
           <Avatar data-size="lg">
             {avatarFileId ? (
@@ -63,66 +67,77 @@ export default async function ProfilePage({ params }: PageProps) {
             ) : null}
             <AvatarFallback>{avatarFallback}</AvatarFallback>
           </Avatar>
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
+          <div className="flex-1">
+            <p className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Profile
             </p>
-            <h1 className="text-3xl md:text-4xl">{profileName}</h1>
-            <p className="text-muted-foreground mt-2">{profileEmail}</p>
-            <p className="text-sm text-muted-foreground mt-3">Role: {role}</p>
+            <h1 className="font-heading text-3xl font-black tracking-[-0.05em] md:text-5xl">
+              {profileName}
+            </h1>
+            <p className="mt-2 text-sm font-medium text-muted-foreground">{profileEmail}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge variant="secondary">{role}</Badge>
+              {profile?.grade ? <Badge variant="outline">{profile.grade}</Badge> : null}
+              {profile?.city ? <Badge variant="ghost">{profile.city}</Badge> : null}
+            </div>
           </div>
+          {isOwner ? (
+            <Button asChild variant="outline" className="w-full md:w-auto">
+              <Link href="/app/profile/edit">Edit profile</Link>
+            </Button>
+          ) : null}
         </div>
-      </section>
+      </RetroPanel>
 
       <section className="grid md:grid-cols-3 gap-4">
-        <article className="border border-border p-5">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Current streak</p>
-          <p className="text-2xl">
+        <RetroPanel tone="secondary">
+          <p className="mb-2 font-heading text-xs uppercase tracking-widest text-muted-foreground">Current streak</p>
+          <p className="font-heading text-3xl font-black tracking-[-0.06em]">
             {profileStats ? `${profileStats.currentStreakDays} days` : "Private"}
           </p>
-        </article>
-        <article className="border border-border p-5">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Courses active</p>
-          <p className="text-2xl">
+        </RetroPanel>
+        <RetroPanel tone="accent">
+          <p className="mb-2 font-heading text-xs uppercase tracking-widest text-muted-foreground">Courses active</p>
+          <p className="font-heading text-3xl font-black tracking-[-0.06em]">
             {profileStats ? profileStats.activeCourses : "Private"}
           </p>
-        </article>
-        <article className="border border-border p-5">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Certificates</p>
-          <p className="text-2xl">
+        </RetroPanel>
+        <RetroPanel tone="card">
+          <p className="mb-2 font-heading text-xs uppercase tracking-widest text-muted-foreground">Certificates</p>
+          <p className="font-heading text-3xl font-black tracking-[-0.06em]">
             {profileStats ? profileStats.certificates : "Private"}
           </p>
-        </article>
+        </RetroPanel>
       </section>
 
       {isOwner ? (
         <section className="grid gap-4 md:grid-cols-2">
           {personalMeta.map((item) => (
-            <article key={item.label} className="border border-border p-5">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+            <RetroPanel key={item.label} tone="muted">
+              <p className="mb-2 font-heading text-xs uppercase tracking-widest text-muted-foreground">
                 {item.label}
               </p>
-              <p className="text-lg">{item.value}</p>
-            </article>
+              <p className="text-lg font-semibold">{item.value}</p>
+            </RetroPanel>
           ))}
         </section>
       ) : null}
 
-      <section className="border border-border p-6">
-        <h2 className="text-xl mb-3">About</h2>
-        <p className="text-muted-foreground leading-relaxed">
+      <RetroPanel tone="card">
+        <h2 className="mb-3 font-heading text-2xl font-black tracking-[-0.04em]">About</h2>
+        <p className="font-medium leading-8 text-muted-foreground">
           {isOwner
             ? profile?.bio?.trim()
               ? profile.bio
-              : "This is your learner profile. Add a short bio from profile settings to help instructors know you better."
-            : "Public profile preview is limited right now. Expanded public profile data will be added in upcoming phases."}
+              : "Yeh tumhara learner profile hai. Ek short bio add kar doge toh instructors ko tumhari learning context samajhne mein help milegi."
+            : "Public profile preview abhi limited hai."}
         </p>
         {isOwner && profile?.hobby ? (
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm font-medium text-muted-foreground">
             Interests: {profile.hobby}
           </p>
         ) : null}
-      </section>
+      </RetroPanel>
     </div>
   );
 }

@@ -91,9 +91,9 @@ export default async function CoursePlayerPage({ params }: PageProps) {
               {course.title}
             </h1>
             <p className="max-w-3xl text-sm font-medium leading-7 text-muted-foreground">
-              Use this page to understand the structure before jumping in. Lesson-specific
-              resources and doubts stay inside each lesson. Course-wide planning and
-              general questions stay here.
+              Pehle structure samjho, phir lesson open karo. Lesson-specific
+              notes aur doubts lesson page ke andar rahenge. Course planning,
+              pacing, aur general questions yahin discuss kar sakte ho.
             </p>
           </div>
 
@@ -146,12 +146,11 @@ export default async function CoursePlayerPage({ params }: PageProps) {
             <Lock className="mt-0.5 size-4 shrink-0" />
             <div className="space-y-1">
               <p className="font-medium text-foreground">
-                Full course streaming is locked until you enroll.
+                Full course access enrollment ke baad unlock hota hai.
               </p>
               <p>
-                You can still access any free preview lessons listed below. The
-                rest of the lesson videos, resources, and course discussion stay
-                gated behind course access.
+                Free preview lessons agar available hain toh neeche open kar sakte ho.
+                Baaki videos, resources, aur discussion course access ke saath unlock honge.
               </p>
             </div>
           </div>
@@ -161,8 +160,8 @@ export default async function CoursePlayerPage({ params }: PageProps) {
       {visibleModules.length === 0 ? (
         <RetroPanel tone="muted" className="text-sm text-muted-foreground">
           {hasFullAccess
-            ? "This course does not have any lessons yet."
-            : "No free preview lessons are available for this course yet."}
+            ? "Is course mein abhi lessons add nahi hue hain."
+            : "Is course ka free preview abhi available nahi hai."}
         </RetroPanel>
       ) : (
         <section className="space-y-4">
@@ -220,7 +219,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
             Course Discussion ({courseComments.length})
           </h2>
           <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Use this for pacing, planning, and course-level questions
+            Pacing, planning, aur course-level questions ke liye
           </p>
         </div>
 
@@ -235,7 +234,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                 name="text"
                 required
                 minLength={2}
-                placeholder="Ask about the course overall, planning, pacing, or general doubts..."
+                placeholder="Course plan, pacing, ya general doubt pooch sakte ho..."
               />
               <div className="flex justify-end">
                 <Button type="submit" size="sm">
@@ -247,7 +246,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
             <div className="divide-y-2 divide-border">
               {courseComments.length === 0 ? (
                 <p className="px-5 py-4 text-sm text-muted-foreground">
-                  No course-wide comments yet. Start the conversation.
+                  Abhi course-wide comments nahi hain. Agar planning ya pacing ka doubt hai, yahin start karo.
                 </p>
               ) : null}
               {courseComments.map((comment) => (
@@ -272,7 +271,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
           </>
         ) : (
           <div className="px-5 py-4 text-sm text-muted-foreground">
-            Enroll in this course to join the course-wide discussion.
+            Course discussion join karne ke liye enroll karna hoga.
           </div>
         )}
       </RetroPanel>
