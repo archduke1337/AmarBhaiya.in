@@ -399,7 +399,7 @@ export default async function InstructorResourcesPage() {
           <EmptyState
             icon={FileText}
             title="No resources yet"
-            description="Create notes, worksheets, test papers, or demo videos that students can access independently — no course required."
+            description="Create notes, worksheets, test papers, or intro videos that students can access independently — no course required."
           />
         ) : (
           resources.map((resource) => (

@@ -314,7 +314,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
               <label className="inline-flex items-center gap-2 text-sm">
                 <input type="checkbox" name="isFreePreview" />
-                Free preview (demo for paid courses)
+                Free preview (available for paid courses)
               </label>
 
               <div className="flex justify-end">
@@ -406,7 +406,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
                     <label className="inline-flex items-center gap-2 text-sm text-foreground">
                       <input type="checkbox" name="isFreePreview" defaultChecked={lesson.isFreePreview} />
-                      Free preview (demo for paid courses)
+                      Free preview (available for paid courses)
                     </label>
 
                     <div className="flex justify-end">

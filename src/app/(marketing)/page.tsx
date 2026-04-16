@@ -58,7 +58,9 @@ function formatStatValue(end: number, suffix: string) {
 
 // ── Page ─────────────────────────────────────────────────────
 export default async function MarketingPage() {
-  const fallbackHomeContent = {
+  type MarketingHomeContent = Awaited<ReturnType<typeof getHomePageContent>>;
+
+  const fallbackHomeContent: MarketingHomeContent = {
     stats: FALLBACK_STATS,
     domains: FALLBACK_DOMAINS,
     learnItems: [],
@@ -66,7 +68,7 @@ export default async function MarketingPage() {
     whyItems: FALLBACK_WHY_ITEMS,
   };
 
-  let homeContent = fallbackHomeContent;
+  let homeContent: MarketingHomeContent = fallbackHomeContent;
 
   try {
     const fetchedContent = await getHomePageContent();
