@@ -112,9 +112,8 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
         <div className="bg-surface/50 border border-border/40 rounded-xl px-4 py-3 flex items-start gap-3 mt-1">
           <Checkbox
             isSelected={consent}
-            onValueChange={setConsent}
-            color="primary"
-            size="sm"
+            onChange={setConsent}
+            variant="primary"
             className="mt-0.5"
           >
             <span className="text-sm font-medium text-foreground/80 leading-relaxed block">

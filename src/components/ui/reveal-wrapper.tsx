@@ -12,20 +12,26 @@
 import React, { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
 
+type RevealTag = keyof HTMLElementTagNameMap;
+
 interface RevealWrapperProps {
   children: React.ReactNode;
   className?: string;
-  as?: React.ElementType;
+  as?: RevealTag;
   threshold?: number;
 }
 
 export function RevealWrapper({
   children,
   className,
-  as: Tag = "div",
+  as = "div",
   threshold = 0.12,
 }: RevealWrapperProps) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLElement | null>(null);
+
+  const setRef = (node: Element | null) => {
+    ref.current = node instanceof HTMLElement ? node : null;
+  };
 
   useEffect(() => {
     const el = ref.current;
@@ -45,10 +51,12 @@ export function RevealWrapper({
     return () => observer.disconnect();
   }, [threshold]);
 
-  return (
-    // @ts-expect-error — dynamic tag type
-    <Tag ref={ref} className={cn("reveal", className)}>
-      {children}
-    </Tag>
+  return React.createElement(
+    as,
+    {
+      ref: setRef as React.RefCallback<HTMLElement>,
+      className: cn("reveal", className),
+    },
+    children,
   );
 }

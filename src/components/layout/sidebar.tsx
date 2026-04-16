@@ -40,7 +40,7 @@ type SidebarProps = {
 type NavItem = {
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   exact?: boolean;
   matchPrefixes?: string[];
 };

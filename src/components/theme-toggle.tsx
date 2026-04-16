@@ -16,7 +16,7 @@ export function ThemeToggle() {
         variant="ghost"
         isIconOnly
         size="sm"
-        disabled
+        isDisabled
         aria-label="Toggle theme"
       >
         <span className="size-4" />

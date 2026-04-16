@@ -3,7 +3,7 @@ import { Button } from "@heroui/react";
 import { cn } from "@/lib/utils/cn";
 
 interface EmptyStateProps {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   title: string;
   description: string;
   action?: {

@@ -32,9 +32,11 @@ export default function DashboardError({
         variant="outline" 
         size="lg" 
         className="font-bold border-border/40 hover:bg-surface-hover mt-4"
-        startContent={<RefreshCw className="size-4" />}
       >
-        Try again
+        <span className="inline-flex items-center gap-2">
+          <RefreshCw className="size-4" />
+          Try again
+        </span>
       </Button>
     </div>
   );

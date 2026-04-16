@@ -264,12 +264,12 @@ export default function MarketingPage() {
         ═══════════════════════════════════════════════════ */}
         <section aria-labelledby="features-heading" className="section-pad">
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <revealWrapper className="mb-12 text-center">
+            <RevealWrapper className="mb-12 text-center">
               <span className="eyebrow mb-4 mx-auto">Why amarbhaiya.in?</span>
               <h2 id="features-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
                 Simple. Honest. Useful.
               </h2>
-            </revealWrapper>
+            </RevealWrapper>
 
             <div className="grid gap-4 sm:grid-cols-2">
               {FEATURES.map((feat, i) => (
