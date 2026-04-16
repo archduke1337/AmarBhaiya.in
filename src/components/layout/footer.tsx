@@ -57,15 +57,15 @@ function FooterLinkColumn({
 }) {
   return (
     <div>
-      <p className="mb-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-foreground/40">
+      <p className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-foreground/40">
         {title}
       </p>
-      <ul className="space-y-2.5" role="list">
+      <ul className="space-y-1.5" role="list">
         {links.map((link) => (
           <li key={`${title}-${link.href}`}>
             <Link
               href={link.href}
-              className="inline-flex min-h-11 items-center text-sm font-medium text-foreground/65 transition-colors duration-200 hover:text-foreground"
+              className="inline-flex min-h-10 items-center text-sm font-medium text-foreground/65 transition-colors duration-200 hover:text-foreground"
             >
               {link.label}
             </Link>
@@ -79,16 +79,16 @@ function FooterLinkColumn({
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-border/40 pb-safe" aria-label="Site footer">
-      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-        <section className="relative overflow-hidden rounded-[calc(var(--radius)+10px)] border border-border/50 bg-surface/70 p-6 shadow-surface sm:p-8">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+        <section className="relative overflow-hidden rounded-[calc(var(--radius)+10px)] border border-border/50 bg-surface/70 p-5 shadow-surface sm:p-8">
           <div
             className="pointer-events-none absolute -right-20 -top-16 h-64 w-64 rounded-full opacity-[0.13] blur-3xl"
             style={{ background: "var(--accent)" }}
             aria-hidden
           />
 
-          <div className="relative grid gap-10 lg:grid-cols-[1.05fr_1fr]">
-            <div className="space-y-5">
+          <div className="relative grid gap-8 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
+            <div className="space-y-4 sm:space-y-5">
               <Link href="/" className="inline-flex items-center gap-2" aria-label="amarbhaiya.in home">
                 <span
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-black"
@@ -106,53 +106,62 @@ export function Footer() {
                 <h2 className="font-heading text-[clamp(1.4rem,2.8vw,2rem)] font-black tracking-[-0.03em] text-foreground">
                   Built for students who need clarity, not noise.
                 </h2>
-                <p className="max-w-xl text-sm font-medium leading-7 text-foreground/65">
+                <p className="max-w-xl text-sm font-medium leading-6 text-foreground/65 sm:leading-7">
                   Start with notes, move into structured courses, and learn at a pace you can sustain.
                   Every section here is designed to help you choose the next useful step quickly.
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="grid gap-2.5 sm:flex sm:flex-wrap sm:gap-3">
                 <Link
                   href="/register"
-                  className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 py-2 text-sm font-bold text-accent-foreground transition-transform duration-200 hover:scale-[1.01]"
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-accent px-4 py-2 text-sm font-bold text-accent-foreground transition-transform duration-200 hover:scale-[1.01] sm:w-auto"
                 >
                   Start free
                 </Link>
                 <Link
                   href="/courses"
-                  className="inline-flex min-h-11 items-center rounded-full border border-border/70 bg-background px-4 py-2 text-sm font-semibold text-foreground/80 transition-colors duration-200 hover:text-foreground"
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-border/70 bg-background px-4 py-2 text-sm font-semibold text-foreground/80 transition-colors duration-200 hover:text-foreground sm:w-auto"
                 >
                   Browse courses
                 </Link>
               </div>
             </div>
 
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {footerLinkGroups.map((group) => (
-                <FooterLinkColumn key={group.title} title={group.title} links={group.links} />
+            <div className="grid gap-x-5 gap-y-6 min-[480px]:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+              {footerLinkGroups.map((group, index) => (
+                <div
+                  key={group.title}
+                  className={
+                    index === footerLinkGroups.length - 1
+                      ? "min-[480px]:col-span-2 lg:col-span-1"
+                      : ""
+                  }
+                >
+                  <FooterLinkColumn title={group.title} links={group.links} />
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        <div className="mt-6 grid gap-5 rounded-[calc(var(--radius)+6px)] border border-border/40 bg-surface/50 p-4 sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
+        <div className="mt-5 grid gap-4 rounded-[calc(var(--radius)+6px)] border border-border/40 bg-surface/50 p-4 sm:mt-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
           <div className="space-y-2">
             <a
               href={`mailto:${OWNER.email}`}
-              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-foreground/75 transition-colors hover:text-foreground"
+              className="inline-flex min-h-10 items-center gap-2 break-all text-sm font-semibold text-foreground/75 transition-colors hover:text-foreground sm:min-h-11 sm:break-normal"
             >
               <Mail className="size-4" />
               {OWNER.email}
             </a>
-            <div className="flex flex-wrap gap-3.5 text-xs font-semibold uppercase tracking-[0.12em] text-foreground/45">
+            <div className="flex flex-wrap gap-2.5 text-[11px] font-semibold uppercase tracking-widest text-foreground/45 sm:gap-3.5 sm:text-xs sm:tracking-[0.12em]">
               {socialLinks.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex min-h-8 items-center gap-1 transition-colors hover:text-foreground/70"
+                  className="inline-flex min-h-8 items-center gap-1 px-1 transition-colors hover:text-foreground/70"
                 >
                   {item.label}
                   <ArrowUpRight className="size-3" />
@@ -161,7 +170,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 text-xs font-semibold uppercase tracking-[0.12em] text-foreground/40 sm:justify-end">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] font-semibold uppercase tracking-widest text-foreground/40 min-[420px]:grid-cols-3 sm:flex sm:flex-wrap sm:justify-end sm:gap-4 sm:text-xs sm:tracking-[0.12em]">
             <Link href="/privacy" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
               Privacy
             </Link>
