@@ -1,23 +1,21 @@
-import type { Metadata } from "next";
-import { Archivo_Black, Space_Grotesk } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipLink } from "@/components/skip-link";
 import { Analytics } from "@vercel/analytics/next";
 
-const bodyFont = Space_Grotesk({
+// ── Fonts ─────────────────────────────────────────────────────
+// Plus Jakarta Sans — modern, expressive, reads beautifully at all sizes
+const bodyFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
+  axes: ["wght"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const displayFont = Archivo_Black({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-  weight: "400",
-});
-
+// ── Metadata ─────────────────────────────────────────────────
 export const metadata: Metadata = {
   title: {
     default: "amarbhaiya.in — Learn from Bhaiya",
@@ -29,7 +27,7 @@ export const metadata: Metadata = {
     "Amarnath Pandey",
     "amarbhaiya",
     "Learn from Bhaiya",
-    "online courses",
+    "online courses India",
     "class 6 to 12 notes",
     "board exam preparation",
     "student courses",
@@ -50,12 +48,29 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     creator: "@amarbhaiya",
   },
-  robots: {
-    index: true,
-    follow: true,
+  robots: { index: true, follow: true },
+  // iOS/Android web-app manifest hints
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "amarbhaiya.in",
   },
 };
 
+// ── Viewport — mobile-first + iOS safe area ───────────────────
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  minimumScale: 1,
+  maximumScale: 5,   // allow zoom for accessibility
+  viewportFit: "cover",  // honours iOS notch / Dynamic Island
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf5eb" },
+    { media: "(prefers-color-scheme: dark)",  color: "#0e0e1a" },
+  ],
+};
+
+// ── Root Layout ───────────────────────────────────────────────
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -64,10 +79,11 @@ export default function RootLayout({
   return (
     <html
       lang="en-IN"
-      className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased font-sans`}
+      className={`${bodyFont.variable} h-full`}
       suppressHydrationWarning
+      // HeroUI v3 theme switching is done via data-theme + class
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-dvh flex flex-col bg-background text-foreground antialiased grain-overlay">
         <SkipLink />
         <ThemeProvider
           attribute="class"

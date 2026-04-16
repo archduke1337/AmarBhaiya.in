@@ -4,10 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox, Button, Input } from "@heroui/react";
 
 export function RegisterForm({ redirectPath }: { redirectPath: string }) {
   const router = useRouter();
@@ -28,7 +25,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
     setError("");
 
     if (!consent) {
-      setError("You must agree to the privacy policy.");
+      setError("Please agree to the privacy policy to continue.");
       return;
     }
 
@@ -53,120 +50,111 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
   }
 
   return (
-    <div className="w-full max-w-[430px] animate-fade-in">
-      <div className="mb-8">
-        <Link href="/" className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground transition-colors">
-          ← amarbhaiya.in
-        </Link>
-        <h1 className="mt-6 text-5xl">Create account</h1>
-        <p className="mt-3 text-sm font-semibold text-muted-foreground">
+    <div className="w-full flex flex-col gap-6 animate-fade-in-up">
+      <div className="mb-2">
+        <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
+          Create account
+        </h2>
+        <p className="text-foreground/60 text-base font-medium">
           Join thousands of students learning with Bhaiya.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground shadow-retro-sm">
+        <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="name">
-            Full Name
-          </Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="Your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            autoComplete="name"
-            className="bg-card"
-          />
-        </div>
+        <Input
+          isRequired
+          label="Full Name"
+          placeholder="Amar Pandey"
+          type="text"
+          value={name}
+          onValueChange={setName}
+          autoComplete="name"
+          variant="faded"
+          classNames={{
+            inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+            label: "font-semibold text-foreground/70",
+          }}
+        />
+
+        <Input
+          isRequired
+          label="Email address"
+          placeholder="you@example.com"
+          type="email"
+          value={email}
+          onValueChange={setEmail}
+          autoComplete="email"
+          variant="faded"
+          classNames={{
+            inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+            label: "font-semibold text-foreground/70",
+          }}
+        />
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="email">
-            Email
-          </Label>
           <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="bg-card"
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="password">
-            Password
-          </Label>
-          <Input
-            id="password"
-            type="password"
+            isRequired
+            label="Password"
             placeholder="Min 8 chars, 1 letter, 1 number"
+            type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+            onValueChange={setPassword}
             autoComplete="new-password"
-            className="bg-card"
+            variant="faded"
+            classNames={{
+              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+              label: "font-semibold text-foreground/70",
+            }}
           />
-          <p className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground shadow-retro-sm">
+          <p className="text-xs text-foreground/50 px-2 font-medium">
             At least 8 characters with a letter and a number.
           </p>
         </div>
 
-        <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-accent px-4 py-3 shadow-retro-sm">
-        <div className="flex items-start gap-3 pt-1">
+        <div className="bg-surface/50 border border-border/40 rounded-xl px-4 py-3 flex items-start gap-3 mt-1">
           <Checkbox
-            id="consent"
-            checked={consent}
-            onCheckedChange={(v) => setConsent(v === true)}
-            className="mt-0.5"
-          />
-          <Label
-            htmlFor="consent"
-            className="cursor-pointer font-sans text-[0.68rem] font-semibold normal-case tracking-normal leading-relaxed text-accent-foreground"
+            isSelected={consent}
+            onValueChange={setConsent}
+            color="primary"
+            size="sm"
+            classNames={{
+              wrapper: "mt-0.5",
+            }}
           >
-            I agree to the{" "}
-            <Link href="/privacy" className="underline">
-              Privacy Policy
-            </Link>{" "}
-            and{" "}
-            <Link href="/terms" className="underline">
-              Terms of Service
-            </Link>
-            .
-          </Label>
-        </div>
+            <span className="text-sm font-medium text-foreground/80 leading-relaxed block">
+              I agree to the{" "}
+              <Link href="/privacy" className="text-accent hover:underline font-semibold">
+                Privacy Policy
+              </Link>{" "}
+              and{" "}
+              <Link href="/terms" className="text-accent hover:underline font-semibold">
+                Terms of Service
+              </Link>.
+            </span>
+          </Checkbox>
         </div>
 
         <Button
           type="submit"
-          disabled={loading}
-          className="w-full"
+          fullWidth
           size="lg"
+          variant="primary"
+          isPending={loading}
+          className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <span className="size-3.5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
-              Creating account...
-            </span>
-          ) : (
-            "Create account"
-          )}
+          {loading ? "Creating account..." : "Create account"}
         </Button>
       </form>
 
-      <p className="mt-8 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-secondary px-4 py-3 text-center text-sm font-semibold text-secondary-foreground shadow-retro-sm">
+      <p className="mt-4 text-center text-sm font-medium text-foreground/60">
         Already have an account?{" "}
-        <Link href={loginHref} className="font-heading uppercase tracking-[0.08em] text-foreground underline">
+        <Link href={loginHref} className="text-foreground font-bold hover:text-accent transition-colors">
           Sign in
         </Link>
       </p>

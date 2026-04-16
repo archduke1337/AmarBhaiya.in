@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, FileText, Home, UserRound } from "lucide-react";
-
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/cn";
 
 type StudentBottomTabBarProps = {
   userId: string;
@@ -45,10 +44,13 @@ export function StudentBottomTabBar({
 
   return (
     <nav
-      aria-label="Student quick navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-border bg-[color:var(--surface-card)] px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 md:hidden"
+      aria-label="Student fast navigation"
+      className="fixed inset-x-0 bottom-0 z-40 md:hidden flex justify-center pb-safe"
+      style={{ paddingBottom: "calc(var(--safe-bottom) + 0.5rem)" }}
     >
-      <div className="mx-auto grid max-w-xl grid-cols-4 gap-2 rounded-[calc(var(--radius)+8px)] border-2 border-border bg-background p-2 shadow-retro-sm">
+      <div 
+        className="mx-4 w-full max-w-sm flex items-center justify-between p-2 nav-island"
+      >
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const href = tab.label === "Profile" ? `/app/profile/${userId}` : tab.href;
@@ -60,14 +62,22 @@ export function StudentBottomTabBar({
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-12 flex-col items-center justify-center gap-1 rounded-[calc(var(--radius)+2px)] border-2 px-1 py-2 text-center font-heading text-[0.62rem] font-black uppercase tracking-[0.08em] transition-all",
+                "flex flex-col items-center justify-center gap-1 rounded-full px-3 py-2 min-w-[64px] min-h-[44px] transition-all duration-300",
                 active
-                  ? "border-border bg-[color:var(--surface-secondary)] text-foreground shadow-retro-sm"
-                  : "border-transparent bg-transparent text-muted-foreground"
+                  ? "text-accent bg-accent/10"
+                  : "text-foreground/50 hover:text-foreground/80 hover:bg-surface/50"
               )}
             >
-              <Icon className="size-4" />
-              <span>{tab.label}</span>
+              <Icon 
+                className={cn(
+                  "size-5 transition-transform duration-300", 
+                  active && "scale-110"
+                )} 
+                strokeWidth={active ? 2.5 : 2} 
+              />
+              <span className="text-[0.625rem] font-bold tracking-tight">
+                {tab.label}
+              </span>
             </Link>
           );
         })}

@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button, Input } from "@heroui/react";
 
 export function LoginForm({ redirectPath }: { redirectPath: string }) {
   const router = useRouter();
@@ -49,84 +46,77 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
   }
 
   return (
-    <div className="w-full max-w-[430px] animate-fade-in">
-      <div className="mb-8">
-        <Link href="/" className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground transition-colors">
-          ← amarbhaiya.in
-        </Link>
-        <h1 className="mt-6 text-5xl">Sign in</h1>
-        <p className="mt-3 text-sm font-semibold text-muted-foreground">
-          Enter your credentials to continue.
+    <div className="w-full flex flex-col gap-6 animate-fade-in-up">
+      <div className="mb-2">
+        <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
+          Welcome back
+        </h2>
+        <p className="text-foreground/60 text-base font-medium">
+          Enter your credentials to continue to your workspace.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground shadow-retro-sm">
+        <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
           {error}
         </div>
       )}
 
+      {/* HeroUI natively supports forms, but we use standard onSubmit here */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">
-            Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="bg-card"
-          />
-        </div>
+        <Input
+          isRequired
+          label="Email address"
+          placeholder="you@example.com"
+          type="email"
+          value={email}
+          onValueChange={setEmail}
+          autoComplete="email"
+          variant="faded"
+          classNames={{
+            inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+            label: "font-semibold text-foreground/70",
+          }}
+        />
 
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">
-              Password
-            </Label>
-            <Link
-              href={forgotPasswordHref}
-              className="text-xs font-heading uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Forgot?
-            </Link>
-          </div>
+        <div className="flex flex-col gap-2 relative">
           <Input
-            id="password"
-            type="password"
+            isRequired
+            label="Password"
             placeholder="••••••••"
+            type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+            onValueChange={setPassword}
             autoComplete="current-password"
-            className="bg-card"
+            variant="faded"
+            classNames={{
+              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+              label: "font-semibold text-foreground/70",
+            }}
           />
+          <Link
+            href={forgotPasswordHref}
+            className="absolute right-2 top-3 text-xs font-bold uppercase tracking-[0.1em] text-accent hover:text-accent-foreground transition-colors z-10"
+          >
+            Forgot?
+          </Link>
         </div>
 
         <Button
           type="submit"
-          disabled={loading}
-          className="w-full"
+          fullWidth
           size="lg"
+          variant="primary"
+          isPending={loading}
+          className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <span className="size-3.5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
-              Signing in...
-            </span>
-          ) : (
-            "Sign in"
-          )}
+          {loading ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 
-      <p className="mt-8 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground shadow-retro-sm">
+      <p className="mt-4 text-center text-sm font-medium text-foreground/60">
         Don&apos;t have an account?{" "}
-        <Link href={registerHref} className="font-heading uppercase tracking-[0.08em] text-foreground underline">
+        <Link href={registerHref} className="text-foreground font-bold hover:text-accent transition-colors">
           Create one
         </Link>
       </p>

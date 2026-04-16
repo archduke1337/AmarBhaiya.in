@@ -1,6 +1,5 @@
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@heroui/react";
 import { logoutAction } from "@/lib/appwrite/actions";
 import { MobileSidebar } from "@/components/layout/sidebar";
 import type { Role } from "@/lib/utils/constants";
@@ -22,33 +21,36 @@ export function DashboardHeader({
   const eyebrow = role === "student" ? "Study space" : "Dashboard";
   const helperText =
     role === "student"
-      ? "Aaj ka flow simple rakho: continue, revise, phir next step."
+      ? "Aaj ka flow simple rakho: continue, waive, phir next step."
       : userEmail;
 
   return (
-    <header className="sticky top-0 z-20 bg-background px-4 py-3 md:px-6">
-      <div className="retro-surface flex flex-col gap-4 bg-card px-4 py-3 md:flex-row md:items-center md:justify-between md:px-5 md:py-4">
+    <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border/40 pt-safe">
+      <div className="flex flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6 md:py-4 max-w-[1400px] mx-auto w-full">
         <div className="flex items-center gap-4">
           <MobileSidebar role={role} userId={userId} />
-          <div className="flex min-w-0 flex-col gap-2">
-            <p className="font-heading text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          
+          <div className="flex min-w-0 flex-col">
+            <p className="eyebrow self-start mb-2">
               {eyebrow}
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl">{firstName}</h1>
-              <Badge variant="secondary" className="hidden sm:inline-flex">{role}</Badge>
+              <h1 className="text-2xl font-black tracking-[-0.03em] leading-none">{firstName}</h1>
+              <div aria-hidden className="hidden sm:flex items-center px-2 py-0.5 rounded-md bg-surface border border-border/60 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-foreground/70">
+                {role}
+              </div>
             </div>
-            <p className="max-w-[32rem] text-sm font-medium text-muted-foreground">
+            <p className="max-w-[32rem] text-sm font-medium text-foreground/60 mt-1">
               <span className="md:hidden">{helperText}</span>
               <span className="hidden md:inline">{userEmail}</span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-end md:self-auto">
           <ThemeToggle />
           <form action={logoutAction} className="hidden sm:block">
-            <Button type="submit" variant="outline" size="sm">
+            <Button type="submit" variant="faded" size="sm" className="font-bold border-border/40 hover:bg-surface text-danger hover:text-danger-foreground hover:border-danger hover:bg-danger">
               Sign out
             </Button>
           </form>

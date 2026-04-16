@@ -1,455 +1,357 @@
-import Image from "next/image";
+/**
+ * Marketing Homepage — amarbhaiya.in
+ * ────────────────────────────────────
+ * Design: Ethereal Glass + Editorial Luxury hybrid
+ * Vibe: Deep OLED dark, warm amber accent, cinematic typography
+ * Layout: Asymmetrical bento + editorial split hero
+ * Mobile: min-h-dvh, pb-safe, 44px touch targets, iOS Safe Areas
+ *
+ * HeroUI v3: Button (onPress, variant, size), Card, compound components
+ * No Provider needed in HeroUI v3.
+ */
+
+import { Suspense } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  Download,
-  Sparkles,
-} from "lucide-react";
+import { Button } from "@heroui/react";
+import { RevealWrapper } from "@/components/ui/reveal-wrapper";
 
-import { RetroPanel } from "@/components/marketing/retro-panel";
-import { SectionHeading } from "@/components/marketing/section-heading";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  getHomePageContent,
-  getPublicCoursesPageData,
-  getPublicNotesPageData,
-  type PublicCourseListItem,
-} from "@/lib/appwrite/marketing-content";
+// ── Static content (no Appwrite needed for shell — ISR fills data) ──
+const STATS = [
+  { value: "50K+",  label: "Students"     },
+  { value: "200+",  label: "Courses"      },
+  { value: "1000+", label: "Free Notes"   },
+  { value: "Class 6–12", label: "Coverage" },
+];
 
-export const revalidate = 3600;
+const SUBJECTS = [
+  { title: "Mathematics",   emoji: "📐", color: "oklch(0.70 0.14 265)", count: "42 courses" },
+  { title: "Science",       emoji: "🔬", color: "oklch(0.70 0.14 148)", count: "38 courses" },
+  { title: "English",       emoji: "📖", color: "oklch(0.72 0.17 55)",  count: "28 courses" },
+  { title: "Social Science",emoji: "🌍", color: "oklch(0.68 0.14 32)",  count: "24 courses" },
+  { title: "Hindi",         emoji: "🖊️", color: "oklch(0.70 0.13 330)", count: "20 courses" },
+  { title: "Computer",      emoji: "💻", color: "oklch(0.68 0.14 220)", count: "15 courses" },
+];
 
-function MetricTile({
-  value,
-  label,
-  suffix,
-}: {
-  value: number;
-  label: string;
-  suffix: string;
-}) {
+const FEATURES = [
+  {
+    icon: "🎥",
+    title: "HD Video Lessons",
+    body: "Concepts explained simply, in Hinglish. No coaching-centre jargon.",
+  },
+  {
+    icon: "📄",
+    title: "Free Notes",
+    body: "Downloadable PDFs for every chapter, every class. Always free.",
+  },
+  {
+    icon: "🔴",
+    title: "Live Q&A Sessions",
+    body: "Ask Bhaiya directly. Real-time doubt solving, no waiting.",
+  },
+  {
+    icon: "🏆",
+    title: "Certificates",
+    body: "Complete a course, earn a shareable certificate. Proof of learning.",
+  },
+];
+
+// ── Page ─────────────────────────────────────────────────────
+export default function MarketingPage() {
   return (
-    <RetroPanel tone="card" className="space-y-2">
-      <p className="font-heading text-4xl font-black tracking-[-0.08em] md:text-5xl">
-        {value.toLocaleString("en-IN")}
-        {suffix}
-      </p>
-      <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </p>
-    </RetroPanel>
-  );
-}
-
-function inferTrack(course: PublicCourseListItem): "school" | "skills" | "general" {
-  const values = [course.title, course.category, ...course.tags].map((item) =>
-    item.toLowerCase()
-  );
-
-  if (
-    values.some((value) => /\b(?:class|grade|std)\s*(6|7|8|9|10|11|12)\b/.test(value))
-  ) {
-    return "school";
-  }
-
-  if (
-    values.some((value) =>
-      [
-        "board",
-        "cbse",
-        "science",
-        "maths",
-        "english",
-        "sst",
-        "physics",
-        "chemistry",
-        "biology",
-        "accountancy",
-        "economics",
-      ].some((token) => value.includes(token))
-    )
-  ) {
-    return "school";
-  }
-
-  if (
-    values.some((value) =>
-      [
-        "skill",
-        "coding",
-        "career",
-        "interview",
-        "programming",
-        "communication",
-        "finance",
-        "development",
-        "professional",
-      ].some((token) => value.includes(token))
-    )
-  ) {
-    return "skills";
-  }
-
-  return "general";
-}
-
-function CourseShelf({
-  title,
-  description,
-  courses,
-}: {
-  title: string;
-  description: string;
-  courses: PublicCourseListItem[];
-}) {
-  return (
-    <section className="mx-auto max-w-7xl space-y-6">
-      <SectionHeading
-        eyebrow="Course shelf"
-        title={title}
-        description={description}
-      />
-
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {courses.map((course) => (
-          <Link key={course.id} href={`/courses/${course.slug}`} className="group">
-            <RetroPanel
-              tone={course.accessModel === "free" ? "secondary" : "card"}
-              size="lg"
-              className="flex h-full flex-col gap-5 transition-transform duration-200 group-hover:-translate-y-1"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Badge variant="outline">{course.category}</Badge>
-                <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  {course.enrolledStudents.toLocaleString("en-IN")} learners
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="font-heading text-2xl font-black leading-[0.95] tracking-[-0.05em]">
-                  {course.title}
-                </h3>
-                <p className="line-clamp-3 text-sm font-medium leading-7 text-foreground/80">
-                  {course.shortDescription}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 text-sm">
-                <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 py-3 shadow-retro-sm">
-                  <p className="mb-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
-                    Lessons
-                  </p>
-                  <p className="font-bold">{course.totalLessons}</p>
-                </div>
-                <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 py-3 shadow-retro-sm">
-                  <p className="mb-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
-                    Hours
-                  </p>
-                  <p className="font-bold">{course.totalDurationHours}</p>
-                </div>
-                <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 py-3 shadow-retro-sm">
-                  <p className="mb-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
-                    Price
-                  </p>
-                  <p className="font-bold">
-                    {course.priceInr === 0 ? "Free" : `INR ${course.priceInr}`}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-auto flex items-center justify-between border-t-2 border-border pt-4">
-                <span className="text-sm font-semibold text-muted-foreground">
-                  {course.accessModel === "free" ? "Start freely" : "Structured path"}
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-[0.72rem] font-black uppercase tracking-[0.1em]">
-                  Explore
-                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
-                </span>
-              </div>
-            </RetroPanel>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export default async function LandingPage() {
-  const [homeContent, notesContent, coursesData] = await Promise.all([
-    getHomePageContent(),
-    getPublicNotesPageData({ limit: 4 }),
-    getPublicCoursesPageData({ sort: "popular" }),
-  ]);
-
-  const schoolCourses = coursesData.courses
-    .filter((course) => inferTrack(course) === "school")
-    .slice(0, 6);
-  const skillCourses = coursesData.courses
-    .filter((course) => inferTrack(course) === "skills")
-    .slice(0, 3);
-
-  return (
-    <div className="space-y-16 px-4 py-8 md:px-6 md:py-10">
-      <section className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
-        <RetroPanel tone="card" size="lg" className="space-y-8">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">Padhai Karo Apne Tareeke Se</Badge>
-            <Badge variant="secondary">School-first</Badge>
-            <Badge variant="ghost">Notes, courses, live help</Badge>
+    <>
+      {/* ═══════════════════════════════════════════════════
+          SECTION 1 — Hero (Editorial Split)
+      ═══════════════════════════════════════════════════ */}
+      <section
+          aria-label="Hero"
+          className="section-pad relative overflow-hidden"
+        >
+          {/* Ambient glow orbs — GPU-safe, fixed pseudo-elements */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div
+              className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full opacity-[0.12] blur-[120px]"
+              style={{ background: "var(--accent)" }}
+            />
+            <div
+              className="absolute -bottom-16 right-0 w-[400px] h-[400px] rounded-full opacity-[0.08] blur-[100px]"
+              style={{ background: "oklch(0.65 0.18 265)" }}
+            />
           </div>
 
-          <div className="space-y-5">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
-              Learn from Amar Bhaiya
-            </p>
-            <h1 className="font-heading max-w-4xl text-4xl font-black leading-[0.94] tracking-[-0.08em] text-balance sm:text-5xl md:text-6xl xl:text-7xl">
-              Padhai ko thoda simple, thoda honest, aur kaafi zyada useful banana tha. Isliye yeh platform bana.
-            </h1>
-            <p className="max-w-2xl text-sm font-medium leading-8 text-muted-foreground sm:text-base md:text-lg">
-              Yahan Class 6 se 12 tak ki padhai pehle aati hai. Notes,
-              board-focused courses, revision support, aur seedha samjhaane wala
-              teaching style uske centre mein hai. Skills aur career waale
-              tracks bhi hain, lekin school journey ko side pe karke nahi.
-            </p>
-          </div>
+          <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+            <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
+              {/* Left — Typography block */}
+              <div className="flex flex-col gap-6">
+                <RevealWrapper>
+                  <span className="eyebrow">
+                    <span aria-hidden>✦</span>
+                    Learn from Amar Bhaiya
+                  </span>
+                </RevealWrapper>
 
-          <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/notes">
-                <Download className="size-4" />
-                Notes kholo
-              </Link>
-            </Button>
-            <Button asChild size="lg">
-              <Link href="/courses">
-                Courses dekho
-                <ArrowRight />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/register">Free account banao</Link>
-            </Button>
-          </div>
-        </RetroPanel>
-
-        <div className="grid gap-4">
-          <RetroPanel tone="secondary" size="lg" className="grid gap-4 sm:grid-cols-[0.86fr_1.14fr] sm:items-center">
-            <div className="space-y-3">
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
-                Amar Bhaiya
-              </p>
-              <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">
-                Real guidance. No coaching-noise drama.
-              </h2>
-              <p className="text-sm font-medium leading-7 text-foreground/80">
-                Platform ka mood bhi wahi hai jo teaching ka hai: seedha, garam,
-                aur student ke favour mein.
-              </p>
-            </div>
-            <div className="overflow-hidden rounded-[calc(var(--radius)+6px)] border-2 border-border bg-[color:var(--surface-card)] shadow-retro-sm">
-              <Image
-                src="/AMAR BHAIYA.png"
-                alt="Amar Bhaiya"
-                width={720}
-                height={720}
-                priority
-                className="aspect-square w-full object-cover"
-              />
-            </div>
-          </RetroPanel>
-
-          <div className="grid grid-cols-2 gap-4">
-            {homeContent.stats.map((item) => (
-              <MetricTile
-                key={item.label}
-                value={item.end}
-                label={item.label}
-                suffix={item.suffix}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {schoolCourses.length > 0 ? (
-        <CourseShelf
-          title="School courses that match what students are actually trying to clear right now."
-          description="Yahan wahi published school courses dikhte hain jo library mein sach mein live hain. Catalogue grow hoga toh yeh shelf naturally grow karegi."
-          courses={schoolCourses}
-        />
-      ) : null}
-
-      {notesContent.notes.length > 0 ? (
-        <section className="mx-auto max-w-7xl space-y-6">
-          <SectionHeading
-            eyebrow="Study notes"
-            title="Kabhi kabhi ek achha note hi student ko wapas track pe le aata hai."
-            description="Independent notes homepage par dikhne chahiye, kyunki kai students ke liye wahi pehla reason hota hai dobara lautne ka."
-          />
-
-          <div className="grid gap-5 xl:grid-cols-[0.92fr_1.08fr]">
-            <RetroPanel tone="secondary" size="lg" className="space-y-5">
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
-                Why notes matter
-              </p>
-              <h3 className="font-heading text-3xl font-black leading-[0.95] tracking-[-0.06em]">
-                Student ko bina enroll kiye bhi help milni chahiye.
-              </h3>
-              <p className="text-sm font-medium leading-7 text-foreground/80">
-                Agar koi pehli baar aaya hai aur ek note khol ke genuinely help
-                feel karta hai, wahi trust ka start hota hai.
-              </p>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/notes">
-                  Notes library kholo
-                  <ArrowRight />
-                </Link>
-              </Button>
-            </RetroPanel>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {notesContent.notes.map((note, index) => (
-                <RetroPanel
-                  key={note.id}
-                  tone={index === 1 ? "accent" : "card"}
-                  className="flex h-full flex-col gap-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge variant="outline">
-                      {note.classTag || note.subjectTag || "Independent note"}
-                    </Badge>
-                    <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      {note.downloadCount.toLocaleString("en-IN")} downloads
+                <RevealWrapper className="stagger-1">
+                  <h1 className="text-[clamp(2.5rem,8vw,5rem)] font-black leading-[0.92] tracking-[-0.04em] text-foreground">
+                    Padhai simple,{" "}
+                    <span
+                      className="inline-block"
+                      style={{
+                        background: "linear-gradient(135deg, var(--accent) 0%, oklch(0.85 0.15 72) 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      honest
                     </span>
+                    {" "}aur useful.
+                  </h1>
+                </RevealWrapper>
+
+                <RevealWrapper className="stagger-2">
+                  <p className="text-base sm:text-lg text-foreground/60 font-medium leading-relaxed max-w-md">
+                    Class 6 se 12 tak — har subject ke notes, video courses, aur live sessions.
+                    Coaching ki zaroorat nahi, Bhaiya hai na.
+                  </p>
+                </RevealWrapper>
+
+                <RevealWrapper className="stagger-3 flex flex-wrap gap-3 pt-2">
+                  <Link href="/courses">
+                    <Button
+                      size="lg"
+                      onPress={() => {}}
+                      className="font-bold px-7 bg-accent text-accent-foreground glow-accent-sm active:scale-[0.97] transition-transform"
+                    >
+                      Courses dekho
+                      <span
+                        className="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                        style={{ background: "oklch(0 0 0 / 0.15)" }}
+                        aria-hidden
+                      >
+                        →
+                      </span>
+                    </Button>
+                  </Link>
+                  <Link href="/notes">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onPress={() => {}}
+                      className="font-semibold px-7"
+                    >
+                      Free notes
+                    </Button>
+                  </Link>
+                </RevealWrapper>
+
+                {/* Stats row */}
+                <RevealWrapper className="stagger-4 flex flex-wrap gap-6 pt-4 border-t border-border/40">
+                  {STATS.map((stat) => (
+                    <div key={stat.label} className="flex flex-col">
+                      <span className="text-xl font-black text-foreground leading-none">{stat.value}</span>
+                      <span className="text-xs text-foreground/50 font-medium mt-0.5">{stat.label}</span>
+                    </div>
+                  ))}
+                </RevealWrapper>
+              </div>
+
+              {/* Right — Asymmetric bento preview cards */}
+              <RevealWrapper className="stagger-2 grid grid-cols-2 gap-3">
+                {/* Big card */}
+                <div
+                  className="card-bezel col-span-2"
+                  style={{ background: "color-mix(in oklab, var(--surface) 85%, var(--accent) 8%)" }}
+                >
+                  <div className="card-bezel-inner p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-2xl" aria-hidden>📐</span>
+                      <div>
+                        <p className="font-bold text-sm text-foreground">Class 10 Mathematics</p>
+                        <p className="text-xs text-foreground/50">42 lessons · Free + Paid</p>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex justify-between text-xs font-medium">
+                        <span className="text-foreground/60">Progress</span>
+                        <span className="text-accent font-bold">68%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-default overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ width: "68%", background: "var(--accent)" }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
-                      {note.title}
-                    </h3>
-                    <p className="text-sm font-medium leading-7 text-foreground/80">
-                      {note.description || "Revision ke waqt kaam aane wala seedha, useful note."}
-                    </p>
+                </div>
+
+                {/* Streak card */}
+                <div className="card-bezel">
+                  <div className="card-bezel-inner p-4 flex flex-col gap-1">
+                    <span className="text-2xl" aria-hidden>🔥</span>
+                    <span className="text-2xl font-black text-foreground leading-none">14</span>
+                    <span className="text-xs text-foreground/50 font-medium">Day streak</span>
                   </div>
-                  <div className="mt-auto flex flex-wrap gap-2">
-                    {[note.subjectTag, note.chapterTag, ...note.tags].filter(Boolean).slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="ghost">
-                        {tag}
-                      </Badge>
-                    ))}
+                </div>
+
+                {/* Notes card */}
+                <div className="card-bezel">
+                  <div className="card-bezel-inner p-4 flex flex-col gap-1">
+                    <span className="text-2xl" aria-hidden>📄</span>
+                    <span className="text-2xl font-black text-foreground leading-none">∞</span>
+                    <span className="text-xs text-foreground/50 font-medium">Free notes</span>
                   </div>
-                </RetroPanel>
+                </div>
+              </RevealWrapper>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════
+            SECTION 2 — Subjects bento grid
+        ═══════════════════════════════════════════════════ */}
+        <section aria-labelledby="subjects-heading" className="section-pad-sm">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <RevealWrapper className="mb-10 text-center">
+              <span className="eyebrow mb-4 mx-auto">Subjects</span>
+              <h2 id="subjects-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
+                Har subject covered.
+              </h2>
+              <p className="mt-3 text-foreground/55 max-w-md mx-auto">
+                Expert-crafted content for every NCERT chapter, every class.
+              </p>
+            </RevealWrapper>
+
+            {/* Responsive subject grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {SUBJECTS.map((subject, i) => (
+                <RevealWrapper
+                  key={subject.title}
+                  className={`stagger-${Math.min(i + 1, 5)}`}
+                >
+                  <Link
+                    href={`/courses?subject=${subject.title.toLowerCase()}`}
+                    className="block group"
+                  >
+                    <div
+                      className="card-bezel h-full"
+                      style={{
+                        background: `color-mix(in oklab, var(--surface) 88%, ${subject.color} 12%)`,
+                      }}
+                    >
+                      <div className="card-bezel-inner p-5 flex flex-col gap-3 min-h-[120px] group-hover:bg-surface/80 transition-colors duration-300">
+                        <span className="text-3xl" aria-hidden>{subject.emoji}</span>
+                        <div>
+                          <p className="font-bold text-sm text-foreground">{subject.title}</p>
+                          <p className="text-xs text-foreground/50 mt-0.5">{subject.count}</p>
+                        </div>
+                        <span
+                          className="text-xs font-semibold self-start opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300"
+                          style={{ color: subject.color }}
+                        >
+                          Explore →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                </RevealWrapper>
               ))}
             </div>
           </div>
         </section>
-      ) : (
-        <section className="mx-auto max-w-7xl">
-          <RetroPanel tone="muted" size="lg" className="space-y-3">
-            <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
-              Notes shelf abhi fill ho rahi hai.
-            </h2>
-            <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
-              Jaise hi Amar Bhaiya ya guest instructors real notes publish karenge,
-              woh yahin dikhenge. Abhi ke liye directly courses explore kar sakte ho.
-            </p>
-          </RetroPanel>
-        </section>
-      )}
 
-      {skillCourses.length > 0 ? (
-        <CourseShelf
-          title="Skill tracks for college students, freshers, and working learners."
-          description="Yeh secondary layer hai. Sirf wahi skill courses dikhenge jo actually publish ho chuke hain."
-          courses={skillCourses}
-        />
-      ) : null}
+        {/* ═══════════════════════════════════════════════════
+            SECTION 3 — Features
+        ═══════════════════════════════════════════════════ */}
+        <section aria-labelledby="features-heading" className="section-pad">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <revealWrapper className="mb-12 text-center">
+              <span className="eyebrow mb-4 mx-auto">Why amarbhaiya.in?</span>
+              <h2 id="features-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
+                Simple. Honest. Useful.
+              </h2>
+            </revealWrapper>
 
-      {homeContent.domains.length > 0 ? (
-        <section className="mx-auto max-w-7xl space-y-6">
-          <SectionHeading
-            eyebrow="Learning areas"
-            title="Platform kis direction mein grow kar raha hai."
-            description="Yeh blocks tabhi dikhte hain jab team ne unhe properly publish kiya ho. Empty promises dikhane ka koi fayda nahi."
-          />
-
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {homeContent.domains.map((item) => (
-              <RetroPanel key={item.title} tone="muted" className="space-y-3">
-                <p className="font-heading text-xl font-black tracking-[-0.04em]">
-                  {item.title}
-                </p>
-                <p className="text-sm font-medium leading-7 text-muted-foreground">
-                  {item.sub}
-                </p>
-              </RetroPanel>
-            ))}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {FEATURES.map((feat, i) => (
+                <RevealWrapper
+                  key={feat.title}
+                  className={`stagger-${Math.min(i + 1, 4)}`}
+                >
+                  <div className="card-bezel h-full">
+                    <div className="card-bezel-inner p-6 flex flex-col gap-4">
+                      <span className="text-3xl w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ background: "color-mix(in oklab, var(--accent) 10%, transparent)" }}
+                        aria-hidden
+                      >
+                        {feat.icon}
+                      </span>
+                      <div>
+                        <h3 className="font-bold text-base text-foreground">{feat.title}</h3>
+                        <p className="text-sm text-foreground/55 mt-1 leading-relaxed">{feat.body}</p>
+                      </div>
+                    </div>
+                  </div>
+                </RevealWrapper>
+              ))}
+            </div>
           </div>
         </section>
-      ) : null}
 
-      {homeContent.whyItems.length > 0 ? (
-        <section className="mx-auto max-w-7xl space-y-6">
-          <SectionHeading
-            eyebrow="Why learn here"
-            title="Reason sirf content ka nahi hota. Feeling ka bhi hota hai."
-            description="Jab team genuine reasons publish karegi, woh yahin clearly dikhte hain. Hype nahi, bas useful clarity."
-          />
-
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {homeContent.whyItems.map((item, index) => (
-              <RetroPanel
-                key={item.title}
-                tone={index % 2 === 0 ? "accent" : "card"}
-                className="space-y-3"
+        {/* ═══════════════════════════════════════════════════
+            SECTION 4 — CTA Banner
+        ═══════════════════════════════════════════════════ */}
+        <section aria-labelledby="cta-heading" className="section-pad-sm pb-safe">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <RevealWrapper>
+              <div
+                className="rounded-[2rem] p-1.5 relative overflow-hidden"
+                style={{
+                  background: "linear-gradient(135deg, color-mix(in oklab, var(--accent) 30%, transparent), color-mix(in oklab, oklch(0.65 0.18 265) 30%, transparent))",
+                }}
               >
-                <Sparkles className="size-5 text-primary" />
-                <h3 className="font-heading text-base font-black tracking-[-0.02em]">
-                  {item.title}
-                </h3>
-                <p className="text-sm font-medium leading-7 text-muted-foreground">
-                  {item.body}
-                </p>
-              </RetroPanel>
-            ))}
+                <div
+                  className="rounded-[calc(2rem-6px)] px-8 py-12 sm:py-16 text-center flex flex-col items-center gap-6"
+                  style={{ background: "color-mix(in oklab, var(--surface) 92%, var(--accent) 8%)" }}
+                >
+                  {/* Glow behind text */}
+                  <div
+                    className="absolute inset-0 rounded-[calc(2rem-6px)] opacity-30 blur-3xl pointer-events-none"
+                    style={{ background: "radial-gradient(ellipse at center, var(--accent), transparent 70%)" }}
+                    aria-hidden
+                  />
+
+                  <span className="eyebrow relative z-10">Start today</span>
+                  <h2
+                    id="cta-heading"
+                    className="relative z-10 text-[clamp(2rem,6vw,3.5rem)] font-black tracking-[-0.04em] text-foreground max-w-xl leading-tight"
+                  >
+                    Ek course free mein shuru karo.
+                  </h2>
+                  <p className="relative z-10 text-foreground/60 max-w-sm text-base leading-relaxed">
+                    Account banao — free hai. Har chapter ka notes bhi free hai. Shuruaat karo aaj.
+                  </p>
+                  <div className="relative z-10 flex flex-wrap gap-3 justify-center">
+                    <Link href="/register">
+                      <Button
+                        size="lg"
+                        onPress={() => {}}
+                        className="font-bold px-8 bg-accent text-accent-foreground glow-accent active:scale-[0.97] transition-transform"
+                      >
+                        Free account banao
+                      </Button>
+                    </Link>
+                    <Link href="/courses">
+                      <Button size="lg" variant="outline" onPress={() => {}} className="font-semibold px-8">
+                        Courses browse karo
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </RevealWrapper>
           </div>
         </section>
-      ) : null}
-
-      <section className="mx-auto max-w-7xl">
-        <RetroPanel tone="brand" size="lg" className="space-y-8 text-center">
-          <div className="mx-auto max-w-3xl space-y-5">
-            <h2 className="mx-auto font-heading text-4xl font-black leading-[0.92] tracking-[-0.06em] text-primary-foreground md:text-6xl">
-              Start chhota rakho. Consistency badi ho jayegi.
-            </h2>
-            <p className="mx-auto max-w-2xl text-base font-medium leading-8 text-primary-foreground/80">
-              Ek note kholo. Ek lesson dekho. Phir dekhna flow kaise banne lagta
-              hai. Platform ka kaam overwhelm karna nahi, momentum dilana hai.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/notes">
-                <Download className="size-4" />
-                Notes explore karo
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"
-            >
-              <Link href="/courses">
-                <BookOpen className="size-4" />
-                Courses dekho
-                <ArrowRight />
-              </Link>
-            </Button>
-          </div>
-        </RetroPanel>
-      </section>
-    </div>
+    </>
   );
 }

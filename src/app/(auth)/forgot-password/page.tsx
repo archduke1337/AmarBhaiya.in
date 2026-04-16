@@ -3,9 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { forgotPasswordAction } from "@/lib/appwrite/actions";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Input, Button } from "@heroui/react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -30,85 +28,84 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="w-full max-w-[430px] animate-fade-in">
-        <div className="mb-8">
-          <Link href="/login" className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground transition-colors">
-            ← Back to sign in
-          </Link>
-          <h1 className="mt-6 text-5xl">Check your email</h1>
-          <p className="mt-3 text-sm font-semibold text-muted-foreground">
-            If an account exists for <span className="text-foreground">{email}</span>, 
+      <div className="w-full flex flex-col gap-6 animate-fade-in-up">
+        <div className="mb-2">
+          <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
+            Check your email
+          </h2>
+          <p className="text-foreground/60 text-base font-medium">
+            If an account exists for <span className="text-foreground font-semibold">{email}</span>, 
             we&apos;ve sent a password reset link.
           </p>
         </div>
 
         <Button
-          onClick={() => { setSent(false); setEmail(""); }}
+          onPress={() => { setSent(false); setEmail(""); }}
           variant="outline"
           size="lg"
-          className="w-full"
+          fullWidth
+          className="font-bold border-border/60 hover:bg-surface-hover"
         >
           Try a different email
         </Button>
+        
+        <p className="mt-4 text-center text-sm font-medium text-foreground/60">
+          <Link href="/login" className="text-foreground font-bold hover:text-accent transition-colors">
+            ← Back to sign in
+          </Link>
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-[430px] animate-fade-in">
-      <div className="mb-8">
-        <Link href="/login" className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground transition-colors">
-          ← Back to sign in
-        </Link>
-        <h1 className="mt-6 text-5xl">Reset password</h1>
-        <p className="mt-3 text-sm font-semibold text-muted-foreground">
+    <div className="w-full flex flex-col gap-6 animate-fade-in-up">
+      <div className="mb-2">
+        <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
+          Reset password
+        </h2>
+        <p className="text-foreground/60 text-base font-medium">
           Enter your email and we&apos;ll send you a reset link.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground shadow-retro-sm">
+        <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">
-            Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="bg-card"
-          />
-        </div>
+        <Input
+          isRequired
+          label="Email address"
+          placeholder="you@example.com"
+          type="email"
+          value={email}
+          onValueChange={setEmail}
+          autoComplete="email"
+          variant="faded"
+          classNames={{
+            inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+            label: "font-semibold text-foreground/70",
+          }}
+        />
 
         <Button
           type="submit"
-          disabled={loading}
-          className="w-full"
+          fullWidth
           size="lg"
+          variant="primary"
+          isPending={loading}
+          className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <span className="size-3.5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
-              Sending...
-            </span>
-          ) : (
-            "Send reset link"
-          )}
+          {loading ? "Sending link..." : "Send reset link"}
         </Button>
       </form>
 
-      <p className="mt-8 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground shadow-retro-sm">
+      <p className="mt-4 text-center text-sm font-medium text-foreground/60">
         Remember your password?{" "}
-        <Link href="/login" className="font-heading uppercase tracking-[0.08em] text-foreground underline">
+        <Link href="/login" className="text-foreground font-bold hover:text-accent transition-colors">
           Sign in
         </Link>
       </p>

@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { confirmPasswordRecoveryAction } from "@/actions/verification";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button, Input } from "@heroui/react";
 
 type PageProps = {
   searchParams: Promise<{ userId?: string; secret?: string }>;
@@ -13,63 +11,81 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
 
   if (!userId || !secret) {
     return (
-      <div className="w-full max-w-md text-center">
-        <div className="retro-surface bg-card p-8">
-          <h1 className="text-4xl">Invalid Reset Link</h1>
-          <p className="mt-3 text-sm font-semibold text-muted-foreground">
+      <div className="w-full flex flex-col gap-6 animate-fade-in-up">
+        <div className="mb-2 text-center">
+          <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
+            Invalid Link
+          </h2>
+          <p className="text-foreground/60 text-base font-medium">
             This password reset link is invalid or has expired.
           </p>
-          <Link
-            href="/login"
-            className="mt-6 inline-block font-heading text-xs uppercase tracking-[0.16em] underline underline-offset-4"
-          >
-            Back to Login
-          </Link>
         </div>
+
+        <Link href="/login" className="mx-auto block">
+          <Button
+            variant="outline"
+            className="font-bold border-border/60 hover:bg-surface-hover px-8"
+          >
+            Back to login
+          </Button>
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-md">
-      <div className="retro-surface bg-card p-8">
-        <h1 className="text-center text-4xl">Reset Password</h1>
-        <p className="mt-3 text-center text-sm font-semibold text-muted-foreground">
-          Enter a new password for your account.
+    <div className="w-full flex flex-col gap-6 animate-fade-in-up">
+      <div className="mb-2">
+        <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
+          New password
+        </h2>
+        <p className="text-foreground/60 text-base font-medium">
+          Create a new password for your account.
         </p>
-
-        <form
-          action={confirmPasswordRecoveryAction}
-          className="mt-6 flex flex-col gap-5"
-        >
-          <input type="hidden" name="userId" value={userId} />
-          <input type="hidden" name="secret" value={secret} />
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">New Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              placeholder="Minimum 8 characters"
-              className="bg-card"
-            />
-          </div>
-
-          <Button type="submit" size="lg" className="w-full">
-            Reset Password
-          </Button>
-
-          <Link
-            href="/login"
-            className="text-center font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground underline underline-offset-4"
-          >
-            Back to Login
-          </Link>
-        </form>
       </div>
+
+      <form action={confirmPasswordRecoveryAction} className="flex flex-col gap-5">
+        <input type="hidden" name="userId" value={userId} />
+        <input type="hidden" name="secret" value={secret} />
+
+        <div className="flex flex-col gap-2">
+          {/* Note: since this is a server component handling standard form submission, 
+              we pass standard html inputs with HeroUI classes for styling, or 
+              use standard HTML FormData in the action. We can use HeroUI Input. */}
+          <Input
+            isRequired
+            name="password"
+            label="New password"
+            placeholder="Min 8 chars, 1 letter, 1 number"
+            type="password"
+            minLength={8}
+            variant="faded"
+            classNames={{
+              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+              label: "font-semibold text-foreground/70",
+            }}
+          />
+          <p className="text-xs text-foreground/50 px-2 font-medium">
+            At least 8 characters with a letter and a number.
+          </p>
+        </div>
+
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          variant="primary"
+          className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
+        >
+          Reset Password
+        </Button>
+      </form>
+
+      <p className="mt-4 text-center text-sm font-medium text-foreground/60">
+        <Link href="/login" className="text-foreground font-bold hover:text-accent transition-colors">
+          Cancel and return to sign in
+        </Link>
+      </p>
     </div>
   );
 }

@@ -1,25 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@heroui/react";
 import { useTheme } from "@/components/theme-provider";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Hydration guard: must detect client-side before rendering theme-dependent UI
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
   if (!mounted) {
     return (
       <Button
-        variant="secondary"
-        size="icon-sm"
-        className="cursor-pointer"
-        aria-label="Toggle theme"
+        variant="ghost"
+        isIconOnly
+        size="sm"
         disabled
+        aria-label="Toggle theme"
       >
         <span className="size-4" />
       </Button>
@@ -30,13 +28,13 @@ export function ThemeToggle() {
 
   return (
     <Button
-      variant={isDark ? "secondary" : "ghost"}
-      size="icon-sm"
-      className="cursor-pointer"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      variant="faded"
+      isIconOnly
+      size="sm"
+      onPress={() => setTheme(isDark ? "light" : "dark")}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+      className="bg-surface border-border/40 text-foreground/70 hover:text-foreground"
     >
-      {/* Sun — visible in dark mode */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"
@@ -47,13 +45,11 @@ export function ThemeToggle() {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={`transition-all duration-300 ${isDark ? "rotate-0 scale-100" : "rotate-90 scale-0"} absolute`}
+        className={`transition-all duration-300 absolute ${isDark ? "rotate-0 scale-100" : "rotate-90 scale-0"}`}
       >
         <circle cx="12" cy="12" r="4" />
         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
       </svg>
-
-      {/* Moon — visible in light mode */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"

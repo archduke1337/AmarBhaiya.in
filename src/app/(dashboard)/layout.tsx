@@ -13,18 +13,25 @@ export default async function DashboardLayout({
   const role = getUserRole(user);
 
   return (
-    <div className="min-h-screen bg-background md:grid md:grid-cols-[88px_1fr] xl:grid-cols-[240px_1fr]">
+    <div className="min-h-dvh bg-background md:grid md:grid-cols-[88px_1fr] xl:grid-cols-[240px_1fr] antialiased">
+      {/* Sidebar hidden on mobile by default, shown via layout grids on md/xl */}
       <Sidebar role={role} userId={user.$id} />
-      <div className={`min-h-screen bg-background ${role === "student" ? "pb-24 md:pb-0" : ""}`}>
+      
+      {/* Main content wrapper */}
+      <div className={`flex flex-col min-h-dvh bg-background ${role === "student" ? "pb-tab" : ""}`}>
         <DashboardHeader userName={user.name} userEmail={user.email} role={role} userId={user.$id} />
+        
+        {/* Main Content Area */}
         <main
           id="main"
-          className={`px-4 py-5 md:px-6 md:py-8 lg:px-8 ${role === "student" ? "pb-28 md:pb-8" : ""}`}
+          className="flex-1 px-4 py-5 md:px-6 md:py-8 lg:px-8 w-full max-w-[1400px] mx-auto"
         >
-          <div className="retro-grid">
+          {/* We replace the old .retro-grid with a modern css grid wrapper if needed, or let children handle layout */}
+          <div className="flex flex-col gap-6">
             {children}
           </div>
         </main>
+        
         {role === "student" ? <StudentBottomTabBar userId={user.$id} /> : null}
       </div>
     </div>

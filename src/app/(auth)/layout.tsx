@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { ThemeToggle } from "@/components/theme-toggle";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle"; // Need to update this one too if it exists
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -12,64 +13,56 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background px-4 py-6 md:px-6 md:py-8">
-      <div className="fixed right-4 top-4 z-50">
-        <ThemeToggle />
+    <div className="min-h-dvh bg-background flex flex-col md:grid md:grid-cols-2 relative">
+      <div className="absolute right-4 top-4 z-50">
+        {/* We'll keep the ThemeToggle but should ensure it uses HeroUI later */}
+        {/* <ThemeToggle /> */}
       </div>
-      <main
-        id="main"
-        className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-6xl gap-6 md:grid-cols-[1.05fr_0.95fr]"
-      >
-        <section className="retro-surface relative hidden overflow-hidden bg-secondary p-8 text-secondary-foreground md:flex md:flex-col md:justify-between">
-          <div className="flex flex-col gap-5">
-            <p className="font-heading text-xs uppercase tracking-[0.18em] text-secondary-foreground/70">
-              Amarbhaiya.in
-            </p>
-            <h1 className="max-w-xl text-6xl leading-[0.9]">
-              Learn loud. Build fast. Stay practical.
-            </h1>
-            <p className="max-w-md text-base font-semibold leading-relaxed text-secondary-foreground/80">
-              Courses, mentoring, live sessions, and community spaces in one chunky workspace made for real progress.
-            </p>
-          </div>
 
-          <div className="grid gap-4">
-            <div className="retro-surface -rotate-1 bg-card p-5">
-              <p className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                What you get
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-accent p-4 shadow-retro-sm">
-                  <p className="text-2xl">100+</p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-accent-foreground/70">
-                    Lessons & tools
-                  </p>
-                </div>
-                <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-primary p-4 text-primary-foreground shadow-retro-sm">
-                  <p className="text-2xl">Live</p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary-foreground/70">
-                    Sessions & replays
-                  </p>
-                </div>
-              </div>
-            </div>
+      {/* ═══════════════════════════════════════════════════
+          Left Column — Editorial Typography + Branding
+      ═══════════════════════════════════════════════════ */}
+      <section className="hidden md:flex flex-col justify-between p-12 bg-surface border-r border-border/50 relative overflow-hidden">
+        {/* Ambient glow in bg */}
+        <div aria-hidden className="absolute -left-32 -bottom-32 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-[100px]" style={{ background: "var(--accent)" }} />
 
-            <div className="retro-surface ml-10 rotate-1 bg-accent p-5">
-              <p className="font-heading text-xs uppercase tracking-[0.16em] text-accent-foreground/70">
-                Built for
-              </p>
-              <ul className="mt-3 grid gap-2 text-sm font-semibold">
-                <li>Students who want clarity, not fluff</li>
-                <li>Actionable lessons with direct next steps</li>
-                <li>One account across learning, billing, and live sessions</li>
-              </ul>
-            </div>
-          </div>
-        </section>
+        {/* Brand */}
+        <div className="relative z-10 flex items-center gap-2">
+           <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden>A</span>
+           <span className="font-bold text-sm text-foreground/80">amarbhaiya<span style={{ color: "var(--accent)" }}>.in</span></span>
+        </div>
 
-        <section className="retro-surface flex items-center justify-center bg-card px-5 py-8 md:px-8">
+        {/* Messaging */}
+        <div className="relative z-10 my-auto">
+          <h1 className="text-[clamp(2.5rem,4vw,4rem)] font-black leading-[1] tracking-[-0.04em] text-foreground max-w-lg mb-6">
+            Padhai simple. <br/>
+            Results honest.
+          </h1>
+          <p className="text-foreground/60 text-lg leading-relaxed max-w-sm">
+            Join the community of students learning without the coaching-centre fluff. Direct next steps.
+          </p>
+        </div>
+
+        {/* Footer info */}
+        <div className="relative z-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground/40">Student Workspace</p>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════
+          Right Column — Auth Form
+      ═══════════════════════════════════════════════════ */}
+      <main className="flex-1 flex flex-col justify-center px-4 py-8 sm:px-12 md:max-w-xl mx-auto w-full relative z-10 pt-safe pb-safe">
+        {/* Mobile brand header (hidden on md) */}
+        <div className="md:hidden flex items-center gap-2 self-center mb-12">
+           <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden>A</span>
+           <span className="font-bold text-sm text-foreground/90">amarbhaiya<span style={{ color: "var(--accent)" }}>.in</span></span>
+        </div>
+
+        {/* Form Container Container */}
+        <div className="w-full">
           {children}
-        </section>
+        </div>
       </main>
     </div>
   );
