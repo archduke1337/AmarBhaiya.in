@@ -74,7 +74,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             placeholder="Amar Pandey"
             type="text"
             value={name}
-            onValueChange={setName}
+            onChange={(e) => setName(e.target.value)}
             autoComplete="name"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
@@ -89,7 +89,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             placeholder="you@example.com"
             type="email"
             value={email}
-            onValueChange={setEmail}
+            onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
@@ -97,18 +97,17 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
           />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-foreground/70">Password</label>
           <Input
             required
-            label="Password"
             placeholder="Min 8 chars, 1 letter, 1 number"
             type="password"
             value={password}
-            onValueChange={setPassword}
+            onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-              label: "font-semibold text-foreground/70",
             }}
           />
           <p className="text-xs text-foreground/50 px-2 font-medium">

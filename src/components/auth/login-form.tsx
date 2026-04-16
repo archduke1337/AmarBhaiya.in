@@ -70,7 +70,7 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             placeholder="you@example.com"
             type="email"
             value={email}
-            onValueChange={setEmail}
+            onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
@@ -85,7 +85,7 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             placeholder="••••••••"
             type="password"
             value={password}
-            onValueChange={setPassword}
+            onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
