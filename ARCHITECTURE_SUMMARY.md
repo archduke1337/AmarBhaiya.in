@@ -217,16 +217,43 @@ Quality:        ESLint 9, TypeScript strict mode
 ## KEY METRICS
 
 ```
-Collections: 30+
+Tables (Collections): 28
 Storage Buckets: 7
 User Roles: 4 (admin, instructor, moderator, student)
-API Routes: 4 groups (auth, content, payments, stream)
-Components: 30+
-Server Actions: 16 files
-Validation Schemas: Multiple (course, lesson, contact, etc)
+API Routes: 14 endpoints across 11 route groups
+Pages/Routes: ~50 (marketing+auth+student+instructor+moderator+admin)
+Components: 35+
+Server Actions: 19 files
+Validation Schemas: Zod (auth + course)
 ```
 
 ---
 
-**Complete architectural analysis generated** ✅
+## MIDDLEWARE
+
+```
+src/middleware.ts          ← Next.js entry point (re-exports proxy)
+src/proxy.ts               ← All routing logic lives here
+
+Middleware does:
+  1. Community subdomain rewrite (community.amarbhaiya.in → /app/community)
+  2. Protected route auth check (/app /instructor /moderator /admin)
+     - Session validation cached 15 s in-process (max 500 entries)
+     - Cold starts always do a fresh Appwrite check (Map resets)
+  3. Auth route redirect for already-logged-in users
+  4. Parallel cache: prune expired entries on every cache write
+```
+
+---
+
+## CHANGELOG (fixes applied Apr 2026)
+
+| # | Fix | File(s) |
+|---|-----|---------|
+| 1 | **Created `src/middleware.ts`** — without this file Next.js never ran any of the routing/auth logic in proxy.ts | `src/middleware.ts` (new) |
+| 2 | **Tightened session cache** — TTL 30s→15s, 500-entry cap, prune on write, 3s on network failure | `src/proxy.ts` |
+| 3 | **Rewrote `hero-digital-success.tsx`** — removed wrong "UI-Layouts" agency branding, replaced with AmarBhaiya content; lazy-loaded ShaderGradient/Three.js via `next/dynamic({ssr:false})` | `src/components/hero-digital-success.tsx` |
+| 4 | **Added dashboard-data barrel** — `src/lib/appwrite/dashboard-data/index.ts` re-exports all 50+ symbols; enables future incremental splitting without breaking imports | `src/lib/appwrite/dashboard-data/index.ts` (new) |
+| 5 | **Marked dashboard-data.ts as deprecated** — JSDoc `@deprecated` comment guides new code toward the barrel | `src/lib/appwrite/dashboard-data.ts` |
+| 6 | **Verified `@emailjs/browser`** — confirmed it is only imported in `contact-form.tsx` which has `"use client"` ✅ | `src/app/(marketing)/contact/contact-form.tsx` |
 

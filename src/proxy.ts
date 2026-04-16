@@ -10,12 +10,36 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 // Community subdomain hostname
 const COMMUNITY_HOST = "community.amarbhaiya.in";
 
-const SESSION_VALIDATION_CACHE_TTL_MS = 30 * 1000;
+// ── Session Validation Cache ─────────────────────────────────────────────────
+// This is an in-process Map — it resets on cold starts / serverless spin-ups.
+// That is intentional: a cold start always validates freshly against Appwrite.
+// On warm instances the cache prevents a network round-trip on every request.
+// TTL is deliberately short (15 s) to keep the stale-auth window minimal.
+const SESSION_VALIDATION_CACHE_TTL_MS = 15 * 1000;
+const SESSION_CACHE_MAX_ENTRIES = 500;
 
-const sessionValidationCache = new Map<
-  string,
-  { valid: boolean; expiresAt: number }
->();
+type SessionCacheEntry = { valid: boolean; expiresAt: number };
+const sessionValidationCache = new Map<string, SessionCacheEntry>();
+
+/** Evict all expired entries and trim the Map to MAX size (LRU-lite eviction). */
+function pruneSessionCache(): void {
+  const now = Date.now();
+  for (const [key, entry] of sessionValidationCache) {
+    if (entry.expiresAt <= now) {
+      sessionValidationCache.delete(key);
+    }
+  }
+  // If still over limit, delete oldest inserted entries
+  if (sessionValidationCache.size > SESSION_CACHE_MAX_ENTRIES) {
+    const overflow = sessionValidationCache.size - SESSION_CACHE_MAX_ENTRIES;
+    let deleted = 0;
+    for (const key of sessionValidationCache.keys()) {
+      if (deleted >= overflow) break;
+      sessionValidationCache.delete(key);
+      deleted++;
+    }
+  }
+}
 
 function getAppwriteSessionValidationConfig(): {
   endpoint: string;
@@ -61,6 +85,7 @@ async function validateAppwriteSessionSecret(sessionSecret: string): Promise<boo
     });
 
     const valid = response.ok;
+    pruneSessionCache();
     sessionValidationCache.set(cacheKey, {
       valid,
       expiresAt: Date.now() + SESSION_VALIDATION_CACHE_TTL_MS,
@@ -68,9 +93,11 @@ async function validateAppwriteSessionSecret(sessionSecret: string): Promise<boo
 
     return valid;
   } catch {
+    // Cache the failure for a shorter window so transient network blips
+    // don't lock users out for 15 s
     sessionValidationCache.set(cacheKey, {
       valid: false,
-      expiresAt: Date.now() + SESSION_VALIDATION_CACHE_TTL_MS,
+      expiresAt: Date.now() + 3000,
     });
 
     return false;

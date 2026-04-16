@@ -1,3 +1,10 @@
+/**
+ * @deprecated This file is a 3300-line monolith.
+ * New code should import from the domain barrel instead:
+ *   import { ... } from "@/lib/appwrite/dashboard-data/index"
+ * Existing imports from "@/lib/appwrite/dashboard-data" continue to work.
+ * See: src/lib/appwrite/dashboard-data/index.ts
+ */
 import { Query } from "node-appwrite";
 import type { Models } from "node-appwrite";
 

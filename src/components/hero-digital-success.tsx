@@ -1,20 +1,49 @@
-'use client'
-import React, { Suspense, useRef } from 'react'
-import { ShaderGradient, ShaderGradientCanvas } from '@shadergradient/react'
-import { TimelineAnimation } from '@/components/timeline-animation'
-import { useMediaQuery } from '@/components/use-media-query'
-import MotionDrawer from '@/components/motion-drawer'
+'use client';
+
+/**
+ * HeroDigitalSuccess
+ * ──────────────────
+ * Animated hero section used on the marketing site.
+ * ShaderGradient is loaded via next/dynamic so the Three.js/WebGL
+ * bundle (~800 KB) is never included in the initial JS payload.
+ */
+
+import React, { Suspense, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import { TimelineAnimation } from '@/components/timeline-animation';
+import { useMediaQuery } from '@/components/use-media-query';
+import MotionDrawer from '@/components/motion-drawer';
+import Link from 'next/link';
+
+// ── Lazy-load the heavy ShaderGradient canvas (Three.js + WebGL) ─────────────
+// ssr: false because ShaderGradient uses WebGL APIs that don't exist in Node.
+const ShaderGradientCanvas = dynamic(
+  () => import('@shadergradient/react').then((mod) => mod.ShaderGradientCanvas),
+  { ssr: false, loading: () => <div className="absolute inset-0 bg-black" /> }
+);
+const ShaderGradient = dynamic(
+  () => import('@shadergradient/react').then((mod) => mod.ShaderGradient),
+  { ssr: false }
+);
+
+// ── Nav links ─────────────────────────────────────────────────────────────────
+const NAV_LINKS = [
+  { label: 'Courses', href: '/courses' },
+  { label: 'Notes', href: '/notes' },
+  { label: 'About', href: '/about' },
+];
 
 export const HeroDigitalSuccess = () => {
-  const timelineRef = useRef<HTMLDivElement>(null)
-  const isMobile = useMediaQuery('(max-width: 768px)')
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
     <section
       ref={timelineRef}
       className="relative min-h-screen bg-black text-white overflow-hidden flex flex-col"
     >
-      <Suspense>
+      {/* ── Gradient background (lazy-loaded) ──────────────────────────── */}
+      <Suspense fallback={<div className="absolute inset-0 bg-black" />}>
         <ShaderGradientCanvas
           style={{
             position: 'absolute',
@@ -23,7 +52,7 @@ export const HeroDigitalSuccess = () => {
             width: '100vw',
             height: '100vh',
           }}
-          lazyLoad={false}
+          lazyLoad
           pixelDensity={1}
           pointerEvents="none"
         >
@@ -48,229 +77,209 @@ export const HeroDigitalSuccess = () => {
             color2="#FF3333"
             color3="#0066FF"
             reflection={0.4}
-            // View (camera) props
             cAzimuthAngle={270}
             cPolarAngle={180}
             cDistance={0.5}
             cameraZoom={15.1}
-            // Effect props
             lightType="env"
             brightness={0.8}
             envPreset="city"
             grain="on"
-            // Tool props
             toggleAxis={false}
             zoomOut={false}
             hoverState=""
-            // Optional - if using transition features
             enableTransition={false}
           />
         </ShaderGradientCanvas>
       </Suspense>
+
+      {/* ── Mobile header ─────────────────────────────────────────────── */}
       {isMobile && (
-        <div className="flex gap-4 justify-between items-center px-10 pt-4">
+        <div className="flex gap-4 justify-between items-center px-6 pt-4 relative z-10">
           <MotionDrawer
             direction="left"
-            width={300}
-            backgroundColor={'#000000'}
+            width={280}
+            backgroundColor="#000000"
             clsBtnClassName="bg-neutral-800 border-r border-neutral-900 text-white"
             contentClassName="bg-black border-r border-neutral-900 text-white"
             btnClassName="bg-white text-black relative w-fit p-2 left-0 top-0"
           >
-            <nav className="space-y-4 ">
-              <div className="flex items-center gap-2 text-white">
-                <svg
-                  className="fill-white w-8 h-8"
-                  width="97"
-                  height="108"
-                  viewBox="0 0 97 108"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+            <nav className="space-y-2 pt-4">
+              <p className="px-4 pb-3 font-heading text-xs uppercase tracking-[0.18em] text-neutral-400">
+                amarbhaiya.in
+              </p>
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block px-4 py-3 text-sm font-semibold text-white hover:bg-neutral-800 rounded-md transition-colors"
                 >
-                  <path d="M55.5 0C61.0005 0.00109895 64.5005 2.50586 64.5 7.5V17C64.5 24.5059 68.5005 27.5 81 27.5H88C94.0005 27.5059 96.5 29.5059 96.5 37.5V98.5C96.5 106.006 95.0005 107.5 88 107.5H41.5C36.5005 107.5 32 104.506 32 98.5V88C32 84.5 28.5 80 20.5 80H8.5C3 80 0 76.5 0 71.5V6.5C0.00048844 1.50586 2.50049 0.00585937 8.5 0H55.5ZM31 20C28.7909 20 27 21.7909 27 24V74C27 76.2091 28.7909 78 31 78H58C60.2091 78 62 76.2091 62 74V24C62 21.7909 60.2091 20 58 20H31Z" />
-                </svg>
-                <span>UI-Layouts</span>
+                  {link.label}
+                </Link>
+              ))}
+              <div className="pt-4 px-4">
+                <Link
+                  href="/register"
+                  className="block w-full text-center py-3 rounded-full bg-white text-black font-bold text-sm"
+                >
+                  Free account banao
+                </Link>
               </div>
-              <a
-                href="#"
-                className="block p-2 hover:bg-neutral-100 hover:text-black rounded-sm"
-              >
-                Our Service
-              </a>
-              <a
-                href="#"
-                className="block p-2 hover:bg-neutral-100 hover:text-black rounded-sm"
-              >
-                About Us
-              </a>
-              <a
-                href="#"
-                className="block p-2 hover:bg-neutral-100 hover:text-black rounded-sm"
-              >
-                Contact
-              </a>
             </nav>
           </MotionDrawer>
-          <TimelineAnimation
-            once={true}
-            as="button"
-            animationNum={3}
-            timelineRef={timelineRef}
-            className="flex items-center gap-2 w-fit px-8 py-4 rounded-full font-bold text-lg bg-neutral-800 text-white"
-          >
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-            <span className="text-sm font-medium">Book a call</span>
-          </TimelineAnimation>
+
+          <Link href="/login">
+            <TimelineAnimation
+              once
+              as="span"
+              animationNum={3}
+              timelineRef={timelineRef}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm bg-neutral-800 text-white"
+            >
+              Login
+            </TimelineAnimation>
+          </Link>
         </div>
       )}
-      {/* Header */}
+
+      {/* ── Desktop header ────────────────────────────────────────────── */}
       {!isMobile && (
-        <header className="relative z-10 flex items-center justify-between px-10 p-4">
+        <header className="relative z-10 flex items-center justify-between px-10 py-4">
           <TimelineAnimation
-            once={true}
+            once
             animationNum={1}
             timelineRef={timelineRef}
             className="flex items-center gap-2"
           >
-            <svg
-              className="fill-white w-8 h-8"
-              width="97"
-              height="108"
-              viewBox="0 0 97 108"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M55.5 0C61.0005 0.00109895 64.5005 2.50586 64.5 7.5V17C64.5 24.5059 68.5005 27.5 81 27.5H88C94.0005 27.5059 96.5 29.5059 96.5 37.5V98.5C96.5 106.006 95.0005 107.5 88 107.5H41.5C36.5005 107.5 32 104.506 32 98.5V88C32 84.5 28.5 80 20.5 80H8.5C3 80 0 76.5 0 71.5V6.5C0.00048844 1.50586 2.50049 0.00585937 8.5 0H55.5ZM31 20C28.7909 20 27 21.7909 27 24V74C27 76.2091 28.7909 78 31 78H58C60.2091 78 62 76.2091 62 74V24C62 21.7909 60.2091 20 58 20H31Z" />
-            </svg>
+            <span className="font-heading text-xl font-black tracking-[-0.04em] text-white">
+              amarbhaiya.in
+            </span>
           </TimelineAnimation>
 
           <TimelineAnimation
-            once={true}
+            once
             as="nav"
             animationNum={2}
             timelineRef={timelineRef}
-            className="hidden md:flex items-center gap-12 text-sm text-white font-medium"
+            className="hidden md:flex items-center gap-10 text-sm text-white/80 font-medium"
           >
-            <a href="#" className="hover:text-white transition">
-              Our Services
-            </a>
-            <a href="#" className="hover:text-white transition">
-              About Us
-            </a>
-            <a href="#" className="hover:text-white transition">
-              Contact
-            </a>
+            {NAV_LINKS.map((link) => (
+              <Link key={link.href} href={link.href} className="hover:text-white transition-colors">
+                {link.label}
+              </Link>
+            ))}
           </TimelineAnimation>
+
           <TimelineAnimation
-            once={true}
-            as="button"
+            once
+            as="div"
             animationNum={3}
             timelineRef={timelineRef}
-            className="flex items-center gap-2 w-fit px-8 py-4 rounded-full font-bold text-lg bg-neutral-800 text-white"
+            className="flex items-center gap-3"
           >
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-            <span className="text-sm font-medium">Book a call</span>
+            <Link
+              href="/login"
+              className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
+            >
+              Login
+            </Link>
+            <Link
+              href="/register"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm bg-white text-black hover:bg-white/90 transition-colors"
+            >
+              <span className="w-2 h-2 rounded-full bg-red-500" aria-hidden="true" />
+              Start free
+            </Link>
           </TimelineAnimation>
         </header>
       )}
 
-      {/* Main Hero Content */}
-      <div className="relative z-10 grow flex flex-col justify-center px-12 md:px-24">
+      {/* ── Hero content ──────────────────────────────────────────────── */}
+      <div className="relative z-10 grow flex flex-col justify-center px-8 md:px-16 lg:px-24">
         <TimelineAnimation
-          once={true}
-          as="h1"
+          once
+          as="p"
           animationNum={4}
           timelineRef={timelineRef}
-          className="flex flex-col xl:flex-row text-[10vw] xl:text-[6.5vw] font-medium leading-[100%] items-baseline gap-x-8 gap-y-2 pb-10 "
+          className="font-heading text-xs uppercase tracking-[0.22em] text-white/50 mb-6"
         >
-          Unlocking
-          <span className="bg-clip-text text-transparent bg-linear-to-r from-white via-red-500 to-red-500 pb-8 xl:inline-block block">
-            Digital Success
-          </span>
+          Learn from Amar Bhaiya
         </TimelineAnimation>
 
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-10">
-          <div className="flex flex-wrap justify-start gap-4">
-            <TimelineAnimation
-              once={true}
-              as="button"
-              animationNum={5}
-              timelineRef={timelineRef}
-              className="cursor-pointer relative group overflow-hidden bg-white text-black px-8 py-4 rounded-full font-medium text-lg flex items-center gap-3 shadow-[0_0_20px_rgba(255,60,60,0.4)]"
-            >
-              <span
-                className="w-6 h-6 rounded-full bg-linear-to-br from-red-400 to-red-700"
-                aria-hidden="true"
-              />
-              Book a Consultation
-            </TimelineAnimation>
-            <TimelineAnimation
-              once={true}
-              as="button"
-              animationNum={6}
-              timelineRef={timelineRef}
-              className="cursor-pointer border border-white/20 bg-white/5 backdrop-blur-md px-8 py-4 rounded-full font-medium text-lg"
-            >
-              More about us
-            </TimelineAnimation>
-          </div>
+        <TimelineAnimation
+          once
+          as="h1"
+          animationNum={5}
+          timelineRef={timelineRef}
+          className="font-heading text-[10vw] xl:text-[6vw] font-black leading-[0.92] tracking-[-0.05em] text-white mb-8"
+        >
+          Padhai ko simple,
+          <br />
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-yellow-300 to-red-400">
+            honest, aur useful
+          </span>
+          <br />
+          banana tha.
+        </TimelineAnimation>
+
+        <div className="flex flex-wrap gap-4">
           <TimelineAnimation
-            once={true}
-            as="p"
+            once
+            as="div"
+            animationNum={6}
+            timelineRef={timelineRef}
+          >
+            <Link
+              href="/courses"
+              className="flex items-center gap-2 bg-white text-black px-8 py-4 rounded-full font-bold text-base hover:bg-white/90 transition-colors shadow-[0_0_30px_rgba(255,200,0,0.3)]"
+            >
+              <span className="w-2 h-2 rounded-full bg-red-500" aria-hidden="true" />
+              Courses dekho
+            </Link>
+          </TimelineAnimation>
+
+          <TimelineAnimation
+            once
+            as="div"
             animationNum={7}
             timelineRef={timelineRef}
-            className="max-w-md text-neutral-100 text-xl font-light leading-relaxed"
           >
-            We are a full-stack agency creating captivating web experiences,
-            driving e-commerce growth, and maximizing digital impact.
+            <Link
+              href="/notes"
+              className="border border-white/20 bg-white/5 backdrop-blur-md px-8 py-4 rounded-full font-medium text-base text-white hover:bg-white/10 transition-colors"
+            >
+              Notes kholo
+            </Link>
           </TimelineAnimation>
         </div>
       </div>
 
-      {/* Footer Info */}
-      <div className="relative z-10 p-12 flex flex-wrap justify-end items-end">
+      {/* ── Footer stats ──────────────────────────────────────────────── */}
+      <div className="relative z-10 p-8 md:p-12 flex flex-wrap justify-end items-end">
         <TimelineAnimation
-          once={true}
+          once
           animationNum={8}
           timelineRef={timelineRef}
-          className="grid grid-cols-2 md:grid-cols-4 gap-x-12 gap-y-4 bg-black/20 backdrop-blur-lg p-4 rounded-lg"
+          className="grid grid-cols-2 md:grid-cols-4 gap-x-10 gap-y-4 bg-black/30 backdrop-blur-lg px-6 py-4 rounded-xl border border-white/10"
         >
-          <TimelineAnimation
-            once={true}
-            animationNum={9}
-            timelineRef={timelineRef}
-          >
-            <p className="text-white text-sm mb-1">Web Design</p>
-            <p className="text-neutral-300 text-xs">Ecommerce Design</p>
-          </TimelineAnimation>
-          <TimelineAnimation
-            once={true}
-            animationNum={10}
-            timelineRef={timelineRef}
-          >
-            <p className="text-white text-sm mb-1">Social Media Marketing</p>
-            <p className="text-neutral-300 text-xs">Email Marketing</p>
-          </TimelineAnimation>
-          <TimelineAnimation
-            once={true}
-            animationNum={11}
-            timelineRef={timelineRef}
-          >
-            <p className="text-white text-sm mb-1">
-              Conversion Rate Optimization
-            </p>
-            <p className="text-neutral-300 text-xs">Paid Traffic & Ad</p>
-          </TimelineAnimation>
-          <TimelineAnimation
-            once={true}
-            animationNum={12}
-            timelineRef={timelineRef}
-          >
-            <p className="text-white text-sm mb-1">User Generated Content</p>
-            <p className="text-neutral-300 text-xs">and more</p>
-          </TimelineAnimation>
+          <div>
+            <p className="text-white text-sm font-bold mb-0.5">Class 6–12</p>
+            <p className="text-neutral-400 text-xs">School courses</p>
+          </div>
+          <div>
+            <p className="text-white text-sm font-bold mb-0.5">Notes Library</p>
+            <p className="text-neutral-400 text-xs">Free downloads</p>
+          </div>
+          <div>
+            <p className="text-white text-sm font-bold mb-0.5">Live Sessions</p>
+            <p className="text-neutral-400 text-xs">Direct Q&amp;A</p>
+          </div>
+          <div>
+            <p className="text-white text-sm font-bold mb-0.5">Skills &amp; Career</p>
+            <p className="text-neutral-400 text-xs">Growth tracks</p>
+          </div>
         </TimelineAnimation>
       </div>
     </section>
-  )
-}
+  );
+};
