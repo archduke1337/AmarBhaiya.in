@@ -10,7 +10,6 @@
  * No Provider needed in HeroUI v3.
  */
 
-import { Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@heroui/react";
 import { RevealWrapper } from "@/components/ui/reveal-wrapper";

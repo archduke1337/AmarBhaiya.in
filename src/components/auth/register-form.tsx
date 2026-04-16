@@ -76,9 +76,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
-            classNames={{
-              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-            }}
+            className="bg-surface shadow-[var(--field-shadow)]"
           />
         </div>
 
@@ -91,9 +89,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            classNames={{
-              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-            }}
+            className="bg-surface shadow-[var(--field-shadow)]"
           />
         </div>
 
@@ -106,9 +102,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
-            classNames={{
-              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-            }}
+            className="bg-surface shadow-[var(--field-shadow)]"
           />
           <p className="text-xs text-foreground/50 px-2 font-medium">
             At least 8 characters with a letter and a number.
@@ -121,9 +115,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             onValueChange={setConsent}
             color="primary"
             size="sm"
-            classNames={{
-              wrapper: "mt-0.5",
-            }}
+            className="mt-0.5"
           >
             <span className="text-sm font-medium text-foreground/80 leading-relaxed block">
               I agree to the{" "}

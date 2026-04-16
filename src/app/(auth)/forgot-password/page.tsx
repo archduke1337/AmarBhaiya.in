@@ -85,9 +85,7 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            classNames={{
-              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-            }}
+            className="bg-surface shadow-[var(--field-shadow)]"
           />
         </div>
 

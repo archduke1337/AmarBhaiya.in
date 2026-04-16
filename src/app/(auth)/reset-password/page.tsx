@@ -60,9 +60,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
               placeholder="Min 8 chars, 1 letter, 1 number"
               type="password"
               minLength={8}
-              classNames={{
-                inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-              }}
+              className="bg-surface shadow-[var(--field-shadow)]"
             />
           </div>
           <p className="text-xs text-foreground/50 px-2 font-medium">

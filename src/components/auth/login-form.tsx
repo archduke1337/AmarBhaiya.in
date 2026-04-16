@@ -72,9 +72,7 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            classNames={{
-              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-            }}
+            className="bg-surface shadow-[var(--field-shadow)]"
           />
         </div>
 
@@ -87,9 +85,7 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
-            classNames={{
-              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-            }}
+            className="bg-surface shadow-[var(--field-shadow)]"
           />
           <Link
             href={forgotPasswordHref}

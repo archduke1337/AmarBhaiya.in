@@ -20,6 +20,8 @@ import {
   getStudentEnrolledCourses,
   getStudentStudyQueue,
   getUpcomingLiveSessions,
+  type StudentEnrolledCourse,
+  type UpcomingSessionItem,
 } from "@/lib/appwrite/dashboard-data";
 import { formatRelativeTime } from "@/lib/utils/format";
 import {
@@ -33,6 +35,7 @@ import {
   EmptyState,
   ActivityFeed,
 } from "@/components/dashboard";
+import type { ActivityItem } from "@/components/dashboard/activity-feed";
 
 export default async function StudentDashboardPage() {
   const user = await requireAuth();
@@ -332,11 +335,11 @@ function getGreeting(): string {
 }
 
 function buildStudentActionItems(
-  inProgressCourses: Array<any>,
-  upcomingSessions: Array<any>,
+  inProgressCourses: StudentEnrolledCourse[],
+  upcomingSessions: UpcomingSessionItem[],
   unreadCount: number
-) {
-  const items: Array<any> = [];
+): ActivityItem[] {
+  const items: ActivityItem[] = [];
 
   const nextCourse = inProgressCourses[0];
   if (nextCourse) {

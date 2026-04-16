@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle"; // Need to update this one too if it exists
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -14,11 +12,6 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-dvh bg-background flex flex-col md:grid md:grid-cols-2 relative">
-      <div className="absolute right-4 top-4 z-50">
-        {/* We'll keep the ThemeToggle but should ensure it uses HeroUI later */}
-        {/* <ThemeToggle /> */}
-      </div>
-
       {/* ═══════════════════════════════════════════════════
           Left Column — Editorial Typography + Branding
       ═══════════════════════════════════════════════════ */}
