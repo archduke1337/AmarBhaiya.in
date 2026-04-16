@@ -12,7 +12,17 @@
 import React, { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
 
-type RevealTag = keyof HTMLElementTagNameMap;
+type RevealTag =
+  | "div"
+  | "span"
+  | "nav"
+  | "p"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "section"
+  | "article"
+  | "main";
 
 interface RevealWrapperProps {
   children: React.ReactNode;
@@ -28,10 +38,6 @@ export function RevealWrapper({
   threshold = 0.12,
 }: RevealWrapperProps) {
   const ref = useRef<HTMLElement | null>(null);
-
-  const setRef = (node: Element | null) => {
-    ref.current = node instanceof HTMLElement ? node : null;
-  };
 
   useEffect(() => {
     const el = ref.current;
@@ -51,12 +57,83 @@ export function RevealWrapper({
     return () => observer.disconnect();
   }, [threshold]);
 
-  return React.createElement(
-    as,
-    {
-      ref: setRef as React.RefCallback<HTMLElement>,
-      className: cn("reveal", className),
-    },
-    children,
+  const classes = cn("reveal", className);
+
+  if (as === "span") {
+    return (
+      <span ref={ref as React.RefObject<HTMLSpanElement>} className={classes}>
+        {children}
+      </span>
+    );
+  }
+
+  if (as === "nav") {
+    return (
+      <nav ref={ref as React.RefObject<HTMLElement>} className={classes}>
+        {children}
+      </nav>
+    );
+  }
+
+  if (as === "p") {
+    return (
+      <p ref={ref as React.RefObject<HTMLParagraphElement>} className={classes}>
+        {children}
+      </p>
+    );
+  }
+
+  if (as === "h1") {
+    return (
+      <h1 ref={ref as React.RefObject<HTMLHeadingElement>} className={classes}>
+        {children}
+      </h1>
+    );
+  }
+
+  if (as === "h2") {
+    return (
+      <h2 ref={ref as React.RefObject<HTMLHeadingElement>} className={classes}>
+        {children}
+      </h2>
+    );
+  }
+
+  if (as === "h3") {
+    return (
+      <h3 ref={ref as React.RefObject<HTMLHeadingElement>} className={classes}>
+        {children}
+      </h3>
+    );
+  }
+
+  if (as === "section") {
+    return (
+      <section ref={ref as React.RefObject<HTMLElement>} className={classes}>
+        {children}
+      </section>
+    );
+  }
+
+  if (as === "article") {
+    return (
+      <article ref={ref as React.RefObject<HTMLElement>} className={classes}>
+        {children}
+      </article>
+    );
+  }
+
+  if (as === "main") {
+    return (
+      <main ref={ref as React.RefObject<HTMLElement>} className={classes}>
+        {children}
+      </main>
+    );
+  }
+
+  return (
+    <div ref={ref as React.RefObject<HTMLDivElement>} className={classes}>
+      {children}
+    </div>
   );
 }

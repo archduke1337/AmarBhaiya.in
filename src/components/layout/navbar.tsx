@@ -11,7 +11,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@heroui/react";
-import { useTheme } from "next-themes";
+import { useSyncExternalStore } from "react";
+import { useTheme } from "@/components/theme-provider";
+
+const subscribe = () => () => {};
 
 // ── Nav Links ─────────────────────────────────────────────────
 const NAV_LINKS = [
@@ -72,7 +75,8 @@ function MoonIcon() {
 export function Navbar() {
   const [menuOpen, setMenuOpen]   = useState(false);
   const [scrolled, setScrolled]  = useState(false);
-  const { theme, setTheme }       = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const menuRef                   = useRef<HTMLDivElement>(null);
 
   // Detect scroll to add / remove background on island
@@ -95,7 +99,8 @@ export function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+  const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  const isDark = mounted ? resolvedTheme === "dark" : false;
 
   return (
     <>
@@ -155,10 +160,10 @@ export function Navbar() {
                 isIconOnly
                 size="sm"
                 onPress={toggleTheme}
-                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
                 className="text-foreground/60 hover:text-foreground"
               >
-                {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+                {isDark ? <SunIcon /> : <MoonIcon />}
               </Button>
 
               {/* Login */}

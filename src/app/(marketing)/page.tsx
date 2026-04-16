@@ -117,7 +117,6 @@ export default function MarketingPage() {
                   <Link href="/courses">
                     <Button
                       size="lg"
-                      onPress={() => {}}
                       className="font-bold px-7 bg-accent text-accent-foreground glow-accent-sm active:scale-[0.97] transition-transform"
                     >
                       Courses dekho
@@ -134,7 +133,6 @@ export default function MarketingPage() {
                     <Button
                       size="lg"
                       variant="outline"
-                      onPress={() => {}}
                       className="font-semibold px-7"
                     >
                       Free notes
@@ -334,14 +332,13 @@ export default function MarketingPage() {
                     <Link href="/register">
                       <Button
                         size="lg"
-                        onPress={() => {}}
                         className="font-bold px-8 bg-accent text-accent-foreground glow-accent active:scale-[0.97] transition-transform"
                       >
                         Free account banao
                       </Button>
                     </Link>
                     <Link href="/courses">
-                      <Button size="lg" variant="outline" onPress={() => {}} className="font-semibold px-8">
+                      <Button size="lg" variant="outline" className="font-semibold px-8">
                         Courses browse karo
                       </Button>
                     </Link>
