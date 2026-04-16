@@ -11,8 +11,7 @@ const bodyFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
-  axes: ["wght"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "variable",
 });
 
 // ── Metadata ─────────────────────────────────────────────────
