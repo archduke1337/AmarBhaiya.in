@@ -278,7 +278,7 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
 
             <div className="mt-auto p-4 pb-[calc(var(--safe-bottom)+1.5rem)]">
                <form action={logoutAction} className="w-full">
-                 <Button type="submit" variant="faded" fullWidth className="font-bold border-danger/20 text-danger bg-danger/5 hover:bg-danger hover:text-danger-foreground">
+                 <Button type="submit" variant="danger-soft" fullWidth className="font-bold border-danger/20 text-danger bg-danger/5 hover:bg-danger hover:text-danger-foreground">
                    Sign out
                  </Button>
                </form>

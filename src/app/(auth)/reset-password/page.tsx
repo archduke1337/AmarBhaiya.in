@@ -72,8 +72,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
           type="submit"
           fullWidth
           size="lg"
-          color="primary"
-          variant="solid"
+          variant="primary"
           className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
           Reset Password

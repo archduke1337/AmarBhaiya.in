@@ -29,7 +29,7 @@ export default function DashboardError({
       </div>
       <Button 
         onPress={reset} 
-        variant="bordered" 
+        variant="outline" 
         size="lg" 
         className="font-bold border-border/40 hover:bg-surface-hover mt-4"
         startContent={<RefreshCw className="size-4" />}

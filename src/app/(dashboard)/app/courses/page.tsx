@@ -30,12 +30,12 @@ export default async function StudentCoursesPage() {
         actions={
           <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
             <Link href="/notes">
-              <Button variant="bordered" className="bg-surface font-bold border-border/40" size="sm">
+              <Button variant="outline" className="bg-surface font-bold border-border/40" size="sm">
                 Notes
               </Button>
             </Link>
             <Link href="/courses">
-              <Button color="primary" variant="solid" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
+              <Button variant="primary" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
                 Browse catalogue
               </Button>
             </Link>
@@ -212,7 +212,7 @@ function CourseCard({
           ) : (
             <form action={issueCertificateAction} className="w-full">
               <input type="hidden" name="courseId" value={course.id} />
-              <Button type="submit" variant="faded" size="sm" className="font-bold border-success/40 text-success hover:bg-success hover:text-success-foreground hover:border-success w-full justify-center">
+              <Button type="submit" variant="secondary" size="sm" className="font-bold border-success/40 text-success hover:bg-success hover:text-success-foreground hover:border-success w-full justify-center">
                 <Award className="size-3.5 mr-1" />
                 Claim Certificate
               </Button>

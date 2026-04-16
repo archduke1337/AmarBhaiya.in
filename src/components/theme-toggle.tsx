@@ -28,7 +28,7 @@ export function ThemeToggle() {
 
   return (
     <Button
-      variant="faded"
+      variant="secondary"
       isIconOnly
       size="sm"
       onPress={() => setTheme(isDark ? "light" : "dark")}

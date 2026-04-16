@@ -74,12 +74,12 @@ export default async function StudentDashboardPage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/notes">
-              <Button variant="bordered" className="bg-surface border-border/40 font-bold" size="sm">
+              <Button variant="outline" className="bg-surface border-border/40 font-bold" size="sm">
                 Notes
               </Button>
             </Link>
             <Link href="/courses">
-              <Button color="primary" variant="solid" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
+              <Button variant="primary" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
                 Browse courses
               </Button>
             </Link>

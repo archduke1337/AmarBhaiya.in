@@ -45,14 +45,14 @@ export function EmptyState({
         <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
           {action && (
             <Link href={action.href}>
-              <Button color="primary" variant="solid" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]">
+              <Button variant="primary" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]">
                 {action.label}
               </Button>
             </Link>
           )}
           {secondaryAction && (
             <Link href={secondaryAction.href}>
-              <Button variant="bordered" className="font-bold border-border/40 bg-surface">
+                <Button variant="outline" className="font-bold border-border/40 bg-surface">
                 {secondaryAction.label}
               </Button>
             </Link>

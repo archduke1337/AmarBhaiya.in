@@ -50,7 +50,7 @@ export function DashboardHeader({
         <div className="flex items-center gap-3 self-end md:self-auto">
           <ThemeToggle />
           <form action={logoutAction} className="hidden sm:block">
-            <Button type="submit" variant="faded" size="sm" className="font-bold border-border/40 hover:bg-surface text-danger hover:text-danger-foreground hover:border-danger hover:bg-danger">
+            <Button type="submit" variant="danger-soft" size="sm" className="font-bold border-border/40 hover:bg-surface text-danger hover:text-danger-foreground hover:border-danger hover:bg-danger">
               Sign out
             </Button>
           </form>
