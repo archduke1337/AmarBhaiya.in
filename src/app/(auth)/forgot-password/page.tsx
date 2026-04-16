@@ -76,19 +76,20 @@ export default function ForgotPasswordPage() {
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <Input
-          required
-          label="Email address"
-          placeholder="you@example.com"
-          type="email"
-          value={email}
-          onValueChange={setEmail}
-          autoComplete="email"
-          classNames={{
-            inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-            label: "font-semibold text-foreground/70",
-          }}
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-foreground/70">Email address</label>
+          <Input
+            required
+            placeholder="you@example.com"
+            type="email"
+            value={email}
+            onValueChange={setEmail}
+            autoComplete="email"
+            classNames={{
+              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+            }}
+          />
+        </div>
 
         <Button
           type="submit"

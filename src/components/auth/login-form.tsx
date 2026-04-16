@@ -62,26 +62,26 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
         </div>
       )}
 
-      {/* HeroUI natively supports forms, but we use standard onSubmit here */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <Input
-          isRequired
-          label="Email address"
-          placeholder="you@example.com"
-          type="email"
-          value={email}
-          onValueChange={setEmail}
-          autoComplete="email"
-          classNames={{
-            inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-            label: "font-semibold text-foreground/70",
-          }}
-        />
-
-        <div className="flex flex-col gap-2 relative">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-foreground/70">Email address</label>
           <Input
             required
-            label="Password"
+            placeholder="you@example.com"
+            type="email"
+            value={email}
+            onValueChange={setEmail}
+            autoComplete="email"
+            classNames={{
+              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+            }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5 relative">
+          <label className="text-sm font-semibold text-foreground/70">Password</label>
+          <Input
+            required
             placeholder="••••••••"
             type="password"
             value={password}
@@ -89,7 +89,6 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             autoComplete="current-password"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-              label: "font-semibold text-foreground/70",
             }}
           />
           <Link

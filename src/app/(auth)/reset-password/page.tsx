@@ -52,18 +52,19 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
           {/* Note: since this is a server component handling standard form submission, 
               we pass standard html inputs with HeroUI classes for styling, or 
               use standard HTML FormData in the action. We can use HeroUI Input. */}
-          <Input
-            required
-            name="password"
-            label="New password"
-            placeholder="Min 8 chars, 1 letter, 1 number"
-            type="password"
-            minLength={8}
-            classNames={{
-              inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
-              label: "font-semibold text-foreground/70",
-            }}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-foreground/70">New password</label>
+            <Input
+              required
+              name="password"
+              placeholder="Min 8 chars, 1 letter, 1 number"
+              type="password"
+              minLength={8}
+              classNames={{
+                inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
+              }}
+            />
+          </div>
           <p className="text-xs text-foreground/50 px-2 font-medium">
             At least 8 characters with a letter and a number.
           </p>
