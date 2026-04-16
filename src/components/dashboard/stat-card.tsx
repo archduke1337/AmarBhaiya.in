@@ -1,15 +1,40 @@
-import { type LucideIcon } from "lucide-react";
+import { ReactNode } from "react";
+import { cn } from "@/lib/utils/cn";
 
-type StatCardProps = {
+interface StatGridProps {
+  children: ReactNode;
+  columns?: 2 | 3 | 4;
+  className?: string;
+}
+
+export function StatGrid({ children, columns = 4, className }: StatGridProps) {
+  return (
+    <div
+      className={cn(
+        "grid gap-4",
+        columns === 2 && "sm:grid-cols-2",
+        columns === 3 && "sm:grid-cols-2 lg:grid-cols-3",
+        columns === 4 && "sm:grid-cols-2 lg:grid-cols-4",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+interface StatCardProps {
   label: string;
   value: string | number;
-  icon?: LucideIcon;
+  icon?: React.ComponentType<{ className?: string }>;
   description?: string;
   trend?: {
     value: number;
     label: string;
+    direction: "up" | "down" | "neutral";
   };
-};
+  className?: string;
+}
 
 export function StatCard({
   label,
@@ -17,58 +42,42 @@ export function StatCard({
   icon: Icon,
   description,
   trend,
+  className,
 }: StatCardProps) {
   return (
-    <article className="group relative flex flex-col gap-4 rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-card)] p-4 shadow-retro transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:bg-[color:var(--surface-secondary)] sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1.5">
-          <p className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground">
-            {label}
-          </p>
-          <p className="text-2xl tabular-nums sm:text-3xl">
-            {value}
-          </p>
-        </div>
+    <div className={cn("bg-surface border border-border/40 rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden", className)}>
+      <div className="flex items-center justify-between">
+        <p className="font-semibold text-sm text-foreground/60">{label}</p>
         {Icon && (
-          <div className="rounded-[calc(var(--radius)-1px)] border-2 border-border bg-[color:var(--surface-accent)] p-2.5 text-accent-foreground shadow-retro-sm transition-colors group-hover:bg-primary group-hover:text-primary-foreground sm:p-3">
+          <div className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-accent">
             <Icon className="size-4" />
           </div>
         )}
       </div>
-
+      <div className="flex items-baseline gap-2 mt-1">
+        <p className="text-3xl font-black tracking-[-0.03em] leading-none">{value}</p>
+      </div>
       {(description || trend) && (
-        <div className="mt-auto flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground">
+        <div className="flex items-center gap-2 mt-auto pt-2">
           {trend && (
             <span
-              className={
-                trend.value >= 0
-                  ? "rounded-full border-2 border-border bg-secondary px-2 py-1 text-secondary-foreground shadow-retro-sm"
-                  : "rounded-full border-2 border-border bg-destructive px-2 py-1 text-destructive-foreground shadow-retro-sm"
-              }
+              className={cn(
+                "inline-flex items-center text-xs font-bold px-1.5 py-0.5 rounded-md",
+                trend.direction === "up" && "bg-success/10 text-success",
+                trend.direction === "down" && "bg-danger/10 text-danger",
+                trend.direction === "neutral" && "bg-surface-hover text-foreground/70"
+              )}
             >
-              {trend.value >= 0 ? "↑" : "↓"} {Math.abs(trend.value)}%
+              {trend.direction === "up" ? "↑" : trend.direction === "down" ? "↓" : "→"} {trend.value}%
             </span>
           )}
-          {description && <span>{description}</span>}
-          {trend && <span>{trend.label}</span>}
+          {description && (
+            <p className="text-xs font-medium text-foreground/50 truncate">
+              {description}
+            </p>
+          )}
         </div>
       )}
-    </article>
+    </div>
   );
-}
-
-type StatGridProps = {
-  children: React.ReactNode;
-  columns?: 2 | 3 | 4;
-};
-
-export function StatGrid({ children, columns = 4 }: StatGridProps) {
-  const colClass =
-    columns === 2
-      ? "grid gap-4 sm:grid-cols-2"
-      : columns === 3
-        ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        : "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
-
-  return <section className={colClass}>{children}</section>;
 }

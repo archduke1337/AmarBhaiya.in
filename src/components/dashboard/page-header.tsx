@@ -1,32 +1,43 @@
-type PageHeaderProps = {
-  eyebrow: string;
+import { ReactNode } from "react";
+import { cn } from "@/lib/utils/cn";
+
+interface PageHeaderProps {
+  eyebrow?: string;
   title: string;
   description?: string;
-  actions?: React.ReactNode;
-};
+  actions?: ReactNode;
+  className?: string;
+}
 
 export function PageHeader({
   eyebrow,
   title,
   description,
   actions,
+  className,
 }: PageHeaderProps) {
   return (
-    <section className="retro-surface flex flex-col gap-5 bg-[color:var(--surface-card)] px-4 py-5 sm:px-5 sm:py-5 lg:flex-row lg:items-end lg:justify-between">
-      <div className="flex min-w-0 flex-col gap-3">
-        <p className="font-heading text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          {eyebrow}
-        </p>
-        <h1 className="text-3xl leading-[0.94] tracking-[-0.05em] md:text-5xl">
+    <div className={cn("flex flex-col gap-4 md:flex-row md:items-end md:justify-between", className)}>
+      <div className="flex flex-col gap-2">
+        {eyebrow && (
+          <p className="eyebrow self-start">
+            {eyebrow}
+          </p>
+        )}
+        <h1 className="text-[clamp(1.75rem,3vw,2.5rem)] font-black tracking-[-0.03em] leading-none">
           {title}
         </h1>
         {description && (
-          <p className="max-w-2xl text-sm font-medium leading-7 text-muted-foreground">
+          <p className="max-w-[42rem] text-sm md:text-base font-medium text-foreground/60 leading-relaxed mt-1">
             {description}
           </p>
         )}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-3 lg:justify-end">{actions}</div>}
-    </section>
+      {actions && (
+        <div className="flex shrink-0 items-center mt-2 md:mt-0">
+          {actions}
+        </div>
+      )}
+    </div>
   );
 }
