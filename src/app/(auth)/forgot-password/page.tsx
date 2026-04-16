@@ -77,14 +77,13 @@ export default function ForgotPasswordPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <Input
-          isRequired
+          required
           label="Email address"
           placeholder="you@example.com"
           type="email"
           value={email}
           onValueChange={setEmail}
           autoComplete="email"
-          variant="bordered"
           classNames={{
             inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
             label: "font-semibold text-foreground/70",

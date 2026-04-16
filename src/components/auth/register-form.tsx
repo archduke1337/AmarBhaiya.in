@@ -75,7 +75,6 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
           value={name}
           onValueChange={setName}
           autoComplete="name"
-          variant="bordered"
           classNames={{
             inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
             label: "font-semibold text-foreground/70",
@@ -90,7 +89,6 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
           value={email}
           onValueChange={setEmail}
           autoComplete="email"
-          variant="bordered"
           classNames={{
             inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
             label: "font-semibold text-foreground/70",
@@ -106,7 +104,6 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             value={password}
             onValueChange={setPassword}
             autoComplete="new-password"
-            variant="bordered"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
               label: "font-semibold text-foreground/70",

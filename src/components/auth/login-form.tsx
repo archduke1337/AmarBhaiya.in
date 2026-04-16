@@ -72,7 +72,6 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
           value={email}
           onValueChange={setEmail}
           autoComplete="email"
-          variant="bordered"
           classNames={{
             inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
             label: "font-semibold text-foreground/70",
@@ -81,14 +80,13 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
 
         <div className="flex flex-col gap-2 relative">
           <Input
-            isRequired
+            required
             label="Password"
             placeholder="••••••••"
             type="password"
             value={password}
             onValueChange={setPassword}
             autoComplete="current-password"
-            variant="bordered"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
               label: "font-semibold text-foreground/70",

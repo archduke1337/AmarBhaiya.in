@@ -11,6 +11,7 @@ import {
   Video,
   ArrowRight,
 } from "lucide-react";
+import { Button } from "@heroui/react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
@@ -32,9 +33,6 @@ import {
   EmptyState,
   ActivityFeed,
 } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 export default async function StudentDashboardPage() {
   const user = await requireAuth();
@@ -64,20 +62,24 @@ export default async function StudentDashboardPage() {
   const greeting = getGreeting();
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 animate-fade-in-up pb-[10vh]">
       {/* Header */}
       <PageHeader
-        eyebrow={role === "student" ? "Dashboard" : `Dashboard · ${role}`}
+        eyebrow={role === "student" ? "Your Dashboard" : `Dashboard · ${role}`}
         title={`${greeting}, ${user.name.split(" ")[0]}`}
         description="Pick up where you left off, revise quickly with notes, or move straight into the next lesson."
         actions={
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/notes">Open notes</Link>
-            </Button>
-            <Button asChild variant="secondary" size="sm">
-              <Link href="/courses">Browse courses</Link>
-            </Button>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/notes">
+              <Button variant="bordered" className="bg-surface border-border/40 font-bold" size="sm">
+                Notes
+              </Button>
+            </Link>
+            <Link href="/courses">
+              <Button color="primary" variant="solid" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
+                Browse courses
+              </Button>
+            </Link>
           </div>
         }
       />
@@ -117,178 +119,134 @@ export default async function StudentDashboardPage() {
         />
       </StatGrid>
 
-      <RetroPanel tone="accent" className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-1">
-          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
-            Study rhythm
-          </p>
-          <p className="text-sm font-medium leading-7 text-foreground/80">
-            Use notes for quick revision, courses for the full sequence, and live sessions when you need explanation that feels human.
-          </p>
+      {/* Rhythm Info Block (previously RetroPanel) */}
+      <div className="card-bezel my-2" style={{ background: "color-mix(in oklab, var(--surface) 80%, var(--accent) 5%)" }}>
+        <div className="card-bezel-inner p-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <p className="eyebrow">
+              Study rhythm
+            </p>
+            <p className="text-sm font-medium leading-relaxed text-foreground/80 max-w-2xl mt-1">
+              Use notes for quick revision, courses for the full sequence, and live sessions when you need explanation that feels human. Class 6 to 12.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">Class 6 to 12 first</Badge>
-          <Badge variant="ghost">Notes + courses + live</Badge>
-        </div>
-      </RetroPanel>
+      </div>
 
       {/* Main content grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Continue Learning — takes 2 cols */}
-        <section className="flex flex-col gap-4 lg:col-span-2">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Continue Learning</h2>
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant="link" size="sm">
-                <Link href="/app/courses">View all</Link>
-              </Button>
-              <Button asChild variant="link" size="sm">
-                <Link href="/notes">Notes</Link>
-              </Button>
-            </div>
-          </div>
-
-          {inProgressCourses.length === 0 ? (
-            <EmptyState
-              icon={GraduationCap}
-              title="No courses in progress"
-              description="Browse the course catalogue and enroll in a course to get started."
-              action={{ label: "Browse courses", href: "/courses" }}
-            />
-          ) : (
-            <div className="grid gap-4 xl:grid-cols-1">
-              {inProgressCourses.slice(0, 3).map((course) => (
-                <Link
-                  key={course.id}
-                  href={course.continueHref}
-                  className="group"
-                >
-                  <RetroPanel
-                    tone={course.progressPercent >= 70 ? "secondary" : "card"}
-                    className="space-y-4 transition-transform group-hover:-translate-y-1"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex flex-col gap-1">
-                        <h3 className="font-heading text-xl font-black tracking-[-0.04em] group-hover:underline">
-                          {course.title}
-                        </h3>
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {course.completedLessons} of {course.totalLessons}{" "}
-                          lessons complete
-                        </p>
-                        {course.continueLessonTitle && (
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                            {course.resumePercent > 0
-                              ? `Resume ${course.continueLessonTitle} at ${course.resumePercent}%`
-                              : `Up next: ${course.continueLessonTitle}`}
-                          </p>
-                        )}
-                      </div>
-                      <Badge variant="outline" className="shrink-0">
-                        {course.category || "General"}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="h-2 flex-1 overflow-hidden rounded-full border-2 border-border bg-card">
-                        <div
-                          className="h-full bg-primary transition-all duration-500"
-                          style={{
-                            width: `${Math.max(2, course.progressPercent)}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs tabular-nums font-black text-muted-foreground">
-                        {course.progressPercent}%
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      <ArrowRight className="size-3" />
-                      <span>
-                        {course.resumePercent > 0 ? "Resume lesson" : "Open next lesson"}
-                      </span>
-                    </div>
-                  </RetroPanel>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <section className="flex flex-col gap-4">
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        {/* Continue Learning — Left Column */}
+        <section className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Study Queue</h2>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button asChild variant="link" size="sm">
-                  <Link href="/app/assignments#pending-assignments">Assignments</Link>
-                </Button>
-                <Button asChild variant="link" size="sm">
-                  <Link href="/app/quizzes">Quizzes</Link>
-                </Button>
+              <h2 className="text-2xl font-black tracking-[-0.03em]">Continue Learning</h2>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/app/courses">
+                   <span className="text-sm font-bold text-accent hover:text-accent-foreground transition-colors cursor-pointer">View all</span>
+                </Link>
               </div>
             </div>
 
-            {studyQueue.length === 0 ? (
-              <RetroPanel tone="muted">
-                <p className="text-sm font-medium text-muted-foreground">
-                  No pending assignments or quiz retakes right now. Keep going with your lessons and new work will show up here automatically.
-                </p>
-              </RetroPanel>
+            {inProgressCourses.length === 0 ? (
+              <EmptyState
+                icon={GraduationCap}
+                title="No active courses"
+                description="Browse the course catalogue and enroll in a course to get started."
+                action={{ label: "Browse courses", href: "/courses" }}
+              />
             ) : (
-              <RetroPanel tone="card" className="overflow-hidden p-0">
-                <div className="divide-y-2 divide-border">
-                  {studyQueue.map((item) => (
-                    <Link
-                      key={`${item.kind}-${item.id}`}
-                      href={item.href}
-                      className="group block transition-colors hover:bg-[color:var(--surface-ink)]"
-                    >
-                      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex min-w-0 flex-col gap-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-medium group-hover:underline">
-                              {item.title}
-                            </p>
-                            <Badge variant="outline" className="text-[10px] uppercase">
-                              {item.kind}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {item.courseTitle}
-                            {item.lessonTitle ? ` · ${item.lessonTitle}` : ""}
+              <div className="grid gap-4 xl:grid-cols-1">
+                {inProgressCourses.slice(0, 3).map((course) => (
+                  <Link
+                    key={course.id}
+                    href={course.continueHref}
+                    className="group"
+                  >
+                    <div className="flex flex-col gap-4 p-5 rounded-2xl bg-surface border border-border/40 transition-all hover:bg-surface-hover hover:border-border/60 hover:shadow-[var(--surface-shadow)]">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col gap-1">
+                          <h3 className="text-lg font-black tracking-[-0.02em] group-hover:text-accent transition-colors">
+                            {course.title}
+                          </h3>
+                          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground/50">
+                            {course.completedLessons} of {course.totalLessons} lessons
                           </p>
-                          <p className="line-clamp-2 text-xs text-muted-foreground">
-                            {item.detail}
-                          </p>
-                        </div>
-
-                        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
-                          <Badge
-                            variant={item.status === "Overdue" ? "default" : "outline"}
-                            className="text-[10px]"
-                          >
-                            {item.status}
-                          </Badge>
-                          {item.dueAt && (
-                            <span className="text-[10px] text-muted-foreground">
-                              {formatRelativeTime(item.dueAt)}
-                            </span>
-                          )}
-                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                            <ArrowRight className="size-3" />
-                            Open
-                          </span>
                         </div>
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </RetroPanel>
+
+                      <div className="flex flex-col gap-2">
+                         <div className="flex justify-between items-center text-xs font-bold">
+                            <span className="text-foreground/50">
+                              {course.resumePercent > 0
+                                ? `Resume: ${course.continueLessonTitle}`
+                                : `Up Next: ${course.continueLessonTitle}`}
+                            </span>
+                            <span className="text-foreground">{course.progressPercent}%</span>
+                         </div>
+                         <div className="h-2 rounded-full bg-surface-hover overflow-hidden">
+                           <div
+                             className="h-full bg-accent transition-all duration-700 w-0"
+                             style={{ width: `${Math.max(2, course.progressPercent)}%` }}
+                           />
+                         </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
-          </section>
+          </div>
+
+          {/* Study Queue Section */}
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-2xl font-black tracking-[-0.03em]">Study Queue</h2>
+            </div>
+
+            {studyQueue.length === 0 ? (
+              <div className="p-6 rounded-2xl border border-dashed border-border/60 bg-surface/30">
+                <p className="text-sm font-medium text-foreground/50 text-center">
+                  No pending assignments or quiz retakes right now.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col rounded-2xl bg-surface border border-border/40 overflow-hidden divide-y divide-border/20">
+                {studyQueue.map((item) => (
+                  <Link
+                    key={`${item.kind}-${item.id}`}
+                    href={item.href}
+                    className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors hover:bg-surface-hover group"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-[0.1em] px-1.5 py-0.5 rounded outline outline-1 outline-border text-foreground/60">
+                          {item.kind}
+                        </span>
+                        <p className="font-bold text-sm tracking-tight group-hover:text-accent transition-colors">
+                           {item.title}
+                        </p>
+                      </div>
+                      <p className="text-xs font-medium text-foreground/50">
+                        {item.courseTitle}{item.lessonTitle ? ` · ${item.lessonTitle}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {item.status === "Overdue" && (
+                         <span className="text-[10px] font-bold uppercase text-danger bg-danger/10 px-2 py-0.5 rounded">Overdue</span>
+                      )}
+                      {item.dueAt && (
+                         <span className="text-xs font-medium text-foreground/40">{formatRelativeTime(item.dueAt)}</span>
+                      )}
+                      <ArrowRight className="size-4 text-foreground/30 group-hover:text-accent transition-colors shrink-0" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
 
-        {/* Sidebar — upcoming sessions + achievements */}
+        {/* Sidebar — Right Column */}
         <aside className="flex flex-col gap-6">
           <ActivityFeed
             title="Next Steps"
@@ -317,7 +275,6 @@ export default async function StudentDashboardPage() {
             />
           )}
 
-          {/* Upcoming Live Sessions */}
           <ActivityFeed
             title="Upcoming Sessions"
             viewAllHref="/app/live"
@@ -333,80 +290,34 @@ export default async function StudentDashboardPage() {
             }))}
           />
 
-          {/* Recent Completions */}
-          {completedCourses.length > 0 && (
-            <ActivityFeed
-              title="Completed Courses"
-              items={completedCourses.slice(0, 3).map((course) => ({
-                id: course.id,
-                label: course.title,
-                description: `${course.totalLessons} lessons`,
-                badge: "Done",
-                href: `/app/courses/${course.slug || course.id}`,
-              }))}
-            />
-          )}
-
-          {/* Recent Notifications */}
-          <ActivityFeed
-            title={`Notifications${unreadCount > 0 ? ` (${unreadCount})` : ""}`}
-            viewAllHref="/app/notifications"
-            emptyText="No recent notifications."
-            items={notifications.slice(0, 4).map((n) => ({
-              id: n.id,
-              label: n.title,
-              description: n.body || n.type,
-              badge: n.isRead ? undefined : "NEW",
-              href: n.link || `/app/notifications#notification-${n.id}`,
-            }))}
-          />
-
-          <RetroPanel tone="accent" className="overflow-hidden p-0">
-            <p className="border-b-2 border-border px-5 py-3 font-heading text-sm font-black uppercase tracking-[0.16em]">
-              Quick Links
-            </p>
-            <div className="flex flex-col divide-y-2 divide-border">
-              {[
-                {
-                  label: "Study Notes",
-                  href: "/notes",
-                  icon: Download,
-                },
-                {
-                  label: "Live Sessions",
-                  href: "/app/live#upcoming-sessions",
-                  icon: Video,
-                },
-                {
-                  label: "Notifications",
-                  href: "/app/notifications",
-                  icon: Bell,
-                },
-                {
-                  label: "Billing History",
-                  href: "/app/billing",
-                  icon: CreditCard,
-                },
-                {
-                  label: "Community",
-                  href: "/app/community",
-                  icon: MessageSquare,
-                },
-              ].map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="group flex items-center justify-between gap-3 px-5 py-3 text-sm text-muted-foreground transition-colors hover:bg-[color:var(--surface-ink)] hover:text-foreground"
-                >
-                  <div className="flex items-center gap-2">
-                    <link.icon className="size-4" />
-                    {link.label}
-                  </div>
-                  <ArrowRight className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
-                </Link>
-              ))}
-            </div>
-          </RetroPanel>
+          <div className="flex flex-col rounded-3xl bg-surface border border-border/40 overflow-hidden relative">
+             <div className="px-5 py-4 border-b border-border/20">
+               <h3 className="font-bold text-base tracking-tight">Quick Links</h3>
+             </div>
+             <div className="flex flex-col divide-y divide-border/20">
+                {[
+                  { label: "Study Notes", href: "/notes", icon: Download },
+                  { label: "Live Sessions", href: "/app/live#upcoming-sessions", icon: Video },
+                  { label: "Notifications", href: "/app/notifications", icon: Bell },
+                  { label: "Billing History", href: "/app/billing", icon: CreditCard },
+                  { label: "Community", href: "/app/community", icon: MessageSquare },
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex justify-between items-center p-4 transition-colors hover:bg-surface-hover group"
+                  >
+                    <div className="flex items-center gap-3 text-sm font-semibold text-foreground/80 group-hover:text-foreground">
+                      <div className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-foreground/60 group-hover:text-accent transition-colors">
+                        <link.icon className="size-4" />
+                      </div>
+                      {link.label}
+                    </div>
+                    <ArrowRight className="size-4 opacity-50 group-hover:opacity-100 group-hover:text-accent transition-all transform group-hover:translate-x-1" />
+                  </Link>
+                ))}
+             </div>
+          </div>
         </aside>
       </div>
     </div>
@@ -421,28 +332,11 @@ function getGreeting(): string {
 }
 
 function buildStudentActionItems(
-  inProgressCourses: Array<{
-    id: string;
-    title: string;
-    continueHref: string;
-    continueLessonTitle: string;
-    resumePercent: number;
-  }>,
-  upcomingSessions: Array<{
-    id: string;
-    title: string;
-    status: string;
-    scheduledAt: string | null;
-  }>,
+  inProgressCourses: Array<any>,
+  upcomingSessions: Array<any>,
   unreadCount: number
 ) {
-  const items: Array<{
-    id: string;
-    label: string;
-    description: string;
-    badge?: string;
-    href?: string;
-  }> = [];
+  const items: Array<any> = [];
 
   const nextCourse = inProgressCourses[0];
   if (nextCourse) {

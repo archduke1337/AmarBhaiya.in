@@ -53,13 +53,12 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
               we pass standard html inputs with HeroUI classes for styling, or 
               use standard HTML FormData in the action. We can use HeroUI Input. */}
           <Input
-            isRequired
+            required
             name="password"
             label="New password"
             placeholder="Min 8 chars, 1 letter, 1 number"
             type="password"
             minLength={8}
-            variant="bordered"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
               label: "font-semibold text-foreground/70",

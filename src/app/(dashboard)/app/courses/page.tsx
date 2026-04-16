@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { BookOpen, ArrowRight, Award } from "lucide-react";
+import { Button } from "@heroui/react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getStudentEnrolledCourses } from "@/lib/appwrite/dashboard-data";
 import { getUserCertificates, issueCertificateAction } from "@/actions/certificate";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 
 export default async function StudentCoursesPage() {
   const user = await requireAuth();
@@ -24,19 +22,23 @@ export default async function StudentCoursesPage() {
   const completed = courses.filter((c) => c.progressPercent >= 100);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 animate-fade-in-up pb-[10vh]">
       <PageHeader
         eyebrow="My Courses"
         title="Keep your learning moving."
         description={`${courses.length} enrolled course${courses.length !== 1 ? "s" : ""} in your library, with ${completed.length} already completed.`}
         actions={
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/notes">Open notes</Link>
-            </Button>
-            <Button asChild variant="secondary" size="sm">
-              <Link href="/courses">Browse catalogue</Link>
-            </Button>
+          <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
+            <Link href="/notes">
+              <Button variant="bordered" className="bg-surface font-bold border-border/40" size="sm">
+                Notes
+              </Button>
+            </Link>
+            <Link href="/courses">
+              <Button color="primary" variant="solid" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
+                Browse catalogue
+              </Button>
+            </Link>
           </div>
         }
       />
@@ -49,27 +51,34 @@ export default async function StudentCoursesPage() {
           action={{ label: "Explore courses", href: "/courses" }}
         />
       ) : (
-        <div className="flex flex-col gap-6">
-          <RetroPanel tone="accent" className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-1">
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
-                Student library
-              </p>
-              <p className="text-sm font-medium leading-7 text-foreground/80">
-                Notes help with quick revision. Courses are where the full sequence, quizzes, assignments, and live support come together.
-              </p>
+        <div className="flex flex-col gap-8">
+          <div className="card-bezel my-2" style={{ background: "color-mix(in oklab, var(--surface) 80%, var(--accent) 5%)" }}>
+            <div className="card-bezel-inner p-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-1">
+                <p className="eyebrow">
+                  Student library
+                </p>
+                <p className="text-sm font-medium leading-relaxed text-foreground/80 max-w-2xl mt-1">
+                  Notes help with quick revision. Courses are where the full sequence, quizzes, assignments, and live support come together.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                 <span className="text-[10px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded bg-surface/50 border border-border/40 shrink-0 text-foreground/70">
+                    {inProgress.length} in progress
+                 </span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded bg-success/10 text-success shrink-0">
+                    {completed.length} completed
+                 </span>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{inProgress.length} in progress</Badge>
-              <Badge variant="ghost">{completed.length} completed</Badge>
-            </div>
-          </RetroPanel>
+          </div>
 
           {/* In Progress */}
           {inProgress.length > 0 && (
-            <section className="flex flex-col gap-3">
-              <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
-                In Progress ({inProgress.length})
+            <section className="flex flex-col gap-4">
+              <h2 className="text-xl font-black tracking-[-0.03em] flex items-center gap-2">
+                In Progress 
+                <span className="text-sm font-semibold bg-surface border border-border/40 text-foreground/50 px-2 py-0.5 rounded-full">{inProgress.length}</span>
               </h2>
               <div className="grid gap-4 xl:grid-cols-2">
                 {inProgress.map((course) => (
@@ -81,9 +90,10 @@ export default async function StudentCoursesPage() {
 
           {/* Completed */}
           {completed.length > 0 && (
-            <section className="flex flex-col gap-3">
-              <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
-                Completed ({completed.length})
+            <section className="flex flex-col gap-4">
+              <h2 className="text-xl font-black tracking-[-0.03em] flex items-center gap-2">
+                Completed 
+                <span className="text-sm font-semibold bg-success/10 text-success px-2 py-0.5 rounded-full">{completed.length}</span>
               </h2>
               <div className="grid gap-4 xl:grid-cols-2">
                 {completed.map((course) => (
@@ -124,30 +134,39 @@ function CourseCard({
   const primaryHref = isComplete ? `/app/courses/${course.slug || course.id}` : course.continueHref;
 
   return (
-    <RetroPanel
-      tone={isComplete ? "muted" : course.progressPercent >= 70 ? "secondary" : "card"}
-      className="flex h-full flex-col gap-0 p-0 transition-transform hover:-translate-y-1"
+    <div
+      className={`flex flex-col p-5 rounded-2xl border transition-all hover:shadow-[var(--surface-shadow)] hover:-translate-y-[2px] ${
+        isComplete
+          ? "bg-surface/50 border-border/30 opacity-90"
+          : "bg-surface border-border/40 hover:bg-surface-hover hover:border-border/60"
+      }`}
     >
       <Link
         href={primaryHref}
-        className="group flex flex-1 flex-col gap-4 p-5"
+        className="group flex flex-1 flex-col gap-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{course.category}</Badge>
-            {isComplete ? <Badge variant="ghost">Completed</Badge> : null}
+            <span className="text-[10px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded bg-surface/50 border border-border/40 shrink-0 text-foreground/70">
+               {course.category}
+            </span>
+            {isComplete ? (
+              <span className="text-[10px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded bg-success/10 text-success shrink-0">
+                 Completed
+              </span>
+            ) : null}
           </div>
-          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/40">
             {course.totalLessons} lessons
           </span>
         </div>
 
-        <h3 className="font-heading text-2xl font-black leading-[0.96] tracking-[-0.04em] group-hover:underline">
+        <h3 className="text-xl font-black leading-tight tracking-[-0.03em] group-hover:text-accent transition-colors">
           {course.title}
         </h3>
 
         {!isComplete && course.continueLessonTitle && (
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          <p className="text-xs font-medium text-foreground/50">
             {course.resumePercent > 0
               ? `Resume ${course.continueLessonTitle} at ${course.resumePercent}%`
               : `Up next: ${course.continueLessonTitle}`}
@@ -155,58 +174,52 @@ function CourseCard({
         )}
 
         <div className="flex items-center gap-3">
-          <div className="h-2 flex-1 overflow-hidden rounded-full border-2 border-border bg-[color:var(--surface-card)]">
+          <div className="h-2 flex-1 overflow-hidden rounded-full border border-border/20 bg-surface-hover">
             <div
-              className={`h-full transition-all duration-500 ${
-                isComplete
-                  ? "bg-emerald-500 dark:bg-emerald-400"
-                  : "bg-primary"
+              className={`h-full transition-all duration-700 w-0 ${
+                isComplete ? "bg-success" : "bg-accent"
               }`}
               style={{ width: `${Math.max(2, course.progressPercent)}%` }}
             />
           </div>
-          <span className="text-xs tabular-nums font-black text-muted-foreground">
+          <span className="text-[10px] tabular-nums font-black text-foreground/60 w-8 text-right">
             {course.progressPercent}%
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span className="font-semibold">
+        <div className="flex items-center justify-between gap-4 pt-2 border-t border-border/30 text-xs mt-auto">
+          <span className="font-semibold text-foreground/50">
             {course.completedLessons}/{course.totalLessons} lessons
           </span>
-          <span className="flex shrink-0 items-center gap-1 font-semibold uppercase tracking-[0.12em] transition-colors group-hover:text-foreground">
-            <ArrowRight className="size-3" />
-            {isComplete
-              ? "Review"
-              : course.resumePercent > 0
-                ? "Resume"
-                : "Continue"}
+          <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.1em] transition-colors group-hover:text-accent">
+            {isComplete ? "Review" : course.resumePercent > 0 ? "Resume" : "Continue"}
+            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
           </span>
         </div>
       </Link>
 
       {/* Certificate CTA for completed courses */}
       {isComplete && (
-        <div className="flex items-center justify-between border-t-2 border-border px-5 py-3">
+        <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/30">
           {certificate ? (
             <Link
               href={certificate.shareUrl}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-600 hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.1em] text-success hover:underline hover:text-success/80"
             >
               <Award className="size-3.5" />
               View Certificate
             </Link>
           ) : (
-            <form action={issueCertificateAction}>
+            <form action={issueCertificateAction} className="w-full">
               <input type="hidden" name="courseId" value={course.id} />
-              <Button type="submit" variant="outline" size="xs">
-                <Award className="size-3.5" />
+              <Button type="submit" variant="faded" size="sm" className="font-bold border-success/40 text-success hover:bg-success hover:text-success-foreground hover:border-success w-full justify-center">
+                <Award className="size-3.5 mr-1" />
                 Claim Certificate
               </Button>
             </form>
           )}
         </div>
       )}
-    </RetroPanel>
+    </div>
   );
 }
