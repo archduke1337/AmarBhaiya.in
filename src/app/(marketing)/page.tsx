@@ -17,29 +17,6 @@ import { getHomePageContent } from "@/lib/appwrite/marketing-content";
 
 export const revalidate = 3600;
 
-const FALLBACK_STATS = [
-  { end: 0, suffix: "+", label: "Students" },
-  { end: 0, suffix: "+", label: "Courses" },
-  { end: 0, suffix: "+", label: "Hours" },
-  { end: 0, suffix: " yrs", label: "Teaching" },
-];
-
-const FALLBACK_DOMAINS = [
-  { title: "School learning", sub: "Class 6 to 12 courses with practical notes" },
-  { title: "Exam prep", sub: "Structured revision paths and chapter-level practice" },
-  { title: "Doubt support", sub: "Live sessions and actionable feedback loops" },
-  { title: "Skills", sub: "Career-oriented skills layered after school basics" },
-  { title: "Community", sub: "Learn with peers and stay accountable" },
-  { title: "Certificates", sub: "Completion records with verification links" },
-];
-
-const FALLBACK_WHY_ITEMS = [
-  { title: "Concept clarity", body: "Lessons focus on understanding first, then speed." },
-  { title: "Useful notes", body: "Chapter notes are written for revision under pressure." },
-  { title: "Live guidance", body: "Students can ask direct doubts in live sessions." },
-  { title: "Progress visibility", body: "Courses and milestones stay transparent and trackable." },
-];
-
 const DOMAIN_ICONS = ["📐", "🔬", "📖", "🌍", "🖊️", "💻"] as const;
 const DOMAIN_COLORS = [
   "oklch(0.70 0.14 265)",
@@ -61,30 +38,24 @@ export default async function MarketingPage() {
   type MarketingHomeContent = Awaited<ReturnType<typeof getHomePageContent>>;
 
   const fallbackHomeContent: MarketingHomeContent = {
-    stats: FALLBACK_STATS,
-    domains: FALLBACK_DOMAINS,
+    stats: [],
+    domains: [],
     learnItems: [],
     featuredCourses: [],
-    whyItems: FALLBACK_WHY_ITEMS,
+    whyItems: [],
   };
 
   let homeContent: MarketingHomeContent = fallbackHomeContent;
 
   try {
-    const fetchedContent = await getHomePageContent();
-    homeContent = {
-      ...fetchedContent,
-      stats: fetchedContent.stats.length > 0 ? fetchedContent.stats : FALLBACK_STATS,
-      domains: fetchedContent.domains.length > 0 ? fetchedContent.domains : FALLBACK_DOMAINS,
-      whyItems: fetchedContent.whyItems.length > 0 ? fetchedContent.whyItems : FALLBACK_WHY_ITEMS,
-    };
+    homeContent = await getHomePageContent();
   } catch {
     homeContent = fallbackHomeContent;
   }
 
-  const stats = homeContent.stats.length > 0 ? homeContent.stats : FALLBACK_STATS;
-  const domains = homeContent.domains.length > 0 ? homeContent.domains : FALLBACK_DOMAINS;
-  const whyItems = homeContent.whyItems.length > 0 ? homeContent.whyItems : FALLBACK_WHY_ITEMS;
+  const stats = homeContent.stats;
+  const domains = homeContent.domains;
+  const whyItems = homeContent.whyItems;
   const featuredCourse = homeContent.featuredCourses[0] ?? null;
   const heroDescription =
     homeContent.learnItems[0]?.desc?.trim() ||
@@ -175,16 +146,18 @@ export default async function MarketingPage() {
                 </RevealWrapper>
 
                 {/* Stats row */}
-                <RevealWrapper className="stagger-4 flex flex-wrap gap-6 pt-4 border-t border-border/40">
-                  {stats.map((stat) => (
-                    <div key={stat.label} className="flex flex-col">
-                      <span className="text-xl font-black text-foreground leading-none">
-                        {formatStatValue(stat.end, stat.suffix)}
-                      </span>
-                      <span className="text-xs text-foreground/50 font-medium mt-0.5">{stat.label}</span>
-                    </div>
-                  ))}
-                </RevealWrapper>
+                {stats.length > 0 ? (
+                  <RevealWrapper className="stagger-4 flex flex-wrap gap-6 pt-4 border-t border-border/40">
+                    {stats.map((stat) => (
+                      <div key={stat.label} className="flex flex-col">
+                        <span className="text-xl font-black text-foreground leading-none">
+                          {formatStatValue(stat.end, stat.suffix)}
+                        </span>
+                        <span className="text-xs text-foreground/50 font-medium mt-0.5">{stat.label}</span>
+                      </div>
+                    ))}
+                  </RevealWrapper>
+                ) : null}
               </div>
 
               {/* Right — Asymmetric bento preview cards */}
@@ -263,40 +236,50 @@ export default async function MarketingPage() {
             </RevealWrapper>
 
             {/* Responsive subject grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-              {domains.slice(0, 6).map((domain, i) => (
-                <RevealWrapper
-                  key={`${domain.title}-${i}`}
-                  className={`stagger-${Math.min(i + 1, 5)}`}
-                >
-                  <Link
-                    href="/courses"
-                    className="block group"
+            {domains.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                {domains.slice(0, 6).map((domain, i) => (
+                  <RevealWrapper
+                    key={`${domain.title}-${i}`}
+                    className={`stagger-${Math.min(i + 1, 5)}`}
                   >
-                    <div
-                      className="card-bezel h-full"
-                      style={{
-                        background: `color-mix(in oklab, var(--surface) 88%, ${DOMAIN_COLORS[i % DOMAIN_COLORS.length]} 12%)`,
-                      }}
+                    <Link
+                      href="/courses"
+                      className="block group"
                     >
-                      <div className="card-bezel-inner p-5 flex flex-col gap-3 min-h-[120px] group-hover:bg-surface/80 transition-colors duration-300">
-                        <span className="text-3xl" aria-hidden>{DOMAIN_ICONS[i % DOMAIN_ICONS.length]}</span>
-                        <div>
-                          <p className="font-bold text-sm text-foreground">{domain.title}</p>
-                          <p className="text-xs text-foreground/50 mt-0.5">{domain.sub}</p>
+                      <div
+                        className="card-bezel h-full"
+                        style={{
+                          background: `color-mix(in oklab, var(--surface) 88%, ${DOMAIN_COLORS[i % DOMAIN_COLORS.length]} 12%)`,
+                        }}
+                      >
+                        <div className="card-bezel-inner p-5 flex flex-col gap-3 min-h-[120px] group-hover:bg-surface/80 transition-colors duration-300">
+                          <span className="text-3xl" aria-hidden>{DOMAIN_ICONS[i % DOMAIN_ICONS.length]}</span>
+                          <div>
+                            <p className="font-bold text-sm text-foreground">{domain.title}</p>
+                            <p className="text-xs text-foreground/50 mt-0.5">{domain.sub}</p>
+                          </div>
+                          <span
+                            className="text-xs font-semibold self-start opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300"
+                            style={{ color: DOMAIN_COLORS[i % DOMAIN_COLORS.length] }}
+                          >
+                            Explore →
+                          </span>
                         </div>
-                        <span
-                          className="text-xs font-semibold self-start opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300"
-                          style={{ color: DOMAIN_COLORS[i % DOMAIN_COLORS.length] }}
-                        >
-                          Explore →
-                        </span>
                       </div>
-                    </div>
-                  </Link>
-                </RevealWrapper>
-              ))}
-            </div>
+                    </Link>
+                  </RevealWrapper>
+                ))}
+              </div>
+            ) : (
+              <RevealWrapper>
+                <div className="card-bezel">
+                  <div className="card-bezel-inner p-5 text-sm text-foreground/60">
+                    Subject highlights appear here once live homepage content is published.
+                  </div>
+                </div>
+              </RevealWrapper>
+            )}
           </div>
         </section>
 
@@ -312,29 +295,39 @@ export default async function MarketingPage() {
               </h2>
             </RevealWrapper>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {whyItems.slice(0, 4).map((item, i) => (
-                <RevealWrapper
-                  key={`${item.title}-${i}`}
-                  className={`stagger-${Math.min(i + 1, 4)}`}
-                >
-                  <div className="card-bezel h-full">
-                    <div className="card-bezel-inner p-6 flex flex-col gap-4">
-                      <span className="text-3xl w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ background: "color-mix(in oklab, var(--accent) 10%, transparent)" }}
-                        aria-hidden
-                      >
-                        {FEATURE_ICONS[i % FEATURE_ICONS.length]}
-                      </span>
-                      <div>
-                        <h3 className="font-bold text-base text-foreground">{item.title}</h3>
-                        <p className="text-sm text-foreground/55 mt-1 leading-relaxed">{item.body}</p>
+            {whyItems.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {whyItems.slice(0, 4).map((item, i) => (
+                  <RevealWrapper
+                    key={`${item.title}-${i}`}
+                    className={`stagger-${Math.min(i + 1, 4)}`}
+                  >
+                    <div className="card-bezel h-full">
+                      <div className="card-bezel-inner p-6 flex flex-col gap-4">
+                        <span className="text-3xl w-12 h-12 rounded-xl flex items-center justify-center"
+                          style={{ background: "color-mix(in oklab, var(--accent) 10%, transparent)" }}
+                          aria-hidden
+                        >
+                          {FEATURE_ICONS[i % FEATURE_ICONS.length]}
+                        </span>
+                        <div>
+                          <h3 className="font-bold text-base text-foreground">{item.title}</h3>
+                          <p className="text-sm text-foreground/55 mt-1 leading-relaxed">{item.body}</p>
+                        </div>
                       </div>
                     </div>
+                  </RevealWrapper>
+                ))}
+              </div>
+            ) : (
+              <RevealWrapper>
+                <div className="card-bezel">
+                  <div className="card-bezel-inner p-6 text-sm text-foreground/60">
+                    Platform highlights appear automatically from published marketing content.
                   </div>
-                </RevealWrapper>
-              ))}
-            </div>
+                </div>
+              </RevealWrapper>
+            )}
           </div>
         </section>
 

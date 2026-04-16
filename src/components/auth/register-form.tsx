@@ -71,7 +71,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
           <label className="text-sm font-semibold text-foreground/70">Full Name</label>
           <Input
             required
-            placeholder="Amar Pandey"
+            placeholder="Your full name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
