@@ -59,7 +59,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
             placeholder="Min 8 chars, 1 letter, 1 number"
             type="password"
             minLength={8}
-            variant="faded"
+            variant="bordered"
             classNames={{
               inputWrapper: "bg-surface shadow-[var(--field-shadow)]",
               label: "font-semibold text-foreground/70",
@@ -74,7 +74,8 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
           type="submit"
           fullWidth
           size="lg"
-          variant="primary"
+          color="primary"
+          variant="solid"
           className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
           Reset Password
