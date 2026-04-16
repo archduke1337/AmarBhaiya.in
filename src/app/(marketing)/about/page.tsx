@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { SectionHeading } from "@/components/marketing/section-heading";
+
 import { getAboutPageContent } from "@/lib/appwrite/marketing-content";
 
 export const metadata: Metadata = {
@@ -7,65 +10,163 @@ export const metadata: Metadata = {
   description:
     "Know the story behind amarbhaiya.in and the mission to make practical learning accessible for students.",
 };
+
+const workingRules = [
+  {
+    title: "Clarity over showing off",
+    detail:
+      "It is better to explain one chapter properly than to impress students with ten vague promises that do not survive real study pressure.",
+  },
+  {
+    title: "Practice sits close to the explanation",
+    detail:
+      "Students should not need five tabs, three downloads, and guesswork to move from understanding to doing.",
+  },
+  {
+    title: "Respect the life a student is actually living",
+    detail:
+      "Time, money, language, confidence, parents, school pressure, and tired evenings all matter. The product should respond to that reality.",
+  },
+];
+
 export default async function AboutPage() {
   const aboutContent = await getAboutPageContent();
 
   return (
-    <div className="px-6 md:px-12 py-20 md:py-28 space-y-24">
-      <section className="max-w-4xl mx-auto space-y-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">About</p>
-        <h1 className="text-4xl md:text-6xl leading-tight">
-          Learn from someone who has already made the mistakes.
-        </h1>
-        <p className="text-muted-foreground text-lg leading-relaxed max-w-3xl">
-          amarbhaiya.in exists to remove confusion for students. Instead of
-          overloaded theory, the platform focuses on practical systems for
-          coding, academics, fitness, and career growth.
-        </p>
+    <div className="space-y-16 px-4 py-14 md:px-6 md:py-20 xl:space-y-20 xl:py-24">
+      <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <SectionHeading
+          eyebrow="About"
+          title="Built for students who want fewer speeches and more signal."
+          description="amarbhaiya.in exists to reduce confusion at the exact moment students need help. The goal is not to sound big from a distance. The goal is to make the next move feel clearer when the pressure is real."
+          titleAs="h1"
+        />
+        <div className="grid gap-4 xl:translate-y-8">
+          <RetroPanel tone="accent" size="lg" className="space-y-4">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+              Operating principle
+            </p>
+            <p className="text-lg font-bold leading-8 tracking-[-0.03em]">
+              Practical learning only works when the teaching feels close to the actual mess students are navigating, not detached from it.
+            </p>
+          </RetroPanel>
+          <RetroPanel tone="card" className="space-y-3">
+            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+              What that means in practice
+            </p>
+            <p className="text-sm font-medium leading-7 text-foreground/80">
+              Stronger structure, direct language, and fewer decorative promises that collapse the moment a student gets stuck or loses momentum.
+            </p>
+          </RetroPanel>
+        </div>
       </section>
 
-      <section className="max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl mb-8">Identity Layers</h2>
+      <section className="mx-auto max-w-6xl space-y-8">
+        <SectionHeading
+          eyebrow="Identity layers"
+          title="More than a teacher. Still grounded in teaching."
+          description="The platform works because Amar Bhaiya is not presented as a distant expert. The voice comes from teaching, building, and understanding the real trade-offs students live with."
+        />
         {aboutContent.identityCards.length === 0 ? (
-          <div className="border border-border p-8 text-sm text-muted-foreground">
-            Identity blocks are not configured yet.
-          </div>
+          <RetroPanel tone="muted">
+            <p className="text-sm font-medium text-muted-foreground">
+              Identity blocks are not configured yet.
+            </p>
+          </RetroPanel>
         ) : null}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-          {aboutContent.identityCards.map((item) => (
-            <article key={item.title} className="bg-background p-8 space-y-3">
-              <h3 className="text-lg">{item.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{item.detail}</p>
-            </article>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {aboutContent.identityCards.map((item, index) => (
+            <RetroPanel
+              key={item.title}
+              tone={index % 3 === 0 ? "card" : index % 3 === 1 ? "secondary" : "accent"}
+              className="space-y-3"
+            >
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                Layer {index + 1}
+              </p>
+              <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                {item.title}
+              </h3>
+              <p className="text-sm font-medium leading-6 text-foreground/80">{item.detail}</p>
+            </RetroPanel>
           ))}
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl mb-8">Journey</h2>
+      <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[0.88fr_1.12fr]">
+        <RetroPanel tone="secondary" size="lg" className="space-y-5">
+          <SectionHeading
+            eyebrow="Working rules"
+            title="The platform should feel rigorous, not loud for the sake of it."
+            description="The design can have character. The experience still has to feel calm, structured, and trustworthy enough for school students, parents, and serious learners."
+            titleAs="h2"
+          />
+        </RetroPanel>
+        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
+          {workingRules.map((rule, index) => (
+            <RetroPanel
+              key={rule.title}
+              tone={index === 1 ? "muted" : "card"}
+              className="space-y-3"
+            >
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                Rule {index + 1}
+              </p>
+              <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                {rule.title}
+              </h3>
+              <p className="text-sm font-medium leading-7 text-foreground/80">{rule.detail}</p>
+            </RetroPanel>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl space-y-8">
+        <SectionHeading
+          eyebrow="Journey"
+          title="A timeline that earns the point of view."
+          description="This is the part that matters: not a polished origin story, but the sequence of experiments, mistakes, and corrections that shaped the teaching style."
+        />
         {aboutContent.journey.length === 0 ? (
-          <div className="border border-border p-8 text-sm text-muted-foreground">
-            Journey timeline is not configured yet.
-          </div>
+          <RetroPanel tone="muted">
+            <p className="text-sm font-medium text-muted-foreground">
+              Journey timeline is not configured yet.
+            </p>
+          </RetroPanel>
         ) : null}
-        <div className="border border-border divide-y divide-border">
-          {aboutContent.journey.map((item) => (
-            <article key={item.year} className="grid md:grid-cols-[120px_1fr] gap-6 p-6 md:p-8">
-              <p className="text-sm uppercase tracking-widest text-muted-foreground">{item.year}</p>
+        <div className="space-y-4">
+          {aboutContent.journey.map((item, index) => (
+            <RetroPanel
+              key={`${item.year}-${item.title}`}
+              tone={index % 2 === 0 ? "card" : "muted"}
+              className="grid gap-5 md:grid-cols-[120px_1fr] md:items-start"
+            >
+              <p className="font-heading text-sm font-black uppercase tracking-[0.2em] text-primary">
+                {item.year}
+              </p>
               <div className="space-y-2">
-                <h3 className="text-xl">{item.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{item.detail}</p>
+                <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                  {item.title}
+                </h3>
+                <p className="text-sm font-medium leading-7 text-foreground/80">{item.detail}</p>
               </div>
-            </article>
+            </RetroPanel>
           ))}
         </div>
       </section>
 
-      <section className="max-w-4xl mx-auto border border-border p-8 md:p-10">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">Mission</p>
-        <p className="text-xl md:text-2xl leading-relaxed">
-          {aboutContent.mission || "Mission content is not configured yet."}
-        </p>
+      <section className="mx-auto max-w-5xl">
+        <RetroPanel tone="primary" size="lg" className="space-y-5">
+          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+            Mission
+          </p>
+          <p className="text-2xl font-bold leading-9 tracking-[-0.04em] text-foreground md:text-3xl md:leading-10">
+            {aboutContent.mission || "Mission content is not configured yet."}
+          </p>
+          <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
+            If a student leaves with more clarity, more confidence, and one obvious next move, the platform did its job. If they also start believing a little more in themselves because of that experience, it did something even better.
+          </p>
+        </RetroPanel>
       </section>
     </div>
   );

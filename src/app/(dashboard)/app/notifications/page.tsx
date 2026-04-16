@@ -10,6 +10,8 @@ import {
 import { formatRelativeTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 
 export default async function NotificationsPage() {
   await requireAuth();
@@ -18,26 +20,26 @@ export default async function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
-      <div className="flex items-start justify-between">
+    <div className="flex max-w-4xl flex-col gap-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader
           eyebrow="Notifications"
-          title="Your Notifications"
+          title="Updates jo padhai ke flow ko affect karte hain."
           description={
             unreadCount > 0
-              ? `${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`
-              : "You\u2019re all caught up!"
+              ? `${unreadCount} unread update${unreadCount !== 1 ? "s" : ""}. Pehle feedback, quiz result, ya instructor update check kar lo.`
+              : "Inbox clear hai. Ab lesson ya notes par wapas ja sakte ho."
           }
         />
         {unreadCount > 0 && (
           <form action={markAllNotificationsReadAction}>
-            <button
+            <Button
               type="submit"
-              className="inline-flex items-center gap-1.5 h-9 border border-border px-3 text-xs transition-colors hover:bg-muted"
+              variant="outline"
             >
               <CheckCheck className="size-3.5" />
               Mark all read
-            </button>
+            </Button>
           </form>
         )}
       </div>
@@ -46,16 +48,18 @@ export default async function NotificationsPage() {
         <EmptyState
           icon={Bell}
           title="No notifications"
-          description="You don't have any notifications yet. They'll appear here when instructors, admins, or the system send you updates."
+          description="Abhi koi update nahi hai. Jab instructor, admin, ya system kuch important bhejega, woh yahin dikhega."
         />
       ) : (
-        <div className="flex flex-col">
+        <RetroPanel tone="card" className="space-y-0 p-0">
           {notifications.map((notification) => (
             <article
               key={notification.id}
               id={`notification-${notification.id}`}
-              className={`flex items-start gap-4 border-b border-border px-5 py-4 transition-colors ${
-                notification.isRead ? "opacity-60" : "bg-muted/20"
+              className={`flex scroll-mt-24 flex-col gap-4 border-b-2 border-border px-5 py-4 transition-colors last:border-b-0 sm:flex-row sm:items-start ${
+                notification.isRead
+                  ? "opacity-70"
+                  : "bg-[color:var(--surface-secondary)]"
               }`}
             >
               {/* Unread dot */}
@@ -84,9 +88,9 @@ export default async function NotificationsPage() {
                   </p>
                 )}
 
-                <div className="mt-1.5 flex items-center gap-3">
+                <div className="mt-2 flex flex-wrap items-center gap-3">
                   {notification.createdAt && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                       {formatRelativeTime(notification.createdAt)}
                     </span>
                   )}
@@ -111,18 +115,19 @@ export default async function NotificationsPage() {
                     name="notificationId"
                     value={notification.id}
                   />
-                  <button
+                  <Button
                     type="submit"
-                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    variant="outline"
+                    size="xs"
                     title="Mark as read"
                   >
                     Mark read
-                  </button>
+                  </Button>
                 </form>
               )}
             </article>
           ))}
-        </div>
+        </RetroPanel>
       )}
     </div>
   );

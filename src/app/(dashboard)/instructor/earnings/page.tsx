@@ -8,7 +8,9 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorRevenueOverview } from "@/lib/appwrite/dashboard-data";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils/format";
@@ -22,14 +24,11 @@ export default async function InstructorEarningsPage() {
       <PageHeader
         eyebrow="Instructor · Revenue"
         title="Earnings Overview"
-        description="Track revenue, recent sales, and the courses that need promotion or pricing attention."
+        description="Track completed sales, monthly momentum, and paid courses that may need a better pitch or a timely student reminder."
         actions={
-          <Link
-            href="/instructor"
-            className="inline-flex h-9 items-center px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Back to dashboard
-          </Link>
+          <Button asChild variant="outline" size="sm" className="w-full min-[420px]:w-auto">
+            <Link href="/instructor">Back to dashboard</Link>
+          </Button>
         }
       />
 
@@ -104,15 +103,21 @@ export default async function InstructorEarningsPage() {
             </div>
           </section>
 
-          <section id="course-revenue" className="border border-border scroll-mt-24">
-            <div className="border-b border-border px-5 py-3">
-              <h2 className="text-sm font-medium">Revenue by Course</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
+          <RetroPanel
+            id="course-revenue"
+            tone="card"
+            className="scroll-mt-24 overflow-hidden p-0"
+          >
+            <div className="border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-3">
+              <h2 className="font-heading text-lg font-black tracking-[-0.04em]">
+                Revenue by Course
+              </h2>
+              <p className="mt-1 text-xs font-semibold leading-6 text-muted-foreground">
                 Monthly revenue, lifetime revenue, enrollments, and last sale in one place.
               </p>
             </div>
 
-            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground lg:grid lg:grid-cols-[1.4fr_120px_140px_140px_140px]">
+            <div className="hidden items-center gap-4 border-b-2 border-border bg-[color:var(--surface-muted)] px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground lg:grid lg:grid-cols-[1.4fr_120px_140px_140px_140px]">
               <span>Course</span>
               <span>Type</span>
               <span>This Month</span>
@@ -125,13 +130,13 @@ export default async function InstructorEarningsPage() {
                 <article
                   key={course.id}
                   id={`course-revenue-${course.id}`}
-                  className="scroll-mt-24 px-5 py-4"
+                  className="scroll-mt-24 px-5 py-4 transition-colors hover:bg-accent/30"
                 >
                   <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[1.4fr_120px_140px_140px_140px] lg:items-center lg:gap-4">
                     <div className="flex flex-col gap-1">
                       <Link
                         href={`/instructor/courses/${course.id}`}
-                        className="text-sm font-medium transition-colors hover:text-muted-foreground"
+                        className="text-sm font-semibold transition-colors hover:text-muted-foreground"
                       >
                         {course.title}
                       </Link>
@@ -146,37 +151,37 @@ export default async function InstructorEarningsPage() {
                           <Badge variant="destructive">Needs attention</Badge>
                         ) : null}
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs font-semibold text-muted-foreground">
                         {course.lastPaymentAt
                           ? `Last sale ${formatRelativeTime(course.lastPaymentAt)}`
                           : "No completed sales yet"}
                       </span>
                     </div>
 
-                    <span className="text-sm text-muted-foreground capitalize">
+                    <span className="text-sm font-semibold text-muted-foreground capitalize">
                       {course.accessModel}
                     </span>
 
-                    <span className="text-sm font-medium tabular-nums">
+                    <span className="text-sm font-semibold tabular-nums">
                       {course.accessModel === "paid"
                         ? formatCurrency(course.monthlyRevenue)
                         : "Free"}
                     </span>
 
-                    <span className="text-sm font-medium tabular-nums">
+                    <span className="text-sm font-semibold tabular-nums">
                       {course.accessModel === "paid"
                         ? formatCurrency(course.totalRevenue)
                         : "Free"}
                     </span>
 
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm font-semibold text-muted-foreground">
                       {course.enrollments}
                     </span>
                   </div>
                 </article>
               ))}
             </div>
-          </section>
+          </RetroPanel>
         </>
       )}
     </div>

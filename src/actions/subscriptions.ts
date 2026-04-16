@@ -1,15 +1,17 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
+import type { Models } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { listAllRows } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
 import { processInBatches } from "@/lib/utils/batch";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = Models.Row & Record<string, unknown>;
 const VALID_SUBSCRIPTION_STATUSES = new Set(["active", "expired", "cancelled"]);
 type AdminTablesDB = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
 type AdminUsers = Awaited<ReturnType<typeof createAdminClient>>["users"];
@@ -71,19 +73,13 @@ async function deactivateOtherActiveSubscriptions(
   userId: string,
   keepSubscriptionId?: string
 ): Promise<void> {
-  const existing = await tablesDB.listRows({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.subscriptions,
-    queries: [
-      Query.equal("userId", [userId]),
-      Query.equal("status", ["active"]),
-      Query.limit(100),
-    ],
-  }).catch(() => ({ rows: [] as AnyRow[] }));
-
-  const rows = (existing.rows as AnyRow[]).filter(
-    (row) => row.$id !== keepSubscriptionId
-  );
+  const rows = (
+    await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.subscriptions,
+      [Query.equal("userId", [userId]), Query.equal("status", ["active"])]
+    ).catch(() => [] as AnyRow[])
+  ).filter((row) => row.$id !== keepSubscriptionId);
 
   await processInBatches(rows, 25, async (row) => {
     const nextStatus =
@@ -123,31 +119,19 @@ export type UserSubscription = {
 async function listAllSubscriptionRows(
   tablesDB: AdminTablesDB
 ): Promise<AnyRow[]> {
-  const rows: AnyRow[] = [];
-  const pageSize = 500;
-  let offset = 0;
+  return listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.subscriptions, [
+    Query.orderDesc("$createdAt"),
+  ]);
+}
 
-  while (true) {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.subscriptions,
-      queries: [
-        Query.orderDesc("$createdAt"),
-        Query.limit(pageSize),
-        Query.offset(offset),
-      ],
-    });
-
-    rows.push(...(result.rows as AnyRow[]));
-
-    if (result.rows.length < pageSize) {
-      break;
-    }
-
-    offset += result.rows.length;
-  }
-
-  return rows;
+async function listUserSubscriptionRows(
+  tablesDB: AdminTablesDB,
+  userId: string
+): Promise<AnyRow[]> {
+  return listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.subscriptions, [
+    Query.equal("userId", [userId]),
+    Query.orderDesc("$createdAt"),
+  ]);
 }
 
 async function buildUserNameMap(
@@ -175,17 +159,7 @@ export async function getUserSubscription(): Promise<UserSubscription | null> {
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.subscriptions,
-      queries: [
-        Query.equal("userId", [user.$id]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(25),
-      ],
-    });
-
-    const rows = result.rows as AnyRow[];
+    const rows = await listUserSubscriptionRows(tablesDB, user.$id);
     if (rows.length === 0) return null;
     const normalizedStatuses = await normalizeSubscriptionStatuses(tablesDB, rows);
     const row = rows.find((candidate) => normalizedStatuses.get(candidate.$id) === "active");

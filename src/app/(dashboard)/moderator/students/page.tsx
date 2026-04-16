@@ -75,7 +75,9 @@ export default async function ModeratorStudentsPage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Last action: <span className="capitalize">{student.latestAction}</span> — {student.latestReason}
+                    {student.status === "open" ? "Open case" : "Last action"}:{" "}
+                    <span className="capitalize">{student.latestAction}</span> —{" "}
+                    {student.latestReason}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
                     {student.actionCount} action{student.actionCount === 1 ? "" : "s"} on record

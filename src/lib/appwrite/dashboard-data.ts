@@ -1383,18 +1383,18 @@ export async function getInstructorLiveSessions(
   try {
     const { tablesDB } = await createAdminClient();
 
-    const queries: string[] = [Query.orderAsc("scheduledAt"), Query.limit(50)];
+    const queries: string[] = [];
     if (scope.role !== "admin") {
       queries.push(Query.equal("instructorId", [scope.userId]));
     }
 
-    const sessionsResult = await safeListRows<LiveSessionRow>(
+    const sessions = await safeListAllRows<LiveSessionRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.liveSessions,
       queries
     );
 
-    const sessionIds = sessionsResult.rows.map((session) => session.$id);
+    const sessionIds = sessions.map((session) => session.$id);
     const rsvpRows = await listRowsByFieldValues<AnyRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.sessionRsvps,
@@ -1415,7 +1415,9 @@ export async function getInstructorLiveSessions(
       );
     }
 
-    return sessionsResult.rows.map((session) => ({
+    const sortedSessions = sortLiveSessionsForDashboard(sessions);
+
+    return sortedSessions.map((session) => ({
       id: session.$id,
       title: typeof session.title === "string" ? session.title : "Untitled session",
       description:
@@ -1436,6 +1438,65 @@ export async function getInstructorLiveSessions(
 
     return [];
   }
+}
+
+function buildRsvpCountBySessionId(rows: AnyRow[]): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const row of rows) {
+    const sessionId = typeof row.sessionId === "string" ? row.sessionId : "";
+    if (!sessionId) {
+      continue;
+    }
+
+    counts.set(sessionId, (counts.get(sessionId) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+function sortLiveSessionsForDashboard(sessions: LiveSessionRow[]): LiveSessionRow[] {
+  const now = Date.now();
+
+  return [...sessions].sort((left, right) => {
+    const leftStatus = typeof left.status === "string" ? left.status : "scheduled";
+    const rightStatus = typeof right.status === "string" ? right.status : "scheduled";
+    const statusPriority = (status: string) => {
+      switch (status) {
+        case "live":
+          return 0;
+        case "scheduled":
+          return 1;
+        case "ended":
+          return 2;
+        default:
+          return 3;
+      }
+    };
+
+    const leftPriority = statusPriority(leftStatus);
+    const rightPriority = statusPriority(rightStatus);
+    if (leftPriority !== rightPriority) {
+      return leftPriority - rightPriority;
+    }
+
+    const leftTime = toDate(left.scheduledAt)?.getTime() ?? 0;
+    const rightTime = toDate(right.scheduledAt)?.getTime() ?? 0;
+
+    if (leftStatus === "live") {
+      return rightTime - leftTime;
+    }
+
+    if (leftStatus === "scheduled") {
+      const leftDelta = leftTime >= now ? leftTime - now : Number.MAX_SAFE_INTEGER;
+      const rightDelta = rightTime >= now ? rightTime - now : Number.MAX_SAFE_INTEGER;
+      if (leftDelta !== rightDelta) {
+        return leftDelta - rightDelta;
+      }
+    }
+
+    return rightTime - leftTime;
+  });
 }
 
 export async function getInstructorCourseSummary(
@@ -1622,6 +1683,7 @@ export async function getModeratorDashboardStats(): Promise<ModeratorDashboardSt
         .filter(
           (row) =>
             row.action === "flag" &&
+            !row.revertedAt &&
             typeof row.entityType === "string" &&
             row.entityType.toLowerCase().includes("thread") &&
             typeof row.entityId === "string"
@@ -1711,30 +1773,43 @@ export async function getModeratorStudents(): Promise<ModeratorStudentItem[]> {
         return rightDate - leftDate;
       });
 
-      const latestByUser = new Map<string, ModerationActionRow>();
-      const countByUser = new Map<string, number>();
-      for (const row of filteredRows) {
-        const userId = String(row.targetUserId);
-        if (!latestByUser.has(userId)) {
-          latestByUser.set(userId, row);
-        }
-        countByUser.set(userId, (countByUser.get(userId) ?? 0) + 1);
+    const latestByUser = new Map<string, ModerationActionRow>();
+    const latestOpenByUser = new Map<string, ModerationActionRow>();
+    const countByUser = new Map<string, number>();
+    for (const row of filteredRows) {
+      const userId = String(row.targetUserId);
+      if (!latestByUser.has(userId)) {
+        latestByUser.set(userId, row);
       }
+      if (!row.revertedAt && !latestOpenByUser.has(userId)) {
+        latestOpenByUser.set(userId, row);
+      }
+      countByUser.set(userId, (countByUser.get(userId) ?? 0) + 1);
+    }
 
-      return [...latestByUser.entries()].slice(0, 50).map(([userId, row]) => ({
+    return [...latestByUser.entries()].map(([userId, row]) => {
+      const openRow = latestOpenByUser.get(userId);
+      const displayRow = openRow ?? row;
+      return ({
         id: userId,
-        latestActionId: row.$id,
-      name:
-        typeof row.targetUserName === "string" && row.targetUserName.length > 0
-            ? row.targetUserName
+        latestActionId: openRow?.$id ?? row.$id,
+        name:
+          typeof displayRow.targetUserName === "string" &&
+          displayRow.targetUserName.length > 0
+            ? displayRow.targetUserName
             : userId,
-        latestAction: typeof row.action === "string" ? row.action : "unknown",
-        latestReason: typeof row.reason === "string" ? row.reason : "No notes",
-        latestScope: typeof row.scope === "string" ? row.scope : "platform",
-        lastActionAt: typeof row.createdAt === "string" ? row.createdAt : null,
+        latestAction:
+          typeof displayRow.action === "string" ? displayRow.action : "unknown",
+        latestReason:
+          typeof displayRow.reason === "string" ? displayRow.reason : "No notes",
+        latestScope:
+          typeof displayRow.scope === "string" ? displayRow.scope : "platform",
+        lastActionAt:
+          typeof displayRow.createdAt === "string" ? displayRow.createdAt : null,
         actionCount: countByUser.get(userId) ?? 1,
-        status: row.revertedAt ? "resolved" : "open",
-      }));
+        status: openRow ? "open" : "resolved",
+      });
+    });
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to load moderator students."
@@ -1799,7 +1874,6 @@ export async function getModeratorCommunityData(): Promise<ModeratorCommunityDat
         const rightDate = toDate(right.lastReplyAt ?? right.createdAt)?.getTime() ?? 0;
         return rightDate - leftDate;
       })
-      .slice(0, 8)
       .map((thread) => ({
         id: thread.$id,
         title: typeof thread.title === "string" ? thread.title : "Untitled thread",
@@ -2026,15 +2100,27 @@ export async function getAdminCategories(): Promise<AdminCategoryItem[]> {
   }
 }
 
-export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
+export async function getAdminPayments(options?: {
+  limit?: number;
+}): Promise<AdminPaymentItem[]> {
   try {
     const { tablesDB, users } = await createAdminClient();
 
-    const paymentRows = await safeListAllRows<PaymentRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.payments,
-      [Query.orderDesc("$createdAt")]
-    );
+    const limit = options?.limit;
+    const paymentRows =
+      typeof limit === "number" && limit > 0
+        ? (
+            await safeListRows<PaymentRow>(
+              tablesDB,
+              APPWRITE_CONFIG.tables.payments,
+              [Query.orderDesc("$createdAt"), Query.limit(limit)]
+            )
+          ).rows
+        : await safeListAllRows<PaymentRow>(
+            tablesDB,
+            APPWRITE_CONFIG.tables.payments,
+            [Query.orderDesc("$createdAt")]
+          );
 
     const sortedPaymentRows = paymentRows.sort((left, right) => {
       const leftDate = toDate(left.createdAt)?.getTime() ?? 0;
@@ -2128,7 +2214,9 @@ export async function getAdminPayments(): Promise<AdminPaymentItem[]> {
   }
 }
 
-export async function getAdminLiveData(): Promise<AdminLiveData> {
+export async function getAdminLiveData(options?: {
+  upcomingLimit?: number;
+}): Promise<AdminLiveData> {
   try {
     const { tablesDB } = await createAdminClient();
 
@@ -2137,6 +2225,13 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
       APPWRITE_CONFIG.tables.liveSessions,
       [Query.orderAsc("scheduledAt")]
     );
+    const rsvpRows = await listRowsByFieldValues<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.sessionRsvps,
+      "sessionId",
+      sessions.map((session) => session.$id)
+    );
+    const rsvpCountBySessionId = buildRsvpCountBySessionId(rsvpRows);
 
     const activeSessions = sessions.filter((session) => session.status === "live").length;
     const scheduledSessions = sessions.filter(
@@ -2148,14 +2243,15 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
         (!session.recordingUrl || String(session.recordingUrl).trim().length === 0)
     ).length;
 
-    const upcoming = sessions
+    const upcomingLimit = options?.upcomingLimit;
+    const upcoming = sortLiveSessionsForDashboard(sessions)
       .filter((session) => session.status === "scheduled" || session.status === "live")
-      .sort((left, right) => {
-        const leftDate = toDate(left.scheduledAt)?.getTime() ?? 0;
-        const rightDate = toDate(right.scheduledAt)?.getTime() ?? 0;
-        return leftDate - rightDate;
-      })
-      .slice(0, 8)
+      .slice(
+        0,
+        typeof upcomingLimit === "number" && upcomingLimit > 0
+          ? upcomingLimit
+          : Number.MAX_SAFE_INTEGER
+      )
       .map((session) => ({
         id: session.$id,
         title: typeof session.title === "string" ? session.title : "Untitled session",
@@ -2166,7 +2262,7 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
           typeof session.scheduledAt === "string" ? session.scheduledAt : null,
         streamUrl: getSafeHttpUrl(session.streamId),
         recordingUrl: getSafeHttpUrl(session.recordingUrl),
-        rsvpCount: 0,
+        rsvpCount: rsvpCountBySessionId.get(session.$id) ?? 0,
       }));
 
     return {
@@ -2189,7 +2285,9 @@ export async function getAdminLiveData(): Promise<AdminLiveData> {
   }
 }
 
-export async function getAdminModerationData(): Promise<AdminModerationData> {
+export async function getAdminModerationData(options?: {
+  escalationLimit?: number;
+}): Promise<AdminModerationData> {
   try {
     const { tablesDB } = await createAdminClient();
 
@@ -2203,10 +2301,18 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
     const openEscalations = rows.filter(
       (row) => row.action === "flag" && !row.revertedAt
     ).length;
-    const activeTimeouts = rows.filter(
-      (row) => row.action === "timeout" && !row.revertedAt
-    ).length;
+    const activeTimeouts = new Set(
+      rows
+        .filter(
+          (row) =>
+            row.action === "timeout" &&
+            !row.revertedAt &&
+            typeof row.targetUserId === "string"
+        )
+        .map((row) => String(row.targetUserId))
+    ).size;
 
+    const escalationLimit = options?.escalationLimit;
     const escalationItems = rows
       .filter((row) => row.action === "flag" && !row.revertedAt)
       .sort((left, right) => {
@@ -2214,7 +2320,12 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
         const rightTime = toDate(right.createdAt)?.getTime() ?? 0;
         return rightTime - leftTime;
       })
-      .slice(0, 20)
+      .slice(
+        0,
+        typeof escalationLimit === "number" && escalationLimit > 0
+          ? escalationLimit
+          : Number.MAX_SAFE_INTEGER
+      )
       .map((row) => ({
         id: row.$id,
         moderatorName: typeof row.moderatorName === "string" ? row.moderatorName : "Unknown",
@@ -2247,17 +2358,29 @@ export async function getAdminModerationData(): Promise<AdminModerationData> {
   }
 }
 
-export async function getAdminAuditLogs(): Promise<AdminAuditItem[]> {
+export async function getAdminAuditLogs(options?: {
+  limit?: number;
+}): Promise<AdminAuditItem[]> {
   try {
     const { tablesDB } = await createAdminClient();
 
-    const logsResult = await safeListRows<AuditLogRow>(
-      tablesDB,
-      APPWRITE_CONFIG.tables.auditLogs,
-      [Query.orderDesc("$createdAt"), Query.limit(100)]
-    );
+    const limit = options?.limit;
+    const logsResult =
+      typeof limit === "number" && limit > 0
+        ? (
+            await safeListRows<AuditLogRow>(
+              tablesDB,
+              APPWRITE_CONFIG.tables.auditLogs,
+              [Query.orderDesc("$createdAt"), Query.limit(limit)]
+            )
+          ).rows
+        : await safeListAllRows<AuditLogRow>(
+            tablesDB,
+            APPWRITE_CONFIG.tables.auditLogs,
+            [Query.orderDesc("$createdAt")]
+          );
 
-    return logsResult.rows.map((log) => ({
+    return logsResult.map((log) => ({
       id: log.$id,
       actor: typeof log.actorName === "string" ? log.actorName : "Unknown actor",
       action: typeof log.action === "string" ? log.action : "unknown action",

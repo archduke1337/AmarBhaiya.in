@@ -35,7 +35,9 @@ import {
   EmptyState,
   ActivityFeed,
 } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default async function InstructorDashboardPage() {
   const { user, role } = await requireRole(["admin", "instructor"]);
@@ -125,13 +127,12 @@ export default async function InstructorDashboardPage() {
         title="Course Command Center"
         description="Manage your courses, monitor student progress, and schedule live sessions."
         actions={
-          <Link
-            href="/instructor/courses/new"
-            className="inline-flex h-9 items-center gap-2 bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
-          >
-            <Plus className="size-4" />
-            New Course
-          </Link>
+          <Button asChild size="sm">
+            <Link href="/instructor/courses/new">
+              <Plus className="size-4" />
+              New Course
+            </Link>
+          </Button>
         }
       />
 
@@ -176,13 +177,10 @@ export default async function InstructorDashboardPage() {
         {/* Course list — 2 cols */}
         <section className="flex flex-col gap-4 lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">My Courses</h2>
-            <Link
-              href="/instructor/courses"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              View all →
-            </Link>
+            <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">My Courses</h2>
+            <Button asChild variant="link" size="sm">
+              <Link href="/instructor/courses">View all</Link>
+            </Button>
           </div>
 
           {courses.length === 0 ? (
@@ -201,42 +199,47 @@ export default async function InstructorDashboardPage() {
                 <Link
                   key={course.id}
                   href={`/instructor/courses/${course.id}`}
-                  className="group flex items-start justify-between gap-4 border border-border p-4 transition-colors hover:border-foreground/20"
+                  className="group"
                 >
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-sm font-medium group-hover:underline">
-                      {course.title}
-                    </h3>
-                    {course.shortDescription && (
-                      <p className="line-clamp-1 text-xs text-muted-foreground">
-                        {course.shortDescription}
+                  <RetroPanel
+                    tone={course.status === "Published" ? "secondary" : "card"}
+                    className="flex items-start justify-between gap-4 transition-transform group-hover:-translate-y-1"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <h3 className="font-heading text-xl font-black tracking-[-0.04em] group-hover:underline">
+                        {course.title}
+                      </h3>
+                      {course.shortDescription && (
+                        <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                          {course.shortDescription}
+                        </p>
+                      )}
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {course.moduleCount} module{course.moduleCount === 1 ? "" : "s"} ·{" "}
+                        {course.totalLessons} lesson{course.totalLessons === 1 ? "" : "s"} ·{" "}
+                        {course.activeEnrollments} enrollment{course.activeEnrollments === 1 ? "" : "s"}
                       </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {course.moduleCount} module{course.moduleCount === 1 ? "" : "s"} ·{" "}
-                      {course.totalLessons} lesson{course.totalLessons === 1 ? "" : "s"} ·{" "}
-                      {course.activeEnrollments} enrollment{course.activeEnrollments === 1 ? "" : "s"}
-                    </p>
-                    {course.publishBlockers[0] ? (
-                      <p className="text-xs text-destructive">
-                        {course.publishBlockers[0]}
-                      </p>
-                    ) : course.attentionFlags[0] ? (
-                      <p className="text-xs text-muted-foreground">
-                        {course.attentionFlags[0]}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Badge
-                      variant={
-                        course.status === "Published" ? "default" : "outline"
-                      }
-                    >
-                      {course.status}
-                    </Badge>
-                    <ArrowRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                  </div>
+                      {course.publishBlockers[0] ? (
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
+                          {course.publishBlockers[0]}
+                        </p>
+                      ) : course.attentionFlags[0] ? (
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                          {course.attentionFlags[0]}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge
+                        variant={
+                          course.status === "Published" ? "default" : "outline"
+                        }
+                      >
+                        {course.status}
+                      </Badge>
+                      <ArrowRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                    </div>
+                  </RetroPanel>
                 </Link>
               ))}
             </div>
@@ -244,13 +247,10 @@ export default async function InstructorDashboardPage() {
 
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Course Health</h2>
-              <Link
-                href="/instructor/courses"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Open course library →
-              </Link>
+              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Course Health</h2>
+              <Button asChild variant="link" size="sm">
+                <Link href="/instructor/courses">Open course library</Link>
+              </Button>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -288,13 +288,10 @@ export default async function InstructorDashboardPage() {
 
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Grading Flow</h2>
-              <Link
-                href="/instructor/submissions"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Open submissions →
-              </Link>
+              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Grading Flow</h2>
+              <Button asChild variant="link" size="sm">
+                <Link href="/instructor/submissions">Open submissions</Link>
+              </Button>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -332,13 +329,10 @@ export default async function InstructorDashboardPage() {
 
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Learner Signals</h2>
-              <Link
-                href="/instructor/students"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Open students →
-              </Link>
+              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Learner Signals</h2>
+              <Button asChild variant="link" size="sm">
+                <Link href="/instructor/students">Open students</Link>
+              </Button>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -459,8 +453,8 @@ export default async function InstructorDashboardPage() {
           />
 
           {/* Quick Links */}
-          <nav className="border border-border">
-            <p className="border-b border-border px-5 py-3 text-sm font-medium">
+          <RetroPanel tone="accent" className="overflow-hidden p-0">
+            <p className="border-b border-border px-5 py-3 font-heading text-sm font-black uppercase tracking-[0.16em]">
               Quick Links
             </p>
             <div className="flex flex-col divide-y divide-border">
@@ -486,7 +480,7 @@ export default async function InstructorDashboardPage() {
                 </Link>
               ))}
             </div>
-          </nav>
+          </RetroPanel>
         </aside>
       </div>
     </div>

@@ -9,6 +9,11 @@ import {
 } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Textarea } from "@/components/ui/textarea";
 
 export default async function CommunityPage() {
   await requireAuth();
@@ -21,28 +26,34 @@ export default async function CommunityPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Community"
-        title="Learn with the cohort, not alone."
-        description="Share insights, ask questions, and connect with fellow learners and mentors."
+        title="Doubt ko andar mat rakho. Community mein pooch lo."
+        description="Course ya lesson ka doubt exact page par poochna best hai. General study questions, planning, aur peer help ke liye yeh community space hai."
       />
 
       {/* Create thread form */}
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3">
-          <h2 className="text-sm font-medium">Start a Discussion</h2>
+      <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="border-b-2 border-border px-5 py-4">
+          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+            Start a discussion
+          </h2>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Clear title likho. Body mein context do. Log help kar payenge.
+          </p>
         </div>
 
         {categories.length === 0 ? (
-          <div className="px-5 py-6 text-sm text-muted-foreground">
-            No forum categories have been created yet. Ask an admin to set up categories.
+          <div className="px-5 py-6 text-sm font-medium leading-7 text-muted-foreground">
+            Abhi community categories set nahi hui hain. Categories publish hote hi thread start kar paoge.
           </div>
         ) : (
           <form action={createForumThreadAction} className="flex flex-col gap-4 p-5">
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col gap-1.5 text-sm">
-                <span className="text-muted-foreground">Category</span>
+              <div className="space-y-2">
+                <Label htmlFor="forumCatId">Category</Label>
                 <select
+                  id="forumCatId"
                   name="forumCatId"
-                  className="h-10 border border-border bg-background px-3 text-sm"
+                  className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
                   required
                   defaultValue={categories[0]?.id ?? ""}
                 >
@@ -52,47 +63,44 @@ export default async function CommunityPage() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </div>
 
-              <label className="flex flex-col gap-1.5 text-sm">
-                <span className="text-muted-foreground">Thread Title</span>
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="thread-title">Thread title</Label>
+                <Input
+                  id="thread-title"
                   type="text"
                   name="title"
-                  placeholder="Your question or topic"
-                  className="h-10 border border-border bg-background px-3 text-sm"
+                  placeholder="Example: Class 10 maths quadratic doubts"
                   required
                   minLength={6}
                 />
-              </label>
+              </div>
             </div>
 
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-muted-foreground">Your Message</span>
-              <textarea
+            <div className="space-y-2">
+              <Label htmlFor="thread-body">Your message</Label>
+              <Textarea
+                id="thread-body"
                 name="body"
-                placeholder="Write your question, insight, or discussion topic..."
-                className="min-h-[100px] border border-border bg-background px-3 py-2 text-sm"
+                placeholder="Kya samajh nahi aa raha? Course/subject mention kar do, aur jitna context ho utna likho..."
                 required
                 minLength={12}
               />
-            </label>
+            </div>
 
             <div className="flex justify-end">
-              <button
-                className="h-9 bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
-                type="submit"
-              >
+              <Button type="submit" variant="secondary">
                 Post thread
-              </button>
+              </Button>
             </div>
           </form>
         )}
-      </section>
+      </RetroPanel>
 
       {/* Thread list */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">
+        <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
           Discussions ({threads.length})
         </h2>
 
@@ -100,25 +108,26 @@ export default async function CommunityPage() {
           <EmptyState
             icon={MessageSquare}
             title="No discussions yet"
-            description="Be the first to start a conversation. Post a thread above to get things going."
+            description="Pehla thread start kar sakte ho. Bas question clear rakho, taaki help karna easy ho."
           />
         ) : (
           threads.map((thread) => (
-            <article
+            <RetroPanel
               key={thread.id}
-              className="group border border-border p-5 transition-colors hover:border-foreground/20"
+              tone={thread.pinned ? "secondary" : "card"}
+              className="group space-y-3 transition-transform hover:-translate-y-1"
             >
-              <div className="flex items-center justify-between gap-4 mb-2">
+              <div className="flex items-center justify-between gap-4">
                 <Badge variant="outline">{thread.category}</Badge>
                 {thread.pinned && (
-                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <Badge variant="ghost">
                     <Pin className="size-3" />
                     Pinned
-                  </span>
+                  </Badge>
                 )}
               </div>
 
-              <h3 className="text-lg font-medium leading-tight">
+              <h3 className="font-heading text-2xl font-black leading-tight tracking-[-0.04em]">
                 <Link
                   href={`/app/community/${thread.id}`}
                   className="hover:underline underline-offset-4"
@@ -127,14 +136,14 @@ export default async function CommunityPage() {
                 </Link>
               </h3>
 
-              <div className="mt-3 flex items-center gap-5 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-5 text-sm font-medium text-muted-foreground">
                 <span>by {thread.author}</span>
                 <span className="inline-flex items-center gap-1">
                   <MessageSquare className="size-4" />
                   {thread.replies} replies
                 </span>
               </div>
-            </article>
+            </RetroPanel>
           ))
         )}
       </section>

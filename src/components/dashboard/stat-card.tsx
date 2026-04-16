@@ -19,31 +19,31 @@ export function StatCard({
   trend,
 }: StatCardProps) {
   return (
-    <article className="group relative border border-border bg-card p-5 transition-colors hover:border-foreground/20">
+    <article className="group relative flex flex-col gap-4 rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-card)] p-4 shadow-retro transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:bg-[color:var(--surface-secondary)] sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1.5">
-          <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+          <p className="font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground">
             {label}
           </p>
-          <p className="text-2xl font-semibold tabular-nums tracking-tight">
+          <p className="text-2xl tabular-nums sm:text-3xl">
             {value}
           </p>
         </div>
         {Icon && (
-          <div className="rounded-md border border-border p-2 text-muted-foreground transition-colors group-hover:text-foreground">
+          <div className="rounded-[calc(var(--radius)-1px)] border-2 border-border bg-[color:var(--surface-accent)] p-2.5 text-accent-foreground shadow-retro-sm transition-colors group-hover:bg-primary group-hover:text-primary-foreground sm:p-3">
             <Icon className="size-4" />
           </div>
         )}
       </div>
 
       {(description || trend) && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="mt-auto flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground">
           {trend && (
             <span
               className={
                 trend.value >= 0
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-red-600 dark:text-red-400"
+                  ? "rounded-full border-2 border-border bg-secondary px-2 py-1 text-secondary-foreground shadow-retro-sm"
+                  : "rounded-full border-2 border-border bg-destructive px-2 py-1 text-destructive-foreground shadow-retro-sm"
               }
             >
               {trend.value >= 0 ? "↑" : "↓"} {Math.abs(trend.value)}%
@@ -68,7 +68,7 @@ export function StatGrid({ children, columns = 4 }: StatGridProps) {
       ? "grid gap-4 sm:grid-cols-2"
       : columns === 3
         ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        : "grid gap-4 sm:grid-cols-2 lg:grid-cols-4";
+        : "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
 
   return <section className={colClass}>{children}</section>;
 }

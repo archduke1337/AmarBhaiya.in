@@ -4,7 +4,9 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
+import { getCourseRow } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { upsertLessonProgressRow } from "@/lib/appwrite/progress";
 import {
   listAllRows,
@@ -13,12 +15,22 @@ import {
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
-import { processInBatches } from "@/lib/utils/batch";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 
 type AnyRow = AnyAppwriteRow;
 
 function isCompletedProgressRow(row: Record<string, unknown>): boolean {
   return typeof row.completedAt === "string" && row.completedAt.trim().length > 0;
+}
+
+function isActiveEnrollmentRow(row: Record<string, unknown>): boolean {
+  return row.isActive !== false && String(row.status ?? "active") !== "cancelled";
+}
+
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
 }
 
 async function resolveCourseForEnrollment(
@@ -186,7 +198,9 @@ export async function completeLessonForUser({
     revalidatePath(`/app/learn/${courseId}/${lessonId}`);
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
-    revalidatePath(`/app/courses/${courseId}`);
+    revalidateEach(
+      getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
+    );
     return actionSuccess();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to mark complete";
@@ -200,6 +214,10 @@ export async function completeLessonForUser({
 export async function enrollInCourseAction(
   formData: FormData
 ): Promise<ActionResult> {
+  let resolvedCourseForRevalidation:
+    | { courseId: string; courseSlug: string }
+    | null = null;
+
   try {
     const user = await requireAuth();
     const courseInput = String(formData.get("courseId") ?? "").trim();
@@ -212,6 +230,7 @@ export async function enrollInCourseAction(
     }
 
     const { courseId, courseSlug, accessModel, isPublished } = resolvedCourse;
+    resolvedCourseForRevalidation = { courseId, courseSlug };
     if (!isPublished) {
       return actionError("Course not available");
     }
@@ -228,11 +247,34 @@ export async function enrollInCourseAction(
         ],
       });
 
-      if (existing.rows.length > 0) {
+      const existingRow = (existing.rows[0] as AnyRow | undefined) ?? null;
+      if (existingRow && isActiveEnrollmentRow(existingRow)) {
         revalidatePath("/app/courses");
         revalidatePath("/app/dashboard");
-        revalidatePath(`/courses/${courseSlug}`);
-        revalidatePath(`/app/courses/${courseId}`);
+        revalidateEach(getCourseDetailPaths(courseId, courseSlug));
+        return actionSuccess();
+      }
+
+      if (existingRow) {
+        const nextStatus =
+          String(existingRow.status ?? "active") === "completed" ? "completed" : "active";
+
+        await tablesDB.updateRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.enrollments,
+          rowId: existingRow.$id,
+          data: {
+            enrolledAt: String(existingRow.enrolledAt ?? "") || new Date().toISOString(),
+            paymentId: "",
+            accessModel: "free",
+            isActive: true,
+            status: nextStatus,
+          },
+        });
+
+        revalidatePath("/app/courses");
+        revalidatePath("/app/dashboard");
+        revalidateEach(getCourseDetailPaths(courseId, courseSlug));
         return actionSuccess();
       }
     } catch {
@@ -265,10 +307,22 @@ export async function enrollInCourseAction(
 
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
-    revalidatePath(`/courses/${courseSlug}`);
-    revalidatePath(`/app/courses/${courseId}`);
+    revalidateEach(getCourseDetailPaths(courseId, courseSlug));
     return actionSuccess();
   } catch (error) {
+    const appwriteError = error as { code?: number };
+    if (appwriteError?.code === 409 && resolvedCourseForRevalidation) {
+      revalidatePath("/app/courses");
+      revalidatePath("/app/dashboard");
+      revalidateEach(
+        getCourseDetailPaths(
+          resolvedCourseForRevalidation.courseId,
+          resolvedCourseForRevalidation.courseSlug
+        )
+      );
+      return actionSuccess();
+    }
+
     const message = error instanceof Error ? error.message : "Failed to enroll in course";
     console.error("[Enrollment] Failed to create enrollment:", message);
     return actionError(message);
@@ -357,7 +411,8 @@ export async function isEnrolled(
       ],
     });
 
-    return result.rows.length > 0;
+    const enrollment = result.rows[0] as AnyRow | undefined;
+    return enrollment ? isActiveEnrollmentRow(enrollment) : false;
   } catch {
     return false;
   }
@@ -456,7 +511,36 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
         Query.limit(1),
       ],
     });
-    if (existing.rows.length > 0) return;
+    const existingRow = (existing.rows[0] as AnyRow | undefined) ?? null;
+    if (existingRow && isActiveEnrollmentRow(existingRow)) return;
+
+    if (existingRow) {
+      const nextStatus =
+        String(existingRow.status ?? "active") === "completed" ? "completed" : "active";
+
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.enrollments,
+        rowId: existingRow.$id,
+        data: {
+          enrolledAt: String(existingRow.enrolledAt ?? "") || new Date().toISOString(),
+          paymentId: "",
+          accessModel: "free",
+          isActive: true,
+          status: nextStatus,
+        },
+      });
+
+      revalidatePath("/admin/students");
+      revalidatePath("/admin/courses");
+      revalidatePath("/app/courses");
+      revalidatePath("/app/dashboard");
+      const course = await getCourseRow(courseId);
+      revalidateEach(
+        getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+      );
+      return;
+    }
   } catch {
     // continue
   }
@@ -482,7 +566,26 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
 
     revalidatePath("/admin/students");
     revalidatePath("/admin/courses");
+    revalidatePath("/app/courses");
+    revalidatePath("/app/dashboard");
+    const course = await getCourseRow(courseId);
+    revalidateEach(
+      getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+    );
   } catch (error) {
+    const appwriteError = error as { code?: number };
+    if (appwriteError?.code === 409) {
+      revalidatePath("/admin/students");
+      revalidatePath("/admin/courses");
+      revalidatePath("/app/courses");
+      revalidatePath("/app/dashboard");
+      const course = await getCourseRow(courseId);
+      revalidateEach(
+        getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+      );
+      return;
+    }
+
     console.error("[Admin Enroll]", error instanceof Error ? error.message : error);
   }
 }
@@ -495,7 +598,7 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
   const enrollmentId = String(formData.get("enrollmentId") ?? "").trim();
   if (!enrollmentId) return;
 
-  const { tablesDB } = await createAdminClient();
+  const { tablesDB, storage } = await createAdminClient();
 
   try {
     const enrollment = (await tablesDB.getRow({
@@ -517,21 +620,46 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
         APPWRITE_CONFIG.tables.progress,
         [Query.equal("userId", [userId]), Query.equal("courseId", [courseId])]
       ).catch(() => []);
-
-      await processInBatches(progressRows, 25, async (row) => {
-        await tablesDB.deleteRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.progress,
-          rowId: row.$id,
-        });
+      const deleted = await executeDeletePlan({
+        tablesDB,
+        storage,
+        plan: {
+          stagedDeletes: [
+            ...progressRows.map((row) => ({
+              tableId: APPWRITE_CONFIG.tables.progress,
+              rowId: row.$id,
+            })),
+            {
+              tableId: APPWRITE_CONFIG.tables.enrollments,
+              rowId: enrollmentId,
+            },
+          ],
+          fileDeletes: [],
+        },
+        label: `enrollment ${enrollmentId}`,
       });
+      if (!deleted) {
+        return;
+      }
+    } else {
+      const deleted = await executeDeletePlan({
+        tablesDB,
+        storage,
+        plan: {
+          stagedDeletes: [
+            {
+              tableId: APPWRITE_CONFIG.tables.enrollments,
+              rowId: enrollmentId,
+            },
+          ],
+          fileDeletes: [],
+        },
+        label: `enrollment ${enrollmentId}`,
+      });
+      if (!deleted) {
+        return;
+      }
     }
-
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      rowId: enrollmentId,
-    });
 
     revalidatePath("/admin/students");
     revalidatePath("/admin/courses");
@@ -539,7 +667,11 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
       revalidatePath(`/admin/students/${userId}`);
     }
     if (courseId) {
-      revalidatePath(`/app/courses/${courseId}`);
+      revalidatePath("/app/courses");
+      const course = await getCourseRow(courseId);
+      revalidateEach(
+        getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+      );
       revalidatePath("/app/dashboard");
     }
   } catch (error) {

@@ -6,8 +6,13 @@ const { createPublicClientMock } = vi.hoisted(() => ({
   createPublicClientMock: vi.fn(),
 }));
 
+const { createAdminClientMock } = vi.hoisted(() => ({
+  createAdminClientMock: vi.fn(),
+}));
+
 vi.mock("@/lib/appwrite/server", () => ({
   createPublicClient: createPublicClientMock,
+  createAdminClient: createAdminClientMock,
 }));
 
 vi.mock("node-appwrite", () => ({
@@ -25,10 +30,16 @@ describe("POST /api/auth/register", () => {
   beforeEach(() => {
     createMock.mockReset();
     createEmailPasswordSessionMock.mockReset();
+    createAdminClientMock.mockReset();
 
     createPublicClientMock.mockResolvedValue({
       account: {
         create: createMock,
+      },
+    });
+
+    createAdminClientMock.mockResolvedValue({
+      account: {
         createEmailPasswordSession: createEmailPasswordSessionMock,
       },
     });
@@ -115,6 +126,31 @@ describe("POST /api/auth/register", () => {
 
   it("returns 500 for non-conflict failures", async () => {
     createMock.mockRejectedValue(new Error("Service unavailable"));
+
+    const request = new Request("http://localhost/api/auth/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Test User",
+        email: "user@example.com",
+        password: "password123",
+        consent: true,
+      }),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toEqual({ error: "Registration failed. Please try again." });
+  });
+
+  it("returns 500 if the auto-login session has no secret", async () => {
+    createMock.mockResolvedValue({ $id: "mock-user-id" });
+    createEmailPasswordSessionMock.mockResolvedValue({
+      secret: "",
+      expire: "2030-01-01T00:00:00.000Z",
+    });
 
     const request = new Request("http://localhost/api/auth/register", {
       method: "POST",

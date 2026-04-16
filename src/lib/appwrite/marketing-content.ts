@@ -3,7 +3,7 @@ import type { Models } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { getFilePreviewUrl } from "@/lib/utils/file-urls";
+import { getFileDownloadUrl, getFilePreviewUrl } from "@/lib/utils/file-urls";
 import type {
   BlogPostRecord,
   Category,
@@ -27,6 +27,18 @@ type ModuleRow = AnyRow & Partial<Module>;
 type LessonRow = AnyRow & Partial<Lesson>;
 type BlogPostRow = AnyRow & Partial<BlogPostRecord>;
 type SiteCopyRow = AnyRow & Partial<SiteCopyRecord>;
+type StandaloneResourceRow = AnyRow & {
+  instructorName?: string;
+  title?: string;
+  description?: string;
+  type?: string;
+  accessModel?: string;
+  price?: number;
+  fileId?: string;
+  downloadCount?: number;
+  isPublished?: boolean;
+  tags?: string[];
+};
 
 export type CourseSort = "popular" | "newest" | "price";
 
@@ -36,6 +48,7 @@ export type PublicCourseListItem = {
   title: string;
   shortDescription: string;
   category: string;
+  tags: string[];
   priceInr: number;
   rating: number;
   totalLessons: number;
@@ -111,6 +124,7 @@ export type HomeLearnItem = {
 
 export type HomeFeaturedCourseItem = {
   title: string;
+  slug: string;
   sub: string;
   level: string;
   students: string;
@@ -139,6 +153,27 @@ export type CoursesPageData = {
 export type BlogPageData = {
   posts: PublicBlogPostPreview[];
   categories: string[];
+};
+
+export type PublicNoteItem = {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  accessModel: "free" | "paid";
+  priceInr: number;
+  downloadCount: number;
+  instructorName: string;
+  createdAt: string;
+  downloadUrl: string;
+  viewUrl: string;
+  classTag: string;
+  subjectTag: string;
+  chapterTag: string;
+};
+
+export type NotesPageData = {
+  notes: PublicNoteItem[];
 };
 
 function toDate(value: unknown): Date | null {
@@ -181,6 +216,76 @@ function parseStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
+function normalizeTag(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function extractClassTag(values: string[]): string {
+  for (const value of values) {
+    const match = value.match(/\b(?:class|grade|std)\s*[-:]?\s*(6|7|8|9|10|11|12)\b/i);
+    if (match?.[1]) {
+      return `Class ${match[1]}`;
+    }
+  }
+
+  return "";
+}
+
+function extractSubjectTag(values: string[]): string {
+  const knownSubjects = [
+    "maths",
+    "mathematics",
+    "science",
+    "english",
+    "sst",
+    "social science",
+    "physics",
+    "chemistry",
+    "biology",
+    "accountancy",
+    "economics",
+    "business studies",
+    "bst",
+    "history",
+    "geography",
+    "civics",
+    "computer",
+    "hindi",
+  ];
+
+  for (const value of values) {
+    const normalized = normalizeTag(value);
+    const matched = knownSubjects.find((subject) => normalized.includes(subject));
+    if (matched) {
+      if (matched === "mathematics") return "Maths";
+      if (matched === "social science") return "Social Science";
+      if (matched === "business studies") return "Business Studies";
+      return toTitleCase(matched);
+    }
+  }
+
+  return "";
+}
+
+function extractChapterTag(values: string[]): string {
+  for (const value of values) {
+    const match = value.match(/\b(chapter|ch)\s*[-:]?\s*([a-z0-9]+)/i);
+    if (match?.[2]) {
+      return `Chapter ${match[2].toUpperCase()}`;
+    }
+  }
+
+  return "";
+}
+
 function parseParagraphs(content: unknown): string[] {
   if (typeof content !== "string" || content.trim().length === 0) {
     return [];
@@ -202,6 +307,47 @@ function parseJsonPayload<T>(value: unknown): T | null {
   } catch {
     return null;
   }
+}
+
+function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
+  const accessModel = row.accessModel === "paid" ? "paid" : "free";
+  const fileId = typeof row.fileId === "string" ? row.fileId : "";
+  const tags = parseStringArray(row.tags);
+  const metadataSources = [
+    ...tags,
+    typeof row.title === "string" ? row.title : "",
+    typeof row.description === "string" ? row.description : "",
+  ];
+
+  return {
+    id: row.$id,
+    title:
+      typeof row.title === "string" && row.title.trim().length > 0
+        ? row.title.trim()
+        : "Untitled note",
+    description:
+      typeof row.description === "string" ? row.description.trim() : "",
+    tags: tags.slice(0, 4),
+    accessModel,
+    priceInr: Math.max(0, toNumber(row.price, 0)),
+    downloadCount: Math.max(0, Math.round(toNumber(row.downloadCount, 0))),
+    instructorName:
+      typeof row.instructorName === "string" && row.instructorName.trim().length > 0
+        ? row.instructorName.trim()
+        : "Amar Bhaiya",
+    createdAt: typeof row.$createdAt === "string" ? row.$createdAt : new Date().toISOString(),
+    downloadUrl:
+      accessModel === "free" && fileId
+        ? getFileDownloadUrl(APPWRITE_CONFIG.buckets.resourceFiles, fileId)
+        : "",
+    viewUrl:
+      accessModel === "free" && fileId
+        ? `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.buckets.resourceFiles}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`
+        : "",
+    classTag: extractClassTag(metadataSources),
+    subjectTag: extractSubjectTag(metadataSources),
+    chapterTag: extractChapterTag(metadataSources),
+  };
 }
 
 async function safeListRows<Row extends AnyRow>(
@@ -408,6 +554,7 @@ function toPublicCourse(
           ? row.description
           : "",
     category: categoryEntry?.slug ?? "uncategorized",
+    tags: parseStringArray(row.tags),
     priceInr: toNumber(row.price, 0),
     rating: toNumber(row.rating, 0),
     totalLessons: toNumber(row.totalLessons, 0),
@@ -671,6 +818,29 @@ export async function getContactChannelsContent(): Promise<ContactChannelItem[]>
   );
 }
 
+export async function getPublicNotesPageData(options?: {
+  limit?: number;
+}): Promise<NotesPageData> {
+  const { tablesDB } = await createAdminClient();
+  const noteRows = await safeListAllRows<StandaloneResourceRow>(
+    tablesDB,
+    APPWRITE_CONFIG.tables.standaloneResources,
+    [
+      Query.equal("isPublished", [true]),
+      Query.equal("type", ["notes"]),
+      Query.orderDesc("$createdAt"),
+    ]
+  );
+
+  const normalized = noteRows.map(toPublicNote);
+  const limited =
+    typeof options?.limit === "number" && options.limit > 0
+      ? normalized.slice(0, options.limit)
+      : normalized;
+
+  return { notes: limited };
+}
+
 export async function getHomePageContent(): Promise<HomePageContent> {
   const { tablesDB } = await createAdminClient();
   const [
@@ -790,38 +960,11 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       };
     });
 
-  const DEFAULT_DOMAINS = [
-    { title: "Coding", sub: "Web, App, DSA" },
-    { title: "Fitness", sub: "Home workouts & nutrition" },
-    { title: "Career", sub: "Interviews & growth" },
-    { title: "Life Skills", sub: "Money, habits, mindset" },
-  ];
-
-  const DEFAULT_LEARN_ITEMS = [
-    { title: "Full-Stack Web Dev", who: "Class 10+", desc: "HTML, CSS, JS, React, Node — build real projects, not toy apps." },
-    { title: "DSA for Placements", who: "College", desc: "200+ problems solved step-by-step. Crack any coding round." },
-    { title: "Fitness at Home", who: "Everyone", desc: "No gym needed. Bodyweight routines, diet plans, transformation roadmaps." },
-    { title: "Career Guidance", who: "Class 8–12", desc: "Which stream, which college, which skills — sorted." },
-    { title: "Money & Investing", who: "18+", desc: "Mutual funds, taxes, budgeting — what school never taught." },
-    { title: "Communication", who: "Everyone", desc: "Speak confidently in English, Hindi, or Hinglish. No judgement." },
-  ];
-
-  const DEFAULT_WHY_ITEMS = [
-    { title: "No Filler Content", body: "Every lesson is picked because it matters. No 40-hour filler courses." },
-    { title: "Real Experience", body: "I teach what I've done — not what I read in a textbook." },
-    { title: "Hindi + English", body: "Learn in the language you think in. Code comments in English, explanations in Hindi." },
-    { title: "Affordable", body: "Most content is free. Paid courses are priced for students, not corporates." },
-  ];
-
-  const resolvedDomains = Array.isArray(domains) && domains.length > 0 ? domains : DEFAULT_DOMAINS;
-  const resolvedLearnItems = Array.isArray(learnItems) && learnItems.length > 0 ? learnItems : DEFAULT_LEARN_ITEMS;
-  const resolvedWhyItems = Array.isArray(whyItems) && whyItems.length > 0 ? whyItems : DEFAULT_WHY_ITEMS;
-
   return {
     stats,
-    domains: resolvedDomains,
-    learnItems: resolvedLearnItems,
+    domains: Array.isArray(domains) ? domains : [],
+    learnItems: Array.isArray(learnItems) ? learnItems : [],
     featuredCourses,
-    whyItems: resolvedWhyItems,
+    whyItems: Array.isArray(whyItems) ? whyItems : [],
   };
 }

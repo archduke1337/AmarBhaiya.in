@@ -4,6 +4,9 @@ import type { Models } from "node-appwrite";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { submitAssignmentAction } from "@/actions/assignments";
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS,
   ASSIGNMENT_SUBMISSION_MAX_BYTES,
@@ -223,55 +226,73 @@ export default async function StudentAssignmentsPage() {
   const done = assignments.filter((a) => a.submitted);
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl">
+    <div className="flex max-w-6xl flex-col gap-6">
       <PageHeader
         eyebrow="Assignments"
-        title="Your Assignments"
-        description={`${pending.length} pending · ${done.length} submitted · ${assignments.length} total`}
+        title="Assignments ko simple queue ki tarah rakho."
+        description={`${pending.length} pending · ${done.length} submitted · ${assignments.length} total. Pehle pending kaam clear karo, phir feedback review karna.`}
       />
 
       {assignments.length === 0 ? (
         <EmptyState
           icon={FileText}
           title="No assignments yet"
-          description="Assignments from your enrolled courses will appear here."
+          description="Jab enrolled courses mein assignments publish honge, woh yahin aa jayenge."
           action={{ label: "Browse courses", href: "/courses" }}
         />
       ) : (
         <div className="flex flex-col gap-6">
+          <RetroPanel tone="accent" className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                Submission desk
+              </p>
+              <p className="text-sm font-medium leading-7 text-foreground/80">
+                File upload karne se pehle name, subject, aur pages ek baar check kar lo. Re-submit karoge toh old file replace ho jayegi.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">{pending.length} pending</Badge>
+              <Badge variant="ghost">{done.length} submitted</Badge>
+            </div>
+          </RetroPanel>
+
           {/* Pending */}
           {pending.length > 0 && (
             <section
               id="pending-assignments"
               className="scroll-mt-24 flex flex-col gap-3"
             >
-              <h2 className="text-sm font-medium text-muted-foreground">
+              <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
                 Pending ({pending.length})
               </h2>
               {pending.map((a) => (
-                <article
+                <RetroPanel
                   key={a.id}
                   id={`assignment-${a.id}`}
-                  className="scroll-mt-24 border border-border"
+                  tone="card"
+                  className="scroll-mt-24 space-y-0 p-0"
                 >
-                  <div className="px-5 py-4 flex flex-col gap-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-medium">{a.title}</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                  <div className="flex flex-col gap-3 px-5 py-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-1">
+                        <h3 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                          {a.title}
+                        </h3>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                           {a.courseTitle}
                         </p>
                       </div>
                       {a.dueDate && (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground border border-border px-2 py-0.5 shrink-0">
+                        <Badge variant="outline" className="shrink-0">
                           <Clock className="size-3" />
                           Due: {new Date(a.dueDate).toLocaleDateString("en-IN")}
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
                     {a.description && (
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                      <p className="whitespace-pre-wrap text-sm font-medium leading-7 text-muted-foreground">
                         {a.description}
                       </p>
                     )}
@@ -280,30 +301,31 @@ export default async function StudentAssignmentsPage() {
                   {/* Submit form */}
                   <form
                     action={submitAssignmentAction}
-                    className="border-t border-border px-5 py-3 flex items-center gap-3"
+                    className="grid gap-3 border-t-2 border-border px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
                     encType="multipart/form-data"
                   >
                     <input type="hidden" name="assignmentId" value={a.id} />
-                    <label className="flex items-center gap-2 text-xs cursor-pointer flex-1">
+                    <label className="flex min-h-12 cursor-pointer items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-muted)] px-3 text-xs font-semibold shadow-retro-sm">
                       <Upload className="size-3.5 text-muted-foreground" />
                       <input
                         type="file"
                         name="file"
                         accept={acceptedAssignmentFileTypes}
-                        className="text-xs file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:mr-2"
+                        className="min-w-0 text-xs file:mr-2 file:rounded-[calc(var(--radius)+1px)] file:border-2 file:border-border file:bg-background file:px-2 file:py-1 file:text-xs"
                       />
                     </label>
-                    <span className="text-[10px] text-muted-foreground hidden lg:inline">
-                      Max {Math.round(ASSIGNMENT_SUBMISSION_MAX_BYTES / (1024 * 1024))} MB
-                    </span>
-                    <button
+                    <Button
                       type="submit"
-                      className="h-8 bg-foreground text-background px-4 text-xs transition-opacity hover:opacity-90 shrink-0"
+                      variant="secondary"
+                      className="w-full sm:w-auto"
                     >
                       Submit
-                    </button>
+                    </Button>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:col-span-2">
+                      Max {Math.round(ASSIGNMENT_SUBMISSION_MAX_BYTES / (1024 * 1024))} MB · Accepted: {acceptedAssignmentFileTypes}
+                    </p>
                   </form>
-                </article>
+                </RetroPanel>
               ))}
             </section>
           )}
@@ -314,20 +336,23 @@ export default async function StudentAssignmentsPage() {
               id="submitted-assignments"
               className="scroll-mt-24 flex flex-col gap-3"
             >
-              <h2 className="text-sm font-medium text-muted-foreground">
+              <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
                 Submitted ({done.length})
               </h2>
               {done.map((a) => (
-                <article
+                <RetroPanel
                   key={a.id}
                   id={`assignment-${a.id}`}
-                  className="scroll-mt-24 border border-border"
+                  tone={a.isGraded ? "secondary" : "muted"}
+                  className="scroll-mt-24 space-y-0 p-0"
                 >
                   <div className="px-5 py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-medium">{a.title}</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-1">
+                        <h3 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                          {a.title}
+                        </h3>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                           {a.courseTitle} · Submitted{" "}
                           {a.submittedAt
                             ? new Date(a.submittedAt).toLocaleDateString(
@@ -337,13 +362,13 @@ export default async function StudentAssignmentsPage() {
                         </p>
                       </div>
                       {a.isGraded ? (
-                        <span className="text-sm font-medium tabular-nums">
+                        <Badge variant="outline" className="tabular-nums">
                           {a.grade}/100
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground border border-border px-2 py-0.5">
+                        <Badge variant="outline">
                           Awaiting grade
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
@@ -353,7 +378,7 @@ export default async function StudentAssignmentsPage() {
                           href={`/api/submission-file/${a.submissionId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs border border-border px-2 py-1 hover:bg-muted transition-colors"
+                          className="inline-flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 text-xs font-semibold shadow-retro-sm transition-colors hover:bg-[color:var(--surface-accent)]"
                         >
                           <Download className="size-3" />
                           Open your submission
@@ -362,17 +387,17 @@ export default async function StudentAssignmentsPage() {
                     )}
 
                     {a.feedback && (
-                      <div className="mt-3 border-t border-border pt-3">
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                      <div className="mt-4 border-t-2 border-border pt-4">
+                        <p className="mb-1 font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                           Instructor Feedback
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm font-medium leading-7 text-muted-foreground">
                           {a.feedback}
                         </p>
                       </div>
                     )}
                   </div>
-                </article>
+                </RetroPanel>
               ))}
             </section>
           )}

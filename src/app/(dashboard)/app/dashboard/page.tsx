@@ -3,6 +3,7 @@ import {
   BookOpen,
   Bell,
   CreditCard,
+  Download,
   Flame,
   GraduationCap,
   MessageSquare,
@@ -31,7 +32,9 @@ import {
   EmptyState,
   ActivityFeed,
 } from "@/components/dashboard";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default async function StudentDashboardPage() {
   const user = await requireAuth();
@@ -66,7 +69,17 @@ export default async function StudentDashboardPage() {
       <PageHeader
         eyebrow={role === "student" ? "Dashboard" : `Dashboard · ${role}`}
         title={`${greeting}, ${user.name.split(" ")[0]}`}
-        description="Pick up where you left off or explore something new."
+        description="Pick up where you left off, revise quickly with notes, or move straight into the next lesson."
+        actions={
+          <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/notes">Open notes</Link>
+            </Button>
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/courses">Browse courses</Link>
+            </Button>
+          </div>
+        }
       />
 
       {/* Stats */}
@@ -104,18 +117,35 @@ export default async function StudentDashboardPage() {
         />
       </StatGrid>
 
+      <RetroPanel tone="accent" className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-1">
+          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+            Study rhythm
+          </p>
+          <p className="text-sm font-medium leading-7 text-foreground/80">
+            Use notes for quick revision, courses for the full sequence, and live sessions when you need explanation that feels human.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline">Class 6 to 12 first</Badge>
+          <Badge variant="ghost">Notes + courses + live</Badge>
+        </div>
+      </RetroPanel>
+
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Continue Learning — takes 2 cols */}
         <section className="flex flex-col gap-4 lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">Continue Learning</h2>
-            <Link
-              href="/app/courses"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              View all →
-            </Link>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Continue Learning</h2>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="link" size="sm">
+                <Link href="/app/courses">View all</Link>
+              </Button>
+              <Button asChild variant="link" size="sm">
+                <Link href="/notes">Notes</Link>
+              </Button>
+            </div>
           </div>
 
           {inProgressCourses.length === 0 ? (
@@ -126,94 +156,94 @@ export default async function StudentDashboardPage() {
               action={{ label: "Browse courses", href: "/courses" }}
             />
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="grid gap-4 xl:grid-cols-1">
               {inProgressCourses.slice(0, 3).map((course) => (
                 <Link
                   key={course.id}
                   href={course.continueHref}
-                  className="group border border-border p-5 transition-colors hover:border-foreground/20"
+                  className="group"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex flex-col gap-1">
-                      <h3 className="font-medium group-hover:underline">
-                        {course.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {course.completedLessons} of {course.totalLessons}{" "}
-                        lessons complete
-                      </p>
-                      {course.continueLessonTitle && (
-                        <p className="text-xs text-muted-foreground">
-                          {course.resumePercent > 0
-                            ? `Resume ${course.continueLessonTitle} at ${course.resumePercent}%`
-                            : `Up next: ${course.continueLessonTitle}`}
+                  <RetroPanel
+                    tone={course.progressPercent >= 70 ? "secondary" : "card"}
+                    className="space-y-4 transition-transform group-hover:-translate-y-1"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col gap-1">
+                        <h3 className="font-heading text-xl font-black tracking-[-0.04em] group-hover:underline">
+                          {course.title}
+                        </h3>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {course.completedLessons} of {course.totalLessons}{" "}
+                          lessons complete
                         </p>
-                      )}
+                        {course.continueLessonTitle && (
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                            {course.resumePercent > 0
+                              ? `Resume ${course.continueLessonTitle} at ${course.resumePercent}%`
+                              : `Up next: ${course.continueLessonTitle}`}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="shrink-0">
+                        {course.category || "General"}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="shrink-0">
-                      {course.category || "General"}
-                    </Badge>
-                  </div>
 
-                  {/* Progress bar */}
-                  <div className="mt-3 flex items-center gap-3">
-                    <div className="h-1.5 flex-1 overflow-hidden bg-muted">
-                      <div
-                        className="h-full bg-foreground transition-all duration-500"
-                        style={{
-                          width: `${Math.max(2, course.progressPercent)}%`,
-                        }}
-                      />
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full border-2 border-border bg-card">
+                        <div
+                          className="h-full bg-primary transition-all duration-500"
+                          style={{
+                            width: `${Math.max(2, course.progressPercent)}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs tabular-nums font-black text-muted-foreground">
+                        {course.progressPercent}%
+                      </span>
                     </div>
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      {course.progressPercent}%
-                    </span>
-                  </div>
 
-                  <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <ArrowRight className="size-3" />
-                    <span>
-                      {course.resumePercent > 0 ? "Resume lesson" : "Open next lesson"}
-                    </span>
-                  </div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      <ArrowRight className="size-3" />
+                      <span>
+                        {course.resumePercent > 0 ? "Resume lesson" : "Open next lesson"}
+                      </span>
+                    </div>
+                  </RetroPanel>
                 </Link>
               ))}
             </div>
           )}
 
           <section className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-medium">Study Queue</h2>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <Link
-                  href="/app/assignments#pending-assignments"
-                  className="transition-colors hover:text-foreground"
-                >
-                  Assignments
-                </Link>
-                <Link
-                  href="/app/quizzes"
-                  className="transition-colors hover:text-foreground"
-                >
-                  Quizzes
-                </Link>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Study Queue</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button asChild variant="link" size="sm">
+                  <Link href="/app/assignments#pending-assignments">Assignments</Link>
+                </Button>
+                <Button asChild variant="link" size="sm">
+                  <Link href="/app/quizzes">Quizzes</Link>
+                </Button>
               </div>
             </div>
 
             {studyQueue.length === 0 ? (
-              <div className="border border-border px-5 py-6 text-sm text-muted-foreground">
-                No pending assignments or quiz retakes right now. Keep going with your lessons and new work will show up here automatically.
-              </div>
+              <RetroPanel tone="muted">
+                <p className="text-sm font-medium text-muted-foreground">
+                  No pending assignments or quiz retakes right now. Keep going with your lessons and new work will show up here automatically.
+                </p>
+              </RetroPanel>
             ) : (
-              <div className="border border-border">
-                <div className="divide-y divide-border">
+              <RetroPanel tone="card" className="overflow-hidden p-0">
+                <div className="divide-y-2 divide-border">
                   {studyQueue.map((item) => (
                     <Link
                       key={`${item.kind}-${item.id}`}
                       href={item.href}
-                      className="group block transition-colors hover:bg-muted/40"
+                      className="group block transition-colors hover:bg-[color:var(--surface-ink)]"
                     >
-                      <div className="flex items-start justify-between gap-3 px-5 py-4">
+                      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex min-w-0 flex-col gap-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-medium group-hover:underline">
@@ -232,7 +262,7 @@ export default async function StudentDashboardPage() {
                           </p>
                         </div>
 
-                        <div className="flex shrink-0 flex-col items-end gap-2">
+                        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
                           <Badge
                             variant={item.status === "Overdue" ? "default" : "outline"}
                             className="text-[10px]"
@@ -253,7 +283,7 @@ export default async function StudentDashboardPage() {
                     </Link>
                   ))}
                 </div>
-              </div>
+              </RetroPanel>
             )}
           </section>
         </section>
@@ -331,12 +361,17 @@ export default async function StudentDashboardPage() {
             }))}
           />
 
-          <nav className="border border-border">
-            <p className="border-b border-border px-5 py-3 text-sm font-medium">
+          <RetroPanel tone="accent" className="overflow-hidden p-0">
+            <p className="border-b-2 border-border px-5 py-3 font-heading text-sm font-black uppercase tracking-[0.16em]">
               Quick Links
             </p>
-            <div className="flex flex-col divide-y divide-border">
+            <div className="flex flex-col divide-y-2 divide-border">
               {[
+                {
+                  label: "Study Notes",
+                  href: "/notes",
+                  icon: Download,
+                },
                 {
                   label: "Live Sessions",
                   href: "/app/live#upcoming-sessions",
@@ -361,7 +396,7 @@ export default async function StudentDashboardPage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="group flex items-center justify-between px-5 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  className="group flex items-center justify-between gap-3 px-5 py-3 text-sm text-muted-foreground transition-colors hover:bg-[color:var(--surface-ink)] hover:text-foreground"
                 >
                   <div className="flex items-center gap-2">
                     <link.icon className="size-4" />
@@ -371,7 +406,7 @@ export default async function StudentDashboardPage() {
                 </Link>
               ))}
             </div>
-          </nav>
+          </RetroPanel>
         </aside>
       </div>
     </div>

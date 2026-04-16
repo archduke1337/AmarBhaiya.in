@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { passwordSchema } from "@/lib/validators/auth";
 
@@ -45,19 +46,6 @@ export async function rsvpToSessionAction(
 
     const { tablesDB } = await createAdminClient();
 
-    // Check if already RSVPed
-    const existing = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.sessionRsvps,
-      queries: [
-        Query.equal("sessionId", [sessionId]),
-        Query.equal("userId", [user.$id]),
-        Query.limit(1),
-      ],
-    });
-
-    if (existing.rows.length > 0) return; // Already RSVPed
-
     await tablesDB.createRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.sessionRsvps,
@@ -72,6 +60,13 @@ export async function rsvpToSessionAction(
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
   } catch (error) {
+    const appwriteError = error as { code?: number };
+    if (appwriteError?.code === 409) {
+      revalidatePath("/app/dashboard");
+      revalidatePath("/app/live");
+      return;
+    }
+
     console.error(
       error instanceof Error ? error.message : "Failed to RSVP."
     );
@@ -88,7 +83,7 @@ export async function cancelRsvpAction(
   if (!sessionId) return;
 
   try {
-    const { tablesDB } = await createAdminClient();
+    const { tablesDB, storage } = await createAdminClient();
 
     const existing = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -103,11 +98,21 @@ export async function cancelRsvpAction(
     const rsvp = existing.rows[0] as { $id: string } | undefined;
     if (!rsvp) return;
 
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.sessionRsvps,
-      rowId: rsvp.$id,
+    const deleted = await executeDeletePlan({
+      tablesDB,
+      storage,
+      plan: {
+        stagedDeletes: [
+          {
+            tableId: APPWRITE_CONFIG.tables.sessionRsvps,
+            rowId: rsvp.$id,
+          },
+        ],
+        fileDeletes: [],
+      },
+      label: `session RSVP ${rsvp.$id}`,
     });
+    if (!deleted) return;
 
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
@@ -151,7 +156,7 @@ export async function changePasswordAction(
 export async function updateDisplayNameAction(
   formData: FormData
 ): Promise<void> {
-  await requireAuth();
+  const user = await requireAuth();
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name || name.length < 2) return;
@@ -161,6 +166,7 @@ export async function updateDisplayNameAction(
     await account.updateName({ name });
     revalidatePath("/app/profile/edit");
     revalidatePath("/app/dashboard");
+    revalidatePath(`/app/profile/${user.$id}`);
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to update name."

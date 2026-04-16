@@ -1,7 +1,22 @@
 import type { Metadata } from "next";
+import { Archivo_Black, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipLink } from "@/components/skip-link";
+import { Analytics } from "@vercel/analytics/next";
+
+const bodyFont = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const displayFont = Archivo_Black({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  weight: "400",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -9,18 +24,17 @@ export const metadata: Metadata = {
     template: "%s | amarbhaiya.in",
   },
   description:
-    "Amarnath Pandey's unified platform — Education, Fitness, Career Guidance, Entrepreneurship & Personal Development. Learn from Bhaiya.",
+    "School-first learning from Amar Bhaiya — notes, courses, and practical guidance for Class 6 to 12 students, with skills and career growth layered in later.",
   keywords: [
     "Amarnath Pandey",
     "amarbhaiya",
     "Learn from Bhaiya",
     "online courses",
-    "tech education",
-    "fitness training",
-    "career coaching",
-    "entrepreneurship",
-    "personal development",
-    "LMS",
+    "class 6 to 12 notes",
+    "board exam preparation",
+    "student courses",
+    "career guidance",
+    "skill courses",
   ],
   authors: [{ name: "Amarnath Pandey" }],
   creator: "Amarnath Pandey",
@@ -30,7 +44,7 @@ export const metadata: Metadata = {
     siteName: "amarbhaiya.in",
     title: "amarbhaiya.in — Learn from Bhaiya",
     description:
-      "Amarnath Pandey's unified platform for education, fitness, career guidance, and personal growth.",
+      "School-first learning from Amar Bhaiya with notes, courses, and practical guidance for Indian students.",
   },
   twitter: {
     card: "summary_large_image",
@@ -50,7 +64,7 @@ export default function RootLayout({
   return (
     <html
       lang="en-IN"
-      className="h-full antialiased font-sans"
+      className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased font-sans`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
@@ -63,6 +77,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

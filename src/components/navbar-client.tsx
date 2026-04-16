@@ -2,20 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { LayoutDashboard, Menu, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, Menu, Search, X } from "lucide-react";
 
+import { PUBLIC_NAV_ITEMS } from "@/lib/utils/constants";
 import { logoutAction } from "@/lib/appwrite/actions";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 import { ThemeToggle } from "./theme-toggle";
-
-const NAV_LINKS = [
-  { label: "About", href: "/about" },
-  { label: "Courses", href: "/courses" },
-  { label: "Blog", href: "/blog" },
-  { label: "Contact", href: "/contact" },
-];
 
 type NavbarClientProps = {
   isAuthenticated: boolean;
@@ -28,198 +24,232 @@ export function NavbarClient({
   dashboardHref,
   firstName,
 }: NavbarClientProps) {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = React.useRef<HTMLButtonElement>(null);
   const mobileMenuRef = React.useRef<HTMLDivElement>(null);
 
+  const navItems = useMemo(
+    () => PUBLIC_NAV_ITEMS.filter((item) => item.href !== "/"),
+    []
+  );
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 12);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Focus management for mobile menu
   useEffect(() => {
-    if (mobileOpen && mobileMenuRef.current) {
-      // Find first interactive element
-      const firstFocusable = mobileMenuRef.current.querySelector(
-        'a, button, [tabindex]:not([tabindex="-1"])'
-      ) as HTMLElement;
-      firstFocusable?.focus();
-
-      // Handle Escape key to close menu
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === "Escape") {
-          setMobileOpen(false);
-          menuButtonRef.current?.focus();
-        }
-      };
-
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
+    if (!mobileOpen || !mobileMenuRef.current) {
+      return;
     }
+
+    const firstFocusable = mobileMenuRef.current.querySelector(
+      'a, button, [tabindex]:not([tabindex="-1"])'
+    ) as HTMLElement | null;
+    firstFocusable?.focus();
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [mobileOpen]);
+
+  function isActive(path: string) {
+    if (path === "/") {
+      return pathname === "/";
+    }
+
+    return pathname === path || pathname.startsWith(`${path}/`);
+  }
 
   return (
     <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-background/80 backdrop-blur-md border-b border-border"
-            : "bg-transparent"
-        }`}
-      >
-        <div className="flex items-center justify-between px-6 md:px-12 h-14">
-          <Link
-            href="/"
-            className="inline-flex items-center"
-            aria-label="Amar Bhaiya home"
-          >
-            <Image
-              src="/AMAR%20BHAIYA.png"
-              alt="Amar Bhaiya"
-              width={180}
-              height={60}
-              priority
-              className="h-10 w-auto object-contain"
-            />
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-10">
-            {NAV_LINKS.map((link) => (
+      <header className="sticky top-0 z-50 px-3 pt-3 md:px-4">
+        <div
+          className={`mx-auto max-w-7xl rounded-[calc(var(--radius)+8px)] border-2 border-border bg-[color:var(--surface-card)] transition-all ${
+            scrolled ? "shadow-retro" : "shadow-retro-sm"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-5">
+            <div className="flex min-w-0 items-center gap-3">
               <Link
-                key={link.label}
-                href={link.href}
-                className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
+                href="/"
+                className="inline-flex items-center"
+                aria-label="Amar Bhaiya home"
               >
-                {link.label}
+                <Image
+                  src="/AMAR%20BHAIYA.png"
+                  alt="Amar Bhaiya"
+                  width={180}
+                  height={60}
+                  priority
+                  className="h-10 w-auto object-contain md:h-11"
+                />
               </Link>
-            ))}
-          </nav>
+              <div className="hidden min-w-0 xl:block">
+                <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                  Learn from Bhaiya
+                </p>
+                <p className="truncate text-sm font-medium text-foreground/75">
+                  Notes first. Courses next. Skills and career growth when students are ready for them.
+                </p>
+              </div>
+            </div>
 
-          <div className="hidden md:flex items-center gap-4">
-            <ThemeToggle />
+            <nav className="hidden items-center gap-2 lg:flex">
+              {navItems.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={`inline-flex h-10 items-center rounded-[calc(var(--radius)+2px)] border-2 px-3.5 font-heading text-[0.72rem] font-black uppercase tracking-[0.14em] transition-all ${
+                    isActive(link.href)
+                      ? "border-border bg-[color:var(--surface-secondary)] text-foreground shadow-retro-sm"
+                      : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-[color:var(--surface-accent)] hover:text-foreground hover:shadow-retro-sm"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
-            {isAuthenticated ? (
-              <>
-                <span className="text-xs uppercase tracking-widest text-muted-foreground hidden lg:inline">
-                  Hi {firstName || "Learner"}
-                </span>
-                <Link
-                  href={dashboardHref}
-                  className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <LayoutDashboard className="size-3.5" />
-                  Dashboard
-                </Link>
-                <form action={logoutAction}>
-                  <button
-                    type="submit"
-                    className="text-xs tracking-widest uppercase bg-foreground text-background px-5 py-2 hover:bg-foreground/90 transition-colors"
-                  >
-                    Sign out
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/register"
-                  className="text-xs tracking-widest uppercase bg-foreground text-background px-5 py-2 hover:bg-foreground/90 transition-colors"
-                >
-                  Start Learning
-                </Link>
-              </>
-            )}
-          </div>
+            <div className="hidden items-center gap-3 md:flex">
+              <ThemeToggle />
 
-          <div className="md:hidden flex items-center gap-2">
-            <ThemeToggle />
-            <button
-              ref={menuButtonRef}
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Toggle menu"
-              aria-expanded={mobileOpen}
-            >
-              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-            </button>
+              {isAuthenticated ? (
+                <>
+                  <Badge variant="outline" className="hidden xl:inline-flex">
+                    Hi {firstName || "Learner"}
+                  </Badge>
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={dashboardHref}>
+                      <LayoutDashboard className="size-3.5" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <form action={logoutAction}>
+                    <Button type="submit" variant="outline" size="sm">
+                      Sign out
+                    </Button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="link" size="sm">
+                    <Link href="/login">Log in</Link>
+                  </Button>
+                  <Button asChild size="sm">
+                    <Link href="/register">Start learning</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <Button
+                asChild
+                variant="outline"
+                size="icon-sm"
+                aria-label="Search courses and notes"
+              >
+                <Link href="/courses">
+                  <Search className="size-4" />
+                </Link>
+              </Button>
+              <ThemeToggle />
+              <Button
+                ref={menuButtonRef}
+                onClick={() => setMobileOpen((current) => !current)}
+                variant="secondary"
+                size="icon-sm"
+                aria-label="Toggle menu"
+                aria-expanded={mobileOpen}
+              >
+                {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
+      {mobileOpen ? (
+        <div className="fixed inset-x-3 top-[5.6rem] z-40 md:hidden">
+          <div
             ref={mobileMenuRef}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 bg-background pt-14"
+            className="rounded-[calc(var(--radius)+8px)] border-2 border-border bg-[color:var(--surface-card)] shadow-retro"
             role="navigation"
             aria-label="Mobile navigation"
           >
-            <nav className="flex flex-col items-start px-6 py-8 gap-6">
-              {NAV_LINKS.map((link) => (
+            <nav className="flex flex-col gap-2 p-4">
+              <div className="rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-secondary)] px-4 py-4 shadow-retro-sm">
+                <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                  Student-first
+                </p>
+                <p className="mt-2 text-sm font-medium leading-6 text-foreground/80">
+                  Notes se start karo. Course mein structure milta hai. Doubt aaye toh Bhaiya ke style mein seedha samjho.
+                </p>
+              </div>
+
+              {navItems.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-2xl font-light tracking-tight text-muted-foreground hover:text-foreground transition-colors"
+                  className={`rounded-[calc(var(--radius)+2px)] border-2 px-4 py-3 font-heading text-base font-black uppercase tracking-[0.08em] ${
+                    isActive(link.href)
+                      ? "border-border bg-[color:var(--surface-secondary)] text-foreground shadow-retro-sm"
+                      : "border-border bg-[color:var(--surface-card)] text-foreground"
+                  }`}
                 >
                   {link.label}
                 </Link>
               ))}
 
-              <div className="border-t border-border w-full pt-6 mt-4 flex flex-col gap-4">
+              <div className="mt-2 grid gap-3 border-t-2 border-border pt-4">
+                <Button asChild variant="ghost">
+                  <Link href="/notes" onClick={() => setMobileOpen(false)}>
+                    Open notes
+                  </Link>
+                </Button>
                 {isAuthenticated ? (
                   <>
-                    <Link
-                      href={dashboardHref}
-                      onClick={() => setMobileOpen(false)}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Open Dashboard
-                    </Link>
+                    <Button asChild variant="secondary">
+                      <Link href={dashboardHref} onClick={() => setMobileOpen(false)}>
+                        Open dashboard
+                      </Link>
+                    </Button>
                     <form action={logoutAction}>
-                      <button
-                        type="submit"
-                        className="inline-block bg-foreground text-background px-6 py-3 text-sm font-medium w-fit"
-                      >
+                      <Button type="submit" variant="outline" className="w-full">
                         Sign out
-                      </button>
+                      </Button>
                     </form>
                   </>
                 ) : (
                   <>
-                    <Link
-                      href="/login"
-                      onClick={() => setMobileOpen(false)}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Log in
-                    </Link>
-                    <Link
-                      href="/register"
-                      onClick={() => setMobileOpen(false)}
-                      className="inline-block bg-foreground text-background px-6 py-3 text-sm font-medium w-fit"
-                    >
-                      Start Learning
-                    </Link>
+                    <Button asChild variant="outline">
+                      <Link href="/login" onClick={() => setMobileOpen(false)}>
+                        Log in
+                      </Link>
+                    </Button>
+                    <Button asChild>
+                      <Link href="/register" onClick={() => setMobileOpen(false)}>
+                        Create account
+                      </Link>
+                    </Button>
                   </>
                 )}
               </div>
             </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

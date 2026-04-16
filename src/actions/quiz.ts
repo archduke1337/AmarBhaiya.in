@@ -5,20 +5,28 @@ import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
 import {
+  getCourseRow,
   userCanManageCourse,
   userHasCourseAccess,
 } from "@/lib/appwrite/access";
 import { createNotificationEntry } from "@/actions/notifications";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import {
   listAllRows,
   type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
-import { processInBatches } from "@/lib/utils/batch";
 
 type AnyRow = AnyAppwriteRow;
+
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
 
 async function getQuizRow(quizId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();
@@ -394,7 +402,7 @@ export async function deleteQuizAction(formData: FormData): Promise<void> {
       return;
     }
 
-    const { tablesDB } = await createAdminClient();
+    const { tablesDB, storage } = await createAdminClient();
 
     // Delete questions first
     const [questionRows, attemptRows] = await Promise.all([
@@ -403,34 +411,41 @@ export async function deleteQuizAction(formData: FormData): Promise<void> {
         Query.equal("quizId", [quizId]),
       ]),
     ]);
-
-    await processInBatches(questionRows, 25, async (question) => {
-      await tablesDB.deleteRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.quizQuestions,
-        rowId: question.$id,
-      });
+    const deleted = await executeDeletePlan({
+      tablesDB,
+      storage,
+      plan: {
+        stagedDeletes: [
+          ...questionRows.map((question) => ({
+            tableId: APPWRITE_CONFIG.tables.quizQuestions,
+            rowId: question.$id,
+          })),
+          ...attemptRows.map((attempt) => ({
+            tableId: APPWRITE_CONFIG.tables.quizAttempts,
+            rowId: attempt.$id,
+          })),
+          {
+            tableId: APPWRITE_CONFIG.tables.quizzes,
+            rowId: quizId,
+          },
+        ],
+        fileDeletes: [],
+      },
+      label: `quiz ${quizId}`,
     });
-
-    await processInBatches(attemptRows, 25, async (attempt) => {
-      await tablesDB.deleteRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.quizAttempts,
-        rowId: attempt.$id,
-      });
-    });
-
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.quizzes,
-      rowId: quizId,
-    });
+    if (!deleted) return;
 
     revalidatePath("/instructor");
     revalidatePath(`/instructor/courses/${String(quiz.courseId ?? "")}/curriculum`);
     revalidatePath("/app/quizzes");
     if (String(quiz.courseId ?? "")) {
-      revalidatePath(`/app/courses/${String(quiz.courseId ?? "")}`);
+      const course = await getCourseRow(String(quiz.courseId ?? ""));
+      revalidateEach(
+        getCourseDetailPaths(
+          String(quiz.courseId ?? ""),
+          typeof course?.slug === "string" ? course.slug : ""
+        )
+      );
     }
     if (String(quiz.lessonId ?? "")) {
       revalidatePath(

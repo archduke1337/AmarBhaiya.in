@@ -2,18 +2,26 @@ import { ID } from "node-appwrite";
 import { NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createPublicClient } from "@/lib/appwrite/server";
+import { buildSessionCookieOptions } from "@/lib/appwrite/session-cookie";
+import {
+  createAdminClient,
+  createPublicClient,
+} from "@/lib/appwrite/server";
 import { registerSchema } from "@/lib/validators/auth";
 
 export const runtime = "nodejs";
 
-function setSessionCookie(response: NextResponse, secret: string, expire: string) {
+function setSessionCookie(
+  request: Request,
+  response: NextResponse,
+  secret: string,
+  expire: string
+) {
   response.cookies.set(APPWRITE_CONFIG.sessionCookieName, secret, {
-    path: "/",
-    httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-    expires: new Date(expire),
+    ...buildSessionCookieOptions({
+      expire,
+      host: request.headers.get("host"),
+    }),
   });
 }
 
@@ -29,22 +37,27 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { account } = await createPublicClient();
+    const { account: publicAccount } = await createPublicClient();
 
-    await account.create({
+    await publicAccount.create({
       userId: ID.unique(),
       email: parsed.data.email,
       password: parsed.data.password,
       name: parsed.data.name,
     });
 
+    const { account } = await createAdminClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
     });
 
+    if (!session.secret) {
+      throw new Error("Missing Appwrite session secret.");
+    }
+
     const response = NextResponse.json({ success: true });
-    setSessionCookie(response, session.secret, session.expire);
+    setSessionCookie(request, response, session.secret, session.expire);
     return response;
   } catch (error) {
     const message =

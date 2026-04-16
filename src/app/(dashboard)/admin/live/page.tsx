@@ -11,11 +11,11 @@ export default async function AdminLivePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        eyebrow="Admin · Live"
-        title="Live Session Monitoring"
-        description="Overview of all active, scheduled, and recently ended live sessions across the platform."
-      />
+        <PageHeader
+          eyebrow="Admin · Live"
+          title="Live Session Monitoring"
+          description="Overview of all active and scheduled live sessions across the platform."
+        />
 
       <StatGrid columns={3}>
         <StatCard
@@ -42,7 +42,7 @@ export default async function AdminLivePage() {
         id="upcoming-sessions"
         className="scroll-mt-24 flex flex-col gap-4"
       >
-        <h2 className="text-lg font-medium">Upcoming Sessions</h2>
+        <h2 className="text-lg font-medium">Live & Scheduled Sessions</h2>
 
         {data.upcoming.length === 0 ? (
           <EmptyState
@@ -52,9 +52,10 @@ export default async function AdminLivePage() {
           />
         ) : (
           <div className="border border-border">
-            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_200px_80px]">
+            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_120px_200px_80px]">
               <span>Session</span>
               <span>Status</span>
+              <span>RSVPs</span>
               <span>Scheduled At</span>
               <span>Links</span>
             </div>
@@ -64,7 +65,7 @@ export default async function AdminLivePage() {
                 <div
                   key={session.id}
                   id={`session-${session.id}`}
-                  className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_200px_80px] md:items-center md:gap-4"
+                  className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_120px_200px_80px] md:items-center md:gap-4"
                 >
                   <span className="text-sm font-medium">{session.title}</span>
 
@@ -74,6 +75,10 @@ export default async function AdminLivePage() {
                   >
                     {session.status}
                   </Badge>
+
+                  <span className="text-sm tabular-nums text-muted-foreground">
+                    {session.rsvpCount}
+                  </span>
 
                   <span className="text-sm tabular-nums text-muted-foreground">
                     {session.scheduledAt

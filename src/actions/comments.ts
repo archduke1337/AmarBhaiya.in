@@ -4,10 +4,11 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth } from "@/lib/appwrite/auth";
-import { userHasCourseAccess } from "@/lib/appwrite/access";
+import { getCourseRow, userHasCourseAccess } from "@/lib/appwrite/access";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
 
 type AnyRow = Record<string, unknown> & { $id: string };
@@ -23,6 +24,12 @@ export type DiscussionComment = {
 
 export type LessonComment = DiscussionComment;
 export type CourseComment = DiscussionComment;
+
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
 
 function mapCommentRow(row: AnyRow): DiscussionComment {
   return {
@@ -169,7 +176,10 @@ export async function postCourseCommentAction(
       text,
     });
 
-    revalidatePath(`/app/courses/${courseId}`);
+    const course = await getCourseRow(courseId);
+    revalidateEach(
+      getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+    );
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to post course comment."

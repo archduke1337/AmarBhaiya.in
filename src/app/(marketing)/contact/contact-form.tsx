@@ -3,6 +3,12 @@
 import { useState } from "react";
 import emailjs from "@emailjs/browser";
 
+import { RetroPanel } from "@/components/marketing/retro-panel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
 type FormState = {
   name: string;
   email: string;
@@ -64,73 +70,94 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border border-border p-7 md:p-8 space-y-5">
-      <div className="grid md:grid-cols-2 gap-4">
-        <label className="space-y-2 text-sm">
-          <span className="text-muted-foreground">Name</span>
-          <input
+    <RetroPanel tone="card" size="lg">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+            Contact form
+          </p>
+          <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">
+            Start the conversation properly.
+          </h2>
+          <p className="text-sm font-medium leading-6 text-muted-foreground">
+            Tell us what you are trying to build, solve, or decide. We will reply with something useful.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="contact-name">Name</Label>
+            <Input
+              id="contact-name"
+              required
+              value={form.name}
+              onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+              name="name"
+              type="text"
+              placeholder="Your full name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contact-email">Email</Label>
+            <Input
+              id="contact-email"
+              required
+              value={form.email}
+              onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="contact-subject">Subject</Label>
+          <Input
+            id="contact-subject"
             required
-            value={form.name}
-            onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-            className="w-full h-11 border border-border bg-background px-3"
-            name="name"
+            value={form.subject}
+            onChange={(event) => setForm((prev) => ({ ...prev, subject: event.target.value }))}
+            name="subject"
             type="text"
-            placeholder="Your full name"
+            placeholder="What can we help with?"
           />
-        </label>
+        </div>
 
-        <label className="space-y-2 text-sm">
-          <span className="text-muted-foreground">Email</span>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="contact-message">Message</Label>
+          <Textarea
+            id="contact-message"
             required
-            value={form.email}
-            onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
-            className="w-full h-11 border border-border bg-background px-3"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
+            value={form.message}
+            onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}
+            name="message"
+            placeholder="Give us the context, timeline, and what a helpful reply would look like."
           />
-        </label>
-      </div>
+        </div>
 
-      <label className="space-y-2 text-sm block">
-        <span className="text-muted-foreground">Subject</span>
-        <input
-          required
-          value={form.subject}
-          onChange={(event) => setForm((prev) => ({ ...prev, subject: event.target.value }))}
-          className="w-full h-11 border border-border bg-background px-3"
-          name="subject"
-          type="text"
-          placeholder="What can we help with?"
-        />
-      </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" disabled={status === "loading"} size="lg">
+            {status === "loading" ? "Sending..." : "Send message"}
+          </Button>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Replies usually land within 1 to 2 business days
+          </p>
+        </div>
 
-      <label className="space-y-2 text-sm block">
-        <span className="text-muted-foreground">Message</span>
-        <textarea
-          required
-          value={form.message}
-          onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}
-          className="w-full min-h-36 border border-border bg-background px-3 py-2"
-          name="message"
-          placeholder="Write your message"
-        />
-      </label>
-
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="h-11 px-6 bg-foreground text-background text-sm font-medium disabled:opacity-60"
-      >
-        {status === "loading" ? "Sending..." : "Send message"}
-      </button>
-
-      {feedback && (
-        <p className={status === "success" ? "text-sm text-emerald-600" : "text-sm text-destructive"}>
-          {feedback}
-        </p>
-      )}
-    </form>
+        {feedback && (
+          <p
+            className={
+              status === "success"
+                ? "rounded-[calc(var(--radius)+4px)] border-2 border-border bg-secondary px-4 py-3 text-sm font-semibold text-foreground"
+                : "rounded-[calc(var(--radius)+4px)] border-2 border-destructive bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
+            }
+          >
+            {feedback}
+          </p>
+        )}
+      </form>
+    </RetroPanel>
   );
 }

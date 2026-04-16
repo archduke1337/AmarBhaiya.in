@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { confirmPasswordRecoveryAction } from "@/actions/verification";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type PageProps = {
   searchParams: Promise<{ userId?: string; secret?: string }>;
@@ -10,15 +13,15 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
 
   if (!userId || !secret) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md border border-border p-8 text-center">
-          <h1 className="text-2xl font-medium">Invalid Reset Link</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
+      <div className="w-full max-w-md text-center">
+        <div className="retro-surface bg-card p-8">
+          <h1 className="text-4xl">Invalid Reset Link</h1>
+          <p className="mt-3 text-sm font-semibold text-muted-foreground">
             This password reset link is invalid or has expired.
           </p>
           <Link
             href="/login"
-            className="mt-6 inline-block text-sm underline underline-offset-4"
+            className="mt-6 inline-block font-heading text-xs uppercase tracking-[0.16em] underline underline-offset-4"
           >
             Back to Login
           </Link>
@@ -28,42 +31,40 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md border border-border p-8">
-        <h1 className="text-2xl font-medium text-center">Reset Password</h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground">
+    <div className="w-full max-w-md">
+      <div className="retro-surface bg-card p-8">
+        <h1 className="text-center text-4xl">Reset Password</h1>
+        <p className="mt-3 text-center text-sm font-semibold text-muted-foreground">
           Enter a new password for your account.
         </p>
 
         <form
           action={confirmPasswordRecoveryAction}
-          className="mt-6 flex flex-col gap-4"
+          className="mt-6 flex flex-col gap-5"
         >
           <input type="hidden" name="userId" value={userId} />
           <input type="hidden" name="secret" value={secret} />
 
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">New Password</span>
-            <input
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="password">New Password</Label>
+            <Input
+              id="password"
               name="password"
               type="password"
               required
               minLength={8}
               placeholder="Minimum 8 characters"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="bg-card"
             />
-          </label>
+          </div>
 
-          <button
-            type="submit"
-            className="h-10 w-full bg-foreground text-sm text-background transition-opacity hover:opacity-90"
-          >
+          <Button type="submit" size="lg" className="w-full">
             Reset Password
-          </button>
+          </Button>
 
           <Link
             href="/login"
-            className="text-center text-sm text-muted-foreground underline underline-offset-4"
+            className="text-center font-heading text-xs uppercase tracking-[0.16em] text-muted-foreground underline underline-offset-4"
           >
             Back to Login
           </Link>

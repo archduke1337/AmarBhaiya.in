@@ -1,14 +1,16 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
+import type { Models } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { listAllRows } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
-type AnyRow = Record<string, unknown> & { $id: string };
+type AnyRow = Models.Row & Record<string, unknown>;
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -138,17 +140,13 @@ export async function getUserCertificates(
   const { tablesDB } = await createAdminClient();
 
   try {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.certificates,
-      queries: [
-        Query.equal("userId", [user.$id]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(50),
-      ],
-    });
+    const rows = await listAllRows<AnyRow>(
+      tablesDB,
+      APPWRITE_CONFIG.tables.certificates,
+      [Query.equal("userId", [user.$id]), Query.orderDesc("$createdAt")]
+    );
 
-    return result.rows.map((r) => {
+    return rows.map((r) => {
       const row = r as AnyRow;
       return {
         id: row.$id,

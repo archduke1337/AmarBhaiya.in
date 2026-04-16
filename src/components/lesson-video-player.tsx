@@ -56,8 +56,8 @@ export function LessonVideoPlayer({
       return;
     }
 
-    const madeMeaningfulTimeProgress = roundedTime - lastSentTimeRef.current >= 15;
-    const madeMeaningfulPercentProgress = nextPercent - lastSentPercentRef.current >= 3;
+    const madeMeaningfulTimeProgress = roundedTime - lastSentTimeRef.current >= 10;
+    const madeMeaningfulPercentProgress = nextPercent - lastSentPercentRef.current >= 2;
 
     if (!snapshot.ended && !madeMeaningfulTimeProgress && !madeMeaningfulPercentProgress) {
       return;

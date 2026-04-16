@@ -9,6 +9,8 @@ import { rsvpToSessionAction } from "@/actions/account";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { RetroPanel } from "@/components/marketing/retro-panel";
 
 export default async function StudentLivePage() {
   await requireAuth();
@@ -21,15 +23,15 @@ export default async function StudentLivePage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Live Sessions"
-        title="Upcoming & Active Sessions"
-        description="Live classes scheduled by instructors, plus recent recordings you can revisit."
+        title="Live class miss ho jaye toh recording ka backup hai."
+        description="Upcoming sessions, active classes, and published recordings ek jagah. Phone pe bhi join karna easy rahe."
       />
 
       {sessions.length === 0 && recordings.length === 0 ? (
         <EmptyState
           icon={Video}
           title="No live sessions yet"
-          description="Live sessions and recordings will appear here once instructors publish them."
+          description="Jab instructors live class schedule ya recording publish karenge, woh yahin dikhega."
         />
       ) : (
         <>
@@ -37,22 +39,29 @@ export default async function StudentLivePage() {
             id="upcoming-sessions"
             className="scroll-mt-24 flex flex-col gap-3"
           >
-            <h2 className="text-lg font-medium">Upcoming & Live</h2>
+            <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
+              Upcoming & live
+            </h2>
             {sessions.length === 0 ? (
-              <p className="border border-border px-5 py-4 text-sm text-muted-foreground">
-                No upcoming sessions right now.
-              </p>
+              <RetroPanel tone="muted">
+                <p className="text-sm font-medium leading-7 text-muted-foreground">
+                  Abhi upcoming session scheduled nahi hai. Recordings section check kar sakte ho.
+                </p>
+              </RetroPanel>
             ) : (
               sessions.map((session) => (
-                <article
+                <RetroPanel
                   key={session.id}
                   id={`session-${session.id}`}
-                  className="scroll-mt-24 border border-border"
+                  tone={session.status === "live" ? "secondary" : "card"}
+                  className="scroll-mt-24"
                 >
-                  <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-base font-medium">{session.title}</h2>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                          {session.title}
+                        </h2>
                         <Badge
                           variant={session.status === "live" ? "default" : "outline"}
                           className="capitalize"
@@ -64,7 +73,7 @@ export default async function StudentLivePage() {
                         </Badge>
                       </div>
 
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="size-3.5" />
                           {session.scheduledAt
@@ -77,16 +86,13 @@ export default async function StudentLivePage() {
                     <div className="shrink-0">
                       {session.status === "live" ? (
                         session.streamUrl ? (
-                          <a
-                            href={session.streamUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex h-9 items-center bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
-                          >
-                            Join Session
-                          </a>
+                          <Button asChild variant="secondary" className="w-full sm:w-auto">
+                            <a href={session.streamUrl} target="_blank" rel="noreferrer">
+                              Join session
+                            </a>
+                          </Button>
                         ) : (
-                          <span className="inline-flex h-9 items-center border border-border px-4 text-sm text-muted-foreground">
+                          <span className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-4 text-sm font-semibold text-muted-foreground shadow-retro-sm">
                             Join link coming soon
                           </span>
                         )
@@ -97,17 +103,18 @@ export default async function StudentLivePage() {
                             name="sessionId"
                             value={session.id}
                           />
-                          <button
+                          <Button
                             type="submit"
-                            className="h-9 border border-border px-4 text-sm transition-colors hover:bg-muted"
+                            variant="outline"
+                            className="w-full sm:w-auto"
                           >
                             RSVP
-                          </button>
+                          </Button>
                         </form>
                       )}
                     </div>
                   </div>
-                </article>
+                </RetroPanel>
               ))
             )}
           </section>
@@ -116,22 +123,29 @@ export default async function StudentLivePage() {
             id="recent-recordings"
             className="scroll-mt-24 flex flex-col gap-3"
           >
-            <h2 className="text-lg font-medium">Recent Recordings</h2>
+            <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
+              Recent recordings
+            </h2>
             {recordings.length === 0 ? (
-              <p className="border border-border px-5 py-4 text-sm text-muted-foreground">
-                Recordings will appear here once sessions end and instructors publish them.
-              </p>
+              <RetroPanel tone="muted">
+                <p className="text-sm font-medium leading-7 text-muted-foreground">
+                  Session khatam hone ke baad jab recording publish hogi, woh yahin aa jayegi.
+                </p>
+              </RetroPanel>
             ) : (
               recordings.map((recording) => (
-                <article
+                <RetroPanel
                   key={recording.id}
                   id={`recording-${recording.id}`}
-                  className="scroll-mt-24 border border-border"
+                  tone="card"
+                  className="scroll-mt-24"
                 >
-                  <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-col gap-1.5">
-                      <h2 className="text-base font-medium">{recording.title}</h2>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                        {recording.title}
+                      </h2>
+                      <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="size-3.5" />
                           {recording.scheduledAt
@@ -141,16 +155,13 @@ export default async function StudentLivePage() {
                       </div>
                     </div>
 
-                    <a
-                      href={recording.recordingUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-9 items-center border border-border px-4 text-sm transition-colors hover:bg-muted"
-                    >
-                      Watch Recording
-                    </a>
+                    <Button asChild variant="outline" className="w-full sm:w-auto">
+                      <a href={recording.recordingUrl} target="_blank" rel="noreferrer">
+                        Watch recording
+                      </a>
+                    </Button>
                   </div>
-                </article>
+                </RetroPanel>
               ))
             )}
           </section>

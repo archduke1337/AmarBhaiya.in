@@ -7,18 +7,22 @@ import { requireRole } from "@/lib/appwrite/auth";
 import { userCanManageCourse } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import {
+  executeDeletePlan,
+  mergeDeletePlans,
+  type DeletePlan,
+} from "@/lib/appwrite/delete-plan";
+import {
   listAllRows as listAllPaginatedRows,
   type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 type AnyRow = AnyAppwriteRow;
 type AdminServices = Awaited<ReturnType<typeof createAdminClient>>;
 type AdminTablesDB = AdminServices["tablesDB"];
-type AdminStorage = AdminServices["storage"];
-type DeleteTarget = { tableId: string; rowId: string };
 
 async function getRowById(
   tablesDB: AdminTablesDB,
@@ -63,58 +67,6 @@ async function listAllRows(
   return rows;
 }
 
-async function deleteRowsByQueries(
-  tablesDB: AdminTablesDB,
-  tableId: string,
-  queries: string[]
-): Promise<string[]> {
-  const failedDeletes: string[] = [];
-
-  try {
-    let hasMore = true;
-    while (hasMore) {
-      const rows = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId,
-        queries: [...queries, Query.limit(500)],
-      });
-
-      if (rows.rows.length === 0) {
-        hasMore = false;
-        break;
-      }
-
-      for (const row of rows.rows as AnyRow[]) {
-        try {
-          await tablesDB.deleteRow({
-            databaseId: APPWRITE_CONFIG.databaseId,
-            tableId,
-            rowId: row.$id,
-          });
-        } catch (error) {
-          failedDeletes.push(`${tableId}/${row.$id}`);
-          console.error(
-            `[Delete] Failed to delete ${tableId}/${row.$id}:`,
-            error instanceof Error ? error.message : error
-          );
-        }
-      }
-
-      if (rows.rows.length < 500) {
-        hasMore = false;
-      }
-    }
-  } catch (error) {
-    failedDeletes.push(`${tableId}/__query_failed__`);
-    console.error(
-      `[Delete] Failed to query ${tableId}:`,
-      error instanceof Error ? error.message : error
-    );
-  }
-
-  return failedDeletes;
-}
-
 async function listRowsByQueriesForIds(
   tablesDB: AdminTablesDB,
   tableId: string,
@@ -137,52 +89,6 @@ async function listRowsByQueriesForIds(
   }
 
   return rows;
-}
-
-async function stageDeleteTargets(
-  tablesDB: AdminTablesDB,
-  transactionId: string,
-  targets: DeleteTarget[]
-): Promise<string[]> {
-  const failedDeletes: string[] = [];
-
-  for (const target of targets) {
-    try {
-      await tablesDB.deleteRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: target.tableId,
-        rowId: target.rowId,
-        transactionId,
-      });
-    } catch (error) {
-      failedDeletes.push(`${target.tableId}/${target.rowId}`);
-      console.error(
-        `[Delete] Failed to stage delete for ${target.tableId}/${target.rowId}:`,
-        error instanceof Error ? error.message : error
-      );
-    }
-  }
-
-  return failedDeletes;
-}
-
-async function deleteFileIds(
-  storage: AdminStorage,
-  bucketId: string,
-  fileIds: string[]
-): Promise<void> {
-  const uniqueIds = [...new Set(fileIds.map((fileId) => fileId.trim()).filter(Boolean))];
-
-  for (const fileId of uniqueIds) {
-    try {
-      await storage.deleteFile({ bucketId, fileId });
-    } catch (error) {
-      console.error(
-        `[Delete] Failed to delete file ${bucketId}/${fileId}:`,
-        error instanceof Error ? error.message : error
-      );
-    }
-  }
 }
 
 async function syncCourseLessonStats(
@@ -212,142 +118,191 @@ async function syncCourseLessonStats(
   }
 }
 
-async function deleteLessonTree({
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
+
+async function collectLessonDeletePlan({
   tablesDB,
-  storage,
   lessonId,
   courseId,
 }: {
   tablesDB: AdminTablesDB;
-  storage: AdminStorage;
   lessonId: string;
   courseId: string;
-}): Promise<boolean> {
+}): Promise<DeletePlan | null> {
   const lesson = await getRowById(tablesDB, APPWRITE_CONFIG.tables.lessons, lessonId);
   if (!lesson || String(lesson.courseId ?? "") !== courseId) {
-    return false;
+    return null;
   }
 
-  const failedDeletes: string[] = [];
   const lessonVideoId = String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? "");
 
   try {
-    const resources = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.resources, [
-      Query.equal("lessonId", [lessonId]),
+    const [resources, quizzes, assignments, lessonComments, lessonProgressRows] =
+      await Promise.all([
+        listAllRows(tablesDB, APPWRITE_CONFIG.tables.resources, [
+          Query.equal("lessonId", [lessonId]),
+        ]),
+        listAllRows(tablesDB, APPWRITE_CONFIG.tables.quizzes, [
+          Query.equal("lessonId", [lessonId]),
+        ]),
+        listAllRows(tablesDB, APPWRITE_CONFIG.tables.assignments, [
+          Query.equal("lessonId", [lessonId]),
+        ]),
+        listAllRows(tablesDB, APPWRITE_CONFIG.tables.courseComments, [
+          Query.equal("lessonId", [lessonId]),
+        ]),
+        listAllRows(tablesDB, APPWRITE_CONFIG.tables.progress, [
+          Query.equal("lessonId", [lessonId]),
+        ]),
+      ]);
+
+    const quizIds = quizzes.map((quiz) => quiz.$id);
+    const assignmentIds = assignments.map((assignment) => assignment.$id);
+    const [quizAttempts, quizQuestions, submissions] = await Promise.all([
+      listRowsByQueriesForIds(
+        tablesDB,
+        APPWRITE_CONFIG.tables.quizAttempts,
+        "quizId",
+        quizIds
+      ),
+      listRowsByQueriesForIds(
+        tablesDB,
+        APPWRITE_CONFIG.tables.quizQuestions,
+        "quizId",
+        quizIds
+      ),
+      listRowsByQueriesForIds(
+        tablesDB,
+        APPWRITE_CONFIG.tables.submissions,
+        "assignmentId",
+        assignmentIds
+      ),
     ]);
+
     const resourceFileIds = resources
       .map((resource) => String(resource.fileId ?? ""))
       .filter(Boolean);
+    const submissionFileIds = submissions
+      .map((submission) => String(submission.fileId ?? ""))
+      .filter(Boolean);
 
-    const quizzes = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.quizzes, [
-      Query.equal("lessonId", [lessonId]),
-    ]);
-    const assignments = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.assignments, [
-      Query.equal("lessonId", [lessonId]),
-    ]);
-
-    const submissionFileIds: string[] = [];
-
-    for (const quiz of quizzes) {
-      failedDeletes.push(
-        ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.quizAttempts, [
-          Query.equal("quizId", [quiz.$id]),
-        ]))
-      );
-      failedDeletes.push(
-        ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.quizQuestions, [
-          Query.equal("quizId", [quiz.$id]),
-        ]))
-      );
-
-      try {
-        await tablesDB.deleteRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.quizzes,
-          rowId: quiz.$id,
-        });
-      } catch (error) {
-        failedDeletes.push(`${APPWRITE_CONFIG.tables.quizzes}/${quiz.$id}`);
-        console.error(
-          `[Delete] Failed to delete ${APPWRITE_CONFIG.tables.quizzes}/${quiz.$id}:`,
-          error instanceof Error ? error.message : error
-        );
-      }
-    }
-
-    for (const assignment of assignments) {
-      const submissions = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.submissions, [
-        Query.equal("assignmentId", [assignment.$id]),
-      ]);
-
-      submissionFileIds.push(
-        ...submissions
-          .map((submission) => String(submission.fileId ?? ""))
-          .filter(Boolean)
-      );
-
-      failedDeletes.push(
-        ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.submissions, [
-          Query.equal("assignmentId", [assignment.$id]),
-        ]))
-      );
-
-      try {
-        await tablesDB.deleteRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
+    return mergeDeletePlans({
+      stagedDeletes: [
+        ...quizAttempts.map((row) => ({
+          tableId: APPWRITE_CONFIG.tables.quizAttempts,
+          rowId: row.$id,
+        })),
+        ...quizQuestions.map((row) => ({
+          tableId: APPWRITE_CONFIG.tables.quizQuestions,
+          rowId: row.$id,
+        })),
+        ...submissions.map((row) => ({
+          tableId: APPWRITE_CONFIG.tables.submissions,
+          rowId: row.$id,
+        })),
+        ...resources.map((row) => ({
+          tableId: APPWRITE_CONFIG.tables.resources,
+          rowId: row.$id,
+        })),
+        ...lessonComments.map((row) => ({
+          tableId: APPWRITE_CONFIG.tables.courseComments,
+          rowId: row.$id,
+        })),
+        ...lessonProgressRows.map((row) => ({
+          tableId: APPWRITE_CONFIG.tables.progress,
+          rowId: row.$id,
+        })),
+        ...assignments.map((row) => ({
           tableId: APPWRITE_CONFIG.tables.assignments,
-          rowId: assignment.$id,
-        });
-      } catch (error) {
-        failedDeletes.push(`${APPWRITE_CONFIG.tables.assignments}/${assignment.$id}`);
-        console.error(
-          `[Delete] Failed to delete ${APPWRITE_CONFIG.tables.assignments}/${assignment.$id}:`,
-          error instanceof Error ? error.message : error
-        );
-      }
-    }
-
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.resources, [
-        Query.equal("lessonId", [lessonId]),
-      ]))
-    );
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.courseComments, [
-        Query.equal("lessonId", [lessonId]),
-      ]))
-    );
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.progress, [
-        Query.equal("lessonId", [lessonId]),
-      ]))
-    );
-
-    if (failedDeletes.length > 0) {
-      console.warn(
-        `[Delete] Aborting lesson delete for ${lessonId} because child cleanup failed.`,
-        failedDeletes
-      );
-      return false;
-    }
-
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      rowId: lessonId,
+          rowId: row.$id,
+        })),
+        ...quizzes.map((row) => ({
+          tableId: APPWRITE_CONFIG.tables.quizzes,
+          rowId: row.$id,
+        })),
+        {
+          tableId: APPWRITE_CONFIG.tables.lessons,
+          rowId: lessonId,
+        },
+      ],
+      fileDeletes: [
+        {
+          bucketId: APPWRITE_CONFIG.buckets.courseVideos,
+          fileIds: [lessonVideoId],
+        },
+        {
+          bucketId: APPWRITE_CONFIG.buckets.courseResources,
+          fileIds: resourceFileIds,
+        },
+        {
+          bucketId: APPWRITE_CONFIG.buckets.courseResources,
+          fileIds: submissionFileIds,
+        },
+      ],
     });
-
-    await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseVideos, [lessonVideoId]);
-    await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseResources, resourceFileIds);
-    await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseResources, submissionFileIds);
-
-    return true;
   } catch (error) {
     console.error(
-      `[Delete] Failed to delete lesson tree ${lessonId}:`,
+      `[Delete] Failed to collect delete plan for lesson ${lessonId}:`,
       error instanceof Error ? error.message : error
     );
-    return false;
+    return null;
+  }
+}
+
+async function collectModuleDeletePlan({
+  tablesDB,
+  moduleId,
+  courseId,
+}: {
+  tablesDB: AdminTablesDB;
+  moduleId: string;
+  courseId: string;
+}): Promise<DeletePlan | null> {
+  const moduleRow = await getRowById(tablesDB, APPWRITE_CONFIG.tables.modules, moduleId);
+  if (!moduleRow || String(moduleRow.courseId ?? "") !== courseId) {
+    return null;
+  }
+
+  try {
+    const lessons = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.lessons, [
+      Query.equal("moduleId", [moduleId]),
+    ]);
+    const lessonPlans = await Promise.all(
+      lessons.map((lesson) =>
+        collectLessonDeletePlan({
+          tablesDB,
+          lessonId: lesson.$id,
+          courseId,
+        })
+      )
+    );
+
+    if (lessonPlans.some((plan) => !plan)) {
+      return null;
+    }
+
+    return mergeDeletePlans(
+      ...(lessonPlans as DeletePlan[]),
+      {
+        stagedDeletes: [
+          {
+            tableId: APPWRITE_CONFIG.tables.modules,
+            rowId: moduleId,
+          },
+        ],
+        fileDeletes: [],
+      }
+    );
+  } catch (error) {
+    console.error(
+      `[Delete] Failed to collect delete plan for module ${moduleId}:`,
+      error instanceof Error ? error.message : error
+    );
+    return null;
   }
 }
 
@@ -441,122 +396,94 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
     .map((resource) => String(resource.fileId ?? ""))
     .filter(Boolean);
 
-  const stagedDeletes: DeleteTarget[] = [
-    ...quizAttempts.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.quizAttempts,
-      rowId: row.$id,
-    })),
-    ...quizQuestions.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.quizQuestions,
-      rowId: row.$id,
-    })),
-    ...submissions.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.submissions,
-      rowId: row.$id,
-    })),
-    ...sessionRsvps.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.sessionRsvps,
-      rowId: row.$id,
-    })),
-    ...resources.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.resources,
-      rowId: row.$id,
-    })),
-    ...courseComments.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.courseComments,
-      rowId: row.$id,
-    })),
-    ...progressRows.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.progress,
-      rowId: row.$id,
-    })),
-    ...enrollments.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      rowId: row.$id,
-    })),
-    ...liveSessions.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.liveSessions,
-      rowId: row.$id,
-    })),
-    ...assignments.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.assignments,
-      rowId: row.$id,
-    })),
-    ...quizzes.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.quizzes,
-      rowId: row.$id,
-    })),
-    ...lessons.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      rowId: row.$id,
-    })),
-    ...modules.map((row) => ({
-      tableId: APPWRITE_CONFIG.tables.modules,
-      rowId: row.$id,
-    })),
-    {
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-    },
-  ];
+  const deletePlan = mergeDeletePlans({
+    stagedDeletes: [
+      ...quizAttempts.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.quizAttempts,
+        rowId: row.$id,
+      })),
+      ...quizQuestions.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.quizQuestions,
+        rowId: row.$id,
+      })),
+      ...submissions.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.submissions,
+        rowId: row.$id,
+      })),
+      ...sessionRsvps.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.sessionRsvps,
+        rowId: row.$id,
+      })),
+      ...resources.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.resources,
+        rowId: row.$id,
+      })),
+      ...courseComments.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.courseComments,
+        rowId: row.$id,
+      })),
+      ...progressRows.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.progress,
+        rowId: row.$id,
+      })),
+      ...enrollments.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.enrollments,
+        rowId: row.$id,
+      })),
+      ...liveSessions.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.liveSessions,
+        rowId: row.$id,
+      })),
+      ...assignments.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.assignments,
+        rowId: row.$id,
+      })),
+      ...quizzes.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.quizzes,
+        rowId: row.$id,
+      })),
+      ...lessons.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.lessons,
+        rowId: row.$id,
+      })),
+      ...modules.map((row) => ({
+        tableId: APPWRITE_CONFIG.tables.modules,
+        rowId: row.$id,
+      })),
+      {
+        tableId: APPWRITE_CONFIG.tables.courses,
+        rowId: courseId,
+      },
+    ],
+    fileDeletes: [
+      {
+        bucketId: APPWRITE_CONFIG.buckets.courseVideos,
+        fileIds: lessonVideoIds,
+      },
+      {
+        bucketId: APPWRITE_CONFIG.buckets.courseResources,
+        fileIds: resourceFileIds,
+      },
+      {
+        bucketId: APPWRITE_CONFIG.buckets.courseResources,
+        fileIds: submissionFileIds,
+      },
+      {
+        bucketId: APPWRITE_CONFIG.buckets.courseThumbnails,
+        fileIds: [String(course.thumbnailFileId ?? course.thumbnailId ?? "")],
+      },
+    ],
+  });
 
-  const transaction = await tablesDB
-    .createTransaction({
-      ttl: 300,
-    })
-    .catch(() => null);
-
-  if (!transaction?.$id) {
-    console.error(`[Delete] Failed to create deletion transaction for course ${courseId}.`);
-    return;
-  }
-
-  const failedDeletes = await stageDeleteTargets(
+  const deleted = await executeDeletePlan({
     tablesDB,
-    transaction.$id,
-    stagedDeletes
-  );
-
-  if (failedDeletes.length > 0) {
-    console.warn(
-      `[Delete] Course ${courseId} was not deleted because transactional staging failed:`,
-      failedDeletes
-    );
-    await tablesDB
-      .updateTransaction({
-        transactionId: transaction.$id,
-        rollback: true,
-      })
-      .catch(() => null);
-    return;
-  }
-
-  try {
-    await tablesDB.updateTransaction({
-      transactionId: transaction.$id,
-      commit: true,
-    });
-  } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to commit course deletion."
-    );
-    await tablesDB
-      .updateTransaction({
-        transactionId: transaction.$id,
-        rollback: true,
-      })
-      .catch(() => null);
-    return;
-  }
-
-  await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseVideos, lessonVideoIds);
-  await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseResources, resourceFileIds);
-  await deleteFileIds(storage, APPWRITE_CONFIG.buckets.courseResources, submissionFileIds);
-  await deleteFileIds(
     storage,
-    APPWRITE_CONFIG.buckets.courseThumbnails,
-    [String(course.thumbnailFileId ?? course.thumbnailId ?? "")]
-  );
+    plan: deletePlan,
+    label: `course ${courseId}`,
+  });
+  if (!deleted) {
+    return;
+  }
 
   revalidatePath("/instructor");
   revalidatePath("/admin/courses");
@@ -569,6 +496,9 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
   revalidatePath("/app/quizzes");
   revalidatePath("/");
   revalidatePath("/courses");
+  revalidateEach(
+    getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
+  );
 }
 
 // ── Delete Module ───────────────────────────────────────────────────────────
@@ -585,39 +515,20 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
   if (!course) return;
 
   const { tablesDB, storage } = await createAdminClient();
-  const moduleRow = await getRowById(tablesDB, APPWRITE_CONFIG.tables.modules, moduleId);
-  if (!moduleRow || String(moduleRow.courseId ?? "") !== courseId) return;
+  const deletePlan = await collectModuleDeletePlan({
+    tablesDB,
+    moduleId,
+    courseId,
+  });
+  if (!deletePlan) return;
 
-  const lessons = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.lessons, [
-    Query.equal("moduleId", [moduleId]),
-  ]);
-
-  for (const lesson of lessons) {
-    const deleted = await deleteLessonTree({
-      tablesDB,
-      storage,
-      lessonId: lesson.$id,
-      courseId,
-    });
-
-    if (!deleted) {
-      return;
-    }
-  }
-
-  // Delete the module
-  try {
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.modules,
-      rowId: moduleId,
-    });
-  } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to delete module."
-    );
-    return;
-  }
+  const deleted = await executeDeletePlan({
+    tablesDB,
+    storage,
+    plan: deletePlan,
+    label: `module ${moduleId}`,
+  });
+  if (!deleted) return;
 
   await syncCourseLessonStats(tablesDB, courseId);
 
@@ -627,9 +538,9 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
   revalidatePath("/app/dashboard");
   revalidatePath("/app/courses");
   revalidatePath("/courses");
-  if (typeof course.slug === "string" && course.slug) {
-    revalidatePath(`/courses/${course.slug}`);
-  }
+  revalidateEach(
+    getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
+  );
   revalidatePath(`/instructor/courses/${courseId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
 }
@@ -647,11 +558,18 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
   if (!course) return;
 
   const { tablesDB, storage } = await createAdminClient();
-  const deleted = await deleteLessonTree({
+  const deletePlan = await collectLessonDeletePlan({
     tablesDB,
-    storage,
     lessonId,
     courseId,
+  });
+  if (!deletePlan) return;
+
+  const deleted = await executeDeletePlan({
+    tablesDB,
+    storage,
+    plan: deletePlan,
+    label: `lesson ${lessonId}`,
   });
   if (!deleted) return;
 
@@ -663,9 +581,9 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
   revalidatePath("/app/dashboard");
   revalidatePath("/app/courses");
   revalidatePath("/courses");
-  if (typeof course.slug === "string" && course.slug) {
-    revalidatePath(`/courses/${course.slug}`);
-  }
+  revalidateEach(
+    getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
+  );
   revalidatePath(`/instructor/courses/${courseId}`);
   revalidatePath(`/app/learn/${courseId}/${lessonId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
@@ -722,7 +640,7 @@ export async function deleteLiveSessionAction(
   const sessionId = String(formData.get("sessionId") ?? "");
   if (!sessionId) return;
 
-  const { tablesDB } = await createAdminClient();
+  const { tablesDB, storage } = await createAdminClient();
   const session = await getRowById(
     tablesDB,
     APPWRITE_CONFIG.tables.liveSessions,
@@ -733,39 +651,44 @@ export async function deleteLiveSessionAction(
     return;
   }
 
-  // Delete RSVPs
-  const failedDeletes: string[] = [];
   try {
-    failedDeletes.push(
-      ...(await deleteRowsByQueries(tablesDB, APPWRITE_CONFIG.tables.sessionRsvps, [
+    const sessionRsvps = await listAllRows(
+      tablesDB,
+      APPWRITE_CONFIG.tables.sessionRsvps,
+      [
         Query.equal("sessionId", [sessionId]),
-      ]))
+      ]
     );
-  } catch {
-    // No RSVPs
-  }
-
-  if (failedDeletes.length > 0) {
-    console.warn(
-      `[Delete] Aborting live session delete for ${sessionId} because RSVP cleanup failed.`,
-      failedDeletes
-    );
-    return;
-  }
-
-  try {
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.liveSessions,
-      rowId: sessionId,
+    const deleted = await executeDeletePlan({
+      tablesDB,
+      storage,
+      plan: {
+        stagedDeletes: [
+          ...sessionRsvps.map((row) => ({
+            tableId: APPWRITE_CONFIG.tables.sessionRsvps,
+            rowId: row.$id,
+          })),
+          {
+            tableId: APPWRITE_CONFIG.tables.liveSessions,
+            rowId: sessionId,
+          },
+        ],
+        fileDeletes: [],
+      },
+      label: `live session ${sessionId}`,
     });
+    if (!deleted) {
+      return;
+    }
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete session."
     );
+    return;
   }
 
   revalidatePath("/admin/live");
+  revalidatePath("/admin");
   revalidatePath("/instructor");
   revalidatePath("/instructor/live");
   revalidatePath("/app/dashboard");

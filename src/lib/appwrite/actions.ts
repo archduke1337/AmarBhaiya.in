@@ -4,10 +4,15 @@ import { ID } from "node-appwrite";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
+  createAdminClient,
   createPublicClient,
   createSessionClient,
 } from "./server";
 import { APPWRITE_CONFIG } from "./config";
+import {
+  getServerActionExpiredSessionCookieOptions,
+  getServerActionSessionCookieOptions,
+} from "./session-cookie";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -24,13 +29,7 @@ export type ActionResult = {
 };
 
 function getSessionCookieOptions(expire: string) {
-  return {
-    path: "/",
-    httpOnly: true,
-    sameSite: "strict" as const,
-    secure: process.env.NODE_ENV === "production",
-    expires: new Date(expire),
-  };
+  return getServerActionSessionCookieOptions(expire);
 }
 
 // ── Login ───────────────────────────────────────────────────────────────────
@@ -43,18 +42,22 @@ export async function loginAction(data: LoginInput): Promise<ActionResult> {
   }
 
   try {
-    const { account } = await createPublicClient();
+    const { account } = await createAdminClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
     });
+
+    if (!session.secret) {
+      throw new Error("Missing Appwrite session secret.");
+    }
 
     // Set session cookie
     const cookieStore = await cookies();
     cookieStore.set(
       APPWRITE_CONFIG.sessionCookieName,
       session.secret,
-      getSessionCookieOptions(session.expire)
+      await getSessionCookieOptions(session.expire)
     );
 
     return { success: true };
@@ -78,10 +81,10 @@ export async function registerAction(data: RegisterInput): Promise<ActionResult>
   }
 
   try {
-    const { account } = await createPublicClient();
+    const { account: publicAccount } = await createPublicClient();
 
     // Create user account
-    await account.create({
+    await publicAccount.create({
       userId: ID.unique(),
       email: parsed.data.email,
       password: parsed.data.password,
@@ -89,16 +92,21 @@ export async function registerAction(data: RegisterInput): Promise<ActionResult>
     });
 
     // Auto-login after registration
+    const { account } = await createAdminClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
     });
 
+    if (!session.secret) {
+      throw new Error("Missing Appwrite session secret.");
+    }
+
     const cookieStore = await cookies();
     cookieStore.set(
       APPWRITE_CONFIG.sessionCookieName,
       session.secret,
-      getSessionCookieOptions(session.expire)
+      await getSessionCookieOptions(session.expire)
     );
 
     return { success: true };
@@ -149,6 +157,10 @@ export async function logoutAction(): Promise<void> {
   }
 
   const cookieStore = await cookies();
-  cookieStore.delete(APPWRITE_CONFIG.sessionCookieName);
+  cookieStore.set(
+    APPWRITE_CONFIG.sessionCookieName,
+    "",
+    await getServerActionExpiredSessionCookieOptions()
+  );
   redirect("/login");
 }

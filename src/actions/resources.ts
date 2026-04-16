@@ -11,6 +11,7 @@ import {
   userCanManageResource,
 } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
 import { normalizeHttpUrl } from "@/lib/utils/url";
@@ -344,23 +345,26 @@ export async function deleteCourseResourceAction(
   try {
     const { tablesDB, storage } = await createAdminClient();
 
-    const fileId = String(resourceContext.resource.fileId ?? "");
-    if (fileId) {
-      try {
-        await storage.deleteFile({
-          bucketId: APPWRITE_CONFIG.buckets.courseResources,
-          fileId,
-        });
-      } catch {
-        // Continue even if file cleanup fails
-      }
-    }
-
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.resources,
-      rowId: resourceId,
+    const deleted = await executeDeletePlan({
+      tablesDB,
+      storage,
+      plan: {
+        stagedDeletes: [
+          {
+            tableId: APPWRITE_CONFIG.tables.resources,
+            rowId: resourceId,
+          },
+        ],
+        fileDeletes: [
+          {
+            bucketId: APPWRITE_CONFIG.buckets.courseResources,
+            fileIds: [String(resourceContext.resource.fileId ?? "")],
+          },
+        ],
+      },
+      label: `course resource ${resourceId}`,
     });
+    if (!deleted) return;
 
     revalidatePath("/instructor/resources");
     revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
@@ -443,23 +447,26 @@ export async function deleteStandaloneResourceAction(
     const resource = await userCanManageResource(resourceId, role, user.$id);
     if (!resource) return;
 
-    const fileId = String(resource.fileId ?? "");
-    if (fileId) {
-      try {
-        await storage.deleteFile({
-          bucketId: APPWRITE_CONFIG.buckets.resourceFiles,
-          fileId,
-        });
-      } catch {
-        // Continue even if file cleanup fails
-      }
-    }
-
-    await tablesDB.deleteRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.standaloneResources,
-      rowId: resourceId,
+    const deleted = await executeDeletePlan({
+      tablesDB,
+      storage,
+      plan: {
+        stagedDeletes: [
+          {
+            tableId: APPWRITE_CONFIG.tables.standaloneResources,
+            rowId: resourceId,
+          },
+        ],
+        fileDeletes: [
+          {
+            bucketId: APPWRITE_CONFIG.buckets.resourceFiles,
+            fileIds: [String(resource.fileId ?? "")],
+          },
+        ],
+      },
+      label: `standalone resource ${resourceId}`,
     });
+    if (!deleted) return;
 
     revalidatePath("/instructor/resources");
   } catch (error) {

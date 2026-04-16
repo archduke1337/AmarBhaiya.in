@@ -3,7 +3,7 @@
 export const SITE_NAME = "amarbhaiya.in";
 export const SITE_TAGLINE = "Learn from Bhaiya";
 export const SITE_DESCRIPTION =
-  "Amarnath Pandey's unified platform — Education, Fitness, Career Guidance, Entrepreneurship & Personal Development.";
+  "Amar Bhaiya's learning platform for Class 6 to 12 students first, with notes, courses, and practical guidance that later expands into skills, career, and life growth.";
 
 export const OWNER = {
   name: "Amarnath Pandey",
@@ -28,8 +28,9 @@ export const OWNER = {
 
 export const PUBLIC_NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
+  { label: "Notes", href: "/notes" },
   { label: "Courses", href: "/courses" },
+  { label: "About", href: "/about" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ] as const;
@@ -38,6 +39,7 @@ export const DASHBOARD_NAV_ITEMS = {
   student: [
     { label: "Dashboard", href: "/app/dashboard", icon: "layout-dashboard" },
     { label: "My Courses", href: "/app/courses", icon: "book-open" },
+    { label: "Notes", href: "/notes", icon: "file-text" },
     { label: "Assignments", href: "/app/assignments", icon: "file-text" },
     { label: "Community", href: "/app/community", icon: "users" },
     { label: "Live Sessions", href: "/app/live", icon: "video" },

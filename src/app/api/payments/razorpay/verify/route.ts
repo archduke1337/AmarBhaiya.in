@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/lib/payments/course-payment";
 import { verifyRazorpayPaymentSignature } from "@/lib/payments/razorpay";
 
@@ -32,6 +33,12 @@ async function getAuthenticatedUser() {
     return await account.get();
   } catch {
     return null;
+  }
+}
+
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
   }
 }
 
@@ -123,11 +130,7 @@ export async function POST(request: Request) {
     revalidatePath("/instructor/earnings");
 
     if (result.courseId) {
-      revalidatePath(`/app/courses/${result.courseId}`);
-    }
-
-    if (result.courseSlug) {
-      revalidatePath(`/courses/${result.courseSlug}`);
+      revalidateEach(getCourseDetailPaths(result.courseId, result.courseSlug ?? ""));
     }
 
     return NextResponse.json({
