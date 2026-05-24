@@ -184,7 +184,7 @@ export default async function AdminNotificationsPage() {
         <p className="text-xs text-muted-foreground mt-1">
           Broadcasts create one notification per user. For large user bases,
           this may take a moment. Notifications appear in each user&apos;s
-          notification feed under Dashboard → Notifications.
+          notification feed under Dashboard &gt; Notifications.
         </p>
       </div>
     </div>

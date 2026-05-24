@@ -121,13 +121,9 @@ export default async function MarketingPage() {
                       className="font-bold px-7 bg-accent text-accent-foreground glow-accent-sm active:scale-[0.97] transition-transform"
                     >
                       Courses dekho
-                      <span
-                        className="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs"
-                        style={{ background: "oklch(0 0 0 / 0.15)" }}
-                        aria-hidden
-                      >
-                        →
-                      </span>
+                      <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
                     </Button>
                   </Link>
                   <Link href="/notes">
@@ -260,7 +256,7 @@ export default async function MarketingPage() {
                             className="text-xs font-semibold self-start opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300"
                             style={{ color: DOMAIN_COLORS[i % DOMAIN_COLORS.length] }}
                           >
-                            Explore →
+                            Explore &gt;
                           </span>
                         </div>
                       </div>

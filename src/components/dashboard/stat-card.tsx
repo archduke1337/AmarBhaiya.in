@@ -68,7 +68,7 @@ export function StatCard({
                 trend.direction === "neutral" && "bg-surface-hover text-foreground/70"
               )}
             >
-              {trend.direction === "up" ? "↑" : trend.direction === "down" ? "↓" : "→"} {trend.value}%
+              {trend.direction === "up" ? "+" : trend.direction === "down" ? "-" : "~"} {trend.value}%
             </span>
           )}
           {description && (

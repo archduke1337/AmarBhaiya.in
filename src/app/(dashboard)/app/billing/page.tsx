@@ -73,7 +73,7 @@ export default async function BillingInfoPage() {
                 {subscription.planName}
               </p>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                {new Date(subscription.startDate).toLocaleDateString("en-IN")} → {new Date(subscription.endDate).toLocaleDateString("en-IN")}
+                {new Date(subscription.startDate).toLocaleDateString("en-IN")} to {new Date(subscription.endDate).toLocaleDateString("en-IN")}
               </p>
             </div>
             {subscription.status === "active" && (

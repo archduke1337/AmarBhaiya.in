@@ -175,7 +175,7 @@ export default async function AdminStudentProfilesPage() {
                   href={`/admin/students/${String(profile.userId ?? "")}`}
                   className="text-xs underline underline-offset-4 hover:text-foreground text-muted-foreground"
                 >
-                  Details →
+                  Details &gt;
                 </Link>
               </div>
             ))}
