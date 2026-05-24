@@ -78,7 +78,7 @@ export function getNavItems(role: Role, userId: string): NavItem[] {
       icon: BookOpen,
       matchPrefixes: ["/app/courses", "/app/learn"],
     },
-    { label: "Notes", href: "/notes", icon: FileText, exact: true },
+    { label: "Notes", href: "/app/notes", icon: FileText, matchPrefixes: ["/app/notes"] },
     { label: "Assignments", href: "/app/assignments", icon: ClipboardCheck },
     {
       label: "Quizzes",
@@ -151,7 +151,7 @@ export function getBottomTabItems(role: Role, userId: string) {
   return [
     { label: "Home", href: "/app/dashboard", icon: LayoutDashboard, match: (p: string) => p === "/app/dashboard" },
     { label: "Courses", href: "/app/courses", icon: BookOpen, match: (p: string) => p.startsWith("/app/courses") || p.startsWith("/app/learn") },
-    { label: "Notes", href: "/notes", icon: FileText, match: (p: string) => p.startsWith("/notes") },
+    { label: "Notes", href: "/app/notes", icon: FileText, match: (p: string) => p.startsWith("/app/notes") },
     { label: "Profile", href: `/app/profile/${userId}`, icon: UserRound, match: (p: string) => p.startsWith("/app/profile") },
   ];
 }

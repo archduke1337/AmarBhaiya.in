@@ -73,7 +73,7 @@ export default async function StudentDashboardPage() {
         description="Pick up where you left off, revise quickly with notes, or move straight into the next lesson."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Link href="/notes">
+            <Link href="/app/notes">
               <Button variant="outline" className="bg-surface border-border/40 font-bold" size="sm">
                 Notes
               </Button>
@@ -299,7 +299,7 @@ export default async function StudentDashboardPage() {
              </div>
              <div className="flex flex-col divide-y divide-border/20">
                 {[
-                  { label: "Study Notes", href: "/notes", icon: Download },
+                  { label: "Study Notes", href: "/app/notes", icon: Download },
                   { label: "Live Sessions", href: "/app/live#upcoming-sessions", icon: Video },
                   { label: "Notifications", href: "/app/notifications", icon: Bell },
                   { label: "Billing History", href: "/app/billing", icon: CreditCard },

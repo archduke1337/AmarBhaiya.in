@@ -29,7 +29,7 @@ export default async function StudentCoursesPage() {
         description={`${courses.length} enrolled course${courses.length !== 1 ? "s" : ""} in your library, with ${completed.length} already completed.`}
         actions={
           <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-            <Link href="/notes">
+            <Link href="/app/notes">
               <Button variant="outline" className="bg-surface font-bold border-border/40" size="sm">
                 Notes
               </Button>
