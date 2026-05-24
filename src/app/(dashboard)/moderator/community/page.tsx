@@ -1,6 +1,6 @@
 import { MessageSquare, Pin, Lock } from "lucide-react";
 
-import { applyModerationActionAction } from "@/actions/operations";
+import { applyModerationActionAction } from "@/actions/moderation";
 import { getModeratorCommunityData } from "@/lib/appwrite/dashboard-data";
 import { lockThreadAction, unlockThreadAction } from "@/actions/community";
 import { PageHeader, EmptyState } from "@/components/dashboard";

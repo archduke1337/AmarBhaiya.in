@@ -3,7 +3,7 @@ import { Flag } from "lucide-react";
 import {
   applyModerationActionAction,
   resolveModerationActionAction,
-} from "@/actions/operations";
+} from "@/actions/moderation";
 import { getModeratorReports } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";

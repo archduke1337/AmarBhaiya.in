@@ -3,7 +3,7 @@ import { Folder, Plus } from "lucide-react";
 import {
   createCategoryAction,
   updateCategoryAction,
-} from "@/actions/operations";
+} from "@/actions/categories";
 import { deleteCategoryAction } from "@/actions/delete";
 import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";

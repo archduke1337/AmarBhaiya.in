@@ -1,0 +1,176 @@
+"use server";
+
+import { ID } from "node-appwrite";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+import { requireRole } from "@/lib/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { createAdminClient } from "@/lib/appwrite/server";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
+
+const applyModerationSchema = z.object({
+  targetUserId: z.string().trim().min(1),
+  targetUserName: z.string().trim().optional(),
+  action: z.enum([
+    "warn",
+    "mute",
+    "timeout",
+    "delete_post",
+    "pin",
+    "unpin",
+    "remove_from_chat",
+    "flag",
+  ]),
+  scope: z.enum(["course", "platform"]),
+  reason: z.string().trim().min(3),
+  duration: z.string().trim().optional(),
+  entityType: z.string().trim().optional(),
+  entityId: z.string().trim().optional(),
+});
+
+const resolveModerationSchema = z.object({
+  actionId: z.string().trim().min(1),
+});
+
+function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value.toLowerCase().trim();
+  return normalized === "true" || normalized === "1" || normalized === "on";
+}
+
+function revalidateEach(paths: string[]): void {
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
+
+export async function applyModerationActionAction(formData: FormData): Promise<void> {
+  const { user } = await requireRole(["admin", "moderator"]);
+
+  const parsed = applyModerationSchema.safeParse({
+    targetUserId: String(formData.get("targetUserId") ?? ""),
+    targetUserName: String(formData.get("targetUserName") ?? "") || undefined,
+    action: String(formData.get("action") ?? "warn"),
+    scope: String(formData.get("scope") ?? "platform"),
+    reason: String(formData.get("reason") ?? ""),
+    duration: String(formData.get("duration") ?? "") || undefined,
+    entityType: String(formData.get("entityType") ?? "") || undefined,
+    entityId: String(formData.get("entityId") ?? "") || undefined,
+  });
+
+  if (!parsed.success) {
+    actionError("Invalid input: targetUserId and reason are required");
+    return;
+  }
+
+  if (parsed.data.targetUserId === user.$id) {
+    actionError("You cannot moderate yourself");
+    return;
+  }
+
+  const entityType = parsed.data.entityType;
+  const entityId = parsed.data.entityId;
+  const isThreadAction =
+    typeof entityType === "string" &&
+    entityType.toLowerCase().includes("thread") &&
+    typeof entityId === "string" &&
+    entityId.length > 0;
+
+  if ((parsed.data.action === "pin" || parsed.data.action === "unpin") && !isThreadAction) {
+    actionError("Pin/unpin action requires a valid thread entity");
+    return;
+  }
+
+  const { tablesDB, users } = await createAdminClient();
+
+  let targetUserName = parsed.data.targetUserName || parsed.data.targetUserId;
+  try {
+    const targetUser = await users.get({ userId: parsed.data.targetUserId });
+    targetUserName = targetUser.name || targetUser.email || targetUserName;
+  } catch {
+    // Fall back to the submitted display name when the user record is unavailable.
+  }
+
+  await tablesDB.createRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.moderationActions,
+    rowId: ID.unique(),
+    data: {
+      moderatorId: user.$id,
+      moderatorName: user.name,
+      targetUserId: parsed.data.targetUserId,
+      targetUserName,
+      action: parsed.data.action,
+      scope: parsed.data.scope,
+      reason: parsed.data.reason,
+      duration: parsed.data.duration || "",
+      entityType: parsed.data.entityType || "",
+      entityId: parsed.data.entityId || "",
+      createdAt: new Date().toISOString(),
+      revertedBy: "",
+    },
+  });
+
+  if (isThreadAction && (parsed.data.action === "pin" || parsed.data.action === "unpin")) {
+    try {
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.forumThreads,
+        rowId: entityId,
+        data: {
+          isPinned: parsed.data.action === "pin",
+        },
+      });
+    } catch {
+      // Ignore thread pin sync failures and keep moderation action record.
+    }
+  }
+
+  revalidatePath("/moderator/reports");
+  revalidatePath("/moderator");
+  revalidatePath("/moderator/community");
+  revalidatePath("/moderator/students");
+  revalidatePath("/admin");
+  revalidatePath("/admin/moderation");
+
+  actionSuccess();
+  return;
+}
+
+export async function resolveModerationActionAction(formData: FormData): Promise<void> {
+  const { user } = await requireRole(["admin", "moderator"]);
+
+  const parsed = resolveModerationSchema.safeParse({
+    actionId: String(formData.get("actionId") ?? ""),
+  });
+
+  if (!parsed.success) {
+    actionError("Invalid input: actionId is required");
+    return;
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.updateRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.moderationActions,
+    rowId: parsed.data.actionId,
+    data: {
+      revertedBy: user.$id,
+      revertedAt: new Date().toISOString(),
+    },
+  });
+
+  revalidatePath("/moderator/reports");
+  revalidatePath("/moderator");
+  revalidatePath("/moderator/students");
+  revalidatePath("/admin");
+  revalidatePath("/admin/moderation");
+
+  actionSuccess();
+  return;
+}

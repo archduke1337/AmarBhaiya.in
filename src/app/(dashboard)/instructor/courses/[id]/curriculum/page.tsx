@@ -7,7 +7,7 @@ import {
   createCurriculumModuleAction,
   updateCurriculumLessonAction,
   updateCurriculumModuleAction,
-} from "@/actions/operations";
+} from "@/actions/curriculum";
 import { deleteModuleAction, deleteLessonAction } from "@/actions/delete";
 import {
   createQuizAction,

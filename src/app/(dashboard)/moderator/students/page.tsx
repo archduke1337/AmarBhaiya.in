@@ -3,7 +3,7 @@ import { UserX, Clock, ShieldAlert, History } from "lucide-react";
 import {
   applyModerationActionAction,
   resolveModerationActionAction,
-} from "@/actions/operations";
+} from "@/actions/moderation";
 import { getModeratorStudents } from "@/lib/appwrite/dashboard-data";
 import {
   PageHeader,

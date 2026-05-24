@@ -15,7 +15,7 @@ import {
   updateBlogPostAction,
   deleteBlogPostAction,
   getAdminBlogPosts,
-} from "@/actions/operations";
+} from "@/actions/marketing";
 import { PageHeader } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

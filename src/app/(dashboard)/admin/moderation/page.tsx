@@ -1,6 +1,6 @@
 import { Activity, AlertTriangle, Clock, Shield } from "lucide-react";
 
-import { resolveModerationActionAction } from "@/actions/operations";
+import { resolveModerationActionAction } from "@/actions/moderation";
 import { getAdminModerationData } from "@/lib/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";

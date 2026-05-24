@@ -1,7 +1,7 @@
 import {
   createCategoryAction,
   updateCategoryAction,
-} from "@/actions/operations";
+} from "@/actions/categories";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
 
