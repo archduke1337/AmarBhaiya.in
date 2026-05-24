@@ -16,6 +16,7 @@ export const revalidate = 3600;
 type SearchParams = Promise<{
   class?: string;
   subject?: string;
+  type?: string;
   note?: string;
 }>;
 
@@ -27,9 +28,14 @@ export default async function NotesPage({
   const params = await searchParams;
   const classFilter = typeof params.class === "string" ? params.class : "";
   const subjectFilter = typeof params.subject === "string" ? params.subject : "";
+  const typeFilter = typeof params.type === "string" ? params.type : "";
   const selectedNoteId = typeof params.note === "string" ? params.note : "";
 
   const { notes } = await getPublicNotesPageData();
+
+  const availableResourceTypes = Array.from(
+    new Set(notes.map((note) => note.resourceType).filter(Boolean))
+  ).sort();
 
   const availableClasses = Array.from(
     new Set(notes.map((note) => note.classTag).filter(Boolean))
@@ -47,7 +53,8 @@ export default async function NotesPage({
   const filteredNotes = notes.filter((note) => {
     const classMatch = !classFilter || note.classTag === classFilter;
     const subjectMatch = !subjectFilter || note.subjectTag === subjectFilter;
-    return classMatch && subjectMatch;
+    const typeMatch = !typeFilter || note.resourceType === typeFilter;
+    return classMatch && subjectMatch && typeMatch;
   });
 
   const selectedNote =
@@ -125,12 +132,33 @@ export default async function NotesPage({
         </div>
 
         <div className="bg-surface border border-border/40 rounded-2xl p-5 flex flex-col gap-5">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Category</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={{ pathname: "/notes", query: { ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
+                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!typeFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                >
+                  All
+                </Link>
+                {availableResourceTypes.map((item) => (
+                  <Link
+                    key={item}
+                    href={{ pathname: "/notes", query: { type: item, ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
+                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${typeFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                  >
+                    {formatResourceType(item)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             <div className="flex flex-col gap-3">
               <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Classes</p>
               <div className="flex flex-wrap gap-2">
                 <Link
-                  href="/notes"
+                  href={{ pathname: "/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
                   className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!classFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                 >
                   All
@@ -138,7 +166,7 @@ export default async function NotesPage({
                 {availableClasses.map((item) => (
                   <Link
                     key={item}
-                    href={{ pathname: "/notes", query: { class: item, ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
+                    href={{ pathname: "/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), class: item, ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
                     className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${classFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                   >
                     {item}
@@ -151,7 +179,7 @@ export default async function NotesPage({
               <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Subjects</p>
               <div className="flex flex-wrap gap-2">
                 <Link
-                  href={{ pathname: "/notes", query: { ...(classFilter ? { class: classFilter } : {}) } }}
+                  href={{ pathname: "/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(classFilter ? { class: classFilter } : {}) } }}
                   className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!subjectFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                 >
                   All
@@ -159,7 +187,7 @@ export default async function NotesPage({
                 {availableSubjects.map((item) => (
                   <Link
                     key={item}
-                    href={{ pathname: "/notes", query: { ...(classFilter ? { class: classFilter } : {}), subject: item } }}
+                    href={{ pathname: "/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(classFilter ? { class: classFilter } : {}), subject: item } }}
                     className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${subjectFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                   >
                     {item}
@@ -181,7 +209,7 @@ export default async function NotesPage({
               {filteredNotes.map((note) => (
                 <Link
                   key={note.id}
-                  href={{ pathname: "/notes", query: { ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}), note: note.id } }}
+                  href={{ pathname: "/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}), note: note.id } }}
                   className={`block bg-surface border transition-all rounded-2xl p-5 ${selectedNote?.id === note.id ? "border-accent/50 bg-accent/[0.02]" : "border-border/40 hover:bg-surface-hover hover:border-border/60"}`}
                 >
                   <div className="flex items-start justify-between gap-4">
