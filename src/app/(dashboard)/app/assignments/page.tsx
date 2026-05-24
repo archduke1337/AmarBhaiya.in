@@ -3,7 +3,7 @@ import type { Models } from "node-appwrite";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { submitAssignmentAction } from "@/actions/assignments";
+import { submitAssignmentAction } from "@/actions/submissions";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

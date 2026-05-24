@@ -8,7 +8,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 
-import { gradeSubmissionAction } from "@/actions/assignments";
+import { gradeSubmissionAction } from "@/actions/submissions";
 import {
   EmptyState,
   PageHeader,
