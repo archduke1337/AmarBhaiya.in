@@ -13,7 +13,7 @@ export default async function InstructorNewCoursePage() {
         <h1 className="text-3xl mt-2">Course Creation Wizard</h1>
       </div>
 
-      <form action={async (fd) => { createCourseDraftAction(fd); }} className="border border-border p-6 space-y-4">
+      <form action={createCourseDraftAction} className="border border-border p-6 space-y-4">
         <label className="space-y-2 block text-sm">
           <span className="text-muted-foreground">Course title</span>
           <input

@@ -7,6 +7,8 @@ import {
   createAdminClient,
   createPublicClient,
 } from "@/lib/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
+import { validateOrigin } from "@/lib/csrf";
 import { registerSchema } from "@/lib/validators/auth";
 
 export const runtime = "nodejs";
@@ -26,6 +28,18 @@ function setSessionCookie(
 }
 
 export async function POST(request: Request) {
+  const originCheck = validateOrigin(request);
+  if (originCheck) return originCheck;
+
+  const rlKey = `${getRateLimitKey(request)}:register`;
+  const rateLimit = checkRateLimit(rlKey, 3);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many registration attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+    );
+  }
+
   const json = await request.json().catch(() => null);
   const parsed = registerSchema.safeParse(json);
 

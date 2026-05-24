@@ -213,7 +213,7 @@ export async function completeLessonForUser({
 
 export async function enrollInCourseAction(
   formData: FormData
-): Promise<ActionResult> {
+): Promise<void> {
   let resolvedCourseForRevalidation:
     | { courseId: string; courseSlug: string }
     | null = null;
@@ -221,18 +221,22 @@ export async function enrollInCourseAction(
   try {
     const user = await requireAuth();
     const courseInput = String(formData.get("courseId") ?? "").trim();
-    if (!courseInput) return actionError("Course ID is required");
-
+    if (!courseInput) {
+      actionError("Course ID is required");
+      return;
+    }
     const { tablesDB } = await createAdminClient();
     const resolvedCourse = await resolveCourseForEnrollment(tablesDB, courseInput);
     if (!resolvedCourse) {
-      return actionError("Course not found");
+      actionError("Course not found");
+      return;
     }
 
     const { courseId, courseSlug, accessModel, isPublished } = resolvedCourse;
     resolvedCourseForRevalidation = { courseId, courseSlug };
     if (!isPublished) {
-      return actionError("Course not available");
+      actionError("Course not available");
+      return;
     }
 
     // Check if already enrolled using canonical course id
@@ -252,7 +256,8 @@ export async function enrollInCourseAction(
         revalidatePath("/app/courses");
         revalidatePath("/app/dashboard");
         revalidateEach(getCourseDetailPaths(courseId, courseSlug));
-        return actionSuccess();
+        actionSuccess();
+        return;
       }
 
       if (existingRow) {
@@ -275,7 +280,8 @@ export async function enrollInCourseAction(
         revalidatePath("/app/courses");
         revalidatePath("/app/dashboard");
         revalidateEach(getCourseDetailPaths(courseId, courseSlug));
-        return actionSuccess();
+        actionSuccess();
+        return;
       }
     } catch {
       // Continue to enroll
@@ -283,7 +289,8 @@ export async function enrollInCourseAction(
 
     // Block paid courses from free enrollment
     if (accessModel === "paid" || accessModel === "subscription") {
-      return actionError("This course requires payment. Please use checkout.", "PAID_COURSE");
+      actionError("This course requires payment. Please use checkout.", "PAID_COURSE");
+      return;
     }
 
     // Create enrollment
@@ -308,7 +315,8 @@ export async function enrollInCourseAction(
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
     revalidateEach(getCourseDetailPaths(courseId, courseSlug));
-    return actionSuccess();
+    actionSuccess();
+    return;
   } catch (error) {
     const appwriteError = error as { code?: number };
     if (appwriteError?.code === 409 && resolvedCourseForRevalidation) {
@@ -320,12 +328,14 @@ export async function enrollInCourseAction(
           resolvedCourseForRevalidation.courseSlug
         )
       );
-      return actionSuccess();
+      actionSuccess();
+      return;
     }
 
     const message = error instanceof Error ? error.message : "Failed to enroll in course";
     console.error("[Enrollment] Failed to create enrollment:", message);
-    return actionError(message);
+    actionError(message);
+    return;
   }
 }
 
@@ -335,14 +345,15 @@ export async function enrollInCourseAction(
 
 export async function markLessonCompleteAction(
   formData: FormData
-): Promise<ActionResult> {
+): Promise<void> {
   try {
     const user = await requireAuth();
     const courseId = String(formData.get("courseId") ?? "");
     const lessonId = String(formData.get("lessonId") ?? "");
-    return completeLessonForUser({ courseId, lessonId, userId: user.$id });
+    await completeLessonForUser({ courseId, lessonId, userId: user.$id });
   } catch (error) {
-    return actionError(error instanceof Error ? error.message : "Unexpected error");
+    actionError(error instanceof Error ? error.message : "Unexpected error");
+    return;
   }
 }
 
@@ -496,8 +507,10 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
 
   const userId = String(formData.get("userId") ?? "").trim();
   const courseId = String(formData.get("courseId") ?? "").trim();
-  if (!userId || !courseId) return;
-
+  if (!userId || !courseId) {
+    actionError("Missing userId or courseId");
+    return;
+  }
   const { tablesDB } = await createAdminClient();
 
   // Check if already enrolled
@@ -512,8 +525,10 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
       ],
     });
     const existingRow = (existing.rows[0] as AnyRow | undefined) ?? null;
-    if (existingRow && isActiveEnrollmentRow(existingRow)) return;
-
+    if (existingRow && isActiveEnrollmentRow(existingRow)) {
+      actionError("Student is already enrolled in this course");
+      return;
+    }
     if (existingRow) {
       const nextStatus =
         String(existingRow.status ?? "active") === "completed" ? "completed" : "active";
@@ -539,6 +554,7 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
       revalidateEach(
         getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
       );
+      actionSuccess();
       return;
     }
   } catch {
@@ -572,6 +588,8 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
     revalidateEach(
       getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
     );
+    actionSuccess();
+    return;
   } catch (error) {
     const appwriteError = error as { code?: number };
     if (appwriteError?.code === 409) {
@@ -583,10 +601,13 @@ export async function adminEnrollAction(formData: FormData): Promise<void> {
       revalidateEach(
         getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
       );
+      actionSuccess();
       return;
     }
 
     console.error("[Admin Enroll]", error instanceof Error ? error.message : error);
+    actionError(error instanceof Error ? error.message : "Failed to create enrollment");
+    return;
   }
 }
 
@@ -596,8 +617,10 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
   await requireRole(["admin"]);
 
   const enrollmentId = String(formData.get("enrollmentId") ?? "").trim();
-  if (!enrollmentId) return;
-
+  if (!enrollmentId) {
+    actionError("Missing enrollmentId");
+    return;
+  }
   const { tablesDB, storage } = await createAdminClient();
 
   try {
@@ -608,6 +631,7 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
     }).catch(() => null)) as AnyRow | null;
 
     if (!enrollment) {
+      actionError("Enrollment not found");
       return;
     }
 
@@ -639,6 +663,7 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
         label: `enrollment ${enrollmentId}`,
       });
       if (!deleted) {
+        actionError("Failed to delete enrollment data");
         return;
       }
     } else {
@@ -657,6 +682,7 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
         label: `enrollment ${enrollmentId}`,
       });
       if (!deleted) {
+        actionError("Failed to delete enrollment data");
         return;
       }
     }
@@ -674,7 +700,11 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
       );
       revalidatePath("/app/dashboard");
     }
+    actionSuccess();
+    return;
   } catch (error) {
     console.error("[Admin Unenroll]", error instanceof Error ? error.message : error);
+    actionError(error instanceof Error ? error.message : "Failed to unenroll student");
+    return;
   }
 }

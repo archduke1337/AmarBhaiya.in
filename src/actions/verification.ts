@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createPublicClient, createSessionClient } from "@/lib/appwrite/server";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { passwordSchema } from "@/lib/validators/auth";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 // ── Send Verification Email ─────────────────────────────────────────────────
 // Sends a magic link to the user's email. When clicked, Appwrite confirms
@@ -25,6 +26,8 @@ export async function sendVerificationEmailAction(): Promise<void> {
     console.error(
       error instanceof Error ? error.message : "Failed to send verification email."
     );
+    actionError(error instanceof Error ? error.message : "Failed to send verification email.");
+    return;
   }
 }
 
@@ -71,6 +74,8 @@ export async function sendPasswordRecoveryAction(
     console.error(
       error instanceof Error ? error.message : "Failed to send recovery email."
     );
+    actionError(error instanceof Error ? error.message : "Failed to send recovery email.");
+    return;
   }
 }
 
@@ -99,5 +104,7 @@ export async function confirmPasswordRecoveryAction(
     console.error(
       error instanceof Error ? error.message : "Failed to reset password."
     );
+    actionError(error instanceof Error ? error.message : "Failed to reset password.");
+    return;
   }
 }

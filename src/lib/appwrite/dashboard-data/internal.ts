@@ -383,6 +383,88 @@ export function toDate(value: unknown): Date | null {
   return parsed;
 }
 
+export function toNumber(value: unknown, fallback = 0): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+export function toDurationMinutes(value: unknown): number {
+  const raw = toNumber(value, 0);
+  if (raw <= 0) return 0;
+  if (raw > 240) return Math.max(1, Math.round(raw / 60));
+  return Math.round(raw);
+}
+
+export function parseStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+export function normalizeTag(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function toTitleCase(value: string): string {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+export function extractClassTag(values: string[]): string {
+  for (const value of values) {
+    const match = value.match(/\b(?:class|grade|std)\s*[-:]?\s*(6|7|8|9|10|11|12)\b/i);
+    if (match?.[1]) return `Class ${match[1]}`;
+  }
+  return "";
+}
+
+export function extractSubjectTag(values: string[]): string {
+  const knownSubjects = [
+    "maths", "mathematics", "science", "english", "sst",
+    "social science", "physics", "chemistry", "biology",
+    "accountancy", "economics", "business studies", "bst",
+    "history", "geography", "civics", "computer", "hindi",
+  ];
+  for (const value of values) {
+    const normalized = normalizeTag(value);
+    const matched = knownSubjects.find((subject) => normalized.includes(subject));
+    if (matched) {
+      if (matched === "mathematics") return "Maths";
+      if (matched === "social science") return "Social Science";
+      if (matched === "business studies") return "Business Studies";
+      return toTitleCase(matched);
+    }
+  }
+  return "";
+}
+
+export function extractChapterTag(values: string[]): string {
+  for (const value of values) {
+    const match = value.match(/\b(chapter|ch)\s*[-:]?\s*([a-z0-9]+)/i);
+    if (match?.[2]) return `Chapter ${match[2].toUpperCase()}`;
+  }
+  return "";
+}
+
+export function parseParagraphs(content: unknown): string[] {
+  if (typeof content !== "string" || content.trim().length === 0) return [];
+  return content
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export function parseJsonPayload<T>(value: unknown): T | null {
+  if (typeof value !== "string" || value.trim().length === 0) return null;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
+}
+
 export function getSafeHttpUrl(value: unknown): string {
   if (typeof value !== "string") return "";
   const trimmed = value.trim();

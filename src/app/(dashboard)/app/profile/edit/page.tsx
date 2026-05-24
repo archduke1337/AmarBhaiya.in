@@ -236,7 +236,7 @@ export default async function StudentProfileEditPage() {
         </div>
 
         {/* Update Name */}
-        <form action={async (fd) => { updateDisplayNameAction(fd); }} className="border-b-2 border-border p-5">
+        <form action={updateDisplayNameAction} className="border-b-2 border-border p-5">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="displayName">Display name</Label>
@@ -260,7 +260,7 @@ export default async function StudentProfileEditPage() {
         </form>
 
         {/* Change Password */}
-        <form action={async (fd) => { changePasswordAction(fd); }} className="p-5">
+        <form action={changePasswordAction} className="p-5">
           <h3 className="mb-4 font-heading text-sm font-black uppercase tracking-[0.14em]">
             Change password
           </h3>

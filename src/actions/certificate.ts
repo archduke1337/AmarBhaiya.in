@@ -8,7 +8,7 @@ import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { listAllRows } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 type AnyRow = Models.Row & Record<string, unknown>;
 
@@ -34,11 +34,14 @@ export async function issueCertificateAction(
 
 export async function _issueCertificate(
   formData: FormData
-): Promise<ActionResult> {
+): Promise<void> {
   try {
     const user = await requireAuth();
     const courseId = String(formData.get("courseId") ?? "");
-    if (!courseId) return actionError("Course ID is required");
+    if (!courseId) {
+      actionError("Course ID is required");
+      return;
+    }
 
     const { tablesDB } = await createAdminClient();
 
@@ -55,7 +58,8 @@ export async function _issueCertificate(
       });
 
       if (existing.rows.length > 0) {
-        return actionSuccess(); // Already issued
+        actionSuccess(); // Already issued
+        return;
       }
     } catch {
       // Continue
@@ -75,12 +79,19 @@ export async function _issueCertificate(
       });
 
       enrollmentRow = enrollment.rows[0] as AnyRow | undefined;
-      if (!enrollmentRow) return actionError("No enrollment found");
+      if (!enrollmentRow) {
+        actionError("No enrollment found");
+        return;
+      }
 
       const progress = Number(enrollmentRow.progress ?? 0);
-      if (progress < 100) return actionError("Course not completed yet");
+      if (progress < 100) {
+        actionError("Course not completed yet");
+        return;
+      }
     } catch {
-      return actionError("Failed to verify enrollment");
+      actionError("Failed to verify enrollment");
+      return;
     }
 
     // Get course title for certificate
@@ -122,13 +133,16 @@ export async function _issueCertificate(
 
       revalidatePath("/app/certificates");
       revalidatePath("/app/courses");
-      return actionSuccess();
+      actionSuccess();
+      return;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to issue certificate";
-      return actionError(message);
+      actionError(message);
+      return;
     }
   } catch (error) {
-    return actionError(error instanceof Error ? error.message : "Unexpected error");
+    actionError(error instanceof Error ? error.message : "Unexpected error");
+    return;
   }
 }
 

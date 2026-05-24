@@ -1,6 +1,8 @@
+import { Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/lib/payments/course-payment";
@@ -82,6 +84,23 @@ export async function POST(request: Request) {
     const courseId = notes.courseId;
 
     const { tablesDB } = await createAdminClient();
+
+    // Idempotency: skip if this payment.id has already been processed
+    const existingPayments = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.payments,
+      queries: [
+        Query.equal("providerRef", [payment.id]),
+        Query.limit(1),
+      ],
+    });
+    const alreadyProcessed = existingPayments.rows.some((row) => {
+      const r = row as { status?: string };
+      return r.status === "completed" || r.status === "refunded";
+    });
+    if (alreadyProcessed) {
+      return NextResponse.json({ received: true, status, idempotent: true });
+    }
 
     const result = await reconcileCoursePayment({
       tablesDB,

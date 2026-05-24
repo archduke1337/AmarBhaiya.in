@@ -4,6 +4,18 @@ import type { Models } from "node-appwrite";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getFileDownloadUrl, getFilePreviewUrl } from "@/lib/utils/file-urls";
+import {
+  chunkValues, extractChapterTag, extractClassTag, extractSubjectTag,
+  isActiveEnrollmentRow, listRowsByFieldValues,
+  normalizeTag, parseJsonPayload, parseParagraphs, parseStringArray,
+  safeCountRows, safeListAllRows, safeListRows,
+  toDate, toDurationMinutes, toNumber, toTitleCase,
+} from "@/lib/appwrite/dashboard-data/internal";
+import { unstable_cache } from "next/cache";
+import {
+  cachedAboutPage, cachedBlogPage, cachedBlogPost, cachedContactPage,
+  cachedCourseDetail, cachedCoursesPage, cachedHomePage, cachedNotesPage,
+} from "@/lib/cache/public-data";
 import type {
   BlogPostRecord,
   Category,
@@ -176,139 +188,6 @@ export type NotesPageData = {
   notes: PublicNoteItem[];
 };
 
-function toDate(value: unknown): Date | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  return parsed;
-}
-
-function toNumber(value: unknown, fallback = 0): number {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : fallback;
-}
-
-function toDurationMinutes(value: unknown): number {
-  const raw = toNumber(value, 0);
-  if (raw <= 0) {
-    return 0;
-  }
-
-  // Lessons are commonly stored in seconds, while UI renders minutes.
-  if (raw > 240) {
-    return Math.max(1, Math.round(raw / 60));
-  }
-
-  return Math.round(raw);
-}
-
-function parseStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.filter((item): item is string => typeof item === "string");
-}
-
-function normalizeTag(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function toTitleCase(value: string): string {
-  return value
-    .split(/[\s_-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(" ");
-}
-
-function extractClassTag(values: string[]): string {
-  for (const value of values) {
-    const match = value.match(/\b(?:class|grade|std)\s*[-:]?\s*(6|7|8|9|10|11|12)\b/i);
-    if (match?.[1]) {
-      return `Class ${match[1]}`;
-    }
-  }
-
-  return "";
-}
-
-function extractSubjectTag(values: string[]): string {
-  const knownSubjects = [
-    "maths",
-    "mathematics",
-    "science",
-    "english",
-    "sst",
-    "social science",
-    "physics",
-    "chemistry",
-    "biology",
-    "accountancy",
-    "economics",
-    "business studies",
-    "bst",
-    "history",
-    "geography",
-    "civics",
-    "computer",
-    "hindi",
-  ];
-
-  for (const value of values) {
-    const normalized = normalizeTag(value);
-    const matched = knownSubjects.find((subject) => normalized.includes(subject));
-    if (matched) {
-      if (matched === "mathematics") return "Maths";
-      if (matched === "social science") return "Social Science";
-      if (matched === "business studies") return "Business Studies";
-      return toTitleCase(matched);
-    }
-  }
-
-  return "";
-}
-
-function extractChapterTag(values: string[]): string {
-  for (const value of values) {
-    const match = value.match(/\b(chapter|ch)\s*[-:]?\s*([a-z0-9]+)/i);
-    if (match?.[2]) {
-      return `Chapter ${match[2].toUpperCase()}`;
-    }
-  }
-
-  return "";
-}
-
-function parseParagraphs(content: unknown): string[] {
-  if (typeof content !== "string" || content.trim().length === 0) {
-    return [];
-  }
-
-  return content
-    .split(/\n\s*\n/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
-function parseJsonPayload<T>(value: unknown): T | null {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return null;
-  }
-}
-
 function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
   const accessModel = row.accessModel === "paid" ? "paid" : "free";
   const fileId = typeof row.fileId === "string" ? row.fileId : "";
@@ -348,108 +227,6 @@ function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
     subjectTag: extractSubjectTag(metadataSources),
     chapterTag: extractChapterTag(metadataSources),
   };
-}
-
-async function safeListRows<Row extends AnyRow>(
-  tablesDB: TablesDbClient,
-  tableId: string,
-  queries: string[] = []
-): Promise<{ rows: Row[]; total: number }> {
-  try {
-    const response = await tablesDB.listRows<Row>({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId,
-      queries,
-    });
-
-    return {
-      rows: response.rows,
-      total: response.total,
-    };
-  } catch {
-    return {
-      rows: [],
-      total: 0,
-    };
-  }
-}
-
-function isActiveEnrollmentRow(row: Partial<EnrollmentRow>): boolean {
-  return row.isActive !== false
-    && String(row.status ?? "active") !== "cancelled";
-}
-
-async function safeCountRows(
-  tablesDB: TablesDbClient,
-  tableId: string,
-  queries: string[] = []
-): Promise<number> {
-  const response = await safeListRows<AnyRow>(tablesDB, tableId, [
-    ...queries,
-    Query.limit(1),
-  ]);
-
-  return response.total;
-}
-
-function chunkValues(values: string[], chunkSize: number): string[][] {
-  const chunks: string[][] = [];
-  for (let index = 0; index < values.length; index += chunkSize) {
-    chunks.push(values.slice(index, index + chunkSize));
-  }
-  return chunks;
-}
-
-async function safeListAllRows<Row extends AnyRow>(
-  tablesDB: TablesDbClient,
-  tableId: string,
-  queries: string[] = [],
-  pageSize = 500
-): Promise<Row[]> {
-  const rows: Row[] = [];
-  let offset = 0;
-
-  while (true) {
-    const response = await safeListRows<Row>(tablesDB, tableId, [
-      ...queries,
-      Query.limit(pageSize),
-      Query.offset(offset),
-    ]);
-
-    rows.push(...response.rows);
-
-    if (response.rows.length < pageSize) {
-      break;
-    }
-
-    offset += response.rows.length;
-  }
-
-  return rows;
-}
-
-async function safeListRowsByFieldValues<Row extends AnyRow>(
-  tablesDB: TablesDbClient,
-  tableId: string,
-  field: string,
-  values: string[],
-  extraQueries: string[] = []
-): Promise<Row[]> {
-  if (values.length === 0) {
-    return [];
-  }
-
-  const chunks = chunkValues(values, 20);
-  const results = await Promise.all(
-    chunks.map((chunk) =>
-      safeListAllRows<Row>(tablesDB, tableId, [
-        Query.equal(field, chunk),
-        ...extraQueries,
-      ])
-    )
-  );
-
-  return results.flatMap((result) => result);
 }
 
 async function safeGetSiteCopyRow(
@@ -501,7 +278,7 @@ async function getEnrollmentCountsByCourseId(
     return new Map<string, number>();
   }
 
-  const enrollmentRows = await safeListRowsByFieldValues<EnrollmentRow>(
+  const enrollmentRows = await listRowsByFieldValues<EnrollmentRow>(
     tablesDB,
     APPWRITE_CONFIG.tables.enrollments,
     "courseId",
@@ -627,7 +404,7 @@ export async function getPublicCoursesPageData(options: {
   };
 }
 
-export async function getPublicCourseBySlug(
+async function getPublicCourseBySlugImpl(
   slug: string
 ): Promise<PublicCourseDetail | null> {
   const { tablesDB } = await createAdminClient();
@@ -697,6 +474,12 @@ export async function getPublicCourseBySlug(
   };
 }
 
+export async function getPublicCourseBySlug(
+  slug: string
+): Promise<PublicCourseDetail | null> {
+  return cachedCourseDetail(slug, () => getPublicCourseBySlugImpl(slug));
+}
+
 export async function getPublicBlogPageData(options: {
   category?: string;
 }): Promise<BlogPageData> {
@@ -743,7 +526,7 @@ export async function getPublicBlogPageData(options: {
   };
 }
 
-export async function getPublicBlogPostBySlug(
+async function getPublicBlogPostBySlugImpl(
   slug: string
 ): Promise<PublicBlogPost | null> {
   const { tablesDB } = await createAdminClient();
@@ -775,7 +558,13 @@ export async function getPublicBlogPostBySlug(
   };
 }
 
-export async function getAboutPageContent(): Promise<{
+export async function getPublicBlogPostBySlug(
+  slug: string
+): Promise<PublicBlogPost | null> {
+  return cachedBlogPost(slug, () => getPublicBlogPostBySlugImpl(slug));
+}
+
+async function getAboutPageContentImpl(): Promise<{
   identityCards: AboutIdentityItem[];
   journey: AboutJourneyItem[];
   mission: string;
@@ -803,7 +592,15 @@ export async function getAboutPageContent(): Promise<{
   };
 }
 
-export async function getContactChannelsContent(): Promise<ContactChannelItem[]> {
+export async function getAboutPageContent(): Promise<{
+  identityCards: AboutIdentityItem[];
+  journey: AboutJourneyItem[];
+  mission: string;
+}> {
+  return cachedAboutPage(() => getAboutPageContentImpl());
+}
+
+async function getContactChannelsContentImpl(): Promise<ContactChannelItem[]> {
   const { tablesDB } = await createAdminClient();
   const row = await safeGetSiteCopyRow(tablesDB, "contact.channels");
   const payload = parseJsonPayload<ContactChannelItem[]>(row?.payload);
@@ -818,7 +615,11 @@ export async function getContactChannelsContent(): Promise<ContactChannelItem[]>
   );
 }
 
-export async function getPublicNotesPageData(options?: {
+export async function getContactChannelsContent(): Promise<ContactChannelItem[]> {
+  return cachedContactPage(() => getContactChannelsContentImpl());
+}
+
+async function getPublicNotesPageDataImpl(options?: {
   limit?: number;
 }): Promise<NotesPageData> {
   const { tablesDB } = await createAdminClient();
@@ -841,7 +642,13 @@ export async function getPublicNotesPageData(options?: {
   return { notes: limited };
 }
 
-export async function getHomePageContent(): Promise<HomePageContent> {
+export async function getPublicNotesPageData(options?: {
+  limit?: number;
+}): Promise<NotesPageData> {
+  return cachedNotesPage(() => getPublicNotesPageDataImpl(options));
+}
+
+async function getHomePageContentImpl(): Promise<HomePageContent> {
   const { tablesDB } = await createAdminClient();
   const [
     domainsRow,
@@ -967,4 +774,8 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     featuredCourses,
     whyItems: Array.isArray(whyItems) ? whyItems : [],
   };
+}
+
+export async function getHomePageContent(): Promise<HomePageContent> {
+  return cachedHomePage(() => getHomePageContentImpl());
 }

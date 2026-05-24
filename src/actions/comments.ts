@@ -10,6 +10,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
@@ -139,6 +140,8 @@ export async function postLessonCommentAction(
     console.error(
       error instanceof Error ? error.message : "Failed to post comment."
     );
+    actionError(error instanceof Error ? error.message : "Failed to post comment.");
+    return;
   }
 }
 
@@ -184,6 +187,8 @@ export async function postCourseCommentAction(
     console.error(
       error instanceof Error ? error.message : "Failed to post course comment."
     );
+    actionError(error instanceof Error ? error.message : "Failed to post course comment.");
+    return;
   }
 }
 

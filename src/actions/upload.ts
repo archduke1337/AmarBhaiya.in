@@ -25,6 +25,7 @@ import {
   STANDALONE_RESOURCE_MAX_BYTES,
 } from "@/lib/uploads/instructor-file";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 const STANDALONE_RESOURCE_EXTENSIONS = [
   "pdf",
@@ -74,41 +75,29 @@ async function deleteUploadedFileIfPresent(
 
 export async function uploadCourseThumbnailAction(
   formData: FormData
-): Promise<{ success: true } | { success: false; error: string }> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
   const file = formData.get("file") as File | null;
 
   if (!courseId || !file || file.size === 0) {
-    return {
-      success: false,
-      error: "Choose an image before uploading.",
-    };
+    return actionError("Choose an image before uploading.");
   }
   const course = await userCanManageCourse(courseId, role, user.$id);
   if (!course) {
-    return {
-      success: false,
-      error: "You do not have permission to update this course.",
-    };
+    return actionError("You do not have permission to update this course.");
   }
 
   // Validate file
   const maxSize = 5 * 1024 * 1024; // 5MB
   if (file.size > maxSize) {
-    return {
-      success: false,
-      error: "Images must be 5 MB or smaller.",
-    };
+    return actionError("Images must be 5 MB or smaller.");
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
-    return {
-      success: false,
-      error: "Only JPG, PNG, and WEBP images are supported.",
-    };
+    return actionError("Only JPG, PNG, and WEBP images are supported.");
   }
 
   try {
@@ -117,10 +106,7 @@ export async function uploadCourseThumbnailAction(
     const validMimes = ["image/jpeg", "image/png", "image/webp"];
     if (!validateFileMimeType(buffer, file.name, validMimes)) {
       console.error("File MIME type validation failed");
-      return {
-        success: false,
-        error: "This file does not look like a valid image.",
-      };
+      return actionError("This file does not look like a valid image.");
     }
 
     const { storage, tablesDB } = await createAdminClient();
@@ -174,15 +160,12 @@ export async function uploadCourseThumbnailAction(
       revalidatePath(`/courses/${course.slug}`);
     }
 
-    return { success: true };
+    return actionSuccess();
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to upload thumbnail.";
     console.error(message);
-    return {
-      success: false,
-      error: message,
-    };
+    return actionError(message);
   }
 }
 
@@ -197,19 +180,30 @@ export async function uploadLessonVideoAction(
   const lessonId = String(formData.get("lessonId") ?? "");
   const file = formData.get("file") as File | null;
 
-  if (!courseId || !lessonId || !file || file.size === 0) return;
-  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
+  if (!courseId || !lessonId || !file || file.size === 0) {
+    actionError("Missing course ID, lesson ID, or file.");
+    return;
+  }
+  if (!(await userCanManageCourse(courseId, role, user.$id))) {
+    actionError("You do not have permission to upload a video to this course.");
+    return;
+  }
 
-  if (file.size > LESSON_VIDEO_MAX_BYTES) return;
-
+  if (file.size > LESSON_VIDEO_MAX_BYTES) {
+    actionError("Video file exceeds the maximum allowed size.");
+    return;
+  }
   const ext = getFileExtension(file.name);
-  if (!isAllowedLessonVideoExtension(ext)) return;
-
+  if (!isAllowedLessonVideoExtension(ext)) {
+    actionError("Video file type is not supported.");
+    return;
+  }
   try {
     // SECURITY: Verify MIME type using magic bytes to prevent malware disguised as video
     const buffer = Buffer.from(await file.arrayBuffer());
     if (!validateFileMimeType(buffer, file.name, [...LESSON_VIDEO_ALLOWED_MIMES])) {
       console.error("File MIME type validation failed");
+      actionError("Video file MIME type validation failed.");
       return;
     }
 
@@ -236,12 +230,18 @@ export async function uploadLessonVideoAction(
         uploaded.$id
       );
       console.error(result.error);
+      actionError(result.error);
       return;
     }
+
+    actionSuccess();
+    return;
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to upload video."
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to upload video.";
+    console.error(message);
+    actionError(message);
+    return;
   }
 }
 
@@ -255,20 +255,29 @@ export async function uploadResourceFileAction(
   const resourceId = String(formData.get("resourceId") ?? "");
   const file = formData.get("file") as File | null;
 
-  if (!resourceId || !file || file.size === 0) return;
+  if (!resourceId || !file || file.size === 0) {
+    actionError("Missing resource ID or file.");
+    return;
+  }
   const resource = await userCanManageResource(resourceId, role, user.$id);
-  if (!resource) return;
-
-  if (file.size > STANDALONE_RESOURCE_MAX_BYTES) return;
-
+  if (!resource) {
+    actionError("You do not have permission to upload to this resource.");
+    return;
+  }
+  if (file.size > STANDALONE_RESOURCE_MAX_BYTES) {
+    actionError("Resource file exceeds the maximum allowed size.");
+    return;
+  }
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!STANDALONE_RESOURCE_EXTENSIONS.includes(ext as (typeof STANDALONE_RESOURCE_EXTENSIONS)[number])) {
+    actionError("Resource file type is not supported.");
     return;
   }
 
   const standaloneHeader = Buffer.from(await file.slice(0, 32).arrayBuffer());
   if (!validateFileMimeType(standaloneHeader, file.name, [...STANDALONE_RESOURCE_ALLOWED_MIMES])) {
     console.error("Standalone resource MIME type validation failed");
+    actionError("Resource file MIME type validation failed.");
     return;
   }
 
@@ -307,10 +316,14 @@ export async function uploadResourceFileAction(
     }
 
     revalidatePath("/instructor/resources");
+    actionSuccess();
+    return;
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to upload resource file."
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to upload resource file.";
+    console.error(message);
+    actionError(message);
+    return;
   }
 }
 
@@ -324,21 +337,29 @@ export async function uploadCourseResourceFileAction(
   const resourceId = String(formData.get("resourceId") ?? "");
   const file = formData.get("file") as File | null;
 
-  if (!resourceId || !file || file.size === 0) return;
-
+  if (!resourceId || !file || file.size === 0) {
+    actionError("Missing resource ID or file.");
+    return;
+  }
   const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
-  if (!resourceContext) return;
-
-  if (file.size > COURSE_RESOURCE_MAX_BYTES) return;
-
+  if (!resourceContext) {
+    actionError("You do not have permission to upload to this course resource.");
+    return;
+  }
+  if (file.size > COURSE_RESOURCE_MAX_BYTES) {
+    actionError("Course resource file exceeds the maximum allowed size.");
+    return;
+  }
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!COURSE_RESOURCE_EXTENSIONS.includes(ext as (typeof COURSE_RESOURCE_EXTENSIONS)[number])) {
+    actionError("Course resource file type is not supported.");
     return;
   }
 
   const courseResourceHeader = Buffer.from(await file.slice(0, 32).arrayBuffer());
   if (!validateFileMimeType(courseResourceHeader, file.name, [...COURSE_RESOURCE_ALLOWED_MIMES])) {
     console.error("Course resource MIME type validation failed");
+    actionError("Course resource file MIME type validation failed.");
     return;
   }
 
@@ -379,10 +400,14 @@ export async function uploadCourseResourceFileAction(
     revalidatePath("/instructor/resources");
     revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
     revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
+    actionSuccess();
+    return;
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to upload course resource file."
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to upload course resource file.";
+    console.error(message);
+    actionError(message);
+    return;
   }
 }
 
@@ -394,19 +419,26 @@ export async function uploadAvatarAction(
   const user = await requireAuth();
 
   const file = formData.get("file") as File | null;
-  if (!file || file.size === 0) return;
-
+  if (!file || file.size === 0) {
+    actionError("No file provided for avatar upload.");
+    return;
+  }
   const maxSize = 2 * 1024 * 1024; // 2MB
-  if (file.size > maxSize) return;
-
+  if (file.size > maxSize) {
+    actionError("Avatar image must be 2 MB or smaller.");
+    return;
+  }
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  if (!["jpg", "jpeg", "png", "webp"].includes(ext)) return;
-
+  if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
+    actionError("Only JPG, PNG, and WEBP images are supported for avatars.");
+    return;
+  }
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const validMimes = ["image/jpeg", "image/png", "image/webp"];
     if (!validateFileMimeType(buffer, file.name, validMimes)) {
       console.error("File MIME type validation failed");
+      actionError("Avatar file MIME type validation failed.");
       return;
     }
 
@@ -428,9 +460,13 @@ export async function uploadAvatarAction(
 
     revalidatePath("/app/profile/edit");
     revalidatePath("/app/dashboard");
+    actionSuccess();
+    return;
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to upload avatar."
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to upload avatar.";
+    console.error(message);
+    actionError(message);
+    return;
   }
 }

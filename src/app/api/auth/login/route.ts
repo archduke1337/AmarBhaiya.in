@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { buildSessionCookieOptions } from "@/lib/appwrite/session-cookie";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { validateOrigin } from "@/lib/csrf";
 import { loginSchema } from "@/lib/validators/auth";
 
 export const runtime = "nodejs";
@@ -22,6 +24,18 @@ function setSessionCookie(
 }
 
 export async function POST(request: Request) {
+  const originCheck = validateOrigin(request);
+  if (originCheck) return originCheck;
+
+  const rlKey = `${getRateLimitKey(request)}:login`;
+  const rateLimit = checkRateLimit(rlKey, 5);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many login attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+    );
+  }
+
   const json = await request.json().catch(() => null);
   const parsed = loginSchema.safeParse(json);
 

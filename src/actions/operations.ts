@@ -15,6 +15,7 @@ import type { Role } from "@/lib/utils/constants";
 import { getBlogDetailPaths, getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { slugify } from "@/lib/utils/format";
 import { parseLineSeparatedList } from "@/lib/utils/form-lists";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 const roleEnum = z.enum(["admin", "instructor", "moderator", "student"]);
 
@@ -276,12 +277,16 @@ export async function updateUserRoleAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: userId and role are required");
     return;
   }
 
   await assignRole(parsed.data.userId, parsed.data.role);
 
   revalidatePath("/admin/users");
+
+  actionSuccess();
+  return;
 }
 
 export async function updateCourseVisibilityAction(formData: FormData): Promise<void> {
@@ -294,11 +299,13 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: courseId, isPublished, and isFeatured are required");
     return;
   }
 
   const course = await getCourseRow(parsed.data.courseId);
   if (!course) {
+    actionError("Course not found");
     return;
   }
 
@@ -321,6 +328,9 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
   revalidatePath("/instructor");
   revalidateHomeContentPaths();
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+
+  actionSuccess();
+  return;
 }
 
 export async function createCategoryAction(formData: FormData): Promise<void> {
@@ -334,6 +344,7 @@ export async function createCategoryAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: name is required (min 2 characters)");
     return;
   }
 
@@ -369,12 +380,16 @@ export async function createCategoryAction(formData: FormData): Promise<void> {
   }
 
   if (!created) {
+    actionError("Failed to create category: slug conflict after multiple attempts");
     return;
   }
 
   revalidatePath("/admin/categories");
   revalidatePath("/instructor/categories");
   revalidatePath("/courses");
+
+  actionSuccess();
+  return;
 }
 
 export async function updateCategoryAction(formData: FormData): Promise<void> {
@@ -389,6 +404,7 @@ export async function updateCategoryAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: categoryId and name are required");
     return;
   }
 
@@ -412,6 +428,9 @@ export async function updateCategoryAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/categories");
   revalidatePath("/instructor/categories");
   revalidatePath("/courses");
+
+  actionSuccess();
+  return;
 }
 
 export async function updateInstructorCourseAction(formData: FormData): Promise<void> {
@@ -429,11 +448,13 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: title (min 6 chars) and shortDescription (min 12 chars) are required");
     return;
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
+    actionError("Course not found or you do not have permission to edit it");
     return;
   }
 
@@ -458,6 +479,9 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
   revalidateCourseEditorPaths(parsed.data.courseId);
   revalidatePath("/admin/courses");
   revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
+
+  actionSuccess();
+  return;
 }
 
 export async function createCurriculumModuleAction(formData: FormData): Promise<void> {
@@ -471,11 +495,13 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: title (min 4 chars) is required");
     return;
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
+    actionError("Course not found or you do not have permission to edit it");
     return;
   }
 
@@ -495,6 +521,9 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
 
   revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+
+  actionSuccess();
+  return;
 }
 
 export async function createCurriculumLessonAction(formData: FormData): Promise<void> {
@@ -512,11 +541,13 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: title (min 4 chars) is required");
     return;
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
+    actionError("Course not found or you do not have permission to edit it");
     return;
   }
 
@@ -530,9 +561,11 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
     })) as { courseId?: string };
 
     if (moduleRow.courseId !== parsed.data.courseId) {
+      actionError("Module does not belong to the specified course");
       return;
     }
   } catch {
+    actionError("Module not found");
     return;
   }
 
@@ -557,6 +590,9 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
 
   revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
+
+  actionSuccess();
+  return;
 }
 
 export async function updateCurriculumModuleAction(formData: FormData): Promise<void> {
@@ -571,11 +607,13 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: title (min 4 chars) is required");
     return;
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
+    actionError("Course not found or you do not have permission to edit it");
     return;
   }
 
@@ -589,9 +627,11 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
     })) as { courseId?: string };
 
     if (moduleRow.courseId !== parsed.data.courseId) {
+      actionError("Module does not belong to the specified course");
       return;
     }
   } catch {
+    actionError("Module not found");
     return;
   }
 
@@ -608,6 +648,9 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
 
   revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+
+  actionSuccess();
+  return;
 }
 
 export async function updateCurriculumLessonAction(formData: FormData): Promise<void> {
@@ -626,11 +669,13 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: title (min 4 chars) is required");
     return;
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
+    actionError("Course not found or you do not have permission to edit it");
     return;
   }
 
@@ -647,9 +692,11 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
       lessonRow.courseId !== parsed.data.courseId ||
       lessonRow.moduleId !== parsed.data.moduleId
     ) {
+      actionError("Lesson does not belong to the specified course or module");
       return;
     }
   } catch {
+    actionError("Lesson not found");
     return;
   }
 
@@ -672,6 +719,9 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
   revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
   revalidatePath(`/app/learn/${parsed.data.courseId}/${parsed.data.lessonId}`);
+
+  actionSuccess();
+  return;
 }
 
 export async function applyModerationActionAction(formData: FormData): Promise<void> {
@@ -689,10 +739,12 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: targetUserId and reason are required");
     return;
   }
 
   if (parsed.data.targetUserId === user.$id) {
+    actionError("You cannot moderate yourself");
     return;
   }
 
@@ -705,6 +757,7 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
     entityId.length > 0;
 
   if ((parsed.data.action === "pin" || parsed.data.action === "unpin") && !isThreadAction) {
+    actionError("Pin/unpin action requires a valid thread entity");
     return;
   }
 
@@ -759,6 +812,9 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
   revalidatePath("/moderator/students");
   revalidatePath("/admin");
   revalidatePath("/admin/moderation");
+
+  actionSuccess();
+  return;
 }
 
 export async function resolveModerationActionAction(formData: FormData): Promise<void> {
@@ -769,6 +825,7 @@ export async function resolveModerationActionAction(formData: FormData): Promise
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: actionId is required");
     return;
   }
 
@@ -789,6 +846,9 @@ export async function resolveModerationActionAction(formData: FormData): Promise
   revalidatePath("/moderator/students");
   revalidatePath("/admin");
   revalidatePath("/admin/moderation");
+
+  actionSuccess();
+  return;
 }
 
 export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
@@ -803,12 +863,13 @@ export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: key (min 3 chars) is required");
     return;
   }
 
   const normalizedPayload = normalizeJsonPayload(parsed.data.payload);
   if (normalizedPayload === null) {
-    console.error("[Marketing] Invalid JSON payload submitted for site copy.");
+    actionError("Invalid JSON payload submitted for site copy");
     return;
   }
 
@@ -857,6 +918,9 @@ export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
   revalidatePath("/contact");
   revalidatePath("/blog");
   revalidatePath("/admin/marketing");
+
+  actionSuccess();
+  return;
 }
 
 export async function createBlogPostAction(formData: FormData): Promise<void> {
@@ -875,6 +939,7 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
+    actionError("Invalid input: name is required (min 2 characters)");
     return;
   }
 
@@ -906,6 +971,7 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
       revalidatePath("/blog");
       revalidatePath("/admin/marketing");
       revalidateEach(getBlogDetailPaths(slug));
+      actionSuccess();
       return;
     } catch (error) {
       const appwriteError = error as { code?: number };
@@ -914,6 +980,8 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
       }
     }
   }
+  actionError("Failed to create blog post: slug conflict after multiple attempts");
+  return;
 }
 
 // ── Update Blog Post ──────────────────────────────────────────────────────
@@ -922,16 +990,20 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
   await requireRole(["admin"]);
 
   const postId = String(formData.get("postId") ?? "");
-  if (!postId) return;
-
+  if (!postId) {
+    actionError("Invalid input: postId is required");
+    return;
+  }
   const { tablesDB } = await createAdminClient();
   const existingPost = (await tablesDB.getRow({
     databaseId: APPWRITE_CONFIG.databaseId,
     tableId: APPWRITE_CONFIG.tables.blogPosts,
     rowId: postId,
   }).catch(() => null)) as AnyRow | null;
-  if (!existingPost) return;
-
+  if (!existingPost) {
+    actionError("Blog post not found");
+    return;
+  }
   const data: Record<string, unknown> = {};
 
   const title = String(formData.get("title") ?? "").trim();
@@ -951,8 +1023,10 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
     data.isPublished = parseBoolean(isPublishedRaw, true);
   }
 
-  if (Object.keys(data).length === 0) return;
-
+  if (Object.keys(data).length === 0) {
+    actionError("No fields to update");
+    return;
+  }
   try {
     await tablesDB.updateRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -965,8 +1039,11 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
     revalidatePath("/blog");
     revalidatePath("/admin/marketing");
     revalidateEach(getBlogDetailPaths(String(existingPost.slug ?? "")));
+    actionSuccess();
+    return;
   } catch (error) {
-    console.error(error instanceof Error ? error.message : "Failed to update blog post.");
+    actionError(error instanceof Error ? error.message : "Failed to update blog post.");
+    return;
   }
 }
 
@@ -976,16 +1053,20 @@ export async function deleteBlogPostAction(formData: FormData): Promise<void> {
   await requireRole(["admin"]);
 
   const postId = String(formData.get("postId") ?? "");
-  if (!postId) return;
-
+  if (!postId) {
+    actionError("Invalid input: postId is required");
+    return;
+  }
   const { tablesDB } = await createAdminClient();
   const existingPost = (await tablesDB.getRow({
     databaseId: APPWRITE_CONFIG.databaseId,
     tableId: APPWRITE_CONFIG.tables.blogPosts,
     rowId: postId,
   }).catch(() => null)) as AnyRow | null;
-  if (!existingPost) return;
-
+  if (!existingPost) {
+    actionError("Blog post not found");
+    return;
+  }
   try {
     await tablesDB.deleteRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -997,8 +1078,11 @@ export async function deleteBlogPostAction(formData: FormData): Promise<void> {
     revalidatePath("/blog");
     revalidatePath("/admin/marketing");
     revalidateEach(getBlogDetailPaths(String(existingPost.slug ?? "")));
+    actionSuccess();
+    return;
   } catch (error) {
-    console.error(error instanceof Error ? error.message : "Failed to delete blog post.");
+    actionError(error instanceof Error ? error.message : "Failed to delete blog post.");
+    return;
   }
 }
 

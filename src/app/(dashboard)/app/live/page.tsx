@@ -97,7 +97,7 @@ export default async function StudentLivePage() {
                           </span>
                         )
                       ) : (
-                        <form action={async (fd) => { rsvpToSessionAction(fd); }}>
+                        <form action={rsvpToSessionAction}>
                           <input
                             type="hidden"
                             name="sessionId"

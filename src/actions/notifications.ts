@@ -10,6 +10,7 @@ import { listAllRows } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { processInBatches } from "@/lib/utils/batch";
 import { toNotificationActionUrl } from "@/lib/utils/url";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -301,6 +302,8 @@ export async function sendNotificationAction(
     console.error(
       error instanceof Error ? error.message : "Failed to send notification."
     );
+    actionError(error instanceof Error ? error.message : "Failed to send notification.");
+    return;
   }
 }
 
@@ -344,5 +347,7 @@ export async function broadcastNotificationAction(
     console.error(
       error instanceof Error ? error.message : "Failed to broadcast."
     );
+    actionError(error instanceof Error ? error.message : "Failed to broadcast.");
+    return;
   }
 }

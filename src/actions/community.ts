@@ -13,6 +13,7 @@ import {
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -155,6 +156,8 @@ export async function createForumReplyAction(
     console.error(
       error instanceof Error ? error.message : "Failed to create reply."
     );
+    actionError(error instanceof Error ? error.message : "Failed to create reply.");
+    return;
   }
 }
 
@@ -278,6 +281,8 @@ export async function deleteForumReplyAction(
     revalidatePath("/moderator/community");
   } catch (error) {
     console.error("[Mod] Reply delete failed:", error instanceof Error ? error.message : error);
+    actionError(error instanceof Error ? error.message : String(error));
+    return;
   }
 }
 
@@ -304,6 +309,8 @@ export async function lockThreadAction(formData: FormData): Promise<void> {
     revalidatePath("/moderator/community");
   } catch (error) {
     console.error("[Mod] Lock thread failed:", error instanceof Error ? error.message : error);
+    actionError(error instanceof Error ? error.message : String(error));
+    return;
   }
 }
 
@@ -330,5 +337,7 @@ export async function unlockThreadAction(formData: FormData): Promise<void> {
     revalidatePath("/moderator/community");
   } catch (error) {
     console.error("[Mod] Unlock thread failed:", error instanceof Error ? error.message : error);
+    actionError(error instanceof Error ? error.message : String(error));
+    return;
   }
 }

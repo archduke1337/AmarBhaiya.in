@@ -15,6 +15,7 @@
     "@heroui/react": "^3.0.2",
     "@heroui/styles": "^3.0.2",
     "@react-three/fiber": "^9.5.0",
+    "@sentry/nextjs": "^10.53.1",
     "@shadergradient/react": "^2.4.20",
     "@types/three": "^0.183.1",
     "@vercel/analytics": "^2.0.1",

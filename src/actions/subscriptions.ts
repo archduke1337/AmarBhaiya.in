@@ -10,6 +10,7 @@ import { listAllRows } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
 import { processInBatches } from "@/lib/utils/batch";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 type AnyRow = Models.Row & Record<string, unknown>;
 const VALID_SUBSCRIPTION_STATUSES = new Set(["active", "expired", "cancelled"]);
@@ -252,6 +253,8 @@ export async function cancelSubscriptionAction(
     console.error(
       error instanceof Error ? error.message : "Failed to cancel subscription."
     );
+    actionError(error instanceof Error ? error.message : "Failed to cancel subscription.");
+    return;
   }
 }
 
@@ -298,6 +301,8 @@ export async function adminUpdateSubscriptionAction(
     console.error(
       error instanceof Error ? error.message : "Failed to update subscription."
     );
+    actionError(error instanceof Error ? error.message : "Failed to update subscription.");
+    return;
   }
 }
 
@@ -348,5 +353,7 @@ export async function adminCreateSubscriptionAction(
     console.error(
       error instanceof Error ? error.message : "Failed to create subscription."
     );
+    actionError(error instanceof Error ? error.message : "Failed to create subscription.");
+    return;
   }
 }

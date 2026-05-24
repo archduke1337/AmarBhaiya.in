@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/nextjs";
+
 /**
  * Production-grade error handling with logging
  * Provides standardized error logging, categorization, and recovery
@@ -58,10 +60,16 @@ export function logError(error: unknown, context: ErrorContext & { category: Err
     details: context.details,
   };
 
-  // In production, this should send to monitoring service (Sentry, DataDog, etc.)
   if (process.env.NODE_ENV === 'production') {
-    // TODO: Send to external logging service
-    console.error('[PROD ERROR]', JSON.stringify(logEntry));
+    Sentry.withScope((scope) => {
+      scope.setLevel('error');
+      scope.setTag('category', context.category);
+      if (context.action) scope.setTag('action', context.action);
+      if (context.userId) scope.setUser({ id: context.userId });
+      if (context.resource) scope.setExtra('resource', context.resource);
+      if (context.details) scope.setExtras(context.details);
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
+    });
   } else {
     console.error('[DEV ERROR]', logEntry);
   }

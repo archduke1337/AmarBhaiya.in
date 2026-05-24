@@ -17,6 +17,7 @@ import {
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -313,11 +314,15 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
-  if (!courseId) return;
-
+  if (!courseId) {
+    actionError("Course ID is required to delete a course");
+    return;
+  }
   const course = await userCanManageCourse(courseId, role, user.$id);
-  if (!course) return;
-
+  if (!course) {
+    actionError("Course not found or you do not have permission to delete it");
+    return;
+  }
   const { tablesDB, storage } = await createAdminClient();
   const [lessons, quizzes, assignments, liveSessions, modules, courseComments, enrollments, progressRows] =
     await Promise.all([
@@ -482,6 +487,7 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
     label: `course ${courseId}`,
   });
   if (!deleted) {
+    actionError("Failed to execute delete plan for course");
     return;
   }
 
@@ -499,6 +505,9 @@ export async function deleteCourseAction(formData: FormData): Promise<void> {
   revalidateEach(
     getCourseDetailPaths(courseId, typeof course.slug === "string" ? course.slug : "")
   );
+
+  actionSuccess();
+  return;
 }
 
 // ── Delete Module ───────────────────────────────────────────────────────────
@@ -509,27 +518,35 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
 
   const courseId = String(formData.get("courseId") ?? "");
   const moduleId = String(formData.get("moduleId") ?? "");
-  if (!courseId || !moduleId) return;
-
+  if (!courseId || !moduleId) {
+    actionError("Course ID and Module ID are required to delete a module");
+    return;
+  }
   const course = await userCanManageCourse(courseId, role, user.$id);
-  if (!course) return;
-
+  if (!course) {
+    actionError("Course not found or you do not have permission to delete this module");
+    return;
+  }
   const { tablesDB, storage } = await createAdminClient();
   const deletePlan = await collectModuleDeletePlan({
     tablesDB,
     moduleId,
     courseId,
   });
-  if (!deletePlan) return;
-
+  if (!deletePlan) {
+    actionError("Failed to build delete plan for module");
+    return;
+  }
   const deleted = await executeDeletePlan({
     tablesDB,
     storage,
     plan: deletePlan,
     label: `module ${moduleId}`,
   });
-  if (!deleted) return;
-
+  if (!deleted) {
+    actionError("Failed to execute delete plan for module");
+    return;
+  }
   await syncCourseLessonStats(tablesDB, courseId);
 
   revalidatePath("/app");
@@ -543,6 +560,9 @@ export async function deleteModuleAction(formData: FormData): Promise<void> {
   );
   revalidatePath(`/instructor/courses/${courseId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
+
+  actionSuccess();
+  return;
 }
 
 // ── Delete Lesson ───────────────────────────────────────────────────────────
@@ -552,27 +572,35 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
 
   const courseId = String(formData.get("courseId") ?? "");
   const lessonId = String(formData.get("lessonId") ?? "");
-  if (!courseId || !lessonId) return;
-
+  if (!courseId || !lessonId) {
+    actionError("Course ID and Lesson ID are required to delete a lesson");
+    return;
+  }
   const course = await userCanManageCourse(courseId, role, user.$id);
-  if (!course) return;
-
+  if (!course) {
+    actionError("Course not found or you do not have permission to delete this lesson");
+    return;
+  }
   const { tablesDB, storage } = await createAdminClient();
   const deletePlan = await collectLessonDeletePlan({
     tablesDB,
     lessonId,
     courseId,
   });
-  if (!deletePlan) return;
-
+  if (!deletePlan) {
+    actionError("Failed to build delete plan for lesson");
+    return;
+  }
   const deleted = await executeDeletePlan({
     tablesDB,
     storage,
     plan: deletePlan,
     label: `lesson ${lessonId}`,
   });
-  if (!deleted) return;
-
+  if (!deleted) {
+    actionError("Failed to execute delete plan for lesson");
+    return;
+  }
   await syncCourseLessonStats(tablesDB, courseId);
 
   revalidatePath("/app");
@@ -587,6 +615,9 @@ export async function deleteLessonAction(formData: FormData): Promise<void> {
   revalidatePath(`/instructor/courses/${courseId}`);
   revalidatePath(`/app/learn/${courseId}/${lessonId}`);
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
+
+  actionSuccess();
+  return;
 }
 
 // ── Delete Category ─────────────────────────────────────────────────────────
@@ -596,8 +627,10 @@ export async function deleteCategoryAction(formData: FormData): Promise<void> {
   await requireRole(["admin"]);
 
   const categoryId = String(formData.get("categoryId") ?? "");
-  if (!categoryId) return;
-
+  if (!categoryId) {
+    actionError("Category ID is required to delete a category");
+    return;
+  }
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -612,7 +645,8 @@ export async function deleteCategoryAction(formData: FormData): Promise<void> {
       console.error(
         `[Delete] Cannot delete category ${categoryId}. ${coursesUsingCategory.total} courses assigned to this category.`
       );
-      return; // Prevent deletion of category with active courses
+      actionError(`Cannot delete category: ${coursesUsingCategory.total} course(s) are still assigned to it`);
+      return;
     }
 
     await tablesDB.deleteRow({
@@ -624,10 +658,15 @@ export async function deleteCategoryAction(formData: FormData): Promise<void> {
     console.error(
       error instanceof Error ? error.message : "Failed to delete category."
     );
+    actionError("Failed to delete category due to an unexpected error");
+    return;
   }
 
   revalidatePath("/admin/categories");
   revalidatePath("/instructor/categories");
+
+  actionSuccess();
+  return;
 }
 
 // ── Delete Live Session ─────────────────────────────────────────────────────
@@ -638,16 +677,22 @@ export async function deleteLiveSessionAction(
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const sessionId = String(formData.get("sessionId") ?? "");
-  if (!sessionId) return;
-
+  if (!sessionId) {
+    actionError("Session ID is required to delete a live session");
+    return;
+  }
   const { tablesDB, storage } = await createAdminClient();
   const session = await getRowById(
     tablesDB,
     APPWRITE_CONFIG.tables.liveSessions,
     sessionId
   );
-  if (!session) return;
+  if (!session) {
+    actionError("Live session not found");
+    return;
+  }
   if (!(await userCanManageCourse(String(session.courseId ?? ""), role, user.$id))) {
+    actionError("You do not have permission to delete this live session");
     return;
   }
 
@@ -678,12 +723,14 @@ export async function deleteLiveSessionAction(
       label: `live session ${sessionId}`,
     });
     if (!deleted) {
+      actionError("Failed to execute delete plan for live session");
       return;
     }
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete session."
     );
+    actionError("Failed to delete live session due to an unexpected error");
     return;
   }
 
@@ -693,4 +740,7 @@ export async function deleteLiveSessionAction(
   revalidatePath("/instructor/live");
   revalidatePath("/app/dashboard");
   revalidatePath("/app/live");
+
+  actionSuccess();
+  return;
 }

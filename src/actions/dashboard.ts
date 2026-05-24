@@ -13,7 +13,7 @@ import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { slugify } from "@/lib/utils/format";
 import { parseLineSeparatedList } from "@/lib/utils/form-lists";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
-import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 import { handleActionError } from "@/lib/errors/error-handler";
 
 const createForumThreadSchema = z.object({
@@ -81,7 +81,7 @@ function normalizeOptionalHttpUrl(value?: string): string | null {
 
 export async function createForumThreadAction(
   formData: FormData
-): Promise<ActionResult> {
+): Promise<void> {
   const user = await requireAuth();
   const payload = {
     forumCatId: String(formData.get("forumCatId") ?? ""),
@@ -92,7 +92,8 @@ export async function createForumThreadAction(
   const parsed = createForumThreadSchema.safeParse(payload);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => i.message).join(", ");
-    return actionError(issues);
+    actionError(issues);
+    return;
   }
 
   try {
@@ -121,16 +122,18 @@ export async function createForumThreadAction(
     revalidatePath("/app/community");
     revalidatePath("/moderator");
     revalidatePath("/moderator/community");
-    return actionSuccess();
+    actionSuccess();
+    return;
   } catch (error) {
-    return actionError(handleActionError(error, { category: "DATABASE", action: "createForumThread" }));
+    actionError(handleActionError(error, { category: "DATABASE", action: "createForumThread" }));
+    return;
   }
 }
 
 
 export async function createCourseDraftAction(
   formData: FormData
-): Promise<ActionResult> {
+): Promise<void> {
   const { user } = await requireRole(["admin", "instructor"]);
 
   const payload = {
@@ -149,7 +152,8 @@ export async function createCourseDraftAction(
   const parsed = createCourseSchema.safeParse(payload);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => i.message).join(", ");
-    return actionError(issues);
+    actionError(issues);
+    return;
   }
 
   try {
@@ -211,18 +215,20 @@ export async function createCourseDraftAction(
     revalidatePath("/instructor/courses");
     revalidatePath("/admin/courses");
     redirect("/instructor/courses");
-    return actionSuccess();
+    actionSuccess();
+    return;
   } catch (error) {
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
       throw error;
     }
-    return actionError(handleActionError(error, { category: "DATABASE", action: "createCourseDraft" }));
+    actionError(handleActionError(error, { category: "DATABASE", action: "createCourseDraft" }));
+    return;
   }
 }
 
 export async function createLiveSessionAction(
   formData: FormData
-): Promise<ActionResult> {
+): Promise<void> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const payload = {
@@ -236,18 +242,21 @@ export async function createLiveSessionAction(
   const parsed = createLiveSessionSchema.safeParse(payload);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => i.message).join(", ");
-    return actionError(issues);
+    actionError(issues);
+    return;
   }
 
   const streamUrl = normalizeOptionalHttpUrl(parsed.data.streamUrl);
   if (streamUrl === null) {
-    return actionError("Invalid stream URL.");
+    actionError("Invalid stream URL.");
+    return;
   }
 
   try {
     const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
     if (!course) {
-      return actionError("You do not have permission to manage this course.");
+      actionError("You do not have permission to manage this course.");
+      return;
     }
 
     const { tablesDB } = await createAdminClient();
@@ -278,15 +287,17 @@ export async function createLiveSessionAction(
     revalidatePath("/admin/live");
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
-    return actionSuccess();
+    actionSuccess();
+    return;
   } catch (error) {
-    return actionError(handleActionError(error, { category: "DATABASE", action: "createLiveSession" }));
+    actionError(handleActionError(error, { category: "DATABASE", action: "createLiveSession" }));
+    return;
   }
 }
 
 export async function updateLiveSessionAction(
   formData: FormData
-): Promise<ActionResult> {
+): Promise<void> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const payload = {
@@ -302,16 +313,19 @@ export async function updateLiveSessionAction(
   const parsed = updateLiveSessionSchema.safeParse(payload);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => i.message).join(", ");
-    return actionError(issues);
+    actionError(issues);
+    return;
   }
 
   const streamUrl = normalizeOptionalHttpUrl(parsed.data.streamUrl);
   const recordingUrl = normalizeOptionalHttpUrl(parsed.data.recordingUrl);
   if (streamUrl === null || recordingUrl === null) {
-    return actionError("Invalid stream or recording URL.");
+    actionError("Invalid stream or recording URL.");
+    return;
   }
   if (parsed.data.status === "live" && !streamUrl) {
-    return actionError("Stream URL is required when setting status to live.");
+    actionError("Stream URL is required when setting status to live.");
+    return;
   }
 
   try {
@@ -323,7 +337,8 @@ export async function updateLiveSessionAction(
     }).catch(() => null);
 
     if (!session) {
-      return actionError("Live session not found.");
+      actionError("Live session not found.");
+      return;
     }
 
     const course = await userCanManageCourse(
@@ -332,7 +347,8 @@ export async function updateLiveSessionAction(
       user.$id
     );
     if (!course) {
-      return actionError("You do not have permission to manage this session.");
+      actionError("You do not have permission to manage this session.");
+      return;
     }
 
     await tablesDB.updateRow({
@@ -355,8 +371,10 @@ export async function updateLiveSessionAction(
     revalidatePath("/admin/live");
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
-    return actionSuccess();
+    actionSuccess();
+    return;
   } catch (error) {
-    return actionError(handleActionError(error, { category: "DATABASE", action: "updateLiveSession" }));
+    actionError(handleActionError(error, { category: "DATABASE", action: "updateLiveSession" }));
+    return;
   }
 }

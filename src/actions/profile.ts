@@ -7,6 +7,7 @@ import { z } from "zod";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -105,6 +106,8 @@ export async function upsertStudentProfileAction(
     console.error(
       error instanceof Error ? error.message : "Failed to update profile."
     );
+    actionError(error instanceof Error ? error.message : "Failed to update profile.");
+    return;
   }
 }
 
@@ -187,6 +190,8 @@ export async function upsertBillingInfoAction(
     console.error(
       error instanceof Error ? error.message : "Failed to update billing info."
     );
+    actionError(error instanceof Error ? error.message : "Failed to update billing info.");
+    return;
   }
 }
 

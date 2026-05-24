@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 
 import { getPublicBlogPostBySlug } from "@/lib/appwrite/marketing-content";
 
+export const revalidate = 3600;
+
 type PageProps = {
   params: Promise<{ slug: string }>;
 };

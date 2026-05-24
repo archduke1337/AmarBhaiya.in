@@ -20,13 +20,7 @@ import {
 } from "../validators/auth";
 import type { LoginInput, RegisterInput, ForgotPasswordInput } from "../validators/auth";
 import { getAppOrigin } from "../utils/url";
-
-// ── Types ───────────────────────────────────────────────────────────────────
-
-export type ActionResult = {
-  success: boolean;
-  error?: string;
-};
+import type { ActionResult } from "../errors/action-result";
 
 function getSessionCookieOptions(expire: string) {
   return getServerActionSessionCookieOptions(expire);

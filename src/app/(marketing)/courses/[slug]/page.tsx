@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { BookOpenCheck, Download, Lock, Play, Video } from "lucide-react";
 
 import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
+
+export const revalidate = 3600;
 import { getLoggedInUser } from "@/lib/appwrite/auth";
 import { isEnrolled } from "@/actions/enrollment";
 import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";

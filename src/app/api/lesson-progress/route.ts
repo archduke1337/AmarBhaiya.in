@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { upsertLessonProgressRow } from "@/lib/appwrite/progress";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 
 export const runtime = "nodejs";
@@ -26,6 +27,15 @@ export async function POST(request: Request) {
   const user = await getAuthenticatedUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rlKey = `${getRateLimitKey(request)}:lesson-progress:${user.$id}`;
+  const rateLimit = checkRateLimit(rlKey, 60);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+    );
   }
 
   const json = await request.json().catch(() => null);

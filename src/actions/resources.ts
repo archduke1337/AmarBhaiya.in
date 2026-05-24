@@ -15,6 +15,7 @@ import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
 import { normalizeHttpUrl } from "@/lib/utils/url";
+import { actionSuccess, actionError } from "@/lib/errors/action-result";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -200,8 +201,10 @@ export async function createStandaloneResourceAction(
     isPublished: formData.get("isPublished") === "on",
   });
 
-  if (!parsed.success) return;
-
+  if (!parsed.success) {
+    actionError("Invalid resource data.");
+    return;
+  }
   try {
     const { tablesDB } = await createAdminClient();
 
@@ -228,10 +231,16 @@ export async function createStandaloneResourceAction(
 
     revalidatePath("/instructor/resources");
     revalidatePath("/admin/courses");
+
+    actionSuccess();
+    return;
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create resource."
     );
+
+    actionError("Failed to create resource.");
+    return;
   }
 }
 
@@ -249,11 +258,15 @@ export async function createCourseResourceAction(
     url: String(formData.get("url") ?? "").trim() || undefined,
   });
 
-  if (!parsed.success) return;
-
+  if (!parsed.success) {
+    actionError("Invalid course resource data.");
+    return;
+  }
   const lessonContext = await userCanManageLesson(parsed.data.lessonId, role, user.$id);
-  if (!lessonContext) return;
-
+  if (!lessonContext) {
+    actionError("You do not have permission to manage this lesson.");
+    return;
+  }
   try {
     const { tablesDB } = await createAdminClient();
 
@@ -276,10 +289,16 @@ export async function createCourseResourceAction(
     revalidatePath("/instructor/resources");
     revalidatePath(`/instructor/courses/${lessonContext.course.$id}/curriculum`);
     revalidatePath(`/app/learn/${lessonContext.course.$id}/${lessonContext.lesson.$id}`);
+
+    actionSuccess();
+    return;
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create course resource."
     );
+
+    actionError("Failed to create course resource.");
+    return;
   }
 }
 
@@ -289,19 +308,25 @@ export async function updateCourseResourceAction(
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
-  if (!resourceId) return;
-
+  if (!resourceId) {
+    actionError("Resource ID is required.");
+    return;
+  }
   const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
-  if (!resourceContext) return;
-
+  if (!resourceContext) {
+    actionError("You do not have permission to manage this resource.");
+    return;
+  }
   const parsed = courseResourceFieldsSchema.safeParse({
     title: String(formData.get("title") ?? ""),
     type: String(formData.get("type") ?? "file"),
     url: String(formData.get("url") ?? "").trim() || undefined,
   });
 
-  if (!parsed.success) return;
-
+  if (!parsed.success) {
+    actionError("Invalid course resource data.");
+    return;
+  }
   const data = {
     title: parsed.data.title,
     type: parsed.data.type,
@@ -324,10 +349,16 @@ export async function updateCourseResourceAction(
     revalidatePath("/instructor/resources");
     revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
     revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
+
+    actionSuccess();
+    return;
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to update course resource."
     );
+
+    actionError("Failed to update course resource.");
+    return;
   }
 }
 
@@ -337,11 +368,15 @@ export async function deleteCourseResourceAction(
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
-  if (!resourceId) return;
-
+  if (!resourceId) {
+    actionError("Resource ID is required.");
+    return;
+  }
   const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
-  if (!resourceContext) return;
-
+  if (!resourceContext) {
+    actionError("You do not have permission to manage this resource.");
+    return;
+  }
   try {
     const { tablesDB, storage } = await createAdminClient();
 
@@ -364,15 +399,23 @@ export async function deleteCourseResourceAction(
       },
       label: `course resource ${resourceId}`,
     });
-    if (!deleted) return;
-
+    if (!deleted) {
+      actionError("Failed to delete course resource.");
+      return;
+    }
     revalidatePath("/instructor/resources");
     revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
     revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
+
+    actionSuccess();
+    return;
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete course resource."
     );
+
+    actionError("Failed to delete course resource.");
+    return;
   }
 }
 
@@ -384,8 +427,14 @@ export async function updateStandaloneResourceAction(
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
-  if (!resourceId) return;
-  if (!(await userCanManageResource(resourceId, role, user.$id))) return;
+  if (!resourceId) {
+    actionError("Resource ID is required.");
+    return;
+  }
+  if (!(await userCanManageResource(resourceId, role, user.$id))) {
+    actionError("You do not have permission to manage this resource.");
+    return;
+  }
 
   const data: Record<string, unknown> = {};
 
@@ -405,7 +454,10 @@ export async function updateStandaloneResourceAction(
     data.accessModel = accessModel;
     if (accessModel === "paid") {
       const price = parseFiniteNumber(formData.get("price"));
-      if (price === null || price < 0) return;
+      if (price === null || price < 0) {
+        actionError("Invalid price.");
+        return;
+      }
       data.price = price;
     } else {
       data.price = 0;
@@ -425,10 +477,16 @@ export async function updateStandaloneResourceAction(
     });
 
     revalidatePath("/instructor/resources");
+
+    actionSuccess();
+    return;
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to update resource."
     );
+
+    actionError("Failed to update resource.");
+    return;
   }
 }
 
@@ -440,13 +498,17 @@ export async function deleteStandaloneResourceAction(
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
-  if (!resourceId) return;
-
+  if (!resourceId) {
+    actionError("Resource ID is required.");
+    return;
+  }
   try {
     const { tablesDB, storage } = await createAdminClient();
     const resource = await userCanManageResource(resourceId, role, user.$id);
-    if (!resource) return;
-
+    if (!resource) {
+      actionError("You do not have permission to manage this resource.");
+      return;
+    }
     const deleted = await executeDeletePlan({
       tablesDB,
       storage,
@@ -466,13 +528,21 @@ export async function deleteStandaloneResourceAction(
       },
       label: `standalone resource ${resourceId}`,
     });
-    if (!deleted) return;
-
+    if (!deleted) {
+      actionError("Failed to delete resource.");
+      return;
+    }
     revalidatePath("/instructor/resources");
+
+    actionSuccess();
+    return;
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete resource."
     );
+
+    actionError("Failed to delete resource.");
+    return;
   }
 }
 

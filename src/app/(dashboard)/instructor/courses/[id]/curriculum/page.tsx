@@ -442,7 +442,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
         <h2 className="text-xl">Course Quizzes ({quizzes.length})</h2>
 
         {/* Create quiz form */}
-        <form action={async (fd) => { createQuizAction(fd); }} className="grid gap-3 md:grid-cols-4 border border-border p-4">
+        <form action={createQuizAction} className="grid gap-3 md:grid-cols-4 border border-border p-4">
           <input type="hidden" name="courseId" value={course.id} />
 
           <label className="space-y-1 text-sm md:col-span-2">
@@ -488,7 +488,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   Pass mark: {quiz.passMark}% · Time limit: {quiz.timeLimit || "None"}
                 </p>
               </div>
-              <form action={async (fd) => { deleteQuizAction(fd); }}>
+              <form action={deleteQuizAction}>
                 <input type="hidden" name="quizId" value={quiz.id} />
                 <button
                   type="submit"
@@ -501,7 +501,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
             {/* Add question form */}
             <form
-              action={async (fd) => { addQuizQuestionAction(fd); }}
+              action={addQuizQuestionAction}
               className="grid gap-3 p-5 md:grid-cols-2"
             >
               <input type="hidden" name="quizId" value={quiz.id} />
