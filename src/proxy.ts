@@ -106,7 +106,7 @@ async function validateAppwriteSessionSecret(sessionSecret: string): Promise<boo
   }
 }
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hostname = request.headers.get("host") ?? "";
 
