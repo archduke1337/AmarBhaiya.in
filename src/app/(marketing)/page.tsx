@@ -17,7 +17,6 @@ import { getHomePageContent } from "@/lib/appwrite/marketing-content";
 
 export const revalidate = 3600;
 
-const DOMAIN_ICONS = ["📐", "🔬", "📖", "🌍", "🖊️", "💻"] as const;
 const DOMAIN_COLORS = [
   "oklch(0.70 0.14 265)",
   "oklch(0.70 0.14 148)",
@@ -26,8 +25,6 @@ const DOMAIN_COLORS = [
   "oklch(0.70 0.13 330)",
   "oklch(0.68 0.14 220)",
 ] as const;
-
-const FEATURE_ICONS = ["🎥", "📄", "🔴", "🏆"] as const;
 
 function formatStatValue(end: number, suffix: string) {
   return `${Math.max(0, Math.round(end)).toLocaleString("en-IN")}${suffix}`;
@@ -89,7 +86,6 @@ export default async function MarketingPage() {
               <div className="flex flex-col gap-6">
                 <RevealWrapper>
                   <span className="eyebrow">
-                    <span aria-hidden>✦</span>
                     Learn from Amar Bhaiya
                   </span>
                 </RevealWrapper>
@@ -171,7 +167,7 @@ export default async function MarketingPage() {
                     {featuredCourse ? (
                       <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3 mb-1">
-                          <span className="text-2xl" aria-hidden>🎓</span>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black text-accent" style={{ background: "color-mix(in oklab, var(--accent) 12%, transparent)" }} aria-hidden>*</div>
                           <div>
                             <p className="font-bold text-sm text-foreground">{featuredCourse.title}</p>
                             <p className="text-xs text-foreground/50">
@@ -207,7 +203,6 @@ export default async function MarketingPage() {
                 {quickStats.map((stat, index) => (
                   <div key={`${stat.label}-${index}`} className="card-bezel">
                     <div className="card-bezel-inner p-4 flex flex-col gap-1">
-                      <span className="text-2xl" aria-hidden>{index === 0 ? "🔥" : "📄"}</span>
                       <span className="text-2xl font-black text-foreground leading-none">
                         {formatStatValue(stat.end, stat.suffix)}
                       </span>
@@ -254,7 +249,9 @@ export default async function MarketingPage() {
                         }}
                       >
                         <div className="card-bezel-inner p-5 flex flex-col gap-3 min-h-[120px] group-hover:bg-surface/80 transition-colors duration-300">
-                          <span className="text-3xl" aria-hidden>{DOMAIN_ICONS[i % DOMAIN_ICONS.length]}</span>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black" style={{ background: `color-mix(in oklab, ${DOMAIN_COLORS[i % DOMAIN_COLORS.length]} 15%, transparent)`, color: DOMAIN_COLORS[i % DOMAIN_COLORS.length] }} aria-hidden>
+                            {domain.title.charAt(0)}
+                          </div>
                           <div>
                             <p className="font-bold text-sm text-foreground">{domain.title}</p>
                             <p className="text-xs text-foreground/50 mt-0.5">{domain.sub}</p>
@@ -304,11 +301,11 @@ export default async function MarketingPage() {
                   >
                     <div className="card-bezel h-full">
                       <div className="card-bezel-inner p-6 flex flex-col gap-4">
-                        <span className="text-3xl w-12 h-12 rounded-xl flex items-center justify-center"
+                        <span className="w-12 h-12 rounded-xl flex items-center justify-center text-base font-black text-accent"
                           style={{ background: "color-mix(in oklab, var(--accent) 10%, transparent)" }}
                           aria-hidden
                         >
-                          {FEATURE_ICONS[i % FEATURE_ICONS.length]}
+                          {String(i + 1).padStart(2, "0")}
                         </span>
                         <div>
                           <h3 className="font-bold text-base text-foreground">{item.title}</h3>

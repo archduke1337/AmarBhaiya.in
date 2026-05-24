@@ -26,7 +26,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
       <div className="retro-surface bg-card p-8">
         {result.success ? (
           <>
-            <h1 className="text-4xl">Email Verified ✓</h1>
+            <h1 className="text-4xl">Email Verified</h1>
             <p className="mt-3 text-sm font-semibold text-muted-foreground">
               Your email has been successfully verified. You now have full access
               to all platform features.

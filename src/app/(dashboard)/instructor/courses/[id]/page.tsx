@@ -250,7 +250,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
         <p className="text-sm text-muted-foreground">
           Upload a cover image for this course. Recommended: 1280×720px, max 5MB.
           {course.thumbnailId
-            ? " Current thumbnail: ✓ uploaded"
+            ? " Current thumbnail: uploaded"
             : " No thumbnail uploaded yet."}
         </p>
         {thumbnailPreviewUrl ? (

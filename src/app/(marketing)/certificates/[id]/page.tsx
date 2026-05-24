@@ -42,7 +42,7 @@ export default async function CertificatePage({ params }: PageProps) {
         {/* Divider */}
         <div className="flex items-center gap-4">
           <div className="flex-1 border-t border-foreground/10" />
-          <span className="text-[10px] text-muted-foreground/40">✦</span>
+          <span className="w-1 h-1 rounded-full bg-foreground/20" />
           <div className="flex-1 border-t border-foreground/10" />
         </div>
 
@@ -63,7 +63,7 @@ export default async function CertificatePage({ params }: PageProps) {
         {/* Divider */}
         <div className="flex items-center gap-4">
           <div className="flex-1 border-t border-foreground/10" />
-          <span className="text-[10px] text-muted-foreground/40">✦</span>
+          <span className="w-1 h-1 rounded-full bg-foreground/20" />
           <div className="flex-1 border-t border-foreground/10" />
         </div>
 

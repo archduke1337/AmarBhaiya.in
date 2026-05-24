@@ -268,7 +268,7 @@ export default async function InstructorResourcesPage() {
                   kind="course-resource"
                   resourceId={resource.id}
                   accept=".pdf,.zip,.txt,.doc,.docx,.pptx"
-                  statusLabel={resource.fileId ? "✓ File attached" : "No file"}
+                  statusLabel={resource.fileId ? "File attached" : "No file"}
                   buttonLabel="Upload"
                   successMessage="Course resource file uploaded."
                   helperText="Direct Appwrite upload. Supports PDF, ZIP, TXT, DOC, DOCX, and PPTX up to 50 MB."
@@ -545,7 +545,7 @@ export default async function InstructorResourcesPage() {
                   kind="standalone-resource"
                   resourceId={resource.id}
                   accept=".pdf,.zip,.txt,.doc,.docx,.ppt,.pptx,.mp4,.webm,.mov,.mkv"
-                  statusLabel={resource.fileId ? "✓ File attached" : "No file"}
+                  statusLabel={resource.fileId ? "File attached" : "No file"}
                   buttonLabel="Upload"
                   successMessage="Resource file uploaded."
                   helperText="Direct Appwrite upload. Supports docs, archives, and media up to 200 MB."

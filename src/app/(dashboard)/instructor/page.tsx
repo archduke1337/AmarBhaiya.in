@@ -628,7 +628,7 @@ function buildActionItems(
       id: "all-done",
       label: "No pending actions",
       description: "You're all caught up!",
-      badge: "✓",
+      badge: "Clear",
     });
   }
 

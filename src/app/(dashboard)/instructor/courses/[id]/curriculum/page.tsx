@@ -339,7 +339,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                     {lesson.isFree ? " · Free" : ""}
                     {lesson.isFreePreview ? " · Preview" : ""}
                     {lesson.videoFileId
-                      ? " · ✓ Video"
+                      ? " · Video"
                       : " · No video"}
                   </p>
 
