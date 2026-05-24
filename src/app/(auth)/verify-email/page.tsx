@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { confirmEmailVerificationAction } from "@/actions/verification";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = { title: "Verify Email" };
 
 type PageProps = {
   searchParams: Promise<{ userId?: string; secret?: string }>;

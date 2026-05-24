@@ -19,6 +19,8 @@ import {
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { handleActionError } from "@/lib/errors/error-handler";
 
 type AnyRow = AnyAppwriteRow;
 
@@ -82,7 +84,7 @@ export type QuizAttemptResult = {
 
 // ── Create Quiz (Instructor) ────────────────────────────────────────────────
 
-export async function createQuizAction(formData: FormData): Promise<void> {
+export async function createQuizAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
@@ -93,8 +95,8 @@ export async function createQuizAction(formData: FormData): Promise<void> {
   const passMark = clampNumber(Math.round(rawPassMark ?? 60), 0, 100);
   const timeLimit = Math.max(0, Math.round(rawTimeLimit ?? 0));
 
-  if (!courseId || !title) return;
-  if (!(await userCanManageCourse(courseId, role, user.$id))) return;
+  if (!courseId || !title) return actionError("Course ID and title are required.");
+  if (!(await userCanManageCourse(courseId, role, user.$id))) return actionError("You do not have permission to manage this course.");
 
   try {
     const { tablesDB } = await createAdminClient();
@@ -106,7 +108,7 @@ export async function createQuizAction(formData: FormData): Promise<void> {
       }).catch(() => null)) as AnyRow | null;
 
       if (!lesson || String(lesson.courseId ?? "") !== courseId) {
-        return;
+        return actionError("Lesson not found or does not belong to this course.");
       }
     }
 
@@ -124,10 +126,9 @@ export async function createQuizAction(formData: FormData): Promise<void> {
     });
 
     revalidatePath(`/instructor/courses/${courseId}/curriculum`);
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to create quiz."
-    );
+    return actionError(handleActionError(error, { category: "DATABASE", action: "createQuiz" }));
   }
 }
 
@@ -135,7 +136,7 @@ export async function createQuizAction(formData: FormData): Promise<void> {
 
 export async function addQuizQuestionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const quizId = String(formData.get("quizId") ?? "");
@@ -143,7 +144,6 @@ export async function addQuizQuestionAction(
   const type = String(formData.get("type") ?? "mcq");
   const correctAnswer = String(formData.get("correctAnswer") ?? "").trim();
 
-  // Parse options from comma-separated string
   const optionsRaw = String(formData.get("options") ?? "");
   const options = optionsRaw
     .split(",")
@@ -153,13 +153,13 @@ export async function addQuizQuestionAction(
   const rawOrder = parseFiniteNumber(formData.get("order"));
   const order = Math.max(0, Math.trunc(rawOrder ?? 0));
 
-  if (!quizId || !text || !correctAnswer) return;
+  if (!quizId || !text || !correctAnswer) return actionError("Quiz ID, question text, and correct answer are required.");
 
   try {
     const quiz = await getQuizRow(quizId);
-    if (!quiz) return;
+    if (!quiz) return actionError("Quiz not found.");
     if (!(await userCanManageCourse(String(quiz.courseId ?? ""), role, user.$id))) {
-      return;
+      return actionError("You do not have permission to manage this quiz.");
     }
 
     const { tablesDB } = await createAdminClient();
@@ -179,10 +179,9 @@ export async function addQuizQuestionAction(
     });
 
     revalidatePath("/instructor");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to add question."
-    );
+    return actionError(handleActionError(error, { category: "DATABASE", action: "addQuizQuestion" }));
   }
 }
 
@@ -266,24 +265,22 @@ export async function getCourseQuizzes(
 
 export async function submitQuizAttemptAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
 
   const quizId = String(formData.get("quizId") ?? "");
-  if (!quizId) return;
+  if (!quizId) return actionError("Quiz ID is required.");
 
   const { tablesDB } = await createAdminClient();
   const quiz = await getQuizRow(quizId);
-  if (!quiz) return;
+  if (!quiz) return actionError("Quiz not found.");
   if (!(await userHasCourseAccess({ courseId: String(quiz.courseId ?? ""), userId: user.$id }))) {
-    return;
+    return actionError("You do not have access to this course.");
   }
 
-  // Get questions
   const questions = await getQuizQuestionRows(tablesDB, quizId);
-  if (questions.length === 0) return;
+  if (questions.length === 0) return actionError("This quiz has no questions.");
 
-  // Get quiz pass mark
   let passMark = 60;
   try {
     passMark = Number(quiz.passMark ?? 60);
@@ -291,7 +288,6 @@ export async function submitQuizAttemptAction(
     // Use default
   }
 
-  // Grade answers
   const answers: string[] = [];
   let correct = 0;
 
@@ -346,10 +342,9 @@ export async function submitQuizAttemptAction(
     revalidatePath("/app/notifications");
     revalidatePath("/app/quizzes");
     revalidatePath(`/app/quiz/${quizId}`);
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to save attempt."
-    );
+    return actionError(handleActionError(error, { category: "DATABASE", action: "submitQuizAttempt" }));
   }
 }
 
@@ -389,22 +384,21 @@ export async function getUserBestAttempt(
 
 // ── Delete Quiz ─────────────────────────────────────────────────────────────
 
-export async function deleteQuizAction(formData: FormData): Promise<void> {
+export async function deleteQuizAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const quizId = String(formData.get("quizId") ?? "");
-  if (!quizId) return;
+  if (!quizId) return actionError("Quiz ID is required.");
 
   try {
     const quiz = await getQuizRow(quizId);
-    if (!quiz) return;
+    if (!quiz) return actionError("Quiz not found.");
     if (!(await userCanManageCourse(String(quiz.courseId ?? ""), role, user.$id))) {
-      return;
+      return actionError("You do not have permission to manage this quiz.");
     }
 
     const { tablesDB, storage } = await createAdminClient();
 
-    // Delete questions first
     const [questionRows, attemptRows] = await Promise.all([
       getQuizQuestionRows(tablesDB, quizId),
       listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.quizAttempts, [
@@ -433,7 +427,7 @@ export async function deleteQuizAction(formData: FormData): Promise<void> {
       },
       label: `quiz ${quizId}`,
     });
-    if (!deleted) return;
+    if (!deleted) return actionError("Failed to delete quiz.");
 
     revalidatePath("/instructor");
     revalidatePath(`/instructor/courses/${String(quiz.courseId ?? "")}/curriculum`);
@@ -452,9 +446,8 @@ export async function deleteQuizAction(formData: FormData): Promise<void> {
         `/app/learn/${String(quiz.courseId ?? "")}/${String(quiz.lessonId ?? "")}`
       );
     }
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to delete quiz."
-    );
+    return actionError(handleActionError(error, { category: "DATABASE", action: "deleteQuiz" }));
   }
 }

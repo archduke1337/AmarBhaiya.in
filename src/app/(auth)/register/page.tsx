@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form";
 import { sanitizeInternalRedirectPath } from "@/lib/utils/url";
+
+export const metadata: Metadata = { title: "Sign Up" };
 
 export default async function RegisterPage({
   searchParams,

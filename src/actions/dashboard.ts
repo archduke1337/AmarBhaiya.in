@@ -13,6 +13,8 @@ import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { slugify } from "@/lib/utils/format";
 import { parseLineSeparatedList } from "@/lib/utils/form-lists";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { handleActionError } from "@/lib/errors/error-handler";
 
 const createForumThreadSchema = z.object({
   forumCatId: z.string().min(1, "Category is required."),
@@ -79,7 +81,7 @@ function normalizeOptionalHttpUrl(value?: string): string | null {
 
 export async function createForumThreadAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
   const payload = {
     forumCatId: String(formData.get("forumCatId") ?? ""),
@@ -89,7 +91,8 @@ export async function createForumThreadAction(
 
   const parsed = createForumThreadSchema.safeParse(payload);
   if (!parsed.success) {
-    return;
+    const issues = parsed.error.issues.map((i) => i.message).join(", ");
+    return actionError(issues);
   }
 
   try {
@@ -118,16 +121,16 @@ export async function createForumThreadAction(
     revalidatePath("/app/community");
     revalidatePath("/moderator");
     revalidatePath("/moderator/community");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to create forum thread."
-    );
+    return actionError(handleActionError(error, { category: "DATABASE", action: "createForumThread" }));
   }
 }
 
+
 export async function createCourseDraftAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user } = await requireRole(["admin", "instructor"]);
 
   const payload = {
@@ -145,7 +148,8 @@ export async function createCourseDraftAction(
 
   const parsed = createCourseSchema.safeParse(payload);
   if (!parsed.success) {
-    return;
+    const issues = parsed.error.issues.map((i) => i.message).join(", ");
+    return actionError(issues);
   }
 
   try {
@@ -207,18 +211,18 @@ export async function createCourseDraftAction(
     revalidatePath("/instructor/courses");
     revalidatePath("/admin/courses");
     redirect("/instructor/courses");
+    return actionSuccess();
   } catch (error) {
-    // redirect() throws a special error in Next.js - rethrow it
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
       throw error;
     }
-    console.error(error instanceof Error ? error.message : "Failed to create course.");
+    return actionError(handleActionError(error, { category: "DATABASE", action: "createCourseDraft" }));
   }
 }
 
 export async function createLiveSessionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const payload = {
@@ -231,18 +235,19 @@ export async function createLiveSessionAction(
 
   const parsed = createLiveSessionSchema.safeParse(payload);
   if (!parsed.success) {
-    return;
+    const issues = parsed.error.issues.map((i) => i.message).join(", ");
+    return actionError(issues);
   }
 
   const streamUrl = normalizeOptionalHttpUrl(parsed.data.streamUrl);
   if (streamUrl === null) {
-    return;
+    return actionError("Invalid stream URL.");
   }
 
   try {
     const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
     if (!course) {
-      return;
+      return actionError("You do not have permission to manage this course.");
     }
 
     const { tablesDB } = await createAdminClient();
@@ -273,16 +278,15 @@ export async function createLiveSessionAction(
     revalidatePath("/admin/live");
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to create live session."
-    );
+    return actionError(handleActionError(error, { category: "DATABASE", action: "createLiveSession" }));
   }
 }
 
 export async function updateLiveSessionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const payload = {
@@ -297,16 +301,17 @@ export async function updateLiveSessionAction(
 
   const parsed = updateLiveSessionSchema.safeParse(payload);
   if (!parsed.success) {
-    return;
+    const issues = parsed.error.issues.map((i) => i.message).join(", ");
+    return actionError(issues);
   }
 
   const streamUrl = normalizeOptionalHttpUrl(parsed.data.streamUrl);
   const recordingUrl = normalizeOptionalHttpUrl(parsed.data.recordingUrl);
   if (streamUrl === null || recordingUrl === null) {
-    return;
+    return actionError("Invalid stream or recording URL.");
   }
   if (parsed.data.status === "live" && !streamUrl) {
-    return;
+    return actionError("Stream URL is required when setting status to live.");
   }
 
   try {
@@ -318,7 +323,7 @@ export async function updateLiveSessionAction(
     }).catch(() => null);
 
     if (!session) {
-      return;
+      return actionError("Live session not found.");
     }
 
     const course = await userCanManageCourse(
@@ -327,7 +332,7 @@ export async function updateLiveSessionAction(
       user.$id
     );
     if (!course) {
-      return;
+      return actionError("You do not have permission to manage this session.");
     }
 
     await tablesDB.updateRow({
@@ -350,9 +355,8 @@ export async function updateLiveSessionAction(
     revalidatePath("/admin/live");
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to update live session."
-    );
+    return actionError(handleActionError(error, { category: "DATABASE", action: "updateLiveSession" }));
   }
 }

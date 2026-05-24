@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
+import type { ActionResult } from "@/lib/errors/action-result";
 
 type Question = {
   id: string;
@@ -16,7 +17,7 @@ type QuizFormProps = {
   passMark: number;
   timeLimit: number;
   questions: Question[];
-  submitAction: (formData: FormData) => Promise<void>;
+  submitAction: (formData: FormData) => Promise<ActionResult>;
 };
 
 export function QuizForm({

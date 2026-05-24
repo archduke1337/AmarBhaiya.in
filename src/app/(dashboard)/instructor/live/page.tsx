@@ -196,7 +196,7 @@ export default async function InstructorLivePage() {
                 </div>
 
                 <form
-                  action={updateLiveSessionAction}
+                  action={async (fd) => { updateLiveSessionAction(fd); }}
                   className="grid gap-4 border-t-2 border-border bg-[color:var(--surface-muted)] px-5 py-4 md:grid-cols-2"
                 >
                   <input type="hidden" name="sessionId" value={session.id} />
@@ -299,7 +299,7 @@ export default async function InstructorLivePage() {
               Create at least one course first. Live sessions need a course so students see them in the right place.
             </p>
           ) : (
-            <form action={createLiveSessionAction} className="flex flex-col gap-4">
+            <form action={async (fd) => { createLiveSessionAction(fd); }} className="flex flex-col gap-4">
               <label className="flex flex-col gap-2">
                 <Label>Course</Label>
                 <select

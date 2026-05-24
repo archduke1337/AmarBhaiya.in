@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { confirmPasswordRecoveryAction } from "@/actions/verification";
 import { Button, Input } from "@heroui/react";
+
+export const metadata: Metadata = { title: "Reset Password" };
 
 type PageProps = {
   searchParams: Promise<{ userId?: string; secret?: string }>;
