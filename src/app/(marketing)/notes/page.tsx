@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Download, Eye } from "lucide-react";
+import { Button } from "@heroui/react";
 
-import { RetroPanel } from "@/components/marketing/retro-panel";
-import { SectionHeading } from "@/components/marketing/section-heading";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { getPublicNotesPageData } from "@/lib/appwrite/marketing-content";
 
 export const metadata: Metadata = {
@@ -57,50 +54,44 @@ export default async function NotesPage({
     filteredNotes.find((note) => note.id === selectedNoteId) ?? filteredNotes[0] ?? null;
 
   return (
-    <div className="space-y-16 px-4 py-8 md:px-6 md:py-10">
-      <section className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
-        <RetroPanel tone="card" size="lg" className="space-y-6">
+    <div className="flex flex-col gap-12 px-4 py-8 md:px-6 md:py-10 max-w-7xl mx-auto">
+      <section className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
+        <div className="bg-surface border border-border/40 rounded-3xl p-6 md:p-8 flex flex-col gap-6">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">Notes library</Badge>
-            <Badge variant="outline">Published notes only</Badge>
-            <Badge variant="ghost">Preview + download</Badge>
+            <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-[0.05em] bg-accent/10 text-accent outline outline-1 outline-accent/20">Notes library</span>
+            <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-[0.05em] bg-surface-hover text-foreground/60 outline outline-1 outline-border">Published notes only</span>
+            <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-[0.05em] bg-surface-hover text-foreground/60 outline outline-1 outline-border">Preview + download</span>
           </div>
 
-          <div className="space-y-5">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
-              Study notes
-            </p>
-            <h1 className="font-heading max-w-4xl text-4xl font-black leading-[0.94] tracking-[-0.08em] text-balance sm:text-5xl md:text-6xl">
+          <div className="flex flex-col gap-5">
+            <p className="eyebrow self-start">Study notes</p>
+            <h1 className="text-[clamp(2rem,5vw,3.5rem)] font-black leading-[0.94] tracking-[-0.04em] text-balance">
               Notes jo actually revision ke time kaam aayein.
             </h1>
-            <p className="max-w-2xl text-sm font-medium leading-8 text-muted-foreground sm:text-base md:text-lg">
-              Yahan sirf wahi notes dikhte hain jo actually publish ho chuke
-              hain. Agar class, subject, ya chapter tags missing hain, page
-              guess nahi karta. Jo clear hai, wahi saamne rakhta hai.
+            <p className="max-w-2xl text-sm md:text-base font-medium text-foreground/60 leading-relaxed">
+              Yahan sirf wahi notes dikhte hain jo actually publish ho chuke hain. Class aur subject ke hisaab se filter karo.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg" variant="secondary">
-              <Link href="#notes-library">
+            <Link href="#notes-library">
+              <Button variant="primary" size="lg" className="font-bold">
                 <BookOpen className="size-4" />
                 Notes library kholo
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/courses">
+              </Button>
+            </Link>
+            <Link href="/courses">
+              <Button variant="ghost" size="lg" className="font-bold">
                 Courses dekho
-                <ArrowRight />
-              </Link>
-            </Button>
+                <ArrowRight className="size-4" />
+              </Button>
+            </Link>
           </div>
-        </RetroPanel>
+        </div>
 
-        <RetroPanel tone="secondary" size="lg" className="space-y-5 xl:translate-y-8">
-          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
-            How to use this
-          </p>
-          <div className="grid gap-3">
+        <div className="bg-surface border border-border/40 rounded-3xl p-6 md:p-8 flex flex-col gap-5 xl:translate-y-8">
+          <p className="eyebrow self-start">How to use this</p>
+          <div className="flex flex-col gap-3">
             {[
               "Class filter tab dikhega jab notes properly class ke saath tagged honge.",
               "Subject filter se revision fast ho jata hai, especially exam ke time.",
@@ -108,248 +99,158 @@ export default async function NotesPage({
             ].map((item, index) => (
               <div
                 key={item}
-                className="rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-card)] px-4 py-4 shadow-retro-sm"
+                className="bg-surface-hover border border-border/40 rounded-xl p-4"
               >
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="text-[10px] font-black uppercase tracking-[0.1em] text-foreground/50">
                   Step {index + 1}
                 </p>
-                <p className="mt-2 text-sm font-medium leading-7 text-foreground/80">
+                <p className="mt-2 text-sm font-medium leading-relaxed text-foreground/80">
                   {item}
                 </p>
               </div>
             ))}
           </div>
-        </RetroPanel>
+        </div>
       </section>
 
-      <section id="notes-library" className="mx-auto max-w-7xl space-y-6 scroll-mt-28">
-        <SectionHeading
-          eyebrow="Live notes"
-          title="Class aur subject ke hisaab se filter karo, phir note kholo."
-          description="Filters note ke actual tags se bante hain. Jitna better tagging hogi, library utni easy ho jayegi."
-        />
+      <section id="notes-library" className="flex flex-col gap-6 scroll-mt-28">
+        <div className="flex flex-col gap-2">
+          <p className="eyebrow self-start">Live notes</p>
+          <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-black tracking-[-0.03em]">
+            Class aur subject ke hisaab se filter karo, phir note kholo.
+          </h2>
+          <p className="text-sm font-medium text-foreground/60">
+            Filters note ke actual tags se bante hain. Jitna better tagging hogi, library utni easy ho jayegi.
+          </p>
+        </div>
 
-        <RetroPanel tone="accent" className="space-y-5">
+        <div className="bg-surface border border-border/40 rounded-2xl p-5 flex flex-col gap-5">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3">
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
-                Classes
-              </p>
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Classes</p>
               <div className="flex flex-wrap gap-2">
-                <Badge asChild variant={!classFilter ? "secondary" : "outline"}>
-                  <Link href="/notes">All</Link>
-                </Badge>
+                <Link
+                  href="/notes"
+                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!classFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                >
+                  All
+                </Link>
                 {availableClasses.map((item) => (
-                  <Badge
+                  <Link
                     key={item}
-                    asChild
-                    variant={classFilter === item ? "secondary" : "outline"}
+                    href={{ pathname: "/notes", query: { class: item, ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
+                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${classFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                   >
-                    <Link
-                      href={{
-                        pathname: "/notes",
-                        query: { class: item, ...(subjectFilter ? { subject: subjectFilter } : {}) },
-                      }}
-                    >
-                      {item}
-                    </Link>
-                  </Badge>
+                    {item}
+                  </Link>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-3">
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
-                Subjects
-              </p>
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Subjects</p>
               <div className="flex flex-wrap gap-2">
-                <Badge
-                  asChild
-                  variant={!subjectFilter ? "ghost" : "outline"}
+                <Link
+                  href={{ pathname: "/notes", query: { ...(classFilter ? { class: classFilter } : {}) } }}
+                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!subjectFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                 >
-                  <Link
-                    href={{
-                      pathname: "/notes",
-                      query: { ...(classFilter ? { class: classFilter } : {}) },
-                    }}
-                  >
-                    All
-                  </Link>
-                </Badge>
+                  All
+                </Link>
                 {availableSubjects.map((item) => (
-                  <Badge
+                  <Link
                     key={item}
-                    asChild
-                    variant={subjectFilter === item ? "ghost" : "outline"}
+                    href={{ pathname: "/notes", query: { ...(classFilter ? { class: classFilter } : {}), subject: item } }}
+                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${subjectFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                   >
-                    <Link
-                      href={{
-                        pathname: "/notes",
-                        query: {
-                          ...(classFilter ? { class: classFilter } : {}),
-                          subject: item,
-                        },
-                      }}
-                    >
-                      {item}
-                    </Link>
-                  </Badge>
+                    {item}
+                  </Link>
                 ))}
               </div>
             </div>
           </div>
-        </RetroPanel>
+        </div>
 
         {filteredNotes.length === 0 ? (
-          <RetroPanel tone="muted" size="lg" className="space-y-3">
-            <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
-              Is filter combo ke liye abhi notes live nahi hain.
-            </h2>
-            <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
-              Iska matlab bas itna hai ki is class-subject combo ke liye notes
-              abhi live nahi hue. Jaise hi publish honge, woh yahin aa jayenge.
-            </p>
-          </RetroPanel>
+          <div className="bg-surface border border-dashed border-border/60 rounded-2xl p-8 text-center">
+            <h2 className="text-xl font-bold tracking-tight">Is filter combo ke liye abhi notes live nahi hain.</h2>
+            <p className="text-sm font-medium text-foreground/60 mt-2">Jaise hi publish honge, yahin aa jayenge.</p>
+          </div>
         ) : (
           <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {filteredNotes.map((note) => (
-                <RetroPanel
+                <Link
                   key={note.id}
-                  tone={selectedNote?.id === note.id ? "secondary" : "card"}
-                  className="space-y-4"
+                  href={{ pathname: "/notes", query: { ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}), note: note.id } }}
+                  className={`block bg-surface border transition-all rounded-2xl p-5 ${selectedNote?.id === note.id ? "border-accent/50 bg-accent/[0.02]" : "border-border/40 hover:bg-surface-hover hover:border-border/60"}`}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap gap-2">
-                      {note.classTag ? <Badge variant="outline">{note.classTag}</Badge> : null}
-                      {note.subjectTag ? <Badge variant="ghost">{note.subjectTag}</Badge> : null}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-2 min-w-0">
+                      <div className="flex flex-wrap gap-2">
+                        {note.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.classTag}</span>}
+                        {note.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.subjectTag}</span>}
+                      </div>
+                      <h2 className="text-lg font-black tracking-[-0.02em]">{note.title}</h2>
+                      <p className="text-xs font-medium text-foreground/50">{note.description || "Clean study material ready for revision."}</p>
                     </div>
-                    <span className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      {note.downloadCount.toLocaleString("en-IN")} downloads
-                    </span>
+                    <span className="shrink-0 text-[10px] font-bold text-foreground/40">{note.downloadCount.toLocaleString("en-IN")} downloads</span>
                   </div>
-
-                  <div className="space-y-2">
-                    <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
-                      {note.title}
-                    </h2>
-                    <p className="text-sm font-medium leading-7 text-foreground/80">
-                      {note.description || "Clean study material ready for revision."}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {[note.chapterTag, ...note.tags].filter(Boolean).slice(0, 4).map((tag) => (
-                      <Badge key={tag} variant="outline">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    <Button asChild size="sm" variant="outline">
-                      <Link
-                        href={{
-                          pathname: "/notes",
-                          query: {
-                            ...(classFilter ? { class: classFilter } : {}),
-                            ...(subjectFilter ? { subject: subjectFilter } : {}),
-                            note: note.id,
-                          },
-                        }}
-                      >
-                        <Eye className="size-4" />
-                        Preview
-                      </Link>
-                    </Button>
-                    {note.downloadUrl ? (
-                      <Button asChild size="sm">
-                        <a href={note.downloadUrl} target="_blank" rel="noreferrer">
-                          <Download className="size-4" />
-                          Download
-                        </a>
-                      </Button>
-                    ) : (
-                      <Button asChild size="sm" variant="secondary">
-                        <Link href="/contact">Request access</Link>
-                      </Button>
-                    )}
-                  </div>
-                </RetroPanel>
+                </Link>
               ))}
             </div>
 
-            <RetroPanel tone="card" size="lg" className="space-y-4 xl:sticky xl:top-28">
+            <div className="bg-surface border border-border/40 rounded-2xl p-5 xl:sticky xl:top-28 flex flex-col gap-5">
               {selectedNote ? (
                 <>
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap gap-2">
-                      {selectedNote.classTag ? (
-                        <Badge variant="outline">{selectedNote.classTag}</Badge>
-                      ) : null}
-                      {selectedNote.subjectTag ? (
-                        <Badge variant="ghost">{selectedNote.subjectTag}</Badge>
-                      ) : null}
-                      {selectedNote.chapterTag ? (
-                        <Badge variant="outline">{selectedNote.chapterTag}</Badge>
-                      ) : null}
+                      {selectedNote.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.classTag}</span>}
+                      {selectedNote.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.subjectTag}</span>}
+                      {selectedNote.chapterTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.chapterTag}</span>}
                     </div>
-                    <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">
-                      {selectedNote.title}
-                    </h2>
-                    <p className="text-sm font-medium leading-7 text-muted-foreground">
-                      {selectedNote.description || "Yeh note live library se selected hai."}
-                    </p>
+                    <h2 className="text-xl font-black tracking-[-0.03em]">{selectedNote.title}</h2>
+                    <p className="text-sm font-medium text-foreground/60">{selectedNote.description || "Yeh note live library se selected hai."}</p>
                   </div>
 
                   {selectedNote.viewUrl ? (
-                    <div className="overflow-hidden rounded-[calc(var(--radius)+4px)] border-2 border-border bg-[color:var(--surface-ink)] shadow-retro-sm">
+                    <div className="overflow-hidden rounded-xl border border-border/40">
                       <iframe
                         title={selectedNote.title}
                         src={selectedNote.viewUrl}
-                        className="h-[70dvh] min-h-[28rem] w-full bg-white"
+                        className="h-[60dvh] min-h-[20rem] w-full bg-white"
                       />
                     </div>
                   ) : (
-                    <RetroPanel tone="muted" className="space-y-3">
-                      <h3 className="font-heading text-xl font-black tracking-[-0.04em]">
-                        Browser preview abhi available nahi hai.
-                      </h3>
-                      <p className="text-sm font-medium leading-7 text-foreground/80">
-                        Yeh usually paid access ya non-PDF file ki wajah se hota hai. Download option available ho toh wahan se open kar lo.
-                      </p>
-                    </RetroPanel>
+                    <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center">
+                      <p className="text-sm font-bold">Browser preview abhi available nahi hai.</p>
+                      <p className="text-xs font-medium text-foreground/50 mt-1">Download option available ho toh wahan se open kar lo.</p>
+                    </div>
                   )}
 
                   <div className="flex flex-wrap gap-3">
-                    {selectedNote.downloadUrl ? (
-                      <Button asChild>
-                        <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer">
+                    {selectedNote.downloadUrl && (
+                      <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer">
+                        <Button variant="primary" size="sm" className="font-bold">
                           <Download className="size-4" />
                           Download note
-                        </a>
-                      </Button>
-                    ) : (
-                      <Button asChild variant="secondary">
-                        <Link href="/contact">Access request bhejo</Link>
-                      </Button>
+                        </Button>
+                      </a>
                     )}
-                    <Button asChild variant="outline">
-                      <Link href="/courses">Related courses dekho</Link>
-                    </Button>
+                    <Link href="/courses">
+                      <Button variant="ghost" size="sm" className="font-bold">
+                        Related courses
+                        <ArrowRight className="size-4" />
+                      </Button>
+                    </Link>
                   </div>
                 </>
               ) : (
-                <RetroPanel tone="muted" className="space-y-3">
-                  <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
-                    Preview karne ke liye note select karo.
-                  </h2>
-                  <p className="text-sm font-medium leading-7 text-foreground/80">
-                    Jab real notes available hote hain, unka browser preview yahin dikhaya jata hai.
-                  </p>
-                </RetroPanel>
+                <div className="text-center py-8">
+                  <p className="text-sm font-bold">Preview karne ke liye note select karo.</p>
+                  <p className="text-xs font-medium text-foreground/50 mt-1">Jab real notes available hote hain, unka browser preview yahin dikhaya jata hai.</p>
+                </div>
               )}
-            </RetroPanel>
+            </div>
           </div>
         )}
       </section>
