@@ -171,6 +171,7 @@ export type PublicNoteItem = {
   id: string;
   title: string;
   description: string;
+  resourceType: string;
   tags: string[];
   accessModel: "free" | "paid";
   priceInr: number;
@@ -183,6 +184,17 @@ export type PublicNoteItem = {
   subjectTag: string;
   chapterTag: string;
 };
+
+export function formatResourceType(type: string): string {
+  const map: Record<string, string> = {
+    notes: "Notes",
+    worksheet: "Worksheet",
+    test_paper: "Test Paper",
+    video: "Video",
+    other: "Resource",
+  };
+  return map[type] ?? type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export type NotesPageData = {
   notes: PublicNoteItem[];
@@ -200,6 +212,7 @@ function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
 
   return {
     id: row.$id,
+    resourceType: typeof row.type === "string" ? row.type : "other",
     title:
       typeof row.title === "string" && row.title.trim().length > 0
         ? row.title.trim()
@@ -628,7 +641,6 @@ async function getPublicNotesPageDataImpl(options?: {
     APPWRITE_CONFIG.tables.standaloneResources,
     [
       Query.equal("isPublished", [true]),
-      Query.equal("type", ["notes"]),
       Query.orderDesc("$createdAt"),
     ]
   );

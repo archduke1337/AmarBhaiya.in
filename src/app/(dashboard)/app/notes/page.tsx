@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Download, Eye } from "lucide-react";
 import { Button } from "@heroui/react";
 
-import { getPublicNotesPageData } from "@/lib/appwrite/marketing-content";
+import { getPublicNotesPageData, formatResourceType } from "@/lib/appwrite/marketing-content";
 import { requireAuth } from "@/lib/appwrite/auth";
 
 export const dynamic = "force-dynamic";
@@ -124,10 +124,11 @@ export default async function StudentNotesPage({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex flex-col gap-2 min-w-0">
-                    <div className="flex flex-wrap gap-2">
-                      {note.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.classTag}</span>}
-                      {note.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.subjectTag}</span>}
-                    </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-accent/10 text-accent">{formatResourceType(note.resourceType)}</span>
+                        {note.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.classTag}</span>}
+                        {note.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.subjectTag}</span>}
+                      </div>
                     <h2 className="text-lg font-black tracking-[-0.02em] group-hover:text-accent transition-colors">{note.title}</h2>
                     <p className="text-xs font-medium text-foreground/50">{note.description || "Clean study material ready for revision."}</p>
                   </div>
@@ -141,11 +142,12 @@ export default async function StudentNotesPage({
             {selectedNote ? (
               <>
                 <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap gap-2">
-                    {selectedNote.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.classTag}</span>}
-                    {selectedNote.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.subjectTag}</span>}
-                    {selectedNote.chapterTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.chapterTag}</span>}
-                  </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-accent/10 text-accent">{formatResourceType(selectedNote.resourceType)}</span>
+                      {selectedNote.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.classTag}</span>}
+                      {selectedNote.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.subjectTag}</span>}
+                      {selectedNote.chapterTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.chapterTag}</span>}
+                    </div>
                   <h2 className="text-xl font-black tracking-[-0.03em]">{selectedNote.title}</h2>
                   <p className="text-sm font-medium text-foreground/60">{selectedNote.description || "Yeh note live library se selected hai."}</p>
                 </div>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Download, Eye } from "lucide-react";
 import { Button } from "@heroui/react";
 
-import { getPublicNotesPageData } from "@/lib/appwrite/marketing-content";
+import { getPublicNotesPageData, formatResourceType } from "@/lib/appwrite/marketing-content";
 
 export const metadata: Metadata = {
   title: "Study Notes",
@@ -187,6 +187,7 @@ export default async function NotesPage({
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-2 min-w-0">
                       <div className="flex flex-wrap gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-accent/10 text-accent">{formatResourceType(note.resourceType)}</span>
                         {note.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.classTag}</span>}
                         {note.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.subjectTag}</span>}
                       </div>
@@ -204,6 +205,7 @@ export default async function NotesPage({
                 <>
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-accent/10 text-accent">{formatResourceType(selectedNote.resourceType)}</span>
                       {selectedNote.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.classTag}</span>}
                       {selectedNote.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.subjectTag}</span>}
                       {selectedNote.chapterTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.chapterTag}</span>}
