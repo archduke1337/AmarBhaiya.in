@@ -180,7 +180,7 @@ export default async function StudentNotesPage({
                   <p className="text-sm font-medium text-foreground/60">{selectedNote.description || "Yeh note live library se selected hai."}</p>
                 </div>
 
-                {selectedNote.viewUrl ? (
+                {selectedNote.canPreview ? (
                   <div className="overflow-hidden rounded-xl border border-border/40">
                     <iframe
                       title={selectedNote.title}
@@ -188,21 +188,33 @@ export default async function StudentNotesPage({
                       className="h-[60dvh] min-h-[20rem] w-full bg-white"
                     />
                   </div>
+                ) : selectedNote.downloadUrl ? (
+                  <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-3">
+                    <p className="text-sm font-bold">Browser preview available nahi hai</p>
+                    <p className="text-xs font-medium text-foreground/50">
+                      .{selectedNote.fileExtension} files ko browser mein preview nahi kiya ja sakta. Download karke open karo.
+                    </p>
+                  </div>
                 ) : (
                   <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center">
-                    <p className="text-sm font-bold">Browser preview abhi available nahi hai.</p>
-                    <p className="text-xs font-medium text-foreground/50 mt-1">Download option available ho toh wahan se open kar lo.</p>
+                    <p className="text-sm font-bold">Is resource mein abhi file attach nahi hui hai.</p>
+                    <p className="text-xs font-medium text-foreground/50 mt-1">Jaise hi file upload hogi, yahin aa jayegi.</p>
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   {selectedNote.downloadUrl && (
                     <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer">
                       <Button variant="primary" size="sm" className="font-bold">
                         <Download className="size-4" />
-                        Download note
+                        Download {selectedNote.fileExtension}
                       </Button>
                     </a>
+                  )}
+                  {selectedNote.accessModel === "paid" && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-black bg-amber-500/10 text-amber-600">
+                      Rs. {selectedNote.priceInr}
+                    </span>
                   )}
                   <Link href="/courses">
                     <Button variant="ghost" size="sm" className="font-bold">
