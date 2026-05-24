@@ -164,7 +164,7 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
   });
 
   revalidateCourseEditorPaths(parsed.data.courseId);
-  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+  revalidateEach(getCourseDetailPaths(parsed.data.courseId, String(course.slug ?? "")));
 
   actionSuccess();
   return;
@@ -233,7 +233,7 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
   await updateCourseLessonStats(tablesDB, parsed.data.courseId);
 
   revalidateCourseEditorPaths(parsed.data.courseId);
-  revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
+  revalidateCourseAudiencePaths(parsed.data.courseId, String(course.slug ?? ""));
 
   actionSuccess();
   return;
@@ -291,7 +291,7 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
   });
 
   revalidateCourseEditorPaths(parsed.data.courseId);
-  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+  revalidateEach(getCourseDetailPaths(parsed.data.courseId, String(course.slug ?? "")));
 
   actionSuccess();
   return;
@@ -361,7 +361,7 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
   await updateCourseLessonStats(tablesDB, parsed.data.courseId);
 
   revalidateCourseEditorPaths(parsed.data.courseId);
-  revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
+  revalidateCourseAudiencePaths(parsed.data.courseId, String(course.slug ?? ""));
   revalidatePath(`/app/learn/${parsed.data.courseId}/${parsed.data.lessonId}`);
 
   actionSuccess();
