@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LessonVideoPlayer } from "@/components/lesson-video-player";
 import { Textarea } from "@/components/ui/textarea";
-import { getCourseProgress } from "@/actions/enrollment";
+import { getCourseProgress } from "@/actions/progress";
 import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
 import { postLessonCommentAction, getLessonComments } from "@/actions/comments";
 import { Query } from "node-appwrite";

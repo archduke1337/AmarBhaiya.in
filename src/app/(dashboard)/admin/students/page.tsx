@@ -8,7 +8,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { getAdminCourses, getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { adminEnrollAction } from "@/actions/enrollment";
+import { adminEnrollAction } from "@/actions/enroll";
 import { formatAdminCourseOption, formatAdminUserOption } from "@/lib/utils/admin-select";
 
 type AnyRow = Models.Row & Record<string, unknown>;

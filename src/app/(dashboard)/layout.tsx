@@ -1,6 +1,6 @@
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { Sidebar } from "@/components/layout/sidebar";
-import { StudentBottomTabBar } from "@/components/layout/student-bottom-tab-bar";
+import { BottomTabBar } from "@/components/layout/bottom-tab-bar";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 
@@ -14,25 +14,21 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[88px_1fr] xl:grid-cols-[240px_1fr] antialiased">
-      {/* Sidebar hidden on mobile by default, shown via layout grids on md/xl */}
       <Sidebar role={role} userId={user.$id} />
       
-      {/* Main content wrapper */}
-      <div className={`flex flex-col min-h-dvh bg-background ${role === "student" ? "pb-tab" : ""}`}>
+      <div className="flex flex-col min-h-dvh bg-background pb-tab">
         <DashboardHeader userName={user.name} userEmail={user.email} role={role} userId={user.$id} />
         
-        {/* Main Content Area */}
         <main
           id="main"
           className="flex-1 px-4 py-5 md:px-6 md:py-8 lg:px-8 w-full max-w-[1400px] mx-auto"
         >
-          {/* We replace the old .retro-grid with a modern css grid wrapper if needed, or let children handle layout */}
           <div className="flex flex-col gap-6">
             {children}
           </div>
         </main>
         
-        {role === "student" ? <StudentBottomTabBar userId={user.$id} /> : null}
+        <BottomTabBar role={role} userId={user.$id} />
       </div>
     </div>
   );

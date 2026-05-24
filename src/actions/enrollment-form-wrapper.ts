@@ -4,10 +4,8 @@
  */
 "use server";
 
-import {
-  enrollInCourseAction,
-  markLessonCompleteAction,
-} from "@/actions/enrollment";
+import { enrollInCourseAction } from "@/actions/enroll";
+import { markLessonCompleteAction } from "@/actions/progress";
 
 export async function enrollInCourseFormAction(
   formData: FormData

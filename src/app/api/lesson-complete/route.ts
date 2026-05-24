@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { completeLessonForUser } from "@/actions/enrollment";
+import { completeLessonForUser } from "@/actions/progress";
 import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 import { createSessionClient } from "@/lib/appwrite/server";

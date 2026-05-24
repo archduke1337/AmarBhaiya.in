@@ -6,6 +6,7 @@ import {
   Activity,
   ArrowRight,
 } from "lucide-react";
+import { Button } from "@heroui/react";
 
 import {
   getModeratorDashboardStats,
@@ -19,8 +20,6 @@ import {
   StatGrid,
   ActivityFeed,
 } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
-import { Button } from "@/components/ui/button";
 
 export default async function ModeratorDashboardPage() {
   const [stats, reports, communityData] = await Promise.all([
@@ -33,28 +32,26 @@ export default async function ModeratorDashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header */}
       <PageHeader
         eyebrow="Moderator"
         title="Moderation Dashboard"
         description="Monitor flagged content, manage user behavior, and keep the community healthy."
         actions={
-          <Button
-            asChild
-            variant={pendingReports.length > 0 ? "default" : "outline"}
-            size="sm"
-          >
-            <Link href="/moderator/reports">
+          <Link href="/moderator/reports">
+            <Button
+              variant={pendingReports.length > 0 ? "primary" : "ghost"}
+              size="sm"
+              className="font-bold"
+            >
               <Flag className="size-4" />
               {pendingReports.length > 0
                 ? `Review ${pendingReports.length} Reports`
                 : "View Reports"}
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         }
       />
 
-      {/* Stats */}
       <StatGrid columns={4}>
         <StatCard
           label="Open Reports"
@@ -86,11 +83,8 @@ export default async function ModeratorDashboardPage() {
         />
       </StatGrid>
 
-      {/* Main content */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Reports + Community — 2 cols */}
         <div className="flex flex-col gap-6 lg:col-span-2">
-          {/* Urgent Queue */}
           <ActivityFeed
             title="Latest Reports"
             viewAllHref="/moderator/reports"
@@ -107,7 +101,6 @@ export default async function ModeratorDashboardPage() {
             }))}
           />
 
-          {/* Community Thread Activity */}
           <ActivityFeed
             title="Recent Community Threads"
             viewAllHref="/moderator/community"
@@ -126,41 +119,38 @@ export default async function ModeratorDashboardPage() {
           />
         </div>
 
-        {/* Sidebar */}
         <aside className="flex flex-col gap-6">
           <ActivityFeed
             title="Follow-up Queue"
             items={buildModeratorFollowUpItems(stats, pendingReports)}
           />
 
-          {/* Moderation Action Breakdown */}
-          <RetroPanel tone="secondary" className="overflow-hidden p-0">
-            <p className="border-b border-border px-5 py-3 font-heading text-sm font-black uppercase tracking-[0.16em]">
-              Action Breakdown
-            </p>
-            <div className="flex flex-col divide-y divide-border">
+          <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border/20">
+              <h3 className="font-bold text-base tracking-tight">Action Breakdown</h3>
+            </div>
+            <div className="flex flex-col divide-y divide-border/20">
               {communityData.actionCounts.map((item) => (
                 <div
                   key={item.label}
                   className="flex items-center justify-between px-5 py-3"
                 >
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm font-medium text-foreground/60">
                     {item.label}
                   </span>
-                  <span className="text-sm font-medium tabular-nums">
+                  <span className="text-sm font-bold tabular-nums">
                     {item.value}
                   </span>
                 </div>
               ))}
             </div>
-          </RetroPanel>
+          </div>
 
-          {/* Quick navigation */}
-          <RetroPanel tone="accent" className="overflow-hidden p-0">
-            <p className="border-b border-border px-5 py-3 font-heading text-sm font-black uppercase tracking-[0.16em]">
-              Quick Navigation
-            </p>
-            <div className="flex flex-col divide-y divide-border">
+          <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border/20">
+              <h3 className="font-bold text-base tracking-tight">Quick Navigation</h3>
+            </div>
+            <div className="flex flex-col divide-y divide-border/20">
               {[
                 {
                   label: "Flagged Reports",
@@ -181,17 +171,19 @@ export default async function ModeratorDashboardPage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="group flex items-center justify-between px-5 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  className="flex items-center justify-between px-5 py-4 text-sm font-semibold text-foreground/70 transition-colors hover:bg-surface-hover hover:text-foreground group"
                 >
-                  <div className="flex items-center gap-2">
-                    <link.icon className="size-4" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-foreground/60 group-hover:text-accent transition-colors">
+                      <link.icon className="size-4" />
+                    </div>
                     {link.label}
                   </div>
-                  <ArrowRight className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                  <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               ))}
             </div>
-          </RetroPanel>
+          </div>
         </aside>
       </div>
     </div>

@@ -8,7 +8,7 @@ import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
 
 export const revalidate = 3600;
 import { getLoggedInUser } from "@/lib/appwrite/auth";
-import { isEnrolled } from "@/actions/enrollment";
+import { isEnrolled } from "@/actions/enroll";
 import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { RazorpayCheckout } from "@/components/razorpay-checkout";

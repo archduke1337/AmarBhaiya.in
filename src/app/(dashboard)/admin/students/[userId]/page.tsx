@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Query } from "node-appwrite";
 import type { Models } from "node-appwrite";
 
-import { adminUnenrollAction } from "@/actions/enrollment";
+import { adminUnenrollAction } from "@/actions/enroll";
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";

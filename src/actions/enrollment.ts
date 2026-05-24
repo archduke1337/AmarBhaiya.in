@@ -26,7 +26,6 @@ export type EnrolledCourse = {
 export async function getStudentEnrollments(
   userId: string
 ): Promise<EnrolledCourse[]> {
-  // SECURITY: Verify caller owns this data or is admin
   const caller = await requireAuth();
   if (caller.$id !== userId && !caller.labels?.includes("admin")) {
     return [];
@@ -81,17 +80,3 @@ export async function getStudentEnrollments(
     return [];
   }
 }
-
-// Re-export moved functions for backward compatibility
-export {
-  enrollInCourseAction,
-  isEnrolled,
-  adminEnrollAction,
-  adminUnenrollAction,
-} from "./enroll";
-
-export {
-  completeLessonForUser,
-  markLessonCompleteAction,
-  getCourseProgress,
-} from "./progress";

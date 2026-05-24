@@ -6,18 +6,19 @@ import {
   BookOpen,
   Video,
   Megaphone,
-  TrendingUp,
   ArrowRight,
   Shield,
   FileText,
+  TrendingUp,
 } from "lucide-react";
+import { Button } from "@heroui/react";
 
 import {
-  getAdminAuditLogs,
   getAdminDashboardStats,
+  getAdminPayments,
   getAdminLiveData,
   getAdminModerationData,
-  getAdminPayments,
+  getAdminAuditLogs,
 } from "@/lib/appwrite/dashboard-data";
 import {
   formatCompactNumber,
@@ -31,8 +32,6 @@ import {
   StatGrid,
   ActivityFeed,
 } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
-import { Button } from "@/components/ui/button";
 
 export default async function AdminDashboardPage() {
   const [stats, payments, liveData, moderationData, auditLogs] = await Promise.all([
@@ -61,22 +60,20 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header */}
       <PageHeader
         eyebrow="Admin"
         title="Platform Control Center"
         description="System-wide overview of users, revenue, content, and platform health."
         actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/marketing">
+          <Link href="/admin/marketing">
+            <Button variant="ghost" size="sm" className="font-bold">
               <TrendingUp className="size-4" />
               Marketing CMS
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         }
       />
 
-      {/* KPI Stats */}
       <StatGrid columns={4}>
         <StatCard
           label="Total Users"
@@ -104,75 +101,24 @@ export default async function AdminDashboardPage() {
         />
       </StatGrid>
 
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[
-          {
-            label: "Total Courses",
-            value: stats.totalCourses,
-            note: `${stats.publishedCourses} published`,
-            tone: "secondary" as const,
-          },
-          {
-            label: "Published",
-            value: stats.publishedCourses,
-            note: `of ${stats.totalCourses} total`,
-            tone: "accent" as const,
-          },
-          {
-            label: "Completion Rate",
-            value: `${stats.completionRate}%`,
-            note: "enrolled → completed",
-            tone: "card" as const,
-          },
-          {
-            label: "Total Revenue",
-            value: formatCurrency(stats.totalRevenue),
-            note: "all time",
-            tone: "muted" as const,
-          },
-        ].map((item) => (
-          <RetroPanel key={item.label} tone={item.tone} className="space-y-1">
-            <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
-              {item.label}
-            </p>
-            <p className="font-heading text-3xl font-black tracking-[-0.05em] tabular-nums">
-              {item.value}
-            </p>
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              {item.note}
-            </p>
-          </RetroPanel>
-        ))}
-      </div>
-
-      {/* Alerts & Quick Navigation */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Quick Actions — takes 2 cols */}
-        <section className="flex flex-col gap-4 lg:col-span-2">
-          <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Quick Actions</h2>
+        <section className="flex flex-col gap-6 lg:col-span-2">
           <div className="grid gap-3 sm:grid-cols-2">
             {quickActions.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
-                className="group"
+                className="group bg-surface border border-border/40 rounded-2xl p-5 transition-all hover:bg-surface-hover hover:border-border/60 hover:shadow-[var(--surface-shadow)]"
               >
-                <RetroPanel
-                  tone={action.href === "/admin/moderation" ? "secondary" : action.href === "/admin/payments" ? "accent" : "card"}
-                  className="flex items-start gap-4 transition-transform group-hover:-translate-y-1"
-                >
-                  <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card p-2 text-muted-foreground shadow-retro-sm transition-colors group-hover:text-foreground">
-                    <action.icon className="size-4" />
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center text-accent shrink-0 group-hover:scale-105 transition-transform">
+                    <action.icon className="size-5" />
                   </div>
-                  <div className="flex flex-1 flex-col gap-0.5">
-                    <span className="font-heading text-lg font-black tracking-[-0.03em]">{action.label}</span>
-                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                      {action.description}
-                    </span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="font-bold text-base tracking-tight group-hover:text-accent transition-colors">{action.label}</span>
+                    <span className="text-xs font-medium text-foreground/50">{action.description}</span>
                   </div>
-                  <ArrowRight className="mt-0.5 size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                </RetroPanel>
+                </div>
               </Link>
             ))}
           </div>
@@ -188,8 +134,7 @@ export default async function AdminDashboardPage() {
           />
         </section>
 
-        {/* System Health sidebar */}
-        <aside className="flex flex-col gap-4">
+        <aside className="flex flex-col gap-6">
           <ActivityFeed
             title="System Alerts"
             emptyText="No issues detected."
@@ -217,25 +162,23 @@ export default async function AdminDashboardPage() {
             }))}
           />
 
-          <RetroPanel tone="accent" className="space-y-3">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.15em] text-muted-foreground">
-              Platform at a Glance
-            </p>
+          <div className="bg-surface border border-border/40 rounded-2xl p-5 flex flex-col gap-3">
+            <p className="eyebrow self-start">Platform at a Glance</p>
             <dl className="flex flex-col gap-2 text-sm">
               <div className="flex items-center justify-between">
-                <dt className="text-muted-foreground">SDK</dt>
-                <dd className="tabular-nums">node-appwrite 23.x</dd>
+                <dt className="text-foreground/60">SDK</dt>
+                <dd className="tabular-nums font-medium">node-appwrite 23.x</dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-muted-foreground">Framework</dt>
-                <dd className="tabular-nums">Next.js 16.2</dd>
+                <dt className="text-foreground/60">Framework</dt>
+                <dd className="tabular-nums font-medium">Next.js 16.2</dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-muted-foreground">Database</dt>
-                <dd className="tabular-nums">Appwrite TablesDB</dd>
+                <dt className="text-foreground/60">Database</dt>
+                <dd className="tabular-nums font-medium">Appwrite TablesDB</dd>
               </div>
             </dl>
-          </RetroPanel>
+          </div>
         </aside>
       </div>
     </div>

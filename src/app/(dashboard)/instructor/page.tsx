@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Layers,
 } from "lucide-react";
+import { Button } from "@heroui/react";
 
 import {
   getInstructorCourseResources,
@@ -35,9 +36,6 @@ import {
   EmptyState,
   ActivityFeed,
 } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 export default async function InstructorDashboardPage() {
   const { user, role } = await requireRole(["admin", "instructor"]);
@@ -121,22 +119,20 @@ export default async function InstructorDashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header */}
       <PageHeader
         eyebrow="Instructor"
         title="Course Command Center"
         description="Manage your courses, monitor student progress, and schedule live sessions."
         actions={
-          <Button asChild size="sm">
-            <Link href="/instructor/courses/new">
+          <Link href="/instructor/courses/new">
+            <Button variant="primary" size="sm" className="font-bold">
               <Plus className="size-4" />
               New Course
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         }
       />
 
-      {/* Stats */}
       <StatGrid columns={4}>
         <StatCard
           label="My Courses"
@@ -172,15 +168,15 @@ export default async function InstructorDashboardPage() {
         />
       </StatGrid>
 
-      {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Course list — 2 cols */}
-        <section className="flex flex-col gap-4 lg:col-span-2">
+        <section className="flex flex-col gap-6 lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">My Courses</h2>
-            <Button asChild variant="link" size="sm">
-              <Link href="/instructor/courses">View all</Link>
-            </Button>
+            <h2 className="text-2xl font-black tracking-[-0.03em]">My Courses</h2>
+            <Link href="/instructor/courses">
+              <Button variant="ghost" size="sm" className="font-bold">
+                View all
+              </Button>
+            </Link>
           </div>
 
           {courses.length === 0 ? (
@@ -199,47 +195,40 @@ export default async function InstructorDashboardPage() {
                 <Link
                   key={course.id}
                   href={`/instructor/courses/${course.id}`}
-                  className="group"
+                  className="group bg-surface border border-border/40 rounded-2xl p-5 transition-all hover:bg-surface-hover hover:border-border/60 hover:shadow-[var(--surface-shadow)]"
                 >
-                  <RetroPanel
-                    tone={course.status === "Published" ? "secondary" : "card"}
-                    className="flex items-start justify-between gap-4 transition-transform group-hover:-translate-y-1"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <h3 className="font-heading text-xl font-black tracking-[-0.04em] group-hover:underline">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <h3 className="text-lg font-black tracking-[-0.02em] group-hover:text-accent transition-colors">
                         {course.title}
                       </h3>
                       {course.shortDescription && (
-                        <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.08em] text-foreground/50">
                           {course.shortDescription}
                         </p>
                       )}
-                      <p className="text-xs font-medium text-muted-foreground">
+                      <p className="text-xs font-medium text-foreground/50">
                         {course.moduleCount} module{course.moduleCount === 1 ? "" : "s"} ·{" "}
                         {course.totalLessons} lesson{course.totalLessons === 1 ? "" : "s"} ·{" "}
                         {course.activeEnrollments} enrollment{course.activeEnrollments === 1 ? "" : "s"}
                       </p>
                       {course.publishBlockers[0] ? (
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
+                        <p className="text-xs font-bold text-danger mt-1">
                           {course.publishBlockers[0]}
                         </p>
                       ) : course.attentionFlags[0] ? (
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <p className="text-xs font-bold text-foreground/50 mt-1">
                           {course.attentionFlags[0]}
                         </p>
                       ) : null}
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <Badge
-                        variant={
-                          course.status === "Published" ? "default" : "outline"
-                        }
-                      >
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-[0.05em] ${course.status === "Published" ? "bg-accent/10 text-accent outline outline-1 outline-accent/20" : "bg-surface-hover text-foreground/60 outline outline-1 outline-border"}`}>
                         {course.status}
-                      </Badge>
-                      <ArrowRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                      </span>
+                      <ArrowRight className="size-4 text-foreground/30 opacity-0 transition-opacity group-hover:opacity-100" />
                     </div>
-                  </RetroPanel>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -247,10 +236,12 @@ export default async function InstructorDashboardPage() {
 
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Course Health</h2>
-              <Button asChild variant="link" size="sm">
-                <Link href="/instructor/courses">Open course library</Link>
-              </Button>
+              <h2 className="text-2xl font-black tracking-[-0.03em]">Course Health</h2>
+              <Link href="/instructor/courses">
+                <Button variant="ghost" size="sm" className="font-bold">
+                  Open course library
+                </Button>
+              </Link>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -288,10 +279,12 @@ export default async function InstructorDashboardPage() {
 
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Grading Flow</h2>
-              <Button asChild variant="link" size="sm">
-                <Link href="/instructor/submissions">Open submissions</Link>
-              </Button>
+              <h2 className="text-2xl font-black tracking-[-0.03em]">Grading Flow</h2>
+              <Link href="/instructor/submissions">
+                <Button variant="ghost" size="sm" className="font-bold">
+                  Open submissions
+                </Button>
+              </Link>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -329,10 +322,12 @@ export default async function InstructorDashboardPage() {
 
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">Learner Signals</h2>
-              <Button asChild variant="link" size="sm">
-                <Link href="/instructor/students">Open students</Link>
-              </Button>
+              <h2 className="text-2xl font-black tracking-[-0.03em]">Learner Signals</h2>
+              <Link href="/instructor/students">
+                <Button variant="ghost" size="sm" className="font-bold">
+                  Open students
+                </Button>
+              </Link>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -369,9 +364,7 @@ export default async function InstructorDashboardPage() {
           </section>
         </section>
 
-        {/* Sidebar */}
         <aside className="flex flex-col gap-6">
-          {/* Action Items */}
           <ActivityFeed
             title="Action Items"
             items={buildActionItems(stats, draftCourses, {
@@ -397,7 +390,6 @@ export default async function InstructorDashboardPage() {
             })}
           />
 
-          {/* Upcoming Sessions */}
           <ActivityFeed
             title="Upcoming Sessions"
             viewAllHref="/instructor/live"
@@ -427,7 +419,6 @@ export default async function InstructorDashboardPage() {
             }))}
           />
 
-          {/* Resource Library */}
           <ActivityFeed
             title="Resource Library"
             viewAllHref="/instructor/resources"
@@ -452,12 +443,11 @@ export default async function InstructorDashboardPage() {
             })}
           />
 
-          {/* Quick Links */}
-          <RetroPanel tone="accent" className="overflow-hidden p-0">
-            <p className="border-b border-border px-5 py-3 font-heading text-sm font-black uppercase tracking-[0.16em]">
-              Quick Links
-            </p>
-            <div className="flex flex-col divide-y divide-border">
+          <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border/20">
+              <h3 className="font-bold text-base tracking-tight">Quick Links</h3>
+            </div>
+            <div className="flex flex-col divide-y divide-border/20">
               {[
                 { label: "Manage Categories", href: "/instructor/categories" },
                 { label: "View Students", href: "/instructor/students" },
@@ -474,13 +464,14 @@ export default async function InstructorDashboardPage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="px-5 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  className="flex justify-between items-center p-4 text-sm font-semibold text-foreground/70 transition-colors hover:bg-surface-hover hover:text-foreground group"
                 >
                   {link.label}
+                  <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               ))}
             </div>
-          </RetroPanel>
+          </div>
         </aside>
       </div>
     </div>
