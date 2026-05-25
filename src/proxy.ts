@@ -106,9 +106,46 @@ async function validateAppwriteSessionSecret(sessionSecret: string): Promise<boo
   }
 }
 
+const CSRF_ALLOWED_ORIGINS = [
+  process.env.NEXT_PUBLIC_APP_URL ?? "",
+  "https://amarbhaiya.in",
+  "https://www.amarbhaiya.in",
+  "https://community.amarbhaiya.in",
+].filter(Boolean);
+
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
 export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hostname = request.headers.get("host") ?? "";
+
+  // ── CSRF origin validation for state-changing requests ─────────────────
+  if (MUTATING_METHODS.has(request.method)) {
+    const origin = request.headers.get("origin");
+    const referer = request.headers.get("referer");
+    const source = origin ?? referer;
+
+    if (source) {
+      try {
+        const sourceUrl = new URL(source);
+        const isAllowed = CSRF_ALLOWED_ORIGINS.some((allowed) => {
+          if (!allowed) return false;
+          try {
+            const allowedUrl = new URL(allowed);
+            return sourceUrl.origin === allowedUrl.origin;
+          } catch {
+            return false;
+          }
+        });
+
+        if (!isAllowed) {
+          return new NextResponse(null, { status: 403 });
+        }
+      } catch {
+        return new NextResponse(null, { status: 400 });
+      }
+    }
+  }
 
   // Build the cookie name dynamically
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
