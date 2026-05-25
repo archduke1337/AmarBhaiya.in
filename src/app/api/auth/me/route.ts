@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { Client, Account } from "node-appwrite";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 
 export async function GET(request: Request) {
@@ -14,8 +14,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { account } = await createAdminClient();
-    await account.get({ session: sessionSecret });
+    const client = new Client()
+      .setEndpoint(APPWRITE_CONFIG.endpoint)
+      .setProject(projectId)
+      .setSession(sessionSecret);
+
+    const account = new Account(client);
+    await account.get();
     return NextResponse.json({ authenticated: true });
   } catch {
     return NextResponse.json({ authenticated: false });
