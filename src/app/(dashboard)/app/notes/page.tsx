@@ -180,13 +180,17 @@ export default async function StudentNotesPage({
                   <p className="text-sm font-medium text-foreground/60">{selectedNote.description || "Yeh note live library se selected hai."}</p>
                 </div>
 
-                {selectedNote.viewUrl ? (
-                  <div className="overflow-hidden rounded-xl border border-border/40">
-                    <iframe
-                      title={selectedNote.title}
-                      src={selectedNote.viewUrl}
-                      className="h-[60dvh] min-h-[20rem] w-full bg-white"
-                    />
+                {selectedNote.downloadUrl ? (
+                  <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-4">
+                    <p className="text-sm font-medium text-foreground/50">
+                      Browser preview available nahi hai. File download karo aur apne device mein open karo.
+                    </p>
+                    <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer">
+                      <Button variant="primary" size="sm" className="font-bold">
+                        <Download className="size-4" />
+                        Download
+                      </Button>
+                    </a>
                   </div>
                 ) : (
                   <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center">
@@ -194,23 +198,6 @@ export default async function StudentNotesPage({
                     <p className="text-xs font-medium text-foreground/50 mt-1">Jaise hi file upload hogi, yahin aa jayegi.</p>
                   </div>
                 )}
-
-                <div className="flex flex-wrap items-center gap-3">
-                  {selectedNote.downloadUrl && (
-                    <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer">
-                      <Button variant="primary" size="sm" className="font-bold">
-                        <Download className="size-4" />
-                        Download
-                      </Button>
-                    </a>
-                  )}
-                  <Link href="/courses">
-                    <Button variant="ghost" size="sm" className="font-bold">
-                      Related courses
-                      <ArrowRight className="size-4" />
-                    </Button>
-                  </Link>
-                </div>
               </>
             ) : (
               <div className="text-center py-8">
