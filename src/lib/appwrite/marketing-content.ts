@@ -210,9 +210,6 @@ function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
     typeof row.description === "string" ? row.description : "",
   ];
 
-  const fileExtension = getFileExtension(row);
-  const canPreview = fileId.length > 0 && PREVIEWABLE_EXTENSIONS.has(fileExtension);
-
   return {
     id: row.$id,
     resourceType: typeof row.type === "string" ? row.type : "other",
@@ -231,26 +228,18 @@ function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
         ? row.instructorName.trim()
         : "Amar Bhaiya",
     createdAt: typeof row.$createdAt === "string" ? row.$createdAt : new Date().toISOString(),
-    fileExtension,
-    canPreview,
     downloadUrl:
       fileId
         ? getFileDownloadUrl(APPWRITE_CONFIG.buckets.resourceFiles, fileId)
         : "",
     viewUrl:
-      canPreview
+      fileId
         ? `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.buckets.resourceFiles}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`
         : "",
     classTag: extractClassTag(metadataSources),
     subjectTag: extractSubjectTag(metadataSources),
     chapterTag: extractChapterTag(metadataSources),
   };
-}
-
-function getFileExtension(row: StandaloneResourceRow): string {
-  const val = typeof row.fileName === "string" ? row.fileName : typeof row.fileId === "string" ? row.fileId : "";
-  const dot = val.lastIndexOf(".");
-  return dot > 0 ? val.slice(dot + 1).toLowerCase() : "";
 }
 
 async function safeGetSiteCopyRow(
