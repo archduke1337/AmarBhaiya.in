@@ -126,7 +126,7 @@ export default async function MarketingPage() {
                       </svg>
                     </Button>
                   </Link>
-                  <Link href="/notes">
+                  <Link href="/app/notes">
                     <Button
                       size="lg"
                       variant="outline"
