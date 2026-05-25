@@ -53,7 +53,7 @@ export default async function StudentNotesPage({
   });
 
   const selectedNote =
-    filteredNotes.find((note) => note.id === selectedNoteId) ?? filteredNotes[0] ?? null;
+    selectedNoteId ? filteredNotes.find((note) => note.id === selectedNoteId) ?? null : null;
 
   return (
     <div className="flex flex-col gap-8 pb-[10vh]">
