@@ -28,18 +28,18 @@ export const OWNER = {
 
 export const PUBLIC_NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "Notes", href: "/notes" },
+  { label: "Notes", href: "/app/notes" },
   { label: "Courses", href: "/courses" },
   { label: "About", href: "/about" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ] as const;
 
-export const DASHBOARD_NAV_ITEMS = {
+// ── Course Access Models
   student: [
     { label: "Dashboard", href: "/app/dashboard", icon: "layout-dashboard" },
     { label: "My Courses", href: "/app/courses", icon: "book-open" },
-    { label: "Notes", href: "/notes", icon: "file-text" },
+    { label: "Notes", href: "/app/notes", icon: "file-text" },
     { label: "Assignments", href: "/app/assignments", icon: "file-text" },
     { label: "Community", href: "/app/community", icon: "users" },
     { label: "Live Sessions", href: "/app/live", icon: "video" },
