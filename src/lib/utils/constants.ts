@@ -35,51 +35,6 @@ export const PUBLIC_NAV_ITEMS = [
   { label: "Contact", href: "/contact" },
 ] as const;
 
-// ── Course Access Models
-  student: [
-    { label: "Dashboard", href: "/app/dashboard", icon: "layout-dashboard" },
-    { label: "My Courses", href: "/app/courses", icon: "book-open" },
-    { label: "Notes", href: "/app/notes", icon: "file-text" },
-    { label: "Assignments", href: "/app/assignments", icon: "file-text" },
-    { label: "Community", href: "/app/community", icon: "users" },
-    { label: "Live Sessions", href: "/app/live", icon: "video" },
-    { label: "Notifications", href: "/app/notifications", icon: "bell" },
-    { label: "Profile", href: "/app/profile/edit", icon: "user" },
-    { label: "Billing", href: "/app/billing", icon: "credit-card" },
-  ],
-  instructor: [
-    { label: "Dashboard", href: "/instructor", icon: "layout-dashboard" },
-    { label: "My Courses", href: "/instructor/courses", icon: "book-open" },
-    { label: "Resources", href: "/instructor/resources", icon: "file-text" },
-    { label: "Categories", href: "/instructor/categories", icon: "folder" },
-    { label: "Students", href: "/instructor/students", icon: "users" },
-    { label: "Submissions", href: "/instructor/submissions", icon: "clipboard-check" },
-    { label: "Live Sessions", href: "/instructor/live", icon: "video" },
-    { label: "Earnings", href: "/instructor/earnings", icon: "trending-up" },
-  ],
-  moderator: [
-    { label: "Dashboard", href: "/moderator", icon: "layout-dashboard" },
-    { label: "Reports", href: "/moderator/reports", icon: "flag" },
-    { label: "Students", href: "/moderator/students", icon: "users" },
-    { label: "Community", href: "/moderator/community", icon: "message-square" },
-  ],
-  admin: [
-    { label: "Dashboard", href: "/admin", icon: "layout-dashboard" },
-    { label: "Marketing", href: "/admin/marketing", icon: "megaphone" },
-    { label: "Users", href: "/admin/users", icon: "users" },
-    { label: "Student Data", href: "/admin/students", icon: "graduation-cap" },
-    { label: "Instructors", href: "/admin/instructors", icon: "user-check" },
-    { label: "Courses", href: "/admin/courses", icon: "book-open" },
-    { label: "Categories", href: "/admin/categories", icon: "folder" },
-    { label: "Payments", href: "/admin/payments", icon: "credit-card" },
-    { label: "Subscriptions", href: "/admin/subscriptions", icon: "repeat" },
-    { label: "Live Sessions", href: "/admin/live", icon: "video" },
-    { label: "Moderation", href: "/admin/moderation", icon: "shield" },
-    { label: "Notifications", href: "/admin/notifications", icon: "bell" },
-    { label: "Audit Logs", href: "/admin/audit", icon: "file-text" },
-  ],
-} as const;
-
 // ── Course Access Models ────────────────────────────────────────────────────
 
 export const ACCESS_MODELS = {
