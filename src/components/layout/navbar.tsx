@@ -19,7 +19,7 @@ const subscribe = () => () => {};
 // ── Nav Links ─────────────────────────────────────────────────
 const NAV_LINKS = [
   { label: "Courses",  href: "/courses" },
-  { label: "Notes",    href: "/notes"   },
+  { label: "Notes",    href: "/app/notes"   },
   { label: "Live",     href: "/app/live" },
   { label: "About",    href: "/about"   },
 ] as const;
@@ -99,6 +99,15 @@ export function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => setAuthenticated(data.authenticated))
+      .catch(() => setAuthenticated(false));
+  }, []);
+
   const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
   const isDark = mounted ? resolvedTheme === "dark" : false;
 
@@ -166,26 +175,36 @@ export function Navbar() {
                 {isDark ? <SunIcon /> : <MoonIcon />}
               </Button>
 
-              {/* Login */}
-              <Link href="/login">
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  className="hidden sm:flex font-semibold"
-                >
-                  Login
-                </Button>
-              </Link>
-
-              {/* CTA */}
-              <Link href="/register">
-                <Button
-                  size="sm"
-                  className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]"
-                >
-                  Start free
-                </Button>
-              </Link>
+              {authenticated ? (
+                <Link href="/app/dashboard">
+                  <Button
+                    size="sm"
+                    className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]"
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button
+                      variant="tertiary"
+                      size="sm"
+                      className="hidden sm:flex font-semibold"
+                    >
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button
+                      size="sm"
+                      className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]"
+                    >
+                      Start free
+                    </Button>
+                  </Link>
+                </>
+              )}
 
               {/* Mobile hamburger */}
               <Button
@@ -253,16 +272,26 @@ export function Navbar() {
 
         {/* Mobile CTA */}
         <div className="px-6 mt-6 grid gap-3">
-          <Link href="/register" onClick={() => setMenuOpen(false)}>
-            <Button fullWidth size="lg" className="font-bold text-base bg-accent text-accent-foreground">
-              Abhi start karo — it&apos;s free
-            </Button>
-          </Link>
-          <Link href="/login" onClick={() => setMenuOpen(false)}>
-            <Button fullWidth variant="tertiary" size="lg" className="font-semibold text-base">
-              Already have an account? Login
-            </Button>
-          </Link>
+          {authenticated ? (
+            <Link href="/app/dashboard" onClick={() => setMenuOpen(false)}>
+              <Button fullWidth size="lg" className="font-bold text-base bg-accent text-accent-foreground">
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/register" onClick={() => setMenuOpen(false)}>
+                <Button fullWidth size="lg" className="font-bold text-base bg-accent text-accent-foreground">
+                  Abhi start karo — it&apos;s free
+                </Button>
+              </Link>
+              <Link href="/login" onClick={() => setMenuOpen(false)}>
+                <Button fullWidth variant="tertiary" size="lg" className="font-semibold text-base">
+                  Already have an account? Login
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </>
