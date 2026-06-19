@@ -11,6 +11,8 @@ type Collection = {
   subtitle?: string;
   courseSlugs: string[];
   cta?: string;
+  imageUrl?: string;
+  bgColor?: string;
 };
 
 type CollectionReorderProps = {
@@ -158,6 +160,8 @@ export function CollectionReorder({ id, name, defaultValue, onChange }: Collecti
       subtitle: "",
       courseSlugs: [],
       cta: "View Collection",
+      imageUrl: "",
+      bgColor: "",
     };
     emitChange([...collections, newItem]);
   }, [collections, emitChange]);
@@ -294,6 +298,20 @@ export function CollectionReorder({ id, name, defaultValue, onChange }: Collecti
                   onChange={(e) => updateField(index, "cta", e.target.value)}
                   placeholder="CTA text (optional)"
                   className="input-field w-full text-sm"
+                />
+                <input
+                  type="text"
+                  value={item.imageUrl ?? ""}
+                  onChange={(e) => updateField(index, "imageUrl", e.target.value)}
+                  placeholder="Banner image URL (optional)"
+                  className="input-field w-full text-sm font-mono"
+                />
+                <input
+                  type="text"
+                  value={item.bgColor ?? ""}
+                  onChange={(e) => updateField(index, "bgColor", e.target.value)}
+                  placeholder="Background color e.g. oklch(0.85 0.15 72) (optional)"
+                  className="input-field w-full text-sm font-mono"
                 />
               </div>
 

@@ -155,6 +155,8 @@ export type HomeCollection = {
   subtitle?: string;
   courseSlugs: string[];
   cta?: string;
+  imageUrl?: string;
+  bgColor?: string;
 };
 
 export type AnnouncementConfig = {

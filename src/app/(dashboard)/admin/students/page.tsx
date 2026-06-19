@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { User } from "lucide-react";
+import { User, GraduationCap, MapPin, School, ChevronRight } from "lucide-react";
 import { Query } from "node-appwrite";
 
 import { requireRole } from "@/lib/appwrite/auth";
@@ -11,6 +11,8 @@ import {
   type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 import { PageHeader, EmptyState } from "@/components/dashboard";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { adminEnrollFormAction } from "@/actions/enrollment-form-wrapper";
 import { formatAdminCourseOption, formatAdminUserOption } from "@/lib/utils/admin-select";
 
@@ -46,60 +48,78 @@ export default async function AdminStudentProfilesPage() {
       />
 
       {/* Manual enrollment */}
-      <section className="bg-surface border border-border/40 rounded-2xl p-5 space-y-3">
-        <h2 className="text-sm font-medium">Manual Enrollment</h2>
-        <form action={adminEnrollFormAction} className="grid gap-3 md:grid-cols-3">
-          <label className="space-y-1 text-sm">
-            <span className="text-muted-foreground">Student</span>
-            <select
-              name="userId"
-              required
-              disabled={!canManuallyEnroll}
-              className="input-field h-9 w-full text-xs disabled:opacity-60"
-              defaultValue=""
-            >
-              <option value="" disabled>
-                {studentOptions.length > 0 ? "Select student" : "No students available"}
-              </option>
-              {studentOptions.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {formatAdminUserOption(user)}
+      <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+        <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
+          <GraduationCap className="size-4 text-muted-foreground" />
+          <div>
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+              Manual Enrollment
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Enroll a student in a course directly from the admin panel.
+            </p>
+          </div>
+        </div>
+        <form action={adminEnrollFormAction} className="flex flex-col gap-4 p-5">
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="space-y-1.5">
+              <span className="text-xs font-semibold text-muted-foreground">Student</span>
+              <select
+                name="userId"
+                required
+                disabled={!canManuallyEnroll}
+                className="input-field--select w-full h-9 text-sm disabled:opacity-60"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  {studentOptions.length > 0 ? "Select student" : "No students available"}
                 </option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="text-muted-foreground">Course</span>
-            <select
-              name="courseId"
-              required
-              disabled={!canManuallyEnroll}
-              className="input-field h-9 w-full text-xs disabled:opacity-60"
-              defaultValue=""
-            >
-              <option value="" disabled>
-                {courseOptions.length > 0 ? "Select course" : "No courses available"}
-              </option>
-              {courseOptions.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {formatAdminCourseOption(course)}
+                {studentOptions.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {formatAdminUserOption(user)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-xs font-semibold text-muted-foreground">Course</span>
+              <select
+                name="courseId"
+                required
+                disabled={!canManuallyEnroll}
+                className="input-field--select w-full h-9 text-sm disabled:opacity-60"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  {courseOptions.length > 0 ? "Select course" : "No courses available"}
                 </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="submit"
-            disabled={!canManuallyEnroll}
-            className="h-9 bg-foreground text-background text-xs transition-opacity hover:opacity-90"
-          >
-            Enroll Student
-          </button>
+                {courseOptions.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {formatAdminCourseOption(course)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex items-end">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!canManuallyEnroll}
+                className="w-full"
+              >
+                <GraduationCap className="size-3.5" />
+                Enroll Student
+              </Button>
+            </div>
+          </div>
         </form>
-        <p className="text-xs text-muted-foreground">
-          {canManuallyEnroll
-            ? `${studentOptions.length} students and ${courseOptions.length} courses available for manual enrollment.`
-            : "Manual enrollment is unavailable until at least one student and one course exist."}
-        </p>
+        <div className="border-t border-border/40 bg-surface-hover px-5 py-2.5">
+          <p className="text-[10px] font-semibold text-muted-foreground">
+            {canManuallyEnroll
+              ? `${studentOptions.length} students and ${courseOptions.length} courses available for manual enrollment.`
+              : "Manual enrollment is unavailable until at least one student and one course exist."}
+          </p>
+        </div>
       </section>
 
       {profiles.length === 0 ? (
@@ -109,12 +129,23 @@ export default async function AdminStudentProfilesPage() {
           description="Students will appear here once they fill out their personal information from their dashboard."
         />
       ) : (
-        <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
-          <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_150px_100px_80px]">
-            <span>User ID</span>
+        <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+          <div className="flex items-center justify-between border-b border-border/40 bg-surface-hover px-5 py-3.5">
+            <div>
+              <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+                Student Profiles
+              </h2>
+              <p className="text-xs text-muted-foreground">{profiles.length} records</p>
+            </div>
+            <Badge variant="outline">{profiles.length} students</Badge>
+          </div>
+
+          <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_150px_100px_100px_80px]">
+            <span>User</span>
             <span>Grade</span>
             <span>School</span>
             <span>City</span>
+            <span>Guardian</span>
             <span></span>
           </div>
 
@@ -122,31 +153,35 @@ export default async function AdminStudentProfilesPage() {
             {profiles.map((profile) => (
               <div
                 key={profile.$id}
-                className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_150px_100px_80px] md:items-center md:gap-4"
+                className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_150px_100px_100px_80px] md:items-center md:gap-4 hover:bg-surface-hover transition-colors"
               >
                 <div className="flex flex-col gap-0.5">
                   <span className="font-mono text-xs">
                     {String(profile.userId ?? "")}
                   </span>
-                  {typeof profile.guardianName === "string" &&
-                    profile.guardianName.length > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        Guardian: {profile.guardianName}
-                      </span>
-                    )}
                 </div>
-                <span className="text-sm">{String(profile.grade ?? "—")}</span>
-                <span className="text-sm text-muted-foreground line-clamp-1">
+                <span className="text-sm flex items-center gap-1.5">
+                  <MapPin className="size-3 text-muted-foreground md:hidden" />
+                  {String(profile.grade ?? "—")}
+                </span>
+                <span className="text-sm text-muted-foreground line-clamp-1 flex items-center gap-1.5">
+                  <School className="size-3 text-muted-foreground md:hidden" />
                   {String(profile.school ?? "—")}
                 </span>
                 <span className="text-sm text-muted-foreground">
                   {String(profile.city ?? "—")}
                 </span>
+                <span className="text-sm text-muted-foreground">
+                  {typeof profile.guardianName === "string" && profile.guardianName.length > 0
+                    ? profile.guardianName
+                    : "—"}
+                </span>
                 <Link
                   href={`/admin/students/${String(profile.userId ?? "")}`}
-                  className="text-xs underline underline-offset-4 hover:text-foreground text-muted-foreground"
+                  className="text-xs font-semibold text-accent hover:underline underline-offset-4 inline-flex items-center gap-1"
                 >
-                  Details &gt;
+                  Details
+                  <ChevronRight className="size-3" />
                 </Link>
               </div>
             ))}

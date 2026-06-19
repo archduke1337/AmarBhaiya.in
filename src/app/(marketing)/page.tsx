@@ -305,18 +305,38 @@ export default async function MarketingPage() {
                     className={`stagger-${Math.min(i + 1, 4)} snap-start shrink-0 w-[280px] sm:w-[320px]`}
                   >
                     <div className="card-bezel h-full">
-                      <div className="card-bezel-inner p-6 flex flex-col gap-4 min-h-[180px]">
-                        <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black"
-                          style={{
-                            background: "color-mix(in oklab, var(--accent) 12%, transparent)",
-                            color: "var(--accent)",
-                          }}
-                          aria-hidden
-                        >
-                          {i + 1}
+                      <div
+                        className="card-bezel-inner p-6 flex flex-col gap-4 min-h-[200px] relative overflow-hidden"
+                        style={{
+                          ...(collection.bgColor ? {
+                            background: `linear-gradient(135deg, ${collection.bgColor}18, ${collection.bgColor}06)`,
+                          } : {}),
+                        }}
+                      >
+                        {/* Banner background image */}
+                        {collection.imageUrl && (
+                          <div
+                            className="absolute inset-0 opacity-10 bg-cover bg-center"
+                            style={{ backgroundImage: `url(${collection.imageUrl})` }}
+                            aria-hidden
+                          />
+                        )}
+
+                        <div className="relative z-10">
+                          <div
+                            className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black"
+                            style={{
+                              background: collection.bgColor
+                                ? `color-mix(in oklab, ${collection.bgColor} 15%, transparent)`
+                                : "color-mix(in oklab, var(--accent) 12%, transparent)",
+                              color: collection.bgColor || "var(--accent)",
+                            }}
+                            aria-hidden
+                          >
+                            {i + 1}
+                          </div>
                         </div>
-                        <div className="flex-1">
+                        <div className="relative z-10 flex-1">
                           <h3 className="font-bold text-base text-foreground">{collection.title}</h3>
                           {collection.subtitle && (
                             <p className="text-sm text-foreground/55 mt-1 leading-relaxed">
@@ -329,7 +349,8 @@ export default async function MarketingPage() {
                         </div>
                         <Link
                           href={collection.courseSlugs[0] ? `/courses/${collection.courseSlugs[0]}` : "/courses"}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-accent hover:opacity-80 transition-opacity"
+                          className="relative z-10 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] hover:opacity-80 transition-opacity"
+                          style={{ color: collection.bgColor || "var(--accent)" }}
                         >
                           {collection.cta || "Explore"}
                           <ArrowRight className="size-3.5" />

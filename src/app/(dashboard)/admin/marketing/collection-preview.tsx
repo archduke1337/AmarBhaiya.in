@@ -9,6 +9,8 @@ type Collection = {
   subtitle?: string;
   courseSlugs: string[];
   cta?: string;
+  imageUrl?: string;
+  bgColor?: string;
 };
 
 type CollectionPreviewProps = {
@@ -69,25 +71,44 @@ export function CollectionPreview({ jsonValue }: CollectionPreviewProps) {
 
           {/* Collections carousel */}
           <div className="flex gap-4 overflow-x-auto p-4 snap-x snap-mandatory scrollbar-none">
-            {collections.map((collection, i) => (
-              <div
+            {collections.map((collection, i) => (                <div
                 key={collection.id}
                 className="snap-start shrink-0 w-[260px]"
               >
-                <div className="rounded-xl border border-border/40 bg-surface-hover p-5 flex flex-col gap-4 min-h-[160px]">
+                <div
+                  className="rounded-xl border border-border/40 bg-surface-hover p-5 flex flex-col gap-4 min-h-[180px] relative overflow-hidden"
+                  style={{
+                    ...(collection.bgColor ? {
+                      background: `linear-gradient(135deg, ${collection.bgColor}22, ${collection.bgColor}08)`,
+                    } : {}),
+                  }}
+                >
+                  {/* Background image */}
+                  {collection.imageUrl && (
+                    <div
+                      className="absolute inset-0 opacity-15 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${collection.imageUrl})` }}
+                      aria-hidden
+                    />
+                  )}
+
                   {/* Number icon */}
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-black"
-                    style={{
-                      background: "color-mix(in oklab, var(--accent) 12%, transparent)",
-                      color: "var(--accent)",
-                    }}
-                  >
-                    {i + 1}
+                  <div className="relative z-10">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-black"
+                      style={{
+                        background: collection.bgColor
+                          ? `color-mix(in oklab, ${collection.bgColor} 15%, transparent)`
+                          : "color-mix(in oklab, var(--accent) 12%, transparent)",
+                        color: collection.bgColor || "var(--accent)",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1">
+                  <div className="relative z-10 flex-1">
                     <h4 className="font-bold text-sm text-foreground">
                       {collection.title || "Untitled"}
                     </h4>
@@ -103,7 +124,10 @@ export function CollectionPreview({ jsonValue }: CollectionPreviewProps) {
                   </div>
 
                   {/* CTA */}
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.12em] text-accent">
+                  <span
+                    className="relative z-10 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: collection.bgColor || "var(--accent)" }}
+                  >
                     {collection.cta || "Explore"}
                     <ArrowRight className="size-3" />
                   </span>

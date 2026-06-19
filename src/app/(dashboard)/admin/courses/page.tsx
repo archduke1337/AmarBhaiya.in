@@ -43,74 +43,89 @@ export default async function AdminCoursesPage() {
           title="No courses found"
           description="Instructors can create courses from their dashboard. They will appear here for admin review."
         />
-        ) : (
-          <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
-            {/* Table header */}
-            <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_100px_100px_220px]">
-              <span>Course</span>
-              <span>Category</span>
-              <span>Status</span>
-              <span>Featured</span>
-              <span>Actions</span>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{courses.length} total</Badge>
+            <Badge variant="outline">{published} published</Badge>
+            <Badge variant="outline">{drafts} drafts</Badge>
+            <Badge variant="outline">{featured} featured</Badge>
           </div>
 
-          <div className="divide-y divide-border/40">
-            {courses.map((course) => (
-              <form
-                key={course.id}
-                action={updateCourseVisibilityFormAction}
-                className="flex flex-col gap-3 px-5 py-4 md:grid md:grid-cols-[1fr_120px_100px_100px_220px] md:items-center md:gap-4"
-              >
-                <input type="hidden" name="courseId" value={course.id} />
+          <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+            {/* Table header */}
+            <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_80px_80px_120px]">
+              <span>Course</span>
+              <span>Category</span>
+              <span>Published</span>
+              <span>Featured</span>
+              <span>Actions</span>
+            </div>
 
-                <div>
-                  <h3 className="text-sm font-semibold">{course.title}</h3>
-                </div>
+            <div className="divide-y divide-border/40">
+              {courses.map((course) => (
+                <form
+                  key={course.id}
+                  action={updateCourseVisibilityFormAction}
+                  className="flex flex-col gap-3 px-5 py-4 md:grid md:grid-cols-[1fr_120px_80px_80px_120px] md:items-center md:gap-4"
+                >
+                  <input type="hidden" name="courseId" value={course.id} />
 
-                <Badge variant="outline" className="w-fit text-xs">
-                  {course.category}
-                </Badge>
+                  <div>
+                    <h3 className="text-sm font-semibold">{course.title}</h3>
+                  </div>
 
-                <label className="inline-flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3 shadow-retro-sm">
-                  <input
-                    type="checkbox"
-                    name="isPublished"
-                    defaultChecked={course.state === "published"}
-                    className="size-4 accent-foreground"
-                  />
-                  <span className="text-xs font-semibold text-muted-foreground">Published</span>
-                </label>
+                  <Badge variant="outline" className="w-fit text-xs">
+                    {course.category}
+                  </Badge>
 
-                <label className="inline-flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3 shadow-retro-sm">
-                  <input
-                    type="checkbox"
-                    name="isFeatured"
-                    defaultChecked={course.featured === "yes"}
-                    className="size-4 accent-foreground"
-                  />
-                  <span className="text-xs font-semibold text-muted-foreground">Featured</span>
-                </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="isPublished"
+                      defaultChecked={course.state === "published"}
+                      className="size-4 accent-foreground"
+                    />
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {course.state === "published" ? "Yes" : "No"}
+                    </span>
+                  </label>
 
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    size="xs"
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    type="submit"
-                    formAction={deleteCourseFormAction}
-                    formNoValidate
-                    variant="destructive"
-                    size="xs"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </form>
-            ))}
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="isFeatured"
+                      defaultChecked={course.featured === "yes"}
+                      className="size-4 accent-foreground"
+                    />
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {course.featured === "yes" ? "Yes" : "No"}
+                    </span>
+                  </label>
+
+                  <div className="flex items-center gap-2">
+                    <Button type="submit" variant="secondary" size="xs">
+                      Save
+                    </Button>
+                    <Button
+                      type="submit"
+                      formAction={deleteCourseFormAction}
+                      formNoValidate
+                      variant="destructive"
+                      size="xs"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </form>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/40 bg-surface-hover px-5 py-3">
+            <p className="text-[10px] font-semibold text-muted-foreground">
+              ⚡ The homepage hero section picks the top 3 featured courses by enrollment count. Unfeature a course or feature a new one and the hero updates after revalidation.
+            </p>
           </div>
         </div>
       )}

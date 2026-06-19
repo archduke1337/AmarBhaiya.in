@@ -1,4 +1,4 @@
-import { Folder, Plus } from "lucide-react";
+import { Folder, FolderPlus, Plus } from "lucide-react";
 
 import {
   createCategoryFormAction,
@@ -7,6 +7,10 @@ import {
 import { deleteCategoryFormAction } from "@/actions/form-wrappers";
 import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 export default async function AdminCategoriesPage() {
   const categories = await getAdminCategories();
@@ -20,65 +24,81 @@ export default async function AdminCategoriesPage() {
       />
 
       {/* Create category form */}
-      <section className="border border-border">
-        <div className="flex items-center gap-2 border-b border-border px-5 py-3">
-          <Plus className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-medium">Create Category</h2>
+      <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+        <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
+          <FolderPlus className="size-4 text-muted-foreground" />
+          <div>
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+              Create Category
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Add a new course category like Maths, Science, or English.
+            </p>
+          </div>
         </div>
-        <form action={createCategoryFormAction} className="grid gap-4 p-5 md:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">Name</span>
-            <input
-              name="name"
-              required
-              minLength={2}
-              placeholder="Career Growth"
-              className="input-field h-10 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-muted-foreground">Slug (optional)</span>
-            <input
-              name="slug"
-              placeholder="career-growth"
-              className="input-field h-10 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
-            <span className="text-muted-foreground">Description</span>
-            <textarea
-              name="description"
-              rows={2}
-              placeholder="Used for upskilling and placement-focused programs."
-              className="input-field--textarea text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm md:max-w-[200px]">
-            <span className="text-muted-foreground">Display Order</span>
-            <input
-              name="order"
-              type="number"
-              min={0}
-              defaultValue={0}
-              className="input-field h-10 text-sm"
-            />
-          </label>
-          <div className="flex items-end md:col-span-2">
-            <button
-              type="submit"
-              className="h-10 bg-foreground px-4 text-sm text-background transition-opacity hover:opacity-90"
-            >
+        <form action={createCategoryFormAction} className="flex flex-col gap-4 p-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="space-y-1.5">
+              <Label htmlFor="cat-name">Name</Label>
+              <Input
+                id="cat-name"
+                name="name"
+                required
+                minLength={2}
+                placeholder="Career Growth"
+              />
+            </label>
+            <label className="space-y-1.5">
+              <Label htmlFor="cat-slug">Slug (optional)</Label>
+              <Input
+                id="cat-slug"
+                name="slug"
+                placeholder="career-growth"
+              />
+            </label>
+            <label className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="cat-desc">Description</Label>
+              <textarea
+                id="cat-desc"
+                name="description"
+                rows={2}
+                placeholder="Used for upskilling and placement-focused programs."
+                className="input-field--textarea w-full text-sm"
+              />
+            </label>
+            <label className="space-y-1.5 md:max-w-[200px]">
+              <Label htmlFor="cat-order">Display Order</Label>
+              <Input
+                id="cat-order"
+                name="order"
+                type="number"
+                min={0}
+                defaultValue={0}
+              />
+            </label>
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" size="sm">
+              <Plus className="size-3.5" />
               Create category
-            </button>
+            </Button>
           </div>
         </form>
       </section>
 
       {/* Existing categories */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium">
-          Existing Categories ({categories.length})
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+              Category List
+            </p>
+            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+              Existing Categories ({categories.length})
+            </h2>
+          </div>
+          <Badge variant="outline">{categories.length} total</Badge>
+        </div>
 
         {categories.length === 0 ? (
           <EmptyState
@@ -87,74 +107,74 @@ export default async function AdminCategoriesPage() {
             description="Create your first category above to start organizing courses."
           />
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {categories.map((category) => (
-              <article key={category.id} className="border border-border">
-                <form action={updateCategoryFormAction} className="grid gap-4 p-5 md:grid-cols-2">
+              <div
+                key={category.id}
+                className="overflow-hidden rounded-2xl border border-border/40 bg-surface"
+              >
+                <form action={updateCategoryFormAction} className="flex flex-col gap-4 p-5">
                   <input type="hidden" name="categoryId" value={category.id} />
 
-                  <label className="flex flex-col gap-1.5 text-sm">
-                    <span className="text-muted-foreground">Name</span>
-                    <input
-                      name="name"
-                      required
-                      minLength={2}
-                      defaultValue={category.name}
-                      className="input-field h-10 text-sm"
-                    />
-                  </label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="space-y-1.5">
+                      <Label htmlFor={`cat-name-${category.id}`}>Name</Label>
+                      <Input
+                        id={`cat-name-${category.id}`}
+                        name="name"
+                        required
+                        minLength={2}
+                        defaultValue={category.name}
+                      />
+                    </label>
 
-                  <label className="flex flex-col gap-1.5 text-sm">
-                    <span className="text-muted-foreground">Slug</span>
-                    <input
-                      name="slug"
-                      defaultValue={category.slug}
-                      className="input-field h-10 text-sm"
-                    />
-                  </label>
+                    <label className="space-y-1.5">
+                      <Label htmlFor={`cat-slug-${category.id}`}>Slug</Label>
+                      <Input
+                        id={`cat-slug-${category.id}`}
+                        name="slug"
+                        defaultValue={category.slug}
+                      />
+                    </label>
 
-                  <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
-                    <span className="text-muted-foreground">Description</span>
-                    <textarea
-                      name="description"
-                      rows={2}
-                      defaultValue={category.description}
-                      className="input-field--textarea text-sm"
-                    />
-                  </label>
+                    <label className="space-y-1.5 md:col-span-2">
+                      <Label htmlFor={`cat-desc-${category.id}`}>Description</Label>
+                      <textarea
+                        id={`cat-desc-${category.id}`}
+                        name="description"
+                        rows={2}
+                        defaultValue={category.description}
+                        className="input-field--textarea w-full text-sm"
+                      />
+                    </label>
 
-                  <label className="flex flex-col gap-1.5 text-sm md:max-w-[200px]">
-                    <span className="text-muted-foreground">Order</span>
-                    <input
-                      name="order"
-                      type="number"
-                      min={0}
-                      defaultValue={category.order}
-                      className="input-field h-10 text-sm"
-                    />
-                  </label>
+                    <label className="space-y-1.5 md:max-w-[200px]">
+                      <Label htmlFor={`cat-order-${category.id}`}>Order</Label>
+                      <Input
+                        id={`cat-order-${category.id}`}
+                        name="order"
+                        type="number"
+                        min={0}
+                        defaultValue={category.order}
+                      />
+                    </label>
+                  </div>
 
-                  <div className="flex items-end justify-end md:col-span-2">
-                    <button
-                      type="submit"
-                      className="h-9 border border-border px-4 text-sm transition-colors hover:bg-muted"
-                    >
+                  <div className="flex items-center justify-between gap-3">
+                    <Button type="submit" size="sm">
                       Save changes
-                    </button>
+                    </Button>
                   </div>
                 </form>
-                <div className="flex items-center px-5 pb-4">
-                  <form action={deleteCategoryFormAction}>
-                    <input type="hidden" name="categoryId" value={category.id} />
-                    <button
-                      type="submit"
-                      className="h-9 border border-destructive/30 px-4 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                    >
-                      Delete
-                    </button>
-                  </form>
-                </div>
-              </article>
+
+                {/* Delete form — must be sibling, not nested */}
+                <form action={deleteCategoryFormAction} className="border-t border-border/40 px-5 py-3">
+                  <input type="hidden" name="categoryId" value={category.id} />
+                  <Button type="submit" size="xs" variant="destructive">
+                    Delete
+                  </Button>
+                </form>
+              </div>
             ))}
           </div>
         )}

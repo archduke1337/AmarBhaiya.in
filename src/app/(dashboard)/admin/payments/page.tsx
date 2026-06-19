@@ -5,6 +5,7 @@ import {
   Clock,
   CreditCard,
   DollarSign,
+  Filter,
   Receipt,
   TrendingUp,
 } from "lucide-react";
@@ -115,6 +116,33 @@ export default async function AdminPaymentsPage() {
           description="Failed or refunded"
         />
       </StatGrid>
+
+      {/* Quick filter nav */}
+      {payments.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="size-3.5 text-muted-foreground" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Quick filter:</span>
+          <a href="#payments-list" className="text-xs font-semibold text-foreground hover:text-accent transition-colors">All ({payments.length})</a>
+          {pendingPayments.length > 0 && (
+            <a href="#payments-list" className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/5 px-2.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors">
+              <Clock className="size-3" />
+              Pending ({pendingPayments.length})
+            </a>
+          )}
+          {failedPayments.length > 0 && (
+            <a href="#payments-list" className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-2.5 py-0.5 text-[10px] font-semibold text-destructive hover:bg-destructive/10 transition-colors">
+              <AlertTriangle className="size-3" />
+              Failed ({failedPayments.length})
+            </a>
+          )}
+          {refundedPayments.length > 0 && (
+            <a href="#payments-list" className="inline-flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/5 px-2.5 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors">
+              <Receipt className="size-3" />
+              Refunded ({refundedPayments.length})
+            </a>
+          )}
+        </div>
+      )}
 
       {payments.length === 0 ? (
         <EmptyState
