@@ -149,12 +149,31 @@ export type HomeWhyItem = {
   body: string;
 };
 
+export type HomeCollection = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  courseSlugs: string[];
+  cta?: string;
+};
+
+export type AnnouncementConfig = {
+  text: string;
+  link?: string;
+  linkLabel?: string;
+  isDismissible?: boolean;
+  isActive?: boolean;
+  backgroundColor?: string;
+};
+
 export type HomePageContent = {
   stats: HomeStatItem[];
   domains: HomeDomainItem[];
   learnItems: HomeLearnItem[];
   featuredCourses: HomeFeaturedCourseItem[];
   whyItems: HomeWhyItem[];
+  collections: HomeCollection[];
+  announcement: AnnouncementConfig | null;
 };
 
 export type CoursesPageData = {
@@ -779,12 +798,28 @@ async function getHomePageContentImpl(): Promise<HomePageContent> {
       };
     });
 
+  const [collectionsRow, announcementRow] = await Promise.all([
+    safeGetSiteCopyRow(tablesDB, "home.collections"),
+    safeGetSiteCopyRow(tablesDB, "site.announcement"),
+  ]);
+
+  const collectionsPayload = parseJsonPayload<{ collections: HomeCollection[] }>(collectionsRow?.payload);
+  const collections = collectionsPayload?.collections ?? [];
+
+  const announcement = parseJsonPayload<AnnouncementConfig>(announcementRow?.payload) ?? null;
+  const validAnnouncement =
+    announcement && typeof announcement.text === "string" && announcement.text.length > 0
+      ? announcement
+      : null;
+
   return {
     stats,
     domains: Array.isArray(domains) ? domains : [],
     learnItems: Array.isArray(learnItems) ? learnItems : [],
     featuredCourses,
     whyItems: Array.isArray(whyItems) ? whyItems : [],
+    collections,
+    announcement: validAnnouncement,
   };
 }
 

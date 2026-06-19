@@ -12,8 +12,10 @@
 
 import Link from "next/link";
 import { Button } from "@heroui/react";
+import { ArrowRight } from "lucide-react";
 import { RevealWrapper } from "@/components/ui/reveal-wrapper";
 import { getHomePageContent } from "@/lib/appwrite/marketing-content";
+import { AnnouncementBanner } from "@/components/marketing/announcement-banner";
 
 export const revalidate = 3600;
 
@@ -40,6 +42,8 @@ export default async function MarketingPage() {
     learnItems: [],
     featuredCourses: [],
     whyItems: [],
+    collections: [],
+    announcement: null,
   };
 
   let homeContent: MarketingHomeContent = fallbackHomeContent;
@@ -59,8 +63,13 @@ export default async function MarketingPage() {
     "Class 6 se 12 tak — har subject ke notes, video courses, aur live sessions. Coaching ki zaroorat nahi, Bhaiya hai na.";
   const quickStats = stats.slice(0, 2);
 
+  const announcement = homeContent.announcement;
+  const collections = homeContent.collections;
+
   return (
     <>
+      <AnnouncementBanner announcement={announcement} />
+
       {/* ═══════════════════════════════════════════════════
           SECTION 1 — Hero (Editorial Split)
       ═══════════════════════════════════════════════════ */}
@@ -277,7 +286,75 @@ export default async function MarketingPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════════
-            SECTION 3 — Features
+            SECTION 3 — Featured Collections
+        ═══════════════════════════════════════════════════ */}
+        {collections.length > 0 && (
+          <section aria-labelledby="collections-heading" className="section-pad-sm">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6">
+              <RevealWrapper className="mb-8">
+                <span className="eyebrow mb-3 mx-auto">Collections</span>
+                <h2 id="collections-heading" className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-[-0.04em] text-center">
+                  Curated learning packs
+                </h2>
+              </RevealWrapper>
+
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none">
+                {collections.map((collection, i) => (
+                  <RevealWrapper
+                    key={collection.id}
+                    className={`stagger-${Math.min(i + 1, 4)} snap-start shrink-0 w-[280px] sm:w-[320px]`}
+                  >
+                    <div className="card-bezel h-full">
+                      <div className="card-bezel-inner p-6 flex flex-col gap-4 min-h-[180px]">
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black"
+                          style={{
+                            background: "color-mix(in oklab, var(--accent) 12%, transparent)",
+                            color: "var(--accent)",
+                          }}
+                          aria-hidden
+                        >
+                          {i + 1}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-base text-foreground">{collection.title}</h3>
+                          {collection.subtitle && (
+                            <p className="text-sm text-foreground/55 mt-1 leading-relaxed">
+                              {collection.subtitle}
+                            </p>
+                          )}
+                          <p className="text-xs text-foreground/40 mt-2">
+                            {collection.courseSlugs.length} course{collection.courseSlugs.length === 1 ? "" : "s"}
+                          </p>
+                        </div>
+                        <Link
+                          href={collection.courseSlugs[0] ? `/courses/${collection.courseSlugs[0]}` : "/courses"}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-accent hover:opacity-80 transition-opacity"
+                        >
+                          {collection.cta || "Explore"}
+                          <ArrowRight className="size-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  </RevealWrapper>
+                ))}
+              </div>
+
+              <RevealWrapper>
+                <div className="mt-6 text-center">
+                  <Link href="/courses">
+                    <Button variant="outline" className="font-semibold px-7">
+                      View all courses
+                    </Button>
+                  </Link>
+                </div>
+              </RevealWrapper>
+            </div>
+          </section>
+        )}
+
+        {/* ═══════════════════════════════════════════════════
+            SECTION 4 — Features
         ═══════════════════════════════════════════════════ */}
         <section aria-labelledby="features-heading" className="section-pad">
           <div className="mx-auto max-w-5xl px-4 sm:px-6">

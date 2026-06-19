@@ -7,6 +7,7 @@ import {
   Megaphone,
   NotebookPen,
   RefreshCw,
+  Star,
   TrendingUp,
   Trash2,
   Users,
@@ -20,9 +21,10 @@ import {
   createBlogPostFormAction,
   updateBlogPostFormAction,
   deleteBlogPostFormAction,
+  updateCourseVisibilityFormAction,
 } from "@/actions/form-wrappers";
 import { getAdminBlogPosts } from "@/actions/marketing";
-import { getAdminDashboardStats } from "@/lib/appwrite/dashboard-data";
+import { getAdminDashboardStats, getAdminCourses } from "@/lib/appwrite/dashboard-data";
 import {
   formatCompactNumber,
   formatCurrency,
@@ -33,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireRole } from "@/lib/appwrite/auth";
+import { BlogPreviewButton } from "./blog-preview";
 
 const suggestedSiteKeys = [
   "home.domains",
@@ -40,11 +43,42 @@ const suggestedSiteKeys = [
   "home.whyItems",
   "home.metrics",
   "home.featuredCourses",
+  "home.collections",
+  "site.announcement",
   "about.identityCards",
   "about.journey",
   "about.mission",
   "contact.channels",
 ];
+
+const collectionsJsonExample = JSON.stringify(
+  {
+    collections: [
+      {
+        id: "class-10-bundle",
+        title: "Class 10 Complete Bundle",
+        subtitle: "All subjects, one package",
+        courseSlugs: ["maths-class-10", "science-class-10"],
+        cta: "View Bundle",
+      },
+    ],
+  },
+  null,
+  2
+);
+
+const announcementJsonExample = JSON.stringify(
+  {
+    text: "New batch starting April 1st! Enroll now.",
+    link: "/courses",
+    linkLabel: "Learn More",
+    isDismissible: true,
+    isActive: true,
+    backgroundColor: "oklch(0.85 0.15 72)",
+  },
+  null,
+  2
+);
 
 const routePreviews: Array<{
   title: string;
@@ -86,19 +120,21 @@ const routePreviews: Array<{
 
 export default async function AdminMarketingPage() {
   await requireRole(["admin"]);
-  const [posts, stats] = await Promise.all([
+  const [posts, stats, courses] = await Promise.all([
     getAdminBlogPosts(),
     getAdminDashboardStats(),
+    getAdminCourses(),
   ]);
   const publishedCount = posts.filter((post) => post.isPublished).length;
   const draftCount = posts.length - publishedCount;
+  const featuredCount = courses.filter((c) => c.featured === "yes").length;
 
   return (
     <div className="flex flex-col gap-8 max-w-7xl">
       <PageHeader
         eyebrow="Admin"
         title="Content Management System"
-        description="Manage site copy, publish blog posts, and control all marketing content from one panel. SEO meta lives in the layout layer — this is purely for what students see."
+        description="Manage site copy, publish blog posts, control featured courses, and track marketing performance. SEO meta lives in the layout layer — this is purely for what students see."
         actions={
           <>
             <Button asChild variant="outline">
@@ -216,6 +252,191 @@ export default async function AdminMarketingPage() {
             </div>
           </div>
         </Link>
+      </section>
+
+      {/* ── Featured Courses Manager ──────────────────────────────────────── */}
+      <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+        <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
+          <Star className="size-4 text-muted-foreground" />
+          <div>
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+              Featured Courses Manager
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {featuredCount} of {courses.length} courses featured — these appear on the homepage hero section. Mark top-priority courses so students see them first.
+            </p>
+          </div>
+        </div>
+
+        {courses.length === 0 ? (
+          <div className="px-5 py-6 text-sm font-medium text-muted-foreground">
+            No courses yet. Courses will appear here once instructors create them.
+          </div>
+        ) : (
+          <div className="divide-y divide-border/40">
+            <div className="hidden items-center gap-4 px-5 py-2.5 font-heading text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_140px_100px_160px]">
+              <span>Course</span>
+              <span>Category</span>
+              <span>Status</span>
+              <span>Featured</span>
+            </div>
+
+            {courses.map((course) => (
+              <form
+                key={course.id}
+                action={updateCourseVisibilityFormAction}
+                className="flex flex-col gap-2 px-5 py-3 md:grid md:grid-cols-[1fr_140px_100px_160px] md:items-center md:gap-4"
+              >
+                <input type="hidden" name="courseId" value={course.id} />
+
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="truncate text-sm font-semibold">{course.title}</span>
+                </div>
+
+                <Badge variant="outline" className="w-fit text-[10px]">
+                  {course.category}
+                </Badge>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="isPublished"
+                    defaultChecked={course.state === "published"}
+                    className="size-3.5 accent-foreground"
+                  />
+                  <span className="text-[11px] font-semibold text-muted-foreground">
+                    {course.state === "published" ? "Published" : "Draft"}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex min-h-9 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3 shadow-retro-sm">
+                    <input
+                      type="checkbox"
+                      name="isFeatured"
+                      defaultChecked={course.featured === "yes"}
+                      className="size-4 accent-foreground"
+                    />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                      {course.featured === "yes" ? "Featured" : "Set featured"}
+                    </span>
+                  </label>
+                  <Button type="submit" size="xs" variant="secondary" className="shrink-0">
+                    Save
+                  </Button>
+                </div>
+              </form>
+            ))}
+          </div>
+        )}
+
+        <div className="border-t border-border/40 bg-surface-hover px-5 py-2.5">
+          <p className="text-[10px] font-semibold text-muted-foreground">
+            ⚡ Homepage picks the top 3 featured courses by enrollment count. Unfeature a course or feature a new one and the hero section updates after publish.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Featured Collections Manager ──────────────────────────────────── */}
+      <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+        <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
+          <BookOpen className="size-4 text-muted-foreground" />
+          <div>
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+              Featured Collections
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Group courses into curated bundles — like "Class 10 Science Pack" or "Maths Foundation". Collections appear on the homepage below featured courses.
+            </p>
+          </div>
+        </div>
+
+        <form action={upsertSiteCopyFormAction} className="flex flex-col gap-4 p-5">
+          <input type="hidden" name="key" value="home.collections" />
+          <input type="hidden" name="isPublished" value="true" />
+
+          <label className="space-y-1.5">
+            <Label htmlFor="collections-title">Collection Title</Label>
+            <Input
+              id="collections-title"
+              name="title"
+              placeholder="e.g. Curated Learning Packs"
+              defaultValue="Curated Learning Packs"
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <Label htmlFor="collections-payload">Collections JSON</Label>
+            <textarea
+              id="collections-payload"
+              name="payload"
+              defaultValue={collectionsJsonExample}
+              className="input-field--textarea w-full min-h-40 font-mono text-xs"
+            />
+            <p className="text-[10px] font-semibold text-muted-foreground">
+              Each collection has: id, title, subtitle, courseSlugs (array of course slugs), and optional cta. Use course slugs from the Courses table.
+            </p>
+          </label>
+
+          <div className="flex justify-end">
+            <Button type="submit" className="w-full sm:w-auto">
+              <BookOpen className="size-4" />
+              Save Collections
+            </Button>
+          </div>
+        </form>
+
+        <div className="border-t border-border/40 bg-surface-hover px-5 py-2.5">
+          <p className="text-[10px] font-semibold text-muted-foreground">
+            💡 Collections render as horizontal scrollable sections on the homepage. Add course slugs that match the slug field in your courses table.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Announcement Banner Manager ────────────────────────────────────── */}
+      <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+        <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
+          <Megaphone className="size-4 text-muted-foreground" />
+          <div>
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+              Announcement Banner
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Show a dismissible banner at the top of every page. Useful for upcoming batches, holiday schedules, or urgent notices.
+            </p>
+          </div>
+        </div>
+
+        <form action={upsertSiteCopyFormAction} className="flex flex-col gap-4 p-5">
+          <input type="hidden" name="key" value="site.announcement" />
+          <input type="hidden" name="isPublished" value="true" />
+
+          <label className="space-y-1.5">
+            <Label htmlFor="announcement-payload">Banner Configuration JSON</Label>
+            <textarea
+              id="announcement-payload"
+              name="payload"
+              defaultValue={announcementJsonExample}
+              className="input-field--textarea w-full min-h-40 font-mono text-xs"
+            />
+            <p className="text-[10px] font-semibold text-muted-foreground">
+              Fields: text (required), link (optional URL), linkLabel, isDismissible, isActive (set false to hide), backgroundColor (oklch color).
+            </p>
+          </label>
+
+          <div className="flex justify-end">
+            <Button type="submit" className="w-full sm:w-auto">
+              <Megaphone className="size-4" />
+              Save Banner
+            </Button>
+          </div>
+        </form>
+
+        <div className="border-t border-border/40 bg-surface-hover px-5 py-2.5">
+          <p className="text-[10px] font-semibold text-muted-foreground">
+            🔔 Set isActive to false or delete the announcement to hide the banner. Users who dismiss it won&apos;t see it again unless you change the announcement text.
+          </p>
+        </div>
       </section>
 
       {/* ── Content Management — Dual Panel ──────────────────────────────── */}
@@ -516,6 +737,11 @@ export default async function AdminMarketingPage() {
                       {post.isPublished ? "Published" : "Draft"}
                     </Badge>
 
+                    <BlogPreviewButton
+                      title={post.title}
+                      content={post.content}
+                    />
+
                     <Button asChild size="sm" variant="outline">
                       <Link href={`/blog/${post.slug}`} target="_blank" rel="noreferrer">
                         View
@@ -594,10 +820,17 @@ export default async function AdminMarketingPage() {
                     </label>
                   </div>
 
-                  <Button type="submit" size="sm">
-                    <NotebookPen className="size-3.5" />
-                    Save Changes
-                  </Button>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Button type="submit" size="sm">
+                      <NotebookPen className="size-3.5" />
+                      Save Changes
+                    </Button>
+                    {!post.isPublished && (
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        Draft — publish to make visible on /blog
+                      </p>
+                    )}
+                  </div>
                 </form>
               </div>
             ))}
