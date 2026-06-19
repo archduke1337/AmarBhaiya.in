@@ -10,7 +10,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -44,38 +44,11 @@ export type StandaloneResource = {
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
-async function listAllRows(
-  tableId: string,
-  queries: string[]
-): Promise<AnyRow[]> {
-  const { tablesDB } = await createAdminClient();
-  const rows: AnyRow[] = [];
-  let offset = 0;
-
-  while (true) {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId,
-      queries: [...queries, Query.limit(500), Query.offset(offset)],
-    });
-
-    rows.push(...(result.rows as AnyRow[]));
-
-    if (result.rows.length < 500) {
-      break;
-    }
-
-    offset += result.rows.length;
-  }
-
-  return rows;
-}
-
 // ── Create ──────────────────────────────────────────────────────────────────
 
 export async function createStandaloneResourceAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user } = await requireRole(["admin", "instructor"]);
 
   const parsed = createResourceSchema.safeParse({
@@ -88,8 +61,7 @@ export async function createStandaloneResourceAction(
   });
 
   if (!parsed.success) {
-    actionError("Invalid resource data.");
-    return;
+    return actionError("Invalid resource data.");
   }
   try {
     const { tablesDB } = await createAdminClient();
@@ -118,15 +90,13 @@ export async function createStandaloneResourceAction(
     revalidatePath("/instructor/resources");
     revalidatePath("/admin/courses");
 
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create resource."
     );
 
-    actionError("Failed to create resource.");
-    return;
+    return actionError("Failed to create resource.");
   }
 }
 
@@ -134,17 +104,15 @@ export async function createStandaloneResourceAction(
 
 export async function updateStandaloneResourceAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   if (!resourceId) {
-    actionError("Resource ID is required.");
-    return;
+    return actionError("Resource ID is required.");
   }
   if (!(await userCanManageResource(resourceId, role, user.$id))) {
-    actionError("You do not have permission to manage this resource.");
-    return;
+    return actionError("You do not have permission to manage this resource.");
   }
 
   const data: Record<string, unknown> = {};
@@ -166,8 +134,7 @@ export async function updateStandaloneResourceAction(
     if (accessModel === "paid") {
       const price = parseFiniteNumber(formData.get("price"));
       if (price === null || price < 0) {
-        actionError("Invalid price.");
-        return;
+        return actionError("Invalid price.");
       }
       data.price = price;
     } else {
@@ -189,15 +156,13 @@ export async function updateStandaloneResourceAction(
 
     revalidatePath("/instructor/resources");
 
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to update resource."
     );
 
-    actionError("Failed to update resource.");
-    return;
+    return actionError("Failed to update resource.");
   }
 }
 
@@ -205,20 +170,18 @@ export async function updateStandaloneResourceAction(
 
 export async function deleteStandaloneResourceAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   if (!resourceId) {
-    actionError("Resource ID is required.");
-    return;
+    return actionError("Resource ID is required.");
   }
   try {
     const { tablesDB, storage } = await createAdminClient();
     const resource = await userCanManageResource(resourceId, role, user.$id);
     if (!resource) {
-      actionError("You do not have permission to manage this resource.");
-      return;
+      return actionError("You do not have permission to manage this resource.");
     }
     const deleted = await executeDeletePlan({
       tablesDB,
@@ -240,20 +203,17 @@ export async function deleteStandaloneResourceAction(
       label: `standalone resource ${resourceId}`,
     });
     if (!deleted) {
-      actionError("Failed to delete resource.");
-      return;
+      return actionError("Failed to delete resource.");
     }
     revalidatePath("/instructor/resources");
 
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete resource."
     );
 
-    actionError("Failed to delete resource.");
-    return;
+    return actionError("Failed to delete resource.");
   }
 }
 
@@ -272,6 +232,7 @@ export async function getInstructorResources(
           ];
 
     const rows = await listAllRows(
+      tablesDB,
       APPWRITE_CONFIG.tables.standaloneResources,
       queries
     );

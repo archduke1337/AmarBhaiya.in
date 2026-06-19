@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   if (originCheck) return originCheck;
 
   const rlKey = `${getRateLimitKey(request)}:login`;
-  const rateLimit = checkRateLimit(rlKey, 5);
+  const rateLimit = await checkRateLimit(rlKey, 5);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: "Too many login attempts. Please try again later." },

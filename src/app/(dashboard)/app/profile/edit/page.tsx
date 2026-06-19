@@ -52,7 +52,7 @@ export default async function StudentProfileEditPage() {
               {user.email} verify kar loge toh account updates aur recovery safer ho jayegi.
             </p>
           </div>
-          <form action={sendVerificationEmailAction}>
+          <form action={async () => { "use server"; await sendVerificationEmailAction(); }}>
             <Button
               type="submit"
               variant="outline"

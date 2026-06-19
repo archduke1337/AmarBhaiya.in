@@ -221,7 +221,7 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Actually validate the session against Appwrite (cached 30s)
+    // Actually validate the session against Appwrite (cached 15s)
     const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
     if (!isValidSession) {
       // Expired/invalid cookie → clear it and redirect to login

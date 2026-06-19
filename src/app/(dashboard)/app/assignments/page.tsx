@@ -13,6 +13,10 @@ import {
 } from "@/lib/uploads/assignment-submission";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import {
+  listAllRows,
+  listRowsByFieldValues,
+} from "@/lib/appwrite/row-pagination";
 import { Query } from "node-appwrite";
 
 type AnyRow = Models.Row & Record<string, unknown>;
@@ -44,98 +48,7 @@ async function getStudentAssignments(
 ): Promise<StudentAssignment[]> {
   const { tablesDB } = await createAdminClient();
 
-  const chunkValues = (values: string[], chunkSize = 20): string[][] => {
-    if (values.length <= chunkSize) {
-      return [values];
-    }
-
-    const chunks: string[][] = [];
-    for (let index = 0; index < values.length; index += chunkSize) {
-      chunks.push(values.slice(index, index + chunkSize));
-    }
-
-    return chunks;
-  };
-
-  const listRowsByFieldValues = async (
-    tableId: string,
-    field: string,
-    values: string[],
-    extraQueries: string[] = []
-  ): Promise<AnyRow[]> => {
-    if (values.length === 0) {
-      return [];
-    }
-
-    const chunks = chunkValues(values, 20);
-    const results = await Promise.all(
-      chunks.map(async (chunk) => {
-        try {
-          const rows: AnyRow[] = [];
-          let offset = 0;
-
-          while (true) {
-            const result = await tablesDB.listRows({
-              databaseId: APPWRITE_CONFIG.databaseId,
-              tableId,
-              queries: [
-                Query.equal(field, chunk),
-                ...extraQueries,
-                Query.limit(500),
-                Query.offset(offset),
-              ],
-            });
-
-            rows.push(...(result.rows as AnyRow[]));
-
-            if (result.rows.length < 500) {
-              break;
-            }
-
-            offset += result.rows.length;
-          }
-
-          return rows;
-        } catch {
-          return [] as AnyRow[];
-        }
-      })
-    );
-
-    return results.flat();
-  };
-
-  const listAllRows = async (
-    tableId: string,
-    queries: string[] = []
-  ): Promise<AnyRow[]> => {
-    try {
-      const rows: AnyRow[] = [];
-      let offset = 0;
-
-      while (true) {
-        const result = await tablesDB.listRows({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId,
-          queries: [...queries, Query.limit(500), Query.offset(offset)],
-        });
-
-        rows.push(...(result.rows as AnyRow[]));
-
-        if (result.rows.length < 500) {
-          break;
-        }
-
-        offset += result.rows.length;
-      }
-
-      return rows;
-    } catch {
-      return [];
-    }
-  };
-
-  const enrollments = await listAllRows(APPWRITE_CONFIG.tables.enrollments, [
+  const enrollments = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.enrollments, [
     Query.equal("userId", [userId]),
   ]);
 
@@ -151,14 +64,15 @@ async function getStudentAssignments(
   if (courseIds.length === 0) return [];
 
   const [courseRows, assignmentRows, submissionsResult] = await Promise.all([
-    listRowsByFieldValues(APPWRITE_CONFIG.tables.courses, "$id", courseIds),
+    listRowsByFieldValues(tablesDB, APPWRITE_CONFIG.tables.courses, "$id", courseIds),
     listRowsByFieldValues(
+      tablesDB,
       APPWRITE_CONFIG.tables.assignments,
       "courseId",
       courseIds,
-      [Query.orderDesc("$createdAt")]
+      { queries: [Query.orderDesc("$createdAt")] }
     ),
-    listAllRows(APPWRITE_CONFIG.tables.submissions, [
+    listAllRows(tablesDB, APPWRITE_CONFIG.tables.submissions, [
       Query.equal("userId", [userId]),
       Query.orderDesc("$createdAt"),
     ]),

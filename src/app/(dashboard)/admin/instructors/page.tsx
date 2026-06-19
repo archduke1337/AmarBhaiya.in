@@ -1,14 +1,15 @@
 import { Users } from "lucide-react";
 import { Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { formatCurrency } from "@/lib/utils/format";
-
-type AnyRow = Models.Row & Record<string, unknown>;
+import {
+  listAllRows,
+  listRowsByFieldValues,
+} from "@/lib/appwrite/row-pagination";
 
 type InstructorInfo = {
   userId: string;
@@ -19,73 +20,15 @@ type InstructorInfo = {
   totalRevenue: number;
 };
 
-function isActiveEnrollment(row: AnyRow): boolean {
+function isActiveEnrollment(row: Record<string, unknown> & { $id: string }): boolean {
   return row.isActive !== false
     && String(row.status ?? "active") !== "cancelled";
-}
-
-async function listAllRows<Row extends AnyRow>(
-  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
-  tableId: string,
-  queries: string[] = [],
-  pageSize = 500
-): Promise<Row[]> {
-  const rows: Row[] = [];
-  let offset = 0;
-
-  while (true) {
-    const response = await tablesDB
-      .listRows<Row>({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId,
-        queries: [...queries, Query.limit(pageSize), Query.offset(offset)],
-      })
-      .catch(() => ({ rows: [] as Row[] }));
-
-    rows.push(...response.rows);
-
-    if (response.rows.length < pageSize) {
-      break;
-    }
-
-    offset += response.rows.length;
-  }
-
-  return rows;
-}
-
-function chunkValues(values: string[], chunkSize: number): string[][] {
-  const chunks: string[][] = [];
-  for (let index = 0; index < values.length; index += chunkSize) {
-    chunks.push(values.slice(index, index + chunkSize));
-  }
-  return chunks;
-}
-
-async function listRowsByFieldValues<Row extends AnyRow>(
-  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
-  tableId: string,
-  field: string,
-  values: string[],
-  extraQueries: string[] = []
-): Promise<Row[]> {
-  if (values.length === 0) {
-    return [];
-  }
-
-  const results = await Promise.all(
-    chunkValues(values, 20).map((chunk) =>
-      listAllRows<Row>(tablesDB, tableId, [Query.equal(field, chunk), ...extraQueries])
-    )
-  );
-
-  return results.flatMap((result) => result);
 }
 
 async function getInstructorActivity(): Promise<InstructorInfo[]> {
   const { tablesDB, users: usersClient } = await createAdminClient();
 
-  const courses = await listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.courses);
+  const courses = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.courses);
 
   const instructorCourses = new Map<string, AnyRow[]>();
   for (const course of courses) {
@@ -101,18 +44,18 @@ async function getInstructorActivity(): Promise<InstructorInfo[]> {
   const revenueByCourse = new Map<string, number>();
 
   const [enrollmentRows, paymentRows] = await Promise.all([
-    listRowsByFieldValues<AnyRow>(
+    listRowsByFieldValues(
       tablesDB,
       APPWRITE_CONFIG.tables.enrollments,
       "courseId",
       courseIds
     ),
-    listRowsByFieldValues<AnyRow>(
+    listRowsByFieldValues(
       tablesDB,
       APPWRITE_CONFIG.tables.payments,
       "courseId",
       courseIds,
-      [Query.equal("status", ["completed"])]
+      { queries: [Query.equal("status", ["completed"])] }
     ),
   ]);
 

@@ -14,7 +14,7 @@ import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
 import { processInBatches } from "@/lib/utils/batch";
 import { ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS, ASSIGNMENT_SUBMISSION_ALLOWED_MIMES, ASSIGNMENT_SUBMISSION_MAX_BYTES, getAssignmentSubmissionFileExtension } from "@/lib/uploads/assignment-submission";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 type AnyRow = AnyAppwriteRow;
 
@@ -128,28 +128,24 @@ export type SubmissionItem = {
 
 export async function submitAssignmentAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
 
   const assignmentId = String(formData.get("assignmentId") ?? "");
   if (!assignmentId) {
-    actionError("Assignment ID is required");
-    return;
+    return actionError("Assignment ID is required");
   }
   const assignment = await getAssignmentRow(assignmentId);
   if (!assignment) {
-    actionError("Assignment not found");
-    return;
+    return actionError("Assignment not found");
   }
   const courseId = String(assignment.courseId ?? "");
   const lessonId = String(assignment.lessonId ?? "");
   if (!courseId) {
-    actionError("Course ID is missing");
-    return;
+    return actionError("Course ID is missing");
   }
   if (!(await userHasCourseAccess({ courseId, userId: user.$id, lessonId: lessonId || undefined }))) {
-    actionError("You do not have access to this course");
-    return;
+    return actionError("You do not have access to this course");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -178,8 +174,7 @@ export async function submitAssignmentAction(
 
   if (file && file.size > 0) {
     if (file.size > ASSIGNMENT_SUBMISSION_MAX_BYTES) {
-      actionError("File exceeds maximum allowed size");
-      return;
+      return actionError("File exceeds maximum allowed size");
     }
 
     const extension = getAssignmentSubmissionFileExtension(file.name);
@@ -188,8 +183,7 @@ export async function submitAssignmentAction(
         extension as (typeof ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS)[number]
       )
     ) {
-      actionError("File type is not allowed");
-      return;
+      return actionError("File type is not allowed");
     }
 
     const fileHeader = Buffer.from(await file.slice(0, 32).arrayBuffer());
@@ -198,8 +192,7 @@ export async function submitAssignmentAction(
         ...ASSIGNMENT_SUBMISSION_ALLOWED_MIMES,
       ])
     ) {
-      actionError("File content does not match allowed types");
-      return;
+      return actionError("File content does not match allowed types");
     }
 
     const { storage } = await createAdminClient();
@@ -215,14 +208,12 @@ export async function submitAssignmentAction(
       console.error(
         error instanceof Error ? error.message : "Failed to upload file."
       );
-      actionError("Failed to upload file");
-      return;
+      return actionError("Failed to upload file");
     }
   }
 
   if (!uploadedFileId) {
-    actionError("No file was uploaded");
-    return;
+    return actionError("No file was uploaded");
   }
 
   if (existingSubmission) {
@@ -249,8 +240,7 @@ export async function submitAssignmentAction(
 
       revalidatePath("/app");
       revalidatePath("/app/assignments");
-      actionSuccess();
-      return;
+      return actionSuccess();
     } catch (error) {
       if (uploadedFileId) {
         const { storage } = await createAdminClient();
@@ -267,8 +257,7 @@ export async function submitAssignmentAction(
       console.error(
         error instanceof Error ? error.message : "Failed to update submission."
       );
-      actionError("Failed to update existing submission");
-      return;
+      return actionError("Failed to update existing submission");
     }
   }
 
@@ -285,8 +274,7 @@ export async function submitAssignmentAction(
 
     revalidatePath("/app");
     revalidatePath("/app/assignments");
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     const appwriteError = error as { code?: number };
     if (appwriteError.code === 409) {
@@ -326,8 +314,7 @@ export async function submitAssignmentAction(
 
           revalidatePath("/app");
           revalidatePath("/app/assignments");
-          actionSuccess();
-          return;
+    return actionSuccess();
         }
       } catch {
         // Fall through to rollback logic below.
@@ -349,8 +336,7 @@ export async function submitAssignmentAction(
     console.error(
       error instanceof Error ? error.message : "Failed to submit assignment."
     );
-    actionError("Failed to submit assignment");
-    return;
+    return actionError("Failed to submit assignment");
   }
 }
 
@@ -411,7 +397,7 @@ export async function getAssignmentSubmissions(
 
 export async function gradeSubmissionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const submissionId = String(formData.get("submissionId") ?? "");
@@ -419,25 +405,21 @@ export async function gradeSubmissionAction(
   const feedback = String(formData.get("feedback") ?? "").trim();
 
   if (!submissionId || rawGrade === null) {
-    actionError("Submission ID and grade are required");
-    return;
+    return actionError("Submission ID and grade are required");
   }
   const grade = clampNumber(Math.round(rawGrade), 0, 100);
 
   try {
     const submission = await getSubmissionRow(submissionId);
     if (!submission) {
-      actionError("Submission not found");
-      return;
+      return actionError("Submission not found");
     }
     const assignment = await getAssignmentRow(String(submission.assignmentId ?? ""));
     if (!assignment) {
-      actionError("Assignment not found");
-      return;
+      return actionError("Assignment not found");
     }
     if (!(await userCanManageCourse(String(assignment.courseId ?? ""), role, user.$id))) {
-      actionError("You do not have permission to manage this course");
-      return;
+      return actionError("You do not have permission to manage this course");
     }
 
     const { tablesDB } = await createAdminClient();
@@ -470,13 +452,11 @@ export async function gradeSubmissionAction(
     revalidatePath("/app/assignments");
     revalidatePath("/app/notifications");
     revalidatePath("/app/dashboard");
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to grade submission."
     );
-    actionError("Failed to grade submission");
-    return;
+    return actionError("Failed to grade submission");
   }
 }

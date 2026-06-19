@@ -16,6 +16,9 @@ import { userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import {
+  listAllRows,
+} from "@/lib/appwrite/row-pagination";
+import {
   getFilePreviewUrl,
 } from "@/lib/utils/file-urls";
 import { normalizeHttpUrl } from "@/lib/utils/url";
@@ -41,36 +44,6 @@ export default async function LessonViewerPage({ params }: PageProps) {
   const { courseId, lessonId } = await params;
 
   const { tablesDB } = await createAdminClient();
-
-  const listAllRows = async (
-    tableId: string,
-    queries: string[] = []
-  ): Promise<AnyRow[]> => {
-    try {
-      const rows: AnyRow[] = [];
-      let offset = 0;
-
-      while (true) {
-        const result = await tablesDB.listRows({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId,
-          queries: [...queries, Query.limit(500), Query.offset(offset)],
-        });
-
-        rows.push(...(result.rows as AnyRow[]));
-
-        if (result.rows.length < 500) {
-          break;
-        }
-
-        offset += result.rows.length;
-      }
-
-      return rows;
-    } catch {
-      return [];
-    }
-  };
 
   // Get lesson
   let lesson: AnyRow | null = null;
@@ -121,10 +94,10 @@ export default async function LessonViewerPage({ params }: PageProps) {
   }
 
   // Get all lessons for navigation
-  const allLessons = await listAllRows(APPWRITE_CONFIG.tables.lessons, [
+  const allLessons = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.lessons, [
     Query.equal("courseId", [courseId]),
     Query.orderAsc("order"),
-  ]);
+  ]).catch(() => []);
 
   const currentIndex = allLessons.findIndex((l) => l.$id === lessonId);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
@@ -149,9 +122,9 @@ export default async function LessonViewerPage({ params }: PageProps) {
   const [{ completedLessonIds }, comments, lessonResources, lessonProgressResult, enrollmentResult] = await Promise.all([
     getCourseProgress(courseId, user.$id),
     getLessonComments(lessonId),
-    listAllRows(APPWRITE_CONFIG.tables.resources, [
+    listAllRows(tablesDB, APPWRITE_CONFIG.tables.resources, [
       Query.equal("lessonId", [lessonId]),
-    ]),
+    ]).catch(() => []),
     tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.progress,

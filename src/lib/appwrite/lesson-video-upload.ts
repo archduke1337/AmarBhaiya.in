@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { deleteUploadedFileIfPresent } from "@/lib/uploads/shared";
 import { validateStoredAppwriteFileSignature } from "@/lib/appwrite/file-signature";
 import { userCanManageCourse } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
@@ -27,25 +28,6 @@ type FinalizeLessonVideoUploadResult =
 
 function getLessonVideoFileId(lesson: Record<string, unknown>): string {
   return String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? "");
-}
-
-async function deleteUploadedFileIfPresent(
-  storage: Awaited<ReturnType<typeof createAdminClient>>["storage"],
-  bucketId: string,
-  fileId: string
-): Promise<void> {
-  if (!fileId) {
-    return;
-  }
-
-  try {
-    await storage.deleteFile({ bucketId, fileId });
-  } catch (error) {
-    console.error(
-      `[LessonVideoUpload] Failed to clean up ${bucketId}/${fileId}:`,
-      error instanceof Error ? error.message : error
-    );
-  }
 }
 
 export async function getManageableLessonVideoTarget({
@@ -106,7 +88,8 @@ export async function finalizeLessonVideoUpload(
     await deleteUploadedFileIfPresent(
       storage,
       APPWRITE_CONFIG.buckets.courseVideos,
-      uploadedFileId
+      uploadedFileId,
+      "LessonVideoUpload"
     );
     return {
       success: false,
@@ -126,7 +109,8 @@ export async function finalizeLessonVideoUpload(
     await deleteUploadedFileIfPresent(
       storage,
       APPWRITE_CONFIG.buckets.courseVideos,
-      uploadedFileId
+      uploadedFileId,
+      "LessonVideoUpload"
     );
     return {
       success: false,
@@ -149,7 +133,8 @@ export async function finalizeLessonVideoUpload(
     await deleteUploadedFileIfPresent(
       storage,
       APPWRITE_CONFIG.buckets.courseVideos,
-      uploadedFileId
+      uploadedFileId,
+      "LessonVideoUpload"
     );
 
     return {
@@ -163,7 +148,8 @@ export async function finalizeLessonVideoUpload(
     await deleteUploadedFileIfPresent(
       storage,
       APPWRITE_CONFIG.buckets.courseVideos,
-      previousVideoId
+      previousVideoId,
+      "LessonVideoUpload"
     );
   }
 

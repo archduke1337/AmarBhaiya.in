@@ -24,6 +24,7 @@ import {
   STANDALONE_RESOURCE_ALLOWED_MIMES,
   STANDALONE_RESOURCE_MAX_BYTES,
 } from "@/lib/uploads/instructor-file";
+import { deleteUploadedFileIfPresent } from "@/lib/uploads/shared";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
@@ -52,23 +53,6 @@ const COURSE_RESOURCE_EXTENSIONS = [
 
 function getCourseThumbnailFileId(course: Record<string, unknown>): string {
   return String(course.thumbnailFileId ?? course.thumbnailId ?? "");
-}
-
-async function deleteUploadedFileIfPresent(
-  storage: Awaited<ReturnType<typeof createAdminClient>>["storage"],
-  bucketId: string,
-  fileId: string
-): Promise<void> {
-  if (!fileId) return;
-
-  try {
-    await storage.deleteFile({ bucketId, fileId });
-  } catch (error) {
-    console.error(
-      `[Upload] Failed to clean up file ${bucketId}/${fileId}:`,
-      error instanceof Error ? error.message : error
-    );
-  }
 }
 
 // ── Upload Course Thumbnail ─────────────────────────────────────────────────
@@ -138,7 +122,8 @@ export async function uploadCourseThumbnailAction(
         await deleteUploadedFileIfPresent(
           storage,
           APPWRITE_CONFIG.buckets.courseThumbnails,
-          uploaded.$id
+          uploaded.$id,
+          "Upload"
         );
         throw error;
       }
@@ -148,7 +133,8 @@ export async function uploadCourseThumbnailAction(
       await deleteUploadedFileIfPresent(
         storage,
         APPWRITE_CONFIG.buckets.courseThumbnails,
-        previousThumbnailId
+        previousThumbnailId,
+        "Upload"
       );
     }
 
@@ -173,7 +159,7 @@ export async function uploadCourseThumbnailAction(
 
 export async function uploadLessonVideoAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
@@ -181,30 +167,25 @@ export async function uploadLessonVideoAction(
   const file = formData.get("file") as File | null;
 
   if (!courseId || !lessonId || !file || file.size === 0) {
-    actionError("Missing course ID, lesson ID, or file.");
-    return;
+    return actionError("Missing course ID, lesson ID, or file.");
   }
   if (!(await userCanManageCourse(courseId, role, user.$id))) {
-    actionError("You do not have permission to upload a video to this course.");
-    return;
+    return actionError("You do not have permission to upload a video to this course.");
   }
 
   if (file.size > LESSON_VIDEO_MAX_BYTES) {
-    actionError("Video file exceeds the maximum allowed size.");
-    return;
+    return actionError("Video file exceeds the maximum allowed size.");
   }
   const ext = getFileExtension(file.name);
   if (!isAllowedLessonVideoExtension(ext)) {
-    actionError("Video file type is not supported.");
-    return;
+    return actionError("Video file type is not supported.");
   }
   try {
     // SECURITY: Verify MIME type using magic bytes to prevent malware disguised as video
     const buffer = Buffer.from(await file.arrayBuffer());
     if (!validateFileMimeType(buffer, file.name, [...LESSON_VIDEO_ALLOWED_MIMES])) {
       console.error("File MIME type validation failed");
-      actionError("Video file MIME type validation failed.");
-      return;
+      return actionError("Video file MIME type validation failed.");
     }
 
     const { storage } = await createAdminClient();
@@ -227,21 +208,19 @@ export async function uploadLessonVideoAction(
       await deleteUploadedFileIfPresent(
         storage,
         APPWRITE_CONFIG.buckets.courseVideos,
-        uploaded.$id
+        uploaded.$id,
+        "Upload"
       );
       console.error(result.error);
-      actionError(result.error);
-      return;
+      return actionError(result.error);
     }
 
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to upload video.";
     console.error(message);
-    actionError(message);
-    return;
+    return actionError(message);
   }
 }
 
@@ -249,36 +228,31 @@ export async function uploadLessonVideoAction(
 
 export async function uploadResourceFileAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   const file = formData.get("file") as File | null;
 
   if (!resourceId || !file || file.size === 0) {
-    actionError("Missing resource ID or file.");
-    return;
+    return actionError("Missing resource ID or file.");
   }
   const resource = await userCanManageResource(resourceId, role, user.$id);
   if (!resource) {
-    actionError("You do not have permission to upload to this resource.");
-    return;
+    return actionError("You do not have permission to upload to this resource.");
   }
   if (file.size > STANDALONE_RESOURCE_MAX_BYTES) {
-    actionError("Resource file exceeds the maximum allowed size.");
-    return;
+    return actionError("Resource file exceeds the maximum allowed size.");
   }
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!STANDALONE_RESOURCE_EXTENSIONS.includes(ext as (typeof STANDALONE_RESOURCE_EXTENSIONS)[number])) {
-    actionError("Resource file type is not supported.");
-    return;
+    return actionError("Resource file type is not supported.");
   }
 
   const standaloneHeader = Buffer.from(await file.slice(0, 32).arrayBuffer());
   if (!validateFileMimeType(standaloneHeader, file.name, [...STANDALONE_RESOURCE_ALLOWED_MIMES])) {
     console.error("Standalone resource MIME type validation failed");
-    actionError("Resource file MIME type validation failed.");
-    return;
+    return actionError("Resource file MIME type validation failed.");
   }
 
   try {
@@ -302,7 +276,8 @@ export async function uploadResourceFileAction(
       await deleteUploadedFileIfPresent(
         storage,
         APPWRITE_CONFIG.buckets.resourceFiles,
-        uploaded.$id
+        uploaded.$id,
+        "Upload"
       );
       throw error;
     }
@@ -311,19 +286,18 @@ export async function uploadResourceFileAction(
       await deleteUploadedFileIfPresent(
         storage,
         APPWRITE_CONFIG.buckets.resourceFiles,
-        previousFileId
+        previousFileId,
+        "Upload"
       );
     }
 
     revalidatePath("/instructor/resources");
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to upload resource file.";
     console.error(message);
-    actionError(message);
-    return;
+    return actionError(message);
   }
 }
 
@@ -331,36 +305,31 @@ export async function uploadResourceFileAction(
 
 export async function uploadCourseResourceFileAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   const file = formData.get("file") as File | null;
 
   if (!resourceId || !file || file.size === 0) {
-    actionError("Missing resource ID or file.");
-    return;
+    return actionError("Missing resource ID or file.");
   }
   const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
   if (!resourceContext) {
-    actionError("You do not have permission to upload to this course resource.");
-    return;
+    return actionError("You do not have permission to upload to this course resource.");
   }
   if (file.size > COURSE_RESOURCE_MAX_BYTES) {
-    actionError("Course resource file exceeds the maximum allowed size.");
-    return;
+    return actionError("Course resource file exceeds the maximum allowed size.");
   }
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!COURSE_RESOURCE_EXTENSIONS.includes(ext as (typeof COURSE_RESOURCE_EXTENSIONS)[number])) {
-    actionError("Course resource file type is not supported.");
-    return;
+    return actionError("Course resource file type is not supported.");
   }
 
   const courseResourceHeader = Buffer.from(await file.slice(0, 32).arrayBuffer());
   if (!validateFileMimeType(courseResourceHeader, file.name, [...COURSE_RESOURCE_ALLOWED_MIMES])) {
     console.error("Course resource MIME type validation failed");
-    actionError("Course resource file MIME type validation failed.");
-    return;
+    return actionError("Course resource file MIME type validation failed.");
   }
 
   try {
@@ -384,7 +353,8 @@ export async function uploadCourseResourceFileAction(
       await deleteUploadedFileIfPresent(
         storage,
         APPWRITE_CONFIG.buckets.courseResources,
-        uploaded.$id
+        uploaded.$id,
+        "Upload"
       );
       throw error;
     }
@@ -393,21 +363,20 @@ export async function uploadCourseResourceFileAction(
       await deleteUploadedFileIfPresent(
         storage,
         APPWRITE_CONFIG.buckets.courseResources,
-        previousFileId
+        previousFileId,
+        "Upload"
       );
     }
 
     revalidatePath("/instructor/resources");
     revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
     revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to upload course resource file.";
     console.error(message);
-    actionError(message);
-    return;
+    return actionError(message);
   }
 }
 
@@ -415,31 +384,27 @@ export async function uploadCourseResourceFileAction(
 
 export async function uploadAvatarAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
-    actionError("No file provided for avatar upload.");
-    return;
+    return actionError("No file provided for avatar upload.");
   }
   const maxSize = 2 * 1024 * 1024; // 2MB
   if (file.size > maxSize) {
-    actionError("Avatar image must be 2 MB or smaller.");
-    return;
+    return actionError("Avatar image must be 2 MB or smaller.");
   }
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
-    actionError("Only JPG, PNG, and WEBP images are supported for avatars.");
-    return;
+    return actionError("Only JPG, PNG, and WEBP images are supported for avatars.");
   }
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const validMimes = ["image/jpeg", "image/png", "image/webp"];
     if (!validateFileMimeType(buffer, file.name, validMimes)) {
       console.error("File MIME type validation failed");
-      actionError("Avatar file MIME type validation failed.");
-      return;
+      return actionError("Avatar file MIME type validation failed.");
     }
 
     const { storage } = await createAdminClient();
@@ -460,13 +425,11 @@ export async function uploadAvatarAction(
 
     revalidatePath("/app/profile/edit");
     revalidatePath("/app/dashboard");
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to upload avatar.";
     console.error(message);
-    actionError(message);
-    return;
+    return actionError(message);
   }
 }

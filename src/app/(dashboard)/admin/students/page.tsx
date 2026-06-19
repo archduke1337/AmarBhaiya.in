@@ -1,52 +1,23 @@
 import Link from "next/link";
 import { User } from "lucide-react";
 import { Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { getAdminCourses, getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import { createAdminClient } from "@/lib/appwrite/server";
+import {
+  listAllRows,
+  type AnyAppwriteRow,
+} from "@/lib/appwrite/row-pagination";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { adminEnrollAction } from "@/actions/enroll";
+import { adminEnrollFormAction } from "@/actions/enrollment-form-wrapper";
 import { formatAdminCourseOption, formatAdminUserOption } from "@/lib/utils/admin-select";
-
-type AnyRow = Models.Row & Record<string, unknown>;
-
-async function listAllRows<Row extends AnyRow>(
-  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
-  tableId: string,
-  queries: string[] = [],
-  pageSize = 500
-): Promise<Row[]> {
-  const rows: Row[] = [];
-  let offset = 0;
-
-  while (true) {
-    const result = await tablesDB
-      .listRows<Row>({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId,
-        queries: [...queries, Query.limit(pageSize), Query.offset(offset)],
-      })
-      .catch(() => ({ rows: [] as Row[] }));
-
-    rows.push(...result.rows);
-
-    if (result.rows.length < pageSize) {
-      break;
-    }
-
-    offset += result.rows.length;
-  }
-
-  return rows;
-}
 
 async function getAllStudentProfiles() {
   const { tablesDB } = await createAdminClient();
   try {
-    return await listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.studentProfiles, [
+    return await listAllRows(tablesDB, APPWRITE_CONFIG.tables.studentProfiles, [
       Query.orderDesc("$createdAt"),
     ]);
   } catch {
@@ -77,7 +48,7 @@ export default async function AdminStudentProfilesPage() {
       {/* Manual enrollment */}
       <section className="border border-border p-5 space-y-3">
         <h2 className="text-sm font-medium">Manual Enrollment</h2>
-        <form action={adminEnrollAction} className="grid gap-3 md:grid-cols-3">
+        <form action={adminEnrollFormAction} className="grid gap-3 md:grid-cols-3">
           <label className="space-y-1 text-sm">
             <span className="text-muted-foreground">Student</span>
             <select

@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   }
 
   const rlKey = `${getRateLimitKey(request)}:verify:${user.$id}`;
-  const rateLimit = checkRateLimit(rlKey, 10);
+  const rateLimit = await checkRateLimit(rlKey, 10);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },

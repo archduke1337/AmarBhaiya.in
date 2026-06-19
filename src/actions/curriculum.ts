@@ -11,7 +11,7 @@ import type { Role } from "@/lib/utils/constants";
 import { getBlogDetailPaths, getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { listAllRows, type AnyAppwriteRow } from "@/lib/appwrite/row-pagination";
 import { userCanManageCourse, getCourseRow } from "@/lib/appwrite/access";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
   if (typeof value !== "string") {
@@ -128,7 +128,7 @@ const updateLessonSchema = z.object({
   isFreePreview: z.boolean(),
 });
 
-export async function createCurriculumModuleAction(formData: FormData): Promise<void> {
+export async function createCurriculumModuleAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const parsed = createModuleSchema.safeParse({
@@ -139,14 +139,12 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: title (min 4 chars) is required");
-    return;
+    return actionError("Invalid input: title (min 4 chars) is required");
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
-    actionError("Course not found or you do not have permission to edit it");
-    return;
+    return actionError("Course not found or you do not have permission to edit it");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -170,7 +168,7 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
   return;
 }
 
-export async function createCurriculumLessonAction(formData: FormData): Promise<void> {
+export async function createCurriculumLessonAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const parsed = createLessonSchema.safeParse({
@@ -239,7 +237,7 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
   return;
 }
 
-export async function updateCurriculumModuleAction(formData: FormData): Promise<void> {
+export async function updateCurriculumModuleAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const parsed = updateModuleSchema.safeParse({
@@ -297,7 +295,7 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
   return;
 }
 
-export async function updateCurriculumLessonAction(formData: FormData): Promise<void> {
+export async function updateCurriculumLessonAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const parsed = updateLessonSchema.safeParse({

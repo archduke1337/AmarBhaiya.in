@@ -5,6 +5,10 @@ import type { Models } from "node-appwrite";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import {
+  listAllRows,
+  listRowsByFieldValues,
+} from "@/lib/appwrite/row-pagination";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
@@ -24,59 +28,7 @@ async function getStudentQuizHistory(userId: string): Promise<QuizAttemptDisplay
   const { tablesDB } = await createAdminClient();
 
   try {
-    const listAllRows = async (
-      tableId: string,
-      queries: string[] = []
-    ): Promise<AnyRow[]> => {
-      const rows: AnyRow[] = [];
-      let offset = 0;
-
-      while (true) {
-        const result = await tablesDB.listRows({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId,
-          queries: [...queries, Query.limit(500), Query.offset(offset)],
-        });
-
-        rows.push(...(result.rows as AnyRow[]));
-
-        if (result.rows.length < 500) {
-          break;
-        }
-
-        offset += result.rows.length;
-      }
-
-      return rows;
-    };
-
-    const chunkValues = (values: string[], chunkSize = 20): string[][] => {
-      const chunks: string[][] = [];
-      for (let index = 0; index < values.length; index += chunkSize) {
-        chunks.push(values.slice(index, index + chunkSize));
-      }
-      return chunks;
-    };
-
-    const listRowsByFieldValues = async (
-      tableId: string,
-      field: string,
-      values: string[]
-    ): Promise<AnyRow[]> => {
-      if (values.length === 0) {
-        return [];
-      }
-
-      const results = await Promise.all(
-        chunkValues(values).map((chunk) =>
-          listAllRows(tableId, [Query.equal(field, chunk)])
-        )
-      );
-
-      return results.flat();
-    };
-
-    const attemptsRows = await listAllRows(APPWRITE_CONFIG.tables.quizAttempts, [
+    const attemptsRows = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.quizAttempts, [
       Query.equal("userId", [userId]),
       Query.orderDesc("$createdAt"),
     ]);
@@ -90,6 +42,7 @@ async function getStudentQuizHistory(userId: string): Promise<QuizAttemptDisplay
     ];
 
     const quizRows = await listRowsByFieldValues(
+      tablesDB,
       APPWRITE_CONFIG.tables.quizzes,
       "$id",
       quizIds
@@ -102,6 +55,7 @@ async function getStudentQuizHistory(userId: string): Promise<QuizAttemptDisplay
       ),
     ];
     const courseRows = await listRowsByFieldValues(
+      tablesDB,
       APPWRITE_CONFIG.tables.courses,
       "$id",
       courseIds

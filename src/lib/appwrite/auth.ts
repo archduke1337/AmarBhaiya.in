@@ -74,12 +74,15 @@ export async function requireRole(
 // ── Assign Role (Admin only) ────────────────────────────────────────────────
 
 export async function assignRole(userId: string, role: Role): Promise<void> {
+  // Verify the caller is an admin before performing privileged operations
+  await requireRole(["admin"]);
+
   const { users } = await createAdminClient();
   const user = await users.get({ userId });
   const currentLabels = user.labels || [];
 
   // Remove existing role labels and add new one
-  const roleLabels = ["admin", "instructor", "moderator", "student"];
+  const roleLabels: string[] = ["admin", "instructor", "moderator", "student"];
   const cleanedLabels = currentLabels.filter(
     (l: string) => !roleLabels.includes(l)
   );

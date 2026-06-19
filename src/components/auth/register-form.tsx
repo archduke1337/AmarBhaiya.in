@@ -97,7 +97,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
           <label className="text-sm font-semibold text-foreground/70">Password</label>
           <Input
             required
-            placeholder="Min 8 chars, 1 letter, 1 number"
+            placeholder="Min 8 chars, letter, number, symbol"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -105,7 +105,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             className="bg-surface shadow-[var(--field-shadow)]"
           />
           <p className="text-xs text-foreground/50 px-2 font-medium">
-            At least 8 characters with a letter and a number.
+            At least 8 characters with a letter, number, and special character.
           </p>
         </div>
 

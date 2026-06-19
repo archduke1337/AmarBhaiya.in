@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 
-import { adminUnenrollAction } from "@/actions/enroll";
+import { adminUnenrollFormAction } from "@/actions/enrollment-form-wrapper";
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
+import {
+  listAllRows,
+  type AnyAppwriteRow,
+} from "@/lib/appwrite/row-pagination";
 import { PageHeader } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 
-type AnyRow = Models.Row & Record<string, unknown>;
 type TablesDbClient = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
 
 type PageProps = {
@@ -45,36 +47,6 @@ type PaymentInfo = {
   providerRef: string;
   createdAt: string;
 };
-
-async function listAllRows<Row extends AnyRow>(
-  tablesDB: TablesDbClient,
-  tableId: string,
-  queries: string[] = [],
-  pageSize = 500
-): Promise<Row[]> {
-  const rows: Row[] = [];
-  let offset = 0;
-
-  while (true) {
-    const result = await tablesDB
-      .listRows<Row>({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId,
-        queries: [...queries, Query.limit(pageSize), Query.offset(offset)],
-      })
-      .catch(() => ({ rows: [] as Row[] }));
-
-    rows.push(...result.rows);
-
-    if (result.rows.length < pageSize) {
-      break;
-    }
-
-    offset += result.rows.length;
-  }
-
-  return rows;
-}
 
 async function loadCourseMetaByIds(
   tablesDB: TablesDbClient,
@@ -145,7 +117,7 @@ async function getStudentDetail(userId: string) {
 
   const enrollments: EnrollmentInfo[] = [];
   try {
-    const enrollmentRows = await listAllRows<AnyRow>(
+    const enrollmentRows = await listAllRows(
       tablesDB,
       APPWRITE_CONFIG.tables.enrollments,
       [Query.equal("userId", [userId]), Query.orderDesc("enrolledAt")]
@@ -179,7 +151,7 @@ async function getStudentDetail(userId: string) {
 
   const payments: PaymentInfo[] = [];
   try {
-    const paymentRows = await listAllRows<AnyRow>(
+    const paymentRows = await listAllRows(
       tablesDB,
       APPWRITE_CONFIG.tables.payments,
       [Query.equal("userId", [userId]), Query.orderDesc("$createdAt")]
@@ -305,7 +277,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
                   >
                     {enrollment.status}
                   </Badge>
-                  <form action={adminUnenrollAction}>
+                  <form action={adminUnenrollFormAction}>
                     <input type="hidden" name="enrollmentId" value={enrollment.id} />
                     <button
                       type="submit"

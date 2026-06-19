@@ -16,6 +16,7 @@ import {
   getUploadFileExtension,
   isAllowedInstructorUploadExtension,
 } from "@/lib/uploads/instructor-file";
+import { deleteUploadedFileIfPresent } from "@/lib/uploads/shared";
 import { validateStoredAppwriteFileSignature } from "@/lib/appwrite/file-signature";
 import type { Role } from "@/lib/utils/constants";
 
@@ -51,25 +52,6 @@ function getAllowedMimesForInstructorUpload(
   }
 
   return COURSE_RESOURCE_ALLOWED_MIMES;
-}
-
-async function deleteUploadedFileIfPresent(
-  storage: Awaited<ReturnType<typeof createAdminClient>>["storage"],
-  bucketId: string,
-  fileId: string
-): Promise<void> {
-  if (!fileId) {
-    return;
-  }
-
-  try {
-    await storage.deleteFile({ bucketId, fileId });
-  } catch (error) {
-    console.error(
-      `[InstructorUpload] Failed to clean up ${bucketId}/${fileId}:`,
-      error instanceof Error ? error.message : error
-    );
-  }
 }
 
 export async function getManageableInstructorUploadTarget(
@@ -129,7 +111,7 @@ export async function finalizeInstructorUpload(
 
   const extension = getUploadFileExtension(String(uploadedFile.name ?? ""));
   if (!isAllowedInstructorUploadExtension(kind, extension)) {
-    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
+    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
     return { success: false, status: 400, error: "Unsupported file format." };
   }
 
@@ -141,7 +123,7 @@ export async function finalizeInstructorUpload(
   });
 
   if (!hasValidSignature) {
-    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
+    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
     return {
       success: false,
       status: 400,
@@ -156,7 +138,7 @@ export async function finalizeInstructorUpload(
 
     const course = await userCanManageCourse(courseId, role, userId);
     if (!course) {
-      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
+      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
       return { success: false, status: 403, error: "Forbidden" };
     }
 
@@ -182,7 +164,7 @@ export async function finalizeInstructorUpload(
         });
       } catch (error) {
         console.error("[InstructorUpload] Failed to attach uploaded thumbnail:", error);
-        await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
+        await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
         return {
           success: false,
           status: 500,
@@ -192,7 +174,7 @@ export async function finalizeInstructorUpload(
     }
 
     if (previousThumbnailId && previousThumbnailId !== uploadedFileId) {
-      await deleteUploadedFileIfPresent(storage, bucketId, previousThumbnailId);
+      await deleteUploadedFileIfPresent(storage, bucketId, previousThumbnailId, "InstructorUpload");
     }
 
     revalidatePath("/instructor");
@@ -213,7 +195,7 @@ export async function finalizeInstructorUpload(
 
     const resource = await userCanManageResource(resourceId, role, userId);
     if (!resource) {
-      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
+      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
       return { success: false, status: 403, error: "Forbidden" };
     }
 
@@ -228,7 +210,7 @@ export async function finalizeInstructorUpload(
       });
     } catch (error) {
       console.error("[InstructorUpload] Failed to attach uploaded resource file:", error);
-      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
+      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
       return {
         success: false,
         status: 500,
@@ -237,7 +219,7 @@ export async function finalizeInstructorUpload(
     }
 
     if (previousFileId && previousFileId !== uploadedFileId) {
-      await deleteUploadedFileIfPresent(storage, bucketId, previousFileId);
+      await deleteUploadedFileIfPresent(storage, bucketId, previousFileId, "InstructorUpload");
     }
 
     revalidatePath("/instructor/resources");
@@ -249,12 +231,11 @@ export async function finalizeInstructorUpload(
   }
 
   const resourceContext = await userCanManageCourseResource(resourceId, role, userId);
-  if (!resourceContext) {
-    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
-    return { success: false, status: 403, error: "Forbidden" };
-  }
+  if (!resourceContext) {      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
+      return { success: false, status: 403, error: "Forbidden" };
+    }
 
-  const previousFileId = String(resourceContext.resource.fileId ?? "");
+    const previousFileId = String(resourceContext.resource.fileId ?? "");
 
   try {
     await tablesDB.updateRow({
@@ -268,16 +249,14 @@ export async function finalizeInstructorUpload(
       "[InstructorUpload] Failed to attach uploaded course resource file:",
       error
     );
-    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId);
+    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
     return {
       success: false,
       status: 500,
       error: "Failed to attach uploaded course resource file.",
     };
-  }
-
-  if (previousFileId && previousFileId !== uploadedFileId) {
-    await deleteUploadedFileIfPresent(storage, bucketId, previousFileId);
+  }    if (previousFileId && previousFileId !== uploadedFileId) {
+    await deleteUploadedFileIfPresent(storage, bucketId, previousFileId, "InstructorUpload");
   }
 
   revalidatePath("/instructor/resources");

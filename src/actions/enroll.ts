@@ -9,7 +9,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { listAllRows, type AnyAppwriteRow } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 
 type AnyRow = AnyAppwriteRow;
@@ -21,6 +21,92 @@ function isActiveEnrollmentRow(row: Record<string, unknown>): boolean {
 function revalidateEach(paths: string[]): void {
   for (const path of paths) {
     revalidatePath(path);
+  }
+}
+
+// ── Shared Enrollment Data ───────────────────────────────────────────────────
+
+type FindOrCreateEnrollmentResult =
+  | { status: "already_active"; enrollment: Record<string, unknown> & { $id: string } }
+  | { status: "reactivated"; enrollment: Record<string, unknown> & { $id: string } }
+  | { status: "created" }
+  | { status: "error"; message: string };
+
+/**
+ * Finds an existing enrollment for a user+course, or creates a new one.
+ * Handles reactivation of cancelled/completed enrollments.
+ * Does NOT handle revalidation — caller must revalidate paths.
+ */
+async function findOrCreateEnrollment(
+  tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],
+  courseId: string,
+  userId: string
+): Promise<FindOrCreateEnrollmentResult> {
+  try {
+    const existing = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      queries: [
+        Query.equal("courseId", [courseId]),
+        Query.equal("userId", [userId]),
+        Query.limit(1),
+      ],
+    });
+
+    const existingRow = (existing.rows[0] as AnyRow | undefined) ?? null;
+    if (existingRow && isActiveEnrollmentRow(existingRow)) {
+      return { status: "already_active", enrollment: existingRow };
+    }
+
+    if (existingRow) {
+      const nextStatus =
+        String(existingRow.status ?? "active") === "completed" ? "completed" : "active";
+
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.enrollments,
+        rowId: existingRow.$id,
+        data: {
+          enrolledAt: String(existingRow.enrolledAt ?? "") || new Date().toISOString(),
+          paymentId: "",
+          accessModel: "free",
+          isActive: true,
+          status: nextStatus,
+        },
+      });
+
+      return { status: "reactivated", enrollment: existingRow };
+    }
+  } catch {
+    // No existing enrollment found — continue to create below
+  }
+
+  try {
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.enrollments,
+      rowId: ID.unique(),
+      data: {
+        courseId,
+        userId,
+        enrolledAt: new Date().toISOString(),
+        paymentId: "",
+        accessModel: "free",
+        isActive: true,
+        completedLessons: 0,
+        progress: 0,
+        completedAt: "",
+        status: "active",
+      },
+    });
+
+    return { status: "created" };
+  } catch (error) {
+    const appwriteError = error as { code?: number };
+    if (appwriteError?.code === 409) {
+      return { status: "created" };
+    }
+    return { status: "error", message: error instanceof Error ? error.message : "Failed to create enrollment" };
   }
 }
 
@@ -70,129 +156,43 @@ async function resolveCourseForEnrollment(
 
 export async function enrollInCourseAction(
   formData: FormData
-): Promise<void> {
-  let resolvedCourseForRevalidation:
-    | { courseId: string; courseSlug: string }
-    | null = null;
-
+): Promise<ActionResult> {
   try {
     const user = await requireAuth();
     const courseInput = String(formData.get("courseId") ?? "").trim();
     if (!courseInput) {
-      actionError("Course ID is required");
-      return;
+      return actionError("Course ID is required");
     }
     const { tablesDB } = await createAdminClient();
     const resolvedCourse = await resolveCourseForEnrollment(tablesDB, courseInput);
     if (!resolvedCourse) {
-      actionError("Course not found");
-      return;
+      return actionError("Course not found");
     }
 
     const { courseId, courseSlug, accessModel, isPublished } = resolvedCourse;
-    resolvedCourseForRevalidation = { courseId, courseSlug };
     if (!isPublished) {
-      actionError("Course not available");
-      return;
-    }
-
-    // Check if already enrolled using canonical course id
-    try {
-      const existing = await tablesDB.listRows({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.enrollments,
-        queries: [
-          Query.equal("courseId", [courseId]),
-          Query.equal("userId", [user.$id]),
-          Query.limit(1),
-        ],
-      });
-
-      const existingRow = (existing.rows[0] as AnyRow | undefined) ?? null;
-      if (existingRow && isActiveEnrollmentRow(existingRow)) {
-        revalidatePath("/app/courses");
-        revalidatePath("/app/dashboard");
-        revalidateEach(getCourseDetailPaths(courseId, courseSlug));
-        actionSuccess();
-        return;
-      }
-
-      if (existingRow) {
-        const nextStatus =
-          String(existingRow.status ?? "active") === "completed" ? "completed" : "active";
-
-        await tablesDB.updateRow({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId: APPWRITE_CONFIG.tables.enrollments,
-          rowId: existingRow.$id,
-          data: {
-            enrolledAt: String(existingRow.enrolledAt ?? "") || new Date().toISOString(),
-            paymentId: "",
-            accessModel: "free",
-            isActive: true,
-            status: nextStatus,
-          },
-        });
-
-        revalidatePath("/app/courses");
-        revalidatePath("/app/dashboard");
-        revalidateEach(getCourseDetailPaths(courseId, courseSlug));
-        actionSuccess();
-        return;
-      }
-    } catch {
-      // Continue to enroll
+      return actionError("Course not available");
     }
 
     // Block paid courses from free enrollment
     if (accessModel === "paid" || accessModel === "subscription") {
-      actionError("This course requires payment. Please use checkout.", "PAID_COURSE");
-      return;
+      return actionError("This course requires payment. Please use checkout.", "PAID_COURSE");
     }
 
-    // Create enrollment
-    await tablesDB.createRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      rowId: ID.unique(),
-      data: {
-        courseId,
-        userId: user.$id,
-        enrolledAt: new Date().toISOString(),
-        paymentId: "",
-        accessModel: "free",
-        isActive: true,
-        completedLessons: 0,
-        progress: 0,
-        completedAt: "",
-        status: "active",
-      },
-    });
+    const result = await findOrCreateEnrollment(tablesDB, courseId, user.$id);
+
+    if (result.status === "error") {
+      return actionError(result.message);
+    }
 
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");
     revalidateEach(getCourseDetailPaths(courseId, courseSlug));
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    const appwriteError = error as { code?: number };
-    if (appwriteError?.code === 409 && resolvedCourseForRevalidation) {
-      revalidatePath("/app/courses");
-      revalidatePath("/app/dashboard");
-      revalidateEach(
-        getCourseDetailPaths(
-          resolvedCourseForRevalidation.courseId,
-          resolvedCourseForRevalidation.courseSlug
-        )
-      );
-      actionSuccess();
-      return;
-    }
-
     const message = error instanceof Error ? error.message : "Failed to enroll in course";
     console.error("[Enrollment] Failed to create enrollment:", message);
-    actionError(message);
-    return;
+    return actionError(message);
   }
 }
 
@@ -230,124 +230,45 @@ export async function isEnrolled(
 
 // ── Admin: Manual Enroll ──────────────────────────────────────────────────
 
-export async function adminEnrollAction(formData: FormData): Promise<void> {
+export async function adminEnrollAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const userId = String(formData.get("userId") ?? "").trim();
   const courseId = String(formData.get("courseId") ?? "").trim();
   if (!userId || !courseId) {
-    actionError("Missing userId or courseId");
-    return;
+    return actionError("Missing userId or courseId");
   }
   const { tablesDB } = await createAdminClient();
 
-  // Check if already enrolled
-  try {
-    const existing = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      queries: [
-        Query.equal("courseId", [courseId]),
-        Query.equal("userId", [userId]),
-        Query.limit(1),
-      ],
-    });
-    const existingRow = (existing.rows[0] as AnyRow | undefined) ?? null;
-    if (existingRow && isActiveEnrollmentRow(existingRow)) {
-      actionError("Student is already enrolled in this course");
-      return;
-    }
-    if (existingRow) {
-      const nextStatus =
-        String(existingRow.status ?? "active") === "completed" ? "completed" : "active";
+  const result = await findOrCreateEnrollment(tablesDB, courseId, userId);
 
-      await tablesDB.updateRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.enrollments,
-        rowId: existingRow.$id,
-        data: {
-          enrolledAt: String(existingRow.enrolledAt ?? "") || new Date().toISOString(),
-          paymentId: "",
-          accessModel: "free",
-          isActive: true,
-          status: nextStatus,
-        },
-      });
-
-      revalidatePath("/admin/students");
-      revalidatePath("/admin/courses");
-      revalidatePath("/app/courses");
-      revalidatePath("/app/dashboard");
-      const course = await getCourseRow(courseId);
-      revalidateEach(
-        getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
-      );
-      actionSuccess();
-      return;
-    }
-  } catch {
-    // continue
+  if (result.status === "already_active") {
+    return actionError("Student is already enrolled in this course");
   }
 
-  try {
-    await tablesDB.createRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.enrollments,
-      rowId: ID.unique(),
-      data: {
-        courseId,
-        userId,
-        enrolledAt: new Date().toISOString(),
-        paymentId: "",
-        accessModel: "free",
-        isActive: true,
-        completedLessons: 0,
-        progress: 0,
-        completedAt: "",
-        status: "active",
-      },
-    });
-
-    revalidatePath("/admin/students");
-    revalidatePath("/admin/courses");
-    revalidatePath("/app/courses");
-    revalidatePath("/app/dashboard");
-    const course = await getCourseRow(courseId);
-    revalidateEach(
-      getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
-    );
-    actionSuccess();
-    return;
-  } catch (error) {
-    const appwriteError = error as { code?: number };
-    if (appwriteError?.code === 409) {
-      revalidatePath("/admin/students");
-      revalidatePath("/admin/courses");
-      revalidatePath("/app/courses");
-      revalidatePath("/app/dashboard");
-      const course = await getCourseRow(courseId);
-      revalidateEach(
-        getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
-      );
-      actionSuccess();
-      return;
-    }
-
-    console.error("[Admin Enroll]", error instanceof Error ? error.message : error);
-    actionError(error instanceof Error ? error.message : "Failed to create enrollment");
-    return;
+  if (result.status === "error") {
+    return actionError(result.message);
   }
+
+  revalidatePath("/admin/students");
+  revalidatePath("/admin/courses");
+  revalidatePath("/app/courses");
+  revalidatePath("/app/dashboard");
+  const course = await getCourseRow(courseId);
+  revalidateEach(
+    getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+  );
+  return actionSuccess();
 }
 
 // ── Admin: Unenroll ───────────────────────────────────────────────────────
 
-export async function adminUnenrollAction(formData: FormData): Promise<void> {
+export async function adminUnenrollAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const enrollmentId = String(formData.get("enrollmentId") ?? "").trim();
   if (!enrollmentId) {
-    actionError("Missing enrollmentId");
-    return;
+    return actionError("Missing enrollmentId");
   }
   const { tablesDB, storage } = await createAdminClient();
 
@@ -359,8 +280,7 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
     }).catch(() => null)) as AnyRow | null;
 
     if (!enrollment) {
-      actionError("Enrollment not found");
-      return;
+      return actionError("Enrollment not found");
     }
 
     const userId = String(enrollment.userId ?? "");
@@ -391,8 +311,7 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
         label: `enrollment ${enrollmentId}`,
       });
       if (!deleted) {
-        actionError("Failed to delete enrollment data");
-        return;
+        return actionError("Failed to delete enrollment data");
       }
     } else {
       const deleted = await executeDeletePlan({
@@ -410,8 +329,7 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
         label: `enrollment ${enrollmentId}`,
       });
       if (!deleted) {
-        actionError("Failed to delete enrollment data");
-        return;
+        return actionError("Failed to delete enrollment data");
       }
     }
 
@@ -428,11 +346,9 @@ export async function adminUnenrollAction(formData: FormData): Promise<void> {
       );
       revalidatePath("/app/dashboard");
     }
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error("[Admin Unenroll]", error instanceof Error ? error.message : error);
-    actionError(error instanceof Error ? error.message : "Failed to unenroll student");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to unenroll student");
   }
 }

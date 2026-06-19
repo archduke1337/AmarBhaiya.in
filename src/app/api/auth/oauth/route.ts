@@ -6,13 +6,10 @@ import { createAdminClient } from "@/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
-function getSafeRedirectPath(request: NextRequest): string {
-  const redirect = request.nextUrl.searchParams.get("redirect");
-
+function sanitizeRedirectPath(redirect: string | null): string {
   if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
     return "/app/dashboard";
   }
-
   return redirect;
 }
 
@@ -25,6 +22,9 @@ function createLoginRedirect(request: NextRequest, errorCode: string): NextRespo
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get("userId");
   const secret = request.nextUrl.searchParams.get("secret");
+  const redirectPath = sanitizeRedirectPath(
+    request.nextUrl.searchParams.get("redirect")
+  );
 
   if (!userId || !secret) {
     return createLoginRedirect(request, "oauth_callback_invalid");
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = NextResponse.redirect(
-      new URL(getSafeRedirectPath(request), request.url)
+      new URL(redirectPath, request.url)
     );
 
     response.cookies.set(APPWRITE_CONFIG.sessionCookieName, session.secret, {

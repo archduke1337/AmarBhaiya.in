@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (originCheck) return originCheck;
 
   const rlKey = `${getRateLimitKey(request)}:register`;
-  const rateLimit = checkRateLimit(rlKey, 3);
+  const rateLimit = await checkRateLimit(rlKey, 3);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: "Too many registration attempts. Please try again later." },

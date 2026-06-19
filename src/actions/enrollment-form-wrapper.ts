@@ -4,15 +4,34 @@
  */
 "use server";
 
-import { enrollInCourseAction } from "@/actions/enroll";
+import {
+  enrollInCourseAction,
+  adminEnrollAction,
+  adminUnenrollAction,
+} from "@/actions/enroll";
 import { markLessonCompleteAction } from "@/actions/progress";
+
+/**
+ * Form-compatible wrappers that discard ActionResult returns.
+ * Next.js <form action={...}> requires Promise<void>.
+ */
 
 export async function enrollInCourseFormAction(
   formData: FormData
 ): Promise<void> {
   await enrollInCourseAction(formData);
-  // Discard the ActionResult for form compatibility
-  // The client will handle the result via URL search params or server revalidation
+}
+
+export async function adminEnrollFormAction(
+  formData: FormData
+): Promise<void> {
+  await adminEnrollAction(formData);
+}
+
+export async function adminUnenrollFormAction(
+  formData: FormData
+): Promise<void> {
+  await adminUnenrollAction(formData);
 }
 
 export async function markLessonCompleteFormAction(

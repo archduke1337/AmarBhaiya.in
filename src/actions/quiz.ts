@@ -84,7 +84,7 @@ export type QuizAttemptResult = {
 
 // ── Create Quiz (Instructor) ────────────────────────────────────────────────
 
-export async function createQuizAction(formData: FormData): Promise<void> {
+export async function createQuizAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
@@ -96,12 +96,10 @@ export async function createQuizAction(formData: FormData): Promise<void> {
   const timeLimit = Math.max(0, Math.round(rawTimeLimit ?? 0));
 
   if (!courseId || !title) {
-    actionError("Course ID and title are required.");
-    return;
+    return actionError("Course ID and title are required.");
   }
   if (!(await userCanManageCourse(courseId, role, user.$id))) {
-    actionError("You do not have permission to manage this course.");
-    return;
+    return actionError("You do not have permission to manage this course.");
   }
 
   try {
@@ -114,8 +112,7 @@ export async function createQuizAction(formData: FormData): Promise<void> {
       }).catch(() => null)) as AnyRow | null;
 
       if (!lesson || String(lesson.courseId ?? "") !== courseId) {
-        actionError("Lesson not found or does not belong to this course.");
-        return;
+        return actionError("Lesson not found or does not belong to this course.");
       }
     }
 
@@ -133,11 +130,9 @@ export async function createQuizAction(formData: FormData): Promise<void> {
     });
 
     revalidatePath(`/instructor/courses/${courseId}/curriculum`);
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    actionError(handleActionError(error, { category: "DATABASE", action: "createQuiz" }));
-    return;
+    return actionError(handleActionError(error, { category: "DATABASE", action: "createQuiz" }));
   }
 }
 
@@ -145,7 +140,7 @@ export async function createQuizAction(formData: FormData): Promise<void> {
 
 export async function addQuizQuestionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const quizId = String(formData.get("quizId") ?? "");
@@ -163,8 +158,7 @@ export async function addQuizQuestionAction(
   const order = Math.max(0, Math.trunc(rawOrder ?? 0));
 
   if (!quizId || !text || !correctAnswer) {
-    actionError("Quiz ID, question text, and correct answer are required.");
-    return;
+    return actionError("Quiz ID, question text, and correct answer are required.");
   }
 
   try {
@@ -195,11 +189,9 @@ export async function addQuizQuestionAction(
     });
 
     revalidatePath("/instructor");
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    actionError(handleActionError(error, { category: "DATABASE", action: "addQuizQuestion" }));
-    return;
+    return actionError(handleActionError(error, { category: "DATABASE", action: "addQuizQuestion" }));
   }
 }
 
@@ -408,24 +400,21 @@ export async function getUserBestAttempt(
 
 // ── Delete Quiz ─────────────────────────────────────────────────────────────
 
-export async function deleteQuizAction(formData: FormData): Promise<void> {
+export async function deleteQuizAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const quizId = String(formData.get("quizId") ?? "");
   if (!quizId) {
-    actionError("Quiz ID is required.");
-    return;
+    return actionError("Quiz ID is required.");
   }
 
   try {
     const quiz = await getQuizRow(quizId);
     if (!quiz) {
-      actionError("Quiz not found.");
-      return;
+      return actionError("Quiz not found.");
     }
     if (!(await userCanManageCourse(String(quiz.courseId ?? ""), role, user.$id))) {
-      actionError("You do not have permission to manage this quiz.");
-      return;
+      return actionError("You do not have permission to manage this quiz.");
     }
 
     const { tablesDB, storage } = await createAdminClient();
@@ -459,8 +448,7 @@ export async function deleteQuizAction(formData: FormData): Promise<void> {
       label: `quiz ${quizId}`,
     });
     if (!deleted) {
-      actionError("Failed to delete quiz.");
-      return;
+      return actionError("Failed to delete quiz.");
     }
 
     revalidatePath("/instructor");
@@ -480,10 +468,8 @@ export async function deleteQuizAction(formData: FormData): Promise<void> {
         `/app/learn/${String(quiz.courseId ?? "")}/${String(quiz.lessonId ?? "")}`
       );
     }
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    actionError(handleActionError(error, { category: "DATABASE", action: "deleteQuiz" }));
-    return;
+    return actionError(handleActionError(error, { category: "DATABASE", action: "deleteQuiz" }));
   }
 }
