@@ -4,8 +4,6 @@ import {
   FileText,
   Globe2,
   NotebookPen,
-  Trash2,
-  ExternalLink,
 } from "lucide-react";
 
 import {
@@ -14,16 +12,13 @@ import {
   deleteBlogPostFormAction,
 } from "@/actions/form-wrappers";
 import { getAdminBlogPosts } from "@/actions/marketing";
-import { formatCompactNumber } from "@/lib/utils/format";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { requireRole } from "@/lib/appwrite/auth";
 import { BlogPreviewButton } from "../marketing/blog-preview";
 import { BlogPostForm } from "../marketing/blog-post-form";
-import { MarkdownEditor } from "../marketing/markdown-editor";
+import { EditBlogPostForm } from "./edit-blog-post-form";
 
 export default async function AdminBlogPage() {
   await requireRole(["admin"]);
@@ -145,97 +140,14 @@ export default async function AdminBlogPage() {
                       title={post.title}
                       content={post.content}
                     />
-
-                    <Button asChild size="sm" variant="outline">
-                      <Link href={`/blog/${post.slug}`} target="_blank" rel="noreferrer">
-                        View
-                        <ExternalLink className="size-3.5" />
-                      </Link>
-                    </Button>
-
-                    <form action={deleteBlogPostFormAction}>
-                      <input type="hidden" name="postId" value={post.id} />
-                      <Button type="submit" size="sm" variant="destructive">
-                        <Trash2 className="size-3.5" />
-                        Delete
-                      </Button>
-                    </form>
                   </div>
                 </div>
 
-                <form
-                  action={updateBlogPostFormAction}
-                  className="border-t border-border/40 bg-surface-hover p-5 space-y-4"
-                >
-                  <input type="hidden" name="postId" value={post.id} />
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <label className="space-y-1.5">
-                      <Label htmlFor={`post-title-${post.id}`}>Title</Label>
-                      <Input
-                        id={`post-title-${post.id}`}
-                        name="title"
-                        defaultValue={post.title}
-                        placeholder="Title"
-                      />
-                    </label>
-
-                    <label className="space-y-1.5">
-                      <Label htmlFor={`post-category-${post.id}`}>Category</Label>
-                      <Input
-                        id={`post-category-${post.id}`}
-                        name="category"
-                        defaultValue={post.category}
-                        placeholder="Category"
-                      />
-                    </label>
-
-                    <label className="space-y-1.5 md:col-span-2">
-                      <Label htmlFor={`post-excerpt-${post.id}`}>Excerpt</Label>
-                      <textarea
-                        id={`post-excerpt-${post.id}`}
-                        name="excerpt"
-                        defaultValue={post.excerpt}
-                        className="input-field--textarea min-h-20 w-full"
-                      />
-                    </label>
-
-                    <div className="md:col-span-2">
-                      <MarkdownEditor
-                        id={`post-content-${post.id}`}
-                        name="content"
-                        defaultValue={post.content}
-                        label="Content"
-                        minHeight="min-h-28"
-                      />
-                    </div>
-
-                    <label className="space-y-1.5">
-                      <Label htmlFor={`post-state-${post.id}`}>Publish state</Label>
-                      <select
-                        id={`post-state-${post.id}`}
-                        name="isPublished"
-                        defaultValue={post.isPublished ? "true" : "false"}
-                        className="input-field--select w-full"
-                      >
-                        <option value="true">Published</option>
-                        <option value="false">Draft</option>
-                      </select>
-                    </label>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <Button type="submit" size="sm">
-                      <NotebookPen className="size-3.5" />
-                      Save Changes
-                    </Button>
-                    {!post.isPublished && (
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                        Draft — publish to make visible on /blog
-                      </p>
-                    )}
-                  </div>
-                </form>
+                <EditBlogPostForm
+                  post={post}
+                  updateBlogPostFormAction={updateBlogPostFormAction}
+                  deleteBlogPostFormAction={deleteBlogPostFormAction}
+                />
               </div>
             ))}
           </div>

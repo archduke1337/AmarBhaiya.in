@@ -311,6 +311,41 @@ export async function deleteBlogPostAction(formData: FormData): Promise<ActionRe
   }
 }
 
+// ── Check Slug Uniqueness ─────────────────────────────────────────────────
+
+export async function checkSlugUniquenessAction(formData: FormData): Promise<ActionResult> {
+  await requireRole(["admin"]);
+
+  const slug = String(formData.get("slug") ?? "").trim();
+  const excludeId = String(formData.get("excludeId") ?? "").trim();
+
+  if (!slug) {
+    return actionSuccess({ available: true });
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const existing = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.blogPosts,
+      queries: [
+        Query.equal("slug", [slug]),
+        Query.limit(1),
+      ],
+    });
+
+    const conflicting = existing.rows.find((row) => {
+      const rowAny = row as { $id: string };
+      return !excludeId || rowAny.$id !== excludeId;
+    });
+
+    return actionSuccess({ available: !conflicting });
+  } catch {
+    return actionSuccess({ available: true });
+  }
+}
+
 // ── Get Blog Posts for Admin ──────────────────────────────────────────────
 
 type AdminBlogPost = {

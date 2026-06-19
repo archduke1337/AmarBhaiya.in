@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   NotebookPen,
   Megaphone,
   RotateCcw,
   Save,
+  Link,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useAutoSave } from "./use-auto-save";
 import { MarkdownEditor } from "./markdown-editor";
+import { checkSlugUniquenessFormAction } from "@/actions/form-wrappers/marketing";
 
 type BlogPostFormProps = {
   createBlogPostFormAction: (formData: FormData) => Promise<void>;
@@ -28,13 +32,40 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [restored, setRestored] = useState(false);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [slugChecking, setSlugChecking] = useState(false);
   const slugManuallyEdited = useRef(false);
+  const slugTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const autoSave = useAutoSave({
     key: "create-blog-post",
     fields: { title, slug, category, authorName, excerpt, content, isPublished, publishedAt, readMinutes },
     delay: 2000,
   });
+
+  // Debounced slug uniqueness check
+  const checkSlug = useCallback((slugToCheck: string) => {
+    if (slugTimerRef.current) clearTimeout(slugTimerRef.current);
+    if (!slugToCheck) {
+      setSlugAvailable(null);
+      setSlugChecking(false);
+      return;
+    }
+    setSlugChecking(true);
+    slugTimerRef.current = setTimeout(async () => {
+      const fd = new FormData();
+      fd.set("slug", slugToCheck);
+      const result = await checkSlugUniquenessFormAction(fd);
+      setSlugAvailable(result.success && result.data?.available === true);
+      setSlugChecking(false);
+    }, 500);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (slugTimerRef.current) clearTimeout(slugTimerRef.current);
+    };
+  }, []);
 
   // Restore draft on mount
   const handleRestore = useCallback(() => {
@@ -144,9 +175,37 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
             value={slug}
             onChange={(e) => {
               slugManuallyEdited.current = true;
-              setSlug(e.target.value);
+              const val = e.target.value;
+              setSlug(val);
+              setSlugAvailable(null);
+              checkSlug(val);
             }}
           />
+          <div className="flex items-center gap-2 min-h-[1.25rem]">
+            {slug && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                <Link className="size-3" />
+                /blog/{slug}
+              </span>
+            )}
+            {slugChecking && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                <span className="size-1.5 animate-pulse rounded-full bg-muted-foreground/50" />
+                Checking…
+              </span>
+            )}
+            {!slugChecking && slugAvailable === false && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="size-3" />
+                Slug already taken
+              </span>
+            )}
+            {!slugChecking && slugAvailable === true && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                Available
+              </span>
+            )}
+          </div>
         </label>
 
         <label className="space-y-1.5">
