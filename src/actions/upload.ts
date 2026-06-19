@@ -380,6 +380,53 @@ export async function uploadCourseResourceFileAction(
   }
 }
 
+// ── Upload Blog Image ───────────────────────────────────────────────────────
+
+export async function uploadBlogImageAction(
+  formData: FormData
+): Promise<ActionResult<{ url: string; fileId: string }>> {
+  await requireRole(["admin"]);
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return actionError("No image file provided.");
+  }
+
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  if (file.size > maxSize) {
+    return actionError("Images must be 10 MB or smaller.");
+  }
+
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (!["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(ext)) {
+    return actionError("Only JPG, PNG, WEBP, GIF, and SVG images are supported.");
+  }
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const validMimes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
+    if (!validateFileMimeType(buffer, file.name, validMimes)) {
+      console.error("Blog image MIME type validation failed");
+      return actionError("This file does not look like a valid image.");
+    }
+
+    const { storage } = await createAdminClient();
+    const uploaded = await storage.createFile({
+      bucketId: APPWRITE_CONFIG.buckets.blogImages,
+      fileId: ID.unique(),
+      file,
+    });
+
+    const viewUrl = `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.buckets.blogImages}/files/${uploaded.$id}/view?project=${APPWRITE_CONFIG.projectId}`;
+
+    return actionSuccess({ url: viewUrl, fileId: uploaded.$id });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to upload image.";
+    console.error(message);
+    return actionError(message);
+  }
+}
+
 // ── Upload User Avatar ──────────────────────────────────────────────────────
 
 export async function uploadAvatarAction(

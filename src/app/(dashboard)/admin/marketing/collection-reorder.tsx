@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { GripVertical, Trash2, Plus, AlertCircle, CheckCircle2 } from "lucide-react";
+import { GripVertical, Trash2, Plus, AlertCircle, CheckCircle2, Undo2, Redo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -37,7 +37,64 @@ export function CollectionReorder({ id, name, defaultValue }: CollectionReorderP
   );
   const [error, setError] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Undo / Redo history stack ───────────────────────────────────────────
+  const historyRef = useRef<Collection[][]>([[]]);
+  const historyIndexRef = useRef(0);
+
+  const pushHistory = useCallback((items: Collection[]) => {
+    const history = historyRef.current;
+    const index = historyIndexRef.current;
+
+    // Discard any redo history beyond current index
+    history.splice(index + 1);
+
+    history.push(structuredClone(items));
+    // Cap history at 50 entries
+    if (history.length > 50) {
+      history.shift();
+    }
+    historyIndexRef.current = history.length - 1;
+
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(false);
+  }, []);
+
+  const undo = useCallback(() => {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current -= 1;
+    const previous = historyRef.current[historyIndexRef.current];
+    setCollections(previous);
+    syncHiddenInput(previous);
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(true);
+  }, [syncHiddenInput]);
+
+  const redo = useCallback(() => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current += 1;
+    const next = historyRef.current[historyIndexRef.current];
+    setCollections(next);
+    syncHiddenInput(next);
+    setCanUndo(true);
+    setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+  }, [syncHiddenInput]);
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+      if (e.shiftKey) {
+        e.preventDefault();
+        redo();
+      } else {
+        e.preventDefault();
+        undo();
+      }
+    }
+  }, [undo, redo]);
 
   const toJson = useCallback((items: Collection[]): string => {
     return JSON.stringify({ collections: items }, null, 2);
@@ -54,7 +111,19 @@ export function CollectionReorder({ id, name, defaultValue }: CollectionReorderP
     setCollections(items);
     setError(items.length === 0 ? "Add at least one collection" : null);
     syncHiddenInput(items);
-  }, [syncHiddenInput]);
+    pushHistory(items);
+  }, [syncHiddenInput, pushHistory]);
+
+  // Initialize history on mount
+  const initialRef = useRef(false);
+  if (!initialRef.current) {
+    const initial = parseCollections(defaultValue);
+    historyRef.current = [initial];
+    historyIndexRef.current = 0;
+    setCanUndo(false);
+    setCanRedo(false);
+    initialRef.current = true;
+  }
 
   // ── Drag handlers ──────────────────────────────────────────────────────
 
@@ -116,7 +185,7 @@ export function CollectionReorder({ id, name, defaultValue }: CollectionReorderP
       <input type="hidden" ref={hiddenInputRef} id={id} name={name} defaultValue={defaultValue} />
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2" onKeyDown={handleKeyDown}>
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-foreground">Collections ({collections.length})</span>
           {error ? (
@@ -131,10 +200,38 @@ export function CollectionReorder({ id, name, defaultValue }: CollectionReorderP
             </span>
           ) : null}
         </div>
-        <Button type="button" size="xs" variant="outline" onClick={addCollection}>
-          <Plus className="size-3.5" />
-          Add Collection
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={undo}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+            className={`rounded-md p-1.5 transition-colors ${
+              canUndo
+                ? "text-muted-foreground hover:bg-surface hover:text-foreground"
+                : "text-muted-foreground/30 cursor-not-allowed"
+            }`}
+          >
+            <Undo2 className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Shift+Z)"
+            className={`rounded-md p-1.5 transition-colors ${
+              canRedo
+                ? "text-muted-foreground hover:bg-surface hover:text-foreground"
+                : "text-muted-foreground/30 cursor-not-allowed"
+            }`}
+          >
+            <Redo2 className="size-3.5" />
+          </button>
+          <Button type="button" size="xs" variant="outline" onClick={addCollection}>
+            <Plus className="size-3.5" />
+            Add Collection
+          </Button>
+        </div>
       </div>
 
       {/* Sortable list */}

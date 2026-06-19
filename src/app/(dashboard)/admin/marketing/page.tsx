@@ -623,17 +623,15 @@ export default async function AdminMarketingPage() {
               />
             </label>
 
-            <label className="space-y-1.5">
-              <Label htmlFor="blog-content">Content</Label>
-              <textarea
-                id="blog-content"
-                name="content"
-                placeholder="Write full post content here"
-                required
-                minLength={24}
-                className="input-field--textarea w-full min-h-52"
-              />
-            </label>
+            <MarkdownEditor
+              id="blog-content"
+              name="content"
+              placeholder="Write full post content here using markdown..."
+              label="Content"
+              minHeight="min-h-52"
+              required
+              minLength={24}
+            />
 
             <Button type="submit" className="w-full sm:w-auto">
               <Megaphone className="size-4" />
@@ -790,15 +788,15 @@ export default async function AdminMarketingPage() {
                       />
                     </label>
 
-                    <label className="space-y-1.5 md:col-span-2">
-                      <Label htmlFor={`post-content-${post.id}`}>Content</Label>
-                      <textarea
+                    <div className="md:col-span-2">
+                      <MarkdownEditor
                         id={`post-content-${post.id}`}
                         name="content"
                         defaultValue={post.content}
-                        className="input-field--textarea w-full min-h-28"
+                        label="Content"
+                        minHeight="min-h-28"
                       />
-                    </label>
+                    </div>
 
                     <label className="space-y-1.5">
                       <Label htmlFor={`post-state-${post.id}`}>Publish state</Label>
