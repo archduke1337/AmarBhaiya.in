@@ -42,6 +42,8 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
     if (draft) {
       setTitle(draft.title ?? "");
       setSlug(draft.slug ?? "");
+      // If the draft has a non-empty slug, assume it was intentionally set
+      if (draft.slug) slugManuallyEdited.current = true;
       setCategory(draft.category ?? "");
       setAuthorName(draft.authorName ?? "");
       setExcerpt(draft.excerpt ?? "");
