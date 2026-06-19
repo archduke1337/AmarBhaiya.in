@@ -37,7 +37,7 @@ type Payment = {
 type StatusBreakdown = {
   label: string;
   count: number;
-  icon: typeof CheckCircle2;
+  icon: string;
   value: string;
 };
 
