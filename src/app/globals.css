@@ -365,6 +365,15 @@
   .stagger-3 { transition-delay: 0.24s; }
   .stagger-4 { transition-delay: 0.32s; }
   .stagger-5 { transition-delay: 0.40s; }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ── HeroUI Button overrides — pill + brand accent ─────── */

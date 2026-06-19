@@ -1,7 +1,7 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { requireRole } from "@/lib/appwrite/auth";
@@ -86,6 +86,9 @@ function revalidateHomeContentPaths(): void {
   revalidatePath("/");
   revalidatePath("/courses");
   revalidatePath("/api/content/home");
+  // Bust unstable_cache for homepage (cachedHomePage uses tag "public-home")
+  revalidateTag("public-home", { expire: 0 });
+  revalidateTag("public-courses", { expire: 0 });
 }
 
 export async function upsertSiteCopyAction(formData: FormData): Promise<ActionResult> {

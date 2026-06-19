@@ -36,6 +36,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireRole } from "@/lib/appwrite/auth";
 import { BlogPreviewButton } from "./blog-preview";
+import { JsonEditor } from "./json-editor";
+import { CollectionReorder } from "./collection-reorder";
+import { MarkdownEditor } from "./markdown-editor";
 
 const suggestedSiteKeys = [
   "home.domains",
@@ -365,18 +368,11 @@ export default async function AdminMarketingPage() {
             />
           </label>
 
-          <label className="space-y-1.5">
-            <Label htmlFor="collections-payload">Collections JSON</Label>
-            <textarea
-              id="collections-payload"
-              name="payload"
-              defaultValue={collectionsJsonExample}
-              className="input-field--textarea w-full min-h-40 font-mono text-xs"
-            />
-            <p className="text-[10px] font-semibold text-muted-foreground">
-              Each collection has: id, title, subtitle, courseSlugs (array of course slugs), and optional cta. Use course slugs from the Courses table.
-            </p>
-          </label>
+          <CollectionReorder
+            id="collections-payload"
+            name="payload"
+            defaultValue={collectionsJsonExample}
+          />
 
           <div className="flex justify-end">
             <Button type="submit" className="w-full sm:w-auto">
@@ -411,18 +407,16 @@ export default async function AdminMarketingPage() {
           <input type="hidden" name="key" value="site.announcement" />
           <input type="hidden" name="isPublished" value="true" />
 
-          <label className="space-y-1.5">
-            <Label htmlFor="announcement-payload">Banner Configuration JSON</Label>
-            <textarea
-              id="announcement-payload"
-              name="payload"
-              defaultValue={announcementJsonExample}
-              className="input-field--textarea w-full min-h-40 font-mono text-xs"
-            />
-            <p className="text-[10px] font-semibold text-muted-foreground">
-              Fields: text (required), link (optional URL), linkLabel, isDismissible, isActive (set false to hide), backgroundColor (oklch color).
-            </p>
-          </label>
+          <JsonEditor
+            id="announcement-payload"
+            name="payload"
+            defaultValue={announcementJsonExample}
+            label="Banner Configuration JSON"
+            placeholder='{"text": "..."}'
+          />
+          <p className="text-[10px] font-semibold text-muted-foreground">
+            Fields: text (required), link (optional URL), linkLabel, isDismissible, isActive (set false to hide), backgroundColor (oklch color).
+          </p>
 
           <div className="flex justify-end">
             <Button type="submit" className="w-full sm:w-auto">
