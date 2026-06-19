@@ -313,7 +313,7 @@ export async function deleteBlogPostAction(formData: FormData): Promise<ActionRe
 
 // ── Check Slug Uniqueness ─────────────────────────────────────────────────
 
-export async function checkSlugUniquenessAction(formData: FormData): Promise<ActionResult> {
+export async function checkSlugUniquenessAction(formData: FormData): Promise<ActionResult<{ available: boolean }>> {
   await requireRole(["admin"]);
 
   const slug = String(formData.get("slug") ?? "").trim();

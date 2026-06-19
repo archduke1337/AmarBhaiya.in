@@ -1,5 +1,6 @@
 "use server";
 
+import { type ActionResult } from "@/lib/errors/action-result";
 import {
   upsertSiteCopyAction,
   createBlogPostAction,
@@ -24,8 +25,6 @@ export async function deleteBlogPostFormAction(formData: FormData): Promise<void
   await deleteBlogPostAction(formData);
 }
 
-export async function checkSlugUniquenessFormAction(formData: FormData): Promise<ActionResult> {
+export async function checkSlugUniquenessFormAction(formData: FormData): Promise<ActionResult<{ available: boolean }>> {
   return checkSlugUniquenessAction(formData);
 }
-
-import { type ActionResult } from "@/lib/errors/action-result";

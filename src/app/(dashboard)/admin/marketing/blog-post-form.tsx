@@ -35,7 +35,7 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [slugChecking, setSlugChecking] = useState(false);
   const slugManuallyEdited = useRef(false);
-  const slugTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const autoSave = useAutoSave({
     key: "create-blog-post",
@@ -155,12 +155,13 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
               const newTitle = e.target.value;
               setTitle(newTitle);
               if (!slugManuallyEdited.current) {
-                setSlug(
-                  newTitle
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/^-+|-+$/g, "")
-                );
+                const newSlug = newTitle
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/^-+|-+$/g, "");
+                setSlug(newSlug);
+                setSlugAvailable(null);
+                checkSlug(newSlug);
               }
             }}
           />

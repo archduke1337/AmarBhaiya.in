@@ -39,8 +39,10 @@ export function EditBlogPostForm({
   const [slug, setSlug] = useState(post.slug);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [slugChecking, setSlugChecking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const slugManuallyEdited = useRef(false);
-  const slugTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deleteFormRef = useRef<HTMLFormElement>(null);
 
   // Debounced slug uniqueness check
   const checkSlug = useCallback((slugToCheck: string) => {
@@ -68,6 +70,7 @@ export function EditBlogPostForm({
   }, []);
 
   return (
+    <>
     <form
       action={updateBlogPostFormAction}
       className="border-t border-border/40 bg-surface-hover p-5 space-y-4"
@@ -103,7 +106,7 @@ export function EditBlogPostForm({
           <Input
             id={`post-slug-${post.id}`}
             name="slug"
-            defaultValue={post.slug}
+            value={slug}
             placeholder="slug"
             onChange={(e) => {
               slugManuallyEdited.current = true;
@@ -190,13 +193,21 @@ export function EditBlogPostForm({
             <NotebookPen className="size-3.5" />
             Save Changes
           </Button>
-          <form action={deleteBlogPostFormAction} className="inline">
-            <input type="hidden" name="postId" value={post.id} />
-            <Button type="submit" size="sm" variant="destructive">
-              <Trash2 className="size-3.5" />
-              Delete
-            </Button>
-          </form>
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            disabled={deleting}
+            onClick={() => {
+              if (confirm("Delete this post? This cannot be undone.")) {
+                setDeleting(true);
+                deleteFormRef.current?.requestSubmit();
+              }
+            }}
+          >
+            <Trash2 className="size-3.5" />
+            Delete
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild size="xs" variant="outline">
@@ -213,5 +224,16 @@ export function EditBlogPostForm({
         </div>
       </div>
     </form>
+
+    {/* Delete form — must be a sibling, not nested, to avoid invalid HTML */}
+    <form
+      ref={deleteFormRef}
+      action={deleteBlogPostFormAction}
+      className="hidden"
+      aria-hidden="true"
+    >
+      <input type="hidden" name="postId" value={post.id} />
+    </form>
+    </>
   );
 }
