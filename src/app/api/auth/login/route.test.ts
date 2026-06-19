@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 
@@ -16,6 +16,7 @@ describe("POST /api/auth/login", () => {
   const createEmailPasswordSessionMock = vi.fn();
 
   beforeEach(() => {
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost";
     createEmailPasswordSessionMock.mockReset();
     createAdminClientMock.mockReset();
 
@@ -26,10 +27,14 @@ describe("POST /api/auth/login", () => {
     });
   });
 
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+  });
+
   it("returns 400 for invalid payload", async () => {
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({ email: "not-an-email", password: "12345678" }),
     });
 
@@ -49,7 +54,7 @@ describe("POST /api/auth/login", () => {
 
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         email: "user@example.com",
         password: "password123",
@@ -77,7 +82,7 @@ describe("POST /api/auth/login", () => {
 
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         email: "user@example.com",
         password: "password123",
@@ -96,7 +101,7 @@ describe("POST /api/auth/login", () => {
 
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         email: "user@example.com",
         password: "password123",
@@ -115,7 +120,7 @@ describe("POST /api/auth/login", () => {
 
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         email: "user@example.com",
         password: "password123",

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 
@@ -10,9 +10,24 @@ const { createAdminClientMock } = vi.hoisted(() => ({
   createAdminClientMock: vi.fn(),
 }));
 
+const { checkRateLimitMock, getRateLimitKeyMock } = vi.hoisted(() => ({
+  checkRateLimitMock: vi.fn(),
+  getRateLimitKeyMock: vi.fn().mockReturnValue("test-ip"),
+}));
+
+vi.mock("@/lib/rate-limiter", () => ({
+  checkRateLimit: checkRateLimitMock,
+  getRateLimitKey: getRateLimitKeyMock,
+}));
+
 vi.mock("@/lib/appwrite/server", () => ({
   createPublicClient: createPublicClientMock,
   createAdminClient: createAdminClientMock,
+}));
+
+vi.mock("@/lib/rate-limiter", () => ({
+  checkRateLimit: checkRateLimitMock,
+  getRateLimitKey: vi.fn().mockReturnValue("test-ip"),
 }));
 
 vi.mock("node-appwrite", () => ({
@@ -28,9 +43,12 @@ describe("POST /api/auth/register", () => {
   const createEmailPasswordSessionMock = vi.fn();
 
   beforeEach(() => {
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost";
     createMock.mockReset();
     createEmailPasswordSessionMock.mockReset();
     createAdminClientMock.mockReset();
+    checkRateLimitMock.mockReset();
+    checkRateLimitMock.mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000 });
 
     createPublicClientMock.mockResolvedValue({
       account: {
@@ -45,10 +63,14 @@ describe("POST /api/auth/register", () => {
     });
   });
 
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+  });
+
   it("returns 400 for invalid payload", async () => {
     const request = new Request("http://localhost/api/auth/register", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         name: "A",
         email: "not-an-email",
@@ -74,11 +96,11 @@ describe("POST /api/auth/register", () => {
 
     const request = new Request("http://localhost/api/auth/register", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         name: "Test User",
         email: "user@example.com",
-        password: "password123",
+        password: "Password123!",
         consent: true,
       }),
     });
@@ -92,12 +114,12 @@ describe("POST /api/auth/register", () => {
     expect(createMock).toHaveBeenCalledWith({
       userId: "mock-user-id",
       email: "user@example.com",
-      password: "password123",
+      password: "Password123!",
       name: "Test User",
     });
     expect(createEmailPasswordSessionMock).toHaveBeenCalledWith({
       email: "user@example.com",
-      password: "password123",
+      password: "Password123!",
     });
     expect(setCookie).toContain(`${APPWRITE_CONFIG.sessionCookieName}=session-secret`);
   });
@@ -107,11 +129,11 @@ describe("POST /api/auth/register", () => {
 
     const request = new Request("http://localhost/api/auth/register", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         name: "Test User",
         email: "user@example.com",
-        password: "password123",
+        password: "Password123!",
         consent: true,
       }),
     });
@@ -129,11 +151,11 @@ describe("POST /api/auth/register", () => {
 
     const request = new Request("http://localhost/api/auth/register", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         name: "Test User",
         email: "user@example.com",
-        password: "password123",
+        password: "Password123!",
         consent: true,
       }),
     });
@@ -154,11 +176,11 @@ describe("POST /api/auth/register", () => {
 
     const request = new Request("http://localhost/api/auth/register", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
       body: JSON.stringify({
         name: "Test User",
         email: "user@example.com",
-        password: "password123",
+        password: "Password123!",
         consent: true,
       }),
     });
