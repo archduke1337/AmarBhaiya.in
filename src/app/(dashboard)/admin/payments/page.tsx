@@ -1,29 +1,22 @@
-import Link from "next/link";
 import {
   AlertTriangle,
   CheckCircle2,
   Clock,
   CreditCard,
   DollarSign,
-  Filter,
   Receipt,
   TrendingUp,
 } from "lucide-react";
 
 import { getAdminPayments } from "@/lib/appwrite/dashboard-data";
+import { formatCurrency } from "@/lib/utils/format";
 import {
-  formatCurrency,
-  formatDateTime,
-  formatRelativeTime,
-} from "@/lib/utils/format";
-import {
-  ActivityFeed,
   EmptyState,
   PageHeader,
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
-import { Badge } from "@/components/ui/badge";
+import { PaymentsManager } from "./payments-manager";
 
 type CourseRevenueItem = {
   courseId: string;
@@ -117,33 +110,6 @@ export default async function AdminPaymentsPage() {
         />
       </StatGrid>
 
-      {/* Quick filter nav */}
-      {payments.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <Filter className="size-3.5 text-muted-foreground" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Quick filter:</span>
-          <a href="#payments-list" className="text-xs font-semibold text-foreground hover:text-accent transition-colors">All ({payments.length})</a>
-          {pendingPayments.length > 0 && (
-            <a href="#payments-list" className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/5 px-2.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors">
-              <Clock className="size-3" />
-              Pending ({pendingPayments.length})
-            </a>
-          )}
-          {failedPayments.length > 0 && (
-            <a href="#payments-list" className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-2.5 py-0.5 text-[10px] font-semibold text-destructive hover:bg-destructive/10 transition-colors">
-              <AlertTriangle className="size-3" />
-              Failed ({failedPayments.length})
-            </a>
-          )}
-          {refundedPayments.length > 0 && (
-            <a href="#payments-list" className="inline-flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/5 px-2.5 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors">
-              <Receipt className="size-3" />
-              Refunded ({refundedPayments.length})
-            </a>
-          )}
-        </div>
-      )}
-
       {payments.length === 0 ? (
         <EmptyState
           icon={CreditCard}
@@ -152,221 +118,23 @@ export default async function AdminPaymentsPage() {
         />
       ) : (
         <div className="grid gap-6 xl:grid-cols-3">
-          <div
-            id="payments-list"
-            className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface xl:col-span-2"
-          >
-            <div className="flex flex-col gap-3 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="font-heading text-lg font-black tracking-[-0.04em]">
-                  All Transactions
-                </h2>
-                <p className="text-xs font-semibold leading-6 text-muted-foreground">
-                  Newest records first, with direct student and course drill-down.
-                </p>
-              </div>
-              <Badge variant="outline">{payments.length} records</Badge>
-            </div>
-
-            <div className="hidden items-center gap-4 border-b-2 border-border bg-[color:var(--surface-muted)] px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1.1fr_1.1fr_1fr_90px_100px_100px]">
-              <span>Student</span>
-              <span>Course</span>
-              <span>Reference</span>
-              <span>Method</span>
-              <span>Amount</span>
-              <span>Status</span>
-            </div>
-
-            <div className="divide-y divide-border">
-              {payments.map((payment) => (
-                <div
-                  key={payment.id}
-                  id={`payment-${payment.id}`}
-                  className="flex scroll-mt-24 flex-col gap-3 px-5 py-4 transition-colors hover:bg-accent/30 md:grid md:grid-cols-[1.1fr_1.1fr_1fr_90px_100px_100px] md:items-center md:gap-4"
-                >
-                  <div className="min-w-0">
-                    {payment.userId ? (
-                      <Link
-                        href={`/admin/students/${payment.userId}`}
-                        className="text-sm font-semibold underline-offset-4 hover:underline"
-                      >
-                        {payment.userName}
-                      </Link>
-                    ) : (
-                      <p className="text-sm font-semibold">{payment.userName}</p>
-                    )}
-                    <p className="text-[10px] font-semibold text-muted-foreground md:hidden">
-                      {payment.providerRef}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0">
-                    {payment.courseSlug ? (
-                      <Link
-                        href={`/courses/${payment.courseSlug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="line-clamp-1 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                      >
-                        {payment.courseTitle}
-                      </Link>
-                    ) : (
-                      <p className="line-clamp-1 text-sm font-medium text-muted-foreground">
-                        {payment.courseTitle}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="truncate font-mono text-xs font-semibold text-muted-foreground">
-                      {payment.providerRef}
-                    </p>
-                    <p className="text-[10px] font-semibold text-muted-foreground">
-                      {payment.createdAt ? formatDateTime(payment.createdAt) : "Unknown time"}
-                    </p>
-                  </div>
-
-                  <span className="text-xs font-semibold capitalize text-muted-foreground">
-                    {payment.method}
-                  </span>
-
-                  <span className="text-sm font-semibold tabular-nums">
-                    {formatCurrency(payment.amount, payment.currency)}
-                  </span>
-
-                  <Badge
-                    variant={payment.status === "completed" ? "default" : "outline"}
-                    className="w-fit uppercase"
-                  >
-                    {payment.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <aside className="flex flex-col gap-6">
-            <ActivityFeed
-              title="Needs Attention"
-              emptyText="No pending, failed, or refunded payments."
-              items={attentionPayments.slice(0, 6).map((payment) => ({
-                id: payment.id,
-                label: `${payment.userName} · ${formatCurrency(payment.amount, payment.currency)}`,
-                description: `${payment.courseTitle} · ${payment.providerRef}`,
-                badge: payment.status,
-                timestamp: payment.createdAt ? formatRelativeTime(payment.createdAt) : undefined,
-                href: `#payment-${payment.id}`,
-              }))}
-            />
-
-            <ActivityFeed
-              title="Recent Successful Payments"
-              emptyText="No completed payments yet."
-              items={completedPayments.slice(0, 6).map((payment) => ({
-                id: payment.id,
-                label: `${payment.userName} paid ${formatCurrency(payment.amount, payment.currency)}`,
-                description: payment.courseTitle,
-                badge: payment.method,
-                timestamp: payment.createdAt ? formatRelativeTime(payment.createdAt) : undefined,
-                href: `#payment-${payment.id}`,
-              }))}
-            />
-
-            <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
-              <div className="border-b-2 border-border px-5 py-3">
-                <h2 className="font-heading text-base font-black tracking-[-0.03em]">
-                  Top Grossing Courses
-                </h2>
-              </div>
-              <div className="divide-y divide-border">
-                {topCourseItems.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-sm font-semibold leading-7 text-muted-foreground">
-                    No course revenue yet.
-                  </p>
-                ) : (
-                  topCourseItems.map((course) => (
-                    <div
-                      key={course.courseId || course.courseTitle}
-                      className="flex items-center justify-between gap-3 px-5 py-3.5"
-                    >
-                      <div className="min-w-0">
-                        {course.courseSlug ? (
-                          <Link
-                            href={`/courses/${course.courseSlug}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="line-clamp-1 text-sm font-semibold underline-offset-4 hover:underline"
-                          >
-                            {course.courseTitle}
-                          </Link>
-                        ) : (
-                          <p className="line-clamp-1 text-sm font-semibold">{course.courseTitle}</p>
-                        )}
-                        <p className="text-xs font-semibold text-muted-foreground">
-                          {course.payments} completed payment{course.payments === 1 ? "" : "s"}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold tabular-nums">
-                          {formatCurrency(course.revenue)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
-              <div className="border-b-2 border-border px-5 py-3">
-                <h2 className="font-heading text-base font-black tracking-[-0.03em]">
-                  Status Breakdown
-                </h2>
-              </div>
-              <div className="divide-y divide-border">
-                {[
-                  {
-                    label: "Completed",
-                    count: completedPayments.length,
-                    icon: CheckCircle2,
-                    value: formatCurrency(totalRevenue),
-                  },
-                  {
-                    label: "Pending",
-                    count: pendingPayments.length,
-                    icon: Clock,
-                    value: `${pendingPayments.length} records`,
-                  },
-                  {
-                    label: "Failed",
-                    count: failedPayments.length,
-                    icon: AlertTriangle,
-                    value: `${failedPayments.length} records`,
-                  },
-                  {
-                    label: "Refunded",
-                    count: refundedPayments.length,
-                    icon: Receipt,
-                    value: `${refundedPayments.length} records`,
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between gap-3 px-5 py-3.5"
-                  >
-                    <div className="flex items-center gap-2 text-sm font-semibold">
-                      <item.icon className="size-4 text-muted-foreground" />
-                      {item.label}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold tabular-nums">{item.count}</p>
-                      <p className="text-[10px] font-semibold text-muted-foreground">{item.value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </aside>
+          <PaymentsManager
+            payments={payments}
+            completedPayments={completedPayments}
+            pendingPayments={pendingPayments}
+            failedPayments={failedPayments}
+            refundedPayments={refundedPayments}
+            totalRevenue={totalRevenue}
+            monthlyRevenue={monthlyRevenue}
+            topCourseItems={topCourseItems}
+            attentionPayments={attentionPayments}
+            statusBreakdown={[
+              { label: "Completed", count: completedPayments.length, icon: CheckCircle2, value: formatCurrency(totalRevenue) },
+              { label: "Pending", count: pendingPayments.length, icon: Clock, value: `${pendingPayments.length} records` },
+              { label: "Failed", count: failedPayments.length, icon: AlertTriangle, value: `${failedPayments.length} records` },
+              { label: "Refunded", count: refundedPayments.length, icon: Receipt, value: `${refundedPayments.length} records` },
+            ]}
+          />
         </div>
       )}
     </div>
