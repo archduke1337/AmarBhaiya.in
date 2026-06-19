@@ -17,9 +17,10 @@ type CollectionReorderProps = {
   id: string;
   name: string;
   defaultValue: string;
+  onChange?: (json: string) => void;
 };
 
-export function CollectionReorder({ id, name, defaultValue }: CollectionReorderProps) {
+export function CollectionReorder({ id, name, defaultValue, onChange }: CollectionReorderProps) {
   const parseCollections = useCallback((json: string): Collection[] => {
     try {
       const parsed = JSON.parse(json);
@@ -50,7 +51,8 @@ export function CollectionReorder({ id, name, defaultValue }: CollectionReorderP
     if (hiddenInputRef.current) {
       hiddenInputRef.current.value = json;
     }
-  }, [toJson]);
+    onChange?.(json);
+  }, [toJson, onChange]);
 
   // ── Undo / Redo history stack ───────────────────────────────────────────
   const historyRef = useRef<Collection[][]>([[]]);

@@ -37,8 +37,8 @@ import { Label } from "@/components/ui/label";
 import { requireRole } from "@/lib/appwrite/auth";
 import { BlogPreviewButton } from "./blog-preview";
 import { BlogPostForm } from "./blog-post-form";
+import { CollectionsForm } from "./collections-form";
 import { JsonEditor } from "./json-editor";
-import { CollectionReorder } from "./collection-reorder";
 import { MarkdownEditor } from "./markdown-editor";
 
 const suggestedSiteKeys = [
@@ -355,33 +355,13 @@ export default async function AdminMarketingPage() {
           </div>
         </div>
 
-        <form action={upsertSiteCopyFormAction} className="flex flex-col gap-4 p-5">
-          <input type="hidden" name="key" value="home.collections" />
-          <input type="hidden" name="isPublished" value="true" />
-
-          <label className="space-y-1.5">
-            <Label htmlFor="collections-title">Collection Title</Label>
-            <Input
-              id="collections-title"
-              name="title"
-              placeholder="e.g. Curated Learning Packs"
-              defaultValue="Curated Learning Packs"
-            />
-          </label>
-
-          <CollectionReorder
-            id="collections-payload"
-            name="payload"
-            defaultValue={collectionsJsonExample}
-          />
-
-          <div className="flex justify-end">
-            <Button type="submit" className="w-full sm:w-auto">
-              <BookOpen className="size-4" />
-              Save Collections
-            </Button>
-          </div>
-        </form>
+        <CollectionsForm
+          upsertSiteCopyFormAction={upsertSiteCopyFormAction}
+          defaults={{
+            title: "Curated Learning Packs",
+            payload: collectionsJsonExample,
+          }}
+        />
 
         <div className="border-t border-border/40 bg-surface-hover px-5 py-2.5">
           <p className="text-[10px] font-semibold text-muted-foreground">
