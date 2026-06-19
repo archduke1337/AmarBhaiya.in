@@ -124,3 +124,245 @@ import {
 export async function issueCertificateFormAction(formData: FormData): Promise<void> {
   await issueCertificateAction(formData);
 }
+
+// ── Categories ──────────────────────────────────────────────────────────────
+
+import {
+  createCategoryAction,
+  updateCategoryAction,
+} from "./categories";
+import {
+  deleteCategoryAction,
+} from "./delete";
+
+export async function createCategoryFormAction(formData: FormData): Promise<void> {
+  await createCategoryAction(formData);
+}
+
+export async function updateCategoryFormAction(formData: FormData): Promise<void> {
+  await updateCategoryAction(formData);
+}
+
+export async function deleteCategoryFormAction(formData: FormData): Promise<void> {
+  await deleteCategoryAction(formData);
+}
+
+// ── Delete (Course/Module/Lesson/Session) ───────────────────────────────────
+
+import {
+  deleteCourseAction,
+  deleteModuleAction,
+  deleteLessonAction,
+  deleteLiveSessionAction,
+} from "./delete";
+
+export async function deleteCourseFormAction(formData: FormData): Promise<void> {
+  await deleteCourseAction(formData);
+}
+
+export async function deleteModuleFormAction(formData: FormData): Promise<void> {
+  await deleteModuleAction(formData);
+}
+
+export async function deleteLessonFormAction(formData: FormData): Promise<void> {
+  await deleteLessonAction(formData);
+}
+
+export async function deleteLiveSessionFormAction(formData: FormData): Promise<void> {
+  await deleteLiveSessionAction(formData);
+}
+
+// ── Dashboard ───────────────────────────────────────────────────────────────
+
+import {
+  createForumThreadAction,
+  createCourseDraftAction,
+  createLiveSessionAction,
+  updateLiveSessionAction,
+} from "./dashboard";
+
+export async function createForumThreadFormAction(formData: FormData): Promise<void> {
+  await createForumThreadAction(formData);
+}
+
+export async function createCourseDraftFormAction(formData: FormData): Promise<void> {
+  await createCourseDraftAction(formData);
+}
+
+export async function createLiveSessionFormAction(formData: FormData): Promise<void> {
+  await createLiveSessionAction(formData);
+}
+
+export async function updateLiveSessionFormAction(formData: FormData): Promise<void> {
+  await updateLiveSessionAction(formData);
+}
+
+// ── Marketing ───────────────────────────────────────────────────────────────
+
+import {
+  upsertSiteCopyAction,
+  createBlogPostAction,
+  updateBlogPostAction,
+  deleteBlogPostAction,
+} from "./marketing";
+
+export async function upsertSiteCopyFormAction(formData: FormData): Promise<void> {
+  await upsertSiteCopyAction(formData);
+}
+
+export async function createBlogPostFormAction(formData: FormData): Promise<void> {
+  await createBlogPostAction(formData);
+}
+
+export async function updateBlogPostFormAction(formData: FormData): Promise<void> {
+  await updateBlogPostAction(formData);
+}
+
+export async function deleteBlogPostFormAction(formData: FormData): Promise<void> {
+  await deleteBlogPostAction(formData);
+}
+
+// ── Moderation ──────────────────────────────────────────────────────────────
+
+import {
+  resolveModerationActionAction,
+  applyModerationActionAction,
+} from "./moderation";
+
+export async function resolveModerationActionFormAction(formData: FormData): Promise<void> {
+  await resolveModerationActionAction(formData);
+}
+
+export async function applyModerationActionFormAction(formData: FormData): Promise<void> {
+  await applyModerationActionAction(formData);
+}
+
+// ── Operations ──────────────────────────────────────────────────────────────
+
+import {
+  updateInstructorCourseAction,
+  updateCourseVisibilityAction,
+  updateUserRoleAction,
+} from "./operations";
+
+export async function updateInstructorCourseFormAction(formData: FormData): Promise<void> {
+  await updateInstructorCourseAction(formData);
+}
+
+export async function updateCourseVisibilityFormAction(formData: FormData): Promise<void> {
+  await updateCourseVisibilityAction(formData);
+}
+
+export async function updateUserRoleFormAction(formData: FormData): Promise<void> {
+  await updateUserRoleAction(formData);
+}
+
+// ── Subscriptions ───────────────────────────────────────────────────────────
+
+import {
+  cancelSubscriptionAction,
+  adminCreateSubscriptionAction,
+  adminUpdateSubscriptionAction,
+} from "./subscriptions";
+
+export async function cancelSubscriptionFormAction(formData: FormData): Promise<void> {
+  await cancelSubscriptionAction(formData);
+}
+
+export async function adminCreateSubscriptionFormAction(formData: FormData): Promise<void> {
+  await adminCreateSubscriptionAction(formData);
+}
+
+export async function adminUpdateSubscriptionFormAction(formData: FormData): Promise<void> {
+  await adminUpdateSubscriptionAction(formData);
+}
+
+// ── Profile ─────────────────────────────────────────────────────────────────
+
+import {
+  upsertStudentProfileAction,
+  upsertBillingInfoAction,
+} from "./profile";
+
+export async function upsertStudentProfileFormAction(formData: FormData): Promise<void> {
+  await upsertStudentProfileAction(formData);
+}
+
+export async function upsertBillingInfoFormAction(formData: FormData): Promise<void> {
+  await upsertBillingInfoAction(formData);
+}
+
+// ── Notifications ────────────────────────────────────────────────────────────
+
+import {
+  sendNotificationAction,
+  broadcastNotificationAction,
+} from "./notifications";
+
+export async function sendNotificationFormAction(formData: FormData): Promise<void> {
+  await sendNotificationAction(formData);
+}
+
+export async function broadcastNotificationFormAction(formData: FormData): Promise<void> {
+  await broadcastNotificationAction(formData);
+}
+
+// ── Community ────────────────────────────────────────────────────────────────
+
+import {
+  createForumReplyAction,
+  deleteForumReplyAction,
+  lockThreadAction,
+  unlockThreadAction,
+} from "./community";
+
+export async function createForumReplyFormAction(formData: FormData): Promise<void> {
+  await createForumReplyAction(formData);
+}
+
+export async function deleteForumReplyFormAction(formData: FormData): Promise<void> {
+  await deleteForumReplyAction(formData);
+}
+
+export async function lockThreadFormAction(formData: FormData): Promise<void> {
+  await lockThreadAction(formData);
+}
+
+export async function unlockThreadFormAction(formData: FormData): Promise<void> {
+  await unlockThreadAction(formData);
+}
+
+// ── Comments ─────────────────────────────────────────────────────────────────
+
+import {
+  postLessonCommentAction,
+  postCourseCommentAction,
+} from "./comments";
+
+export async function postLessonCommentFormAction(formData: FormData): Promise<void> {
+  await postLessonCommentAction(formData);
+}
+
+export async function postCourseCommentFormAction(formData: FormData): Promise<void> {
+  await postCourseCommentAction(formData);
+}
+
+// ── Account ─────────────────────────────────────────────────────────────────
+
+import {
+  rsvpToSessionAction,
+  changePasswordAction,
+  updateDisplayNameAction,
+} from "./account";
+
+export async function rsvpToSessionFormAction(formData: FormData): Promise<void> {
+  await rsvpToSessionAction(formData);
+}
+
+export async function changePasswordFormAction(formData: FormData): Promise<void> {
+  await changePasswordAction(formData);
+}
+
+export async function updateDisplayNameFormAction(formData: FormData): Promise<void> {
+  await updateDisplayNameAction(formData);
+}

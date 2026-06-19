@@ -1,7 +1,7 @@
 import {
-  createCategoryAction,
-  updateCategoryAction,
-} from "@/actions/categories";
+  createCategoryFormAction,
+  updateCategoryFormAction,
+} from "@/actions/form-wrappers";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
 
@@ -24,7 +24,7 @@ export default async function InstructorCategoriesPage() {
           Create and refine categories here so your courses are mapped correctly in discovery.
         </p>
 
-        <form action={createCategoryAction} className="grid gap-3 md:grid-cols-2">
+        <form action={createCategoryFormAction} className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1 text-sm">
             <span>Name</span>
             <input
@@ -85,7 +85,7 @@ export default async function InstructorCategoriesPage() {
 
         {categories.map((category) => (
           <article key={category.id} className="border border-border p-4">
-            <form action={updateCategoryAction} className="grid gap-3 md:grid-cols-2">
+            <form action={updateCategoryFormAction} className="grid gap-3 md:grid-cols-2">
               <input type="hidden" name="categoryId" value={category.id} />
 
               <label className="space-y-1 text-sm">

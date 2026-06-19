@@ -5,7 +5,7 @@ import {
   getRecentLiveRecordings,
   getUpcomingLiveSessions,
 } from "@/lib/appwrite/dashboard-data";
-import { rsvpToSessionAction } from "@/actions/account";
+import { rsvpToSessionFormAction } from "@/actions/form-wrappers";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -97,7 +97,7 @@ export default async function StudentLivePage() {
                           </span>
                         )
                       ) : (
-                        <form action={rsvpToSessionAction}>
+                        <form action={rsvpToSessionFormAction}>
                           <input
                             type="hidden"
                             name="sessionId"

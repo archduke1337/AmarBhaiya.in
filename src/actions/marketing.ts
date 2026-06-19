@@ -13,7 +13,7 @@ import {
   listAllRows,
   type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 const upsertSiteCopySchema = z.object({
   key: z.string().trim().min(3),
@@ -93,7 +93,7 @@ function revalidateHomeContentPaths(): void {
   revalidatePath("/api/content/home");
 }
 
-export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
+export async function upsertSiteCopyAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const parsed = upsertSiteCopySchema.safeParse({
@@ -105,14 +105,12 @@ export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: key (min 3 chars) is required");
-    return;
+    return actionError("Invalid input: key (min 3 chars) is required");
   }
 
   const normalizedPayload = normalizeJsonPayload(parsed.data.payload);
   if (normalizedPayload === null) {
-    actionError("Invalid JSON payload submitted for site copy");
-    return;
+    return actionError("Invalid JSON payload submitted for site copy");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -161,11 +159,10 @@ export async function upsertSiteCopyAction(formData: FormData): Promise<void> {
   revalidatePath("/blog");
   revalidatePath("/admin/marketing");
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
 
-export async function createBlogPostAction(formData: FormData): Promise<void> {
+export async function createBlogPostAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const parsed = createBlogPostSchema.safeParse({
@@ -181,8 +178,7 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: name is required (min 2 characters)");
-    return;
+    return actionError("Invalid input: name is required (min 2 characters)");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -213,8 +209,7 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
       revalidatePath("/blog");
       revalidatePath("/admin/marketing");
       revalidateEach(getBlogDetailPaths(slug));
-      actionSuccess();
-      return;
+      return actionSuccess();
     } catch (error) {
       const appwriteError = error as { code?: number };
       if (appwriteError.code !== 409) {
@@ -222,19 +217,17 @@ export async function createBlogPostAction(formData: FormData): Promise<void> {
       }
     }
   }
-  actionError("Failed to create blog post: slug conflict after multiple attempts");
-  return;
+  return actionError("Failed to create blog post: slug conflict after multiple attempts");
 }
 
 // ── Update Blog Post ──────────────────────────────────────────────────────
 
-export async function updateBlogPostAction(formData: FormData): Promise<void> {
+export async function updateBlogPostAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const postId = String(formData.get("postId") ?? "");
   if (!postId) {
-    actionError("Invalid input: postId is required");
-    return;
+    return actionError("Invalid input: postId is required");
   }
   const { tablesDB } = await createAdminClient();
   const existingPost = (await tablesDB.getRow({
@@ -243,8 +236,7 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
     rowId: postId,
   }).catch(() => null)) as AnyRow | null;
   if (!existingPost) {
-    actionError("Blog post not found");
-    return;
+    return actionError("Blog post not found");
   }
   const data: Record<string, unknown> = {};
 
@@ -266,8 +258,7 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
   }
 
   if (Object.keys(data).length === 0) {
-    actionError("No fields to update");
-    return;
+    return actionError("No fields to update");
   }
   try {
     await tablesDB.updateRow({
@@ -281,23 +272,20 @@ export async function updateBlogPostAction(formData: FormData): Promise<void> {
     revalidatePath("/blog");
     revalidatePath("/admin/marketing");
     revalidateEach(getBlogDetailPaths(String(existingPost.slug ?? "")));
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    actionError(error instanceof Error ? error.message : "Failed to update blog post.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to update blog post.");
   }
 }
 
 // ── Delete Blog Post ──────────────────────────────────────────────────────
 
-export async function deleteBlogPostAction(formData: FormData): Promise<void> {
+export async function deleteBlogPostAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const postId = String(formData.get("postId") ?? "");
   if (!postId) {
-    actionError("Invalid input: postId is required");
-    return;
+    return actionError("Invalid input: postId is required");
   }
   const { tablesDB } = await createAdminClient();
   const existingPost = (await tablesDB.getRow({
@@ -306,8 +294,7 @@ export async function deleteBlogPostAction(formData: FormData): Promise<void> {
     rowId: postId,
   }).catch(() => null)) as AnyRow | null;
   if (!existingPost) {
-    actionError("Blog post not found");
-    return;
+    return actionError("Blog post not found");
   }
   try {
     await tablesDB.deleteRow({
@@ -320,11 +307,9 @@ export async function deleteBlogPostAction(formData: FormData): Promise<void> {
     revalidatePath("/blog");
     revalidatePath("/admin/marketing");
     revalidateEach(getBlogDetailPaths(String(existingPost.slug ?? "")));
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    actionError(error instanceof Error ? error.message : "Failed to delete blog post.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to delete blog post.");
   }
 }
 

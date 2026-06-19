@@ -4,8 +4,10 @@ import { ArrowLeft, Pin, Lock, MessageSquare } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import {
-  createForumReplyAction,
-  deleteForumReplyAction,
+  createForumReplyFormAction,
+  deleteForumReplyFormAction,
+} from "@/actions/form-wrappers";
+import {
   getForumThreadDetail,
   getForumThreadReplies,
 } from "@/actions/community";
@@ -143,7 +145,7 @@ export default async function ThreadDetailPage({ params }: PageProps) {
                       {reply.body}
                     </p>
                     {isMod && (
-                      <form action={deleteForumReplyAction} className="mt-2">
+                      <form action={deleteForumReplyFormAction} className="mt-2">
                         <input type="hidden" name="replyId" value={reply.id} />
                         <input type="hidden" name="threadId" value={thread.id} />
                         <Button
@@ -180,7 +182,7 @@ export default async function ThreadDetailPage({ params }: PageProps) {
             </p>
           </div>
           <form
-            action={createForumReplyAction}
+            action={createForumReplyFormAction}
             className="flex flex-col gap-4 p-5"
           >
             <input type="hidden" name="threadId" value={thread.id} />

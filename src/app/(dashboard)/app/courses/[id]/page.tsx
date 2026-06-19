@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpenCheck, Download, Lock, MessageSquareMore } from "lucide-react";
 
-import { getCourseComments, postCourseCommentAction } from "@/actions/comments";
+import { postCourseCommentFormAction } from "@/actions/form-wrappers";
+import { getCourseComments } from "@/actions/comments";
 import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
@@ -226,7 +227,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
         {hasFullAccess ? (
           <>
             <form
-              action={postCourseCommentAction}
+              action={postCourseCommentFormAction}
               className="border-b-2 border-border p-5 space-y-3"
             >
               <input type="hidden" name="courseId" value={course.id} />

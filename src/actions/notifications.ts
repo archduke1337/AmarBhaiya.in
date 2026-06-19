@@ -10,7 +10,7 @@ import { listAllRows } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { processInBatches } from "@/lib/utils/batch";
 import { toNotificationActionUrl } from "@/lib/utils/url";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -272,7 +272,7 @@ export async function markAllNotificationsReadAction(): Promise<void> {
 
 export async function sendNotificationAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const userId = String(formData.get("userId") ?? "");
@@ -281,7 +281,7 @@ export async function sendNotificationAction(
   const link = String(formData.get("link") ?? "").trim();
   const type = String(formData.get("type") ?? "info");
 
-  if (!userId || !title) return;
+  if (!userId || !title) return actionError("User ID and title are required.");
 
   try {
     const { tablesDB } = await createAdminClient();
@@ -298,12 +298,9 @@ export async function sendNotificationAction(
     );
 
     revalidatePath("/admin/notifications");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to send notification."
-    );
-    actionError(error instanceof Error ? error.message : "Failed to send notification.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to send notification.");
   }
 }
 
@@ -311,7 +308,7 @@ export async function sendNotificationAction(
 
 export async function broadcastNotificationAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const title = String(formData.get("title") ?? "").trim();
@@ -319,7 +316,7 @@ export async function broadcastNotificationAction(
   const link = String(formData.get("link") ?? "").trim();
   const type = String(formData.get("type") ?? "announcement");
 
-  if (!title) return;
+  if (!title) return actionError("Title is required.");
 
   try {
     const { tablesDB, users } = await createAdminClient();
@@ -343,11 +340,8 @@ export async function broadcastNotificationAction(
 
     revalidatePath("/admin/notifications");
     revalidatePath("/admin");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to broadcast."
-    );
-    actionError(error instanceof Error ? error.message : "Failed to broadcast.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to broadcast.");
   }
 }

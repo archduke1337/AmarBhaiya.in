@@ -13,7 +13,7 @@ import {
 } from "@/lib/appwrite/row-pagination";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -106,7 +106,7 @@ async function syncForumThreadReplyMetadata(threadId: string): Promise<void> {
 
 export async function createForumReplyAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
 
   const parsed = createReplySchema.safeParse({
@@ -114,13 +114,12 @@ export async function createForumReplyAction(
     body: String(formData.get("body") ?? ""),
   });
 
-  if (!parsed.success) return;
+  if (!parsed.success) return actionError("Invalid input: thread and body are required.");
 
   try {
     const { tablesDB } = await createSessionClient();
     const now = new Date().toISOString();
 
-    // Check thread exists and is not locked
     const thread = (await tablesDB.getRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.forumThreads,
@@ -128,10 +127,9 @@ export async function createForumReplyAction(
     })) as AnyRow;
 
     if (Boolean(thread.isLocked)) {
-      return; // Thread is locked, can't reply
+      return actionError("Thread is locked.");
     }
 
-    // Create the reply
     await tablesDB.createRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.forumReplies,
@@ -152,12 +150,9 @@ export async function createForumReplyAction(
     revalidatePath("/app/community");
     revalidatePath(`/app/community/${parsed.data.threadId}`);
     revalidatePath("/moderator/community");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to create reply."
-    );
-    actionError(error instanceof Error ? error.message : "Failed to create reply.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to create reply.");
   }
 }
 
@@ -241,12 +236,12 @@ export async function getForumThreadReplies(
 
 export async function deleteForumReplyAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   await requireRole(["admin", "moderator"]);
 
   const replyId = String(formData.get("replyId") ?? "").trim();
   const threadId = String(formData.get("threadId") ?? "").trim();
-  if (!replyId) return;
+  if (!replyId) return actionError("Reply ID is required.");
 
   const { tablesDB } = await createAdminClient();
 
@@ -257,7 +252,7 @@ export async function deleteForumReplyAction(
       rowId: replyId,
     }).catch(() => null)) as AnyRow | null;
     if (!reply || Boolean(reply.isDeleted)) {
-      return;
+      return actionError("Reply not found or already deleted.");
     }
 
     const resolvedThreadId = String(reply.threadId ?? threadId);
@@ -279,20 +274,19 @@ export async function deleteForumReplyAction(
     }
     revalidatePath("/app/community");
     revalidatePath("/moderator/community");
+    return actionSuccess();
   } catch (error) {
-    console.error("[Mod] Reply delete failed:", error instanceof Error ? error.message : error);
-    actionError(error instanceof Error ? error.message : String(error));
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to delete reply.");
   }
 }
 
 // ── Lock Thread (Moderator) ─────────────────────────────────────────────────
 
-export async function lockThreadAction(formData: FormData): Promise<void> {
+export async function lockThreadAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin", "moderator"]);
 
   const threadId = String(formData.get("threadId") ?? "").trim();
-  if (!threadId) return;
+  if (!threadId) return actionError("Thread ID is required.");
 
   const { tablesDB } = await createAdminClient();
 
@@ -307,20 +301,19 @@ export async function lockThreadAction(formData: FormData): Promise<void> {
     revalidatePath(`/app/community/${threadId}`);
     revalidatePath("/app/community");
     revalidatePath("/moderator/community");
+    return actionSuccess();
   } catch (error) {
-    console.error("[Mod] Lock thread failed:", error instanceof Error ? error.message : error);
-    actionError(error instanceof Error ? error.message : String(error));
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to lock thread.");
   }
 }
 
 // ── Unlock Thread (Moderator) ───────────────────────────────────────────────
 
-export async function unlockThreadAction(formData: FormData): Promise<void> {
+export async function unlockThreadAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin", "moderator"]);
 
   const threadId = String(formData.get("threadId") ?? "").trim();
-  if (!threadId) return;
+  if (!threadId) return actionError("Thread ID is required.");
 
   const { tablesDB } = await createAdminClient();
 
@@ -335,9 +328,8 @@ export async function unlockThreadAction(formData: FormData): Promise<void> {
     revalidatePath(`/app/community/${threadId}`);
     revalidatePath("/app/community");
     revalidatePath("/moderator/community");
+    return actionSuccess();
   } catch (error) {
-    console.error("[Mod] Unlock thread failed:", error instanceof Error ? error.message : error);
-    actionError(error instanceof Error ? error.message : String(error));
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to unlock thread.");
   }
 }

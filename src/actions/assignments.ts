@@ -9,7 +9,7 @@ import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { listAllRows, type AnyAppwriteRow } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 type AnyRow = AnyAppwriteRow;
 
@@ -42,7 +42,7 @@ export type AssignmentItem = {
 
 export async function createAssignmentAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const courseId = String(formData.get("courseId") ?? "");
@@ -52,12 +52,10 @@ export async function createAssignmentAction(
   const dueDate = String(formData.get("dueDate") ?? "");
 
   if (!courseId || !title) {
-    actionError("Course ID and title are required");
-    return;
+    return actionError("Course ID and title are required");
   }
   if (!(await userCanManageCourse(courseId, role, user.$id))) {
-    actionError("You do not have permission to manage this course");
-    return;
+    return actionError("You do not have permission to manage this course");
   }
 
   try {
@@ -71,8 +69,7 @@ export async function createAssignmentAction(
       }).catch(() => null)) as AnyRow | null;
 
       if (!lesson || String(lesson.courseId ?? "") !== courseId) {
-        actionError("Lesson does not belong to the specified course");
-        return;
+        return actionError("Lesson does not belong to the specified course");
       }
     }
 
@@ -90,14 +87,12 @@ export async function createAssignmentAction(
     });
 
     revalidatePath(`/instructor/courses/${courseId}/curriculum`);
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create assignment."
     );
-    actionError("Failed to create assignment");
-    return;
+    return actionError("Failed to create assignment");
   }
 }
 
@@ -134,23 +129,20 @@ export async function getCourseAssignments(
 
 export async function deleteAssignmentAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const assignmentId = String(formData.get("assignmentId") ?? "");
   if (!assignmentId) {
-    actionError("Assignment ID is required");
-    return;
+    return actionError("Assignment ID is required");
   }
   try {
     const assignment = await getAssignmentRow(assignmentId);
     if (!assignment) {
-      actionError("Assignment not found");
-      return;
+      return actionError("Assignment not found");
     }
     if (!(await userCanManageCourse(String(assignment.courseId ?? ""), role, user.$id))) {
-      actionError("You do not have permission to manage this course");
-      return;
+      return actionError("You do not have permission to manage this course");
     }
 
     const { tablesDB, storage } = await createAdminClient();
@@ -185,8 +177,7 @@ export async function deleteAssignmentAction(
       label: `assignment ${assignmentId}`,
     });
     if (!deleted) {
-      actionError("Failed to delete assignment");
-      return;
+      return actionError("Failed to delete assignment");
     }
     revalidatePath("/instructor");
     revalidatePath("/instructor/submissions");
@@ -207,13 +198,11 @@ export async function deleteAssignmentAction(
         `/app/learn/${String(assignment.courseId ?? "")}/${String(assignment.lessonId ?? "")}`
       );
     }
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete assignment."
     );
-    actionError("Failed to delete assignment");
-    return;
+    return actionError("Failed to delete assignment");
   }
 }

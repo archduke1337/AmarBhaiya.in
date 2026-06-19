@@ -1,9 +1,9 @@
 import { requireAuth } from "@/lib/appwrite/auth";
+import { upsertStudentProfileFormAction } from "@/actions/form-wrappers";
 import {
-  upsertStudentProfileAction,
   getStudentProfile,
 } from "@/actions/profile";
-import { updateDisplayNameAction, changePasswordAction } from "@/actions/account";
+import { updateDisplayNameFormAction, changePasswordFormAction } from "@/actions/form-wrappers";
 import { sendVerificationEmailAction } from "@/actions/verification";
 import { AvatarUploadForm } from "@/components/profile/avatar-upload-form";
 import { PageHeader } from "@/components/dashboard";
@@ -99,7 +99,7 @@ export default async function StudentProfileEditPage() {
       </RetroPanel>
 
       <form
-        action={upsertStudentProfileAction}
+        action={upsertStudentProfileFormAction}
         className="flex flex-col gap-6"
       >
         {/* Basic Info */}
@@ -236,7 +236,7 @@ export default async function StudentProfileEditPage() {
         </div>
 
         {/* Update Name */}
-        <form action={updateDisplayNameAction} className="border-b-2 border-border p-5">
+        <form action={updateDisplayNameFormAction} className="border-b-2 border-border p-5">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="displayName">Display name</Label>
@@ -260,7 +260,7 @@ export default async function StudentProfileEditPage() {
         </form>
 
         {/* Change Password */}
-        <form action={changePasswordAction} className="p-5">
+        <form action={changePasswordFormAction} className="p-5">
           <h3 className="mb-4 font-heading text-sm font-black uppercase tracking-[0.14em]">
             Change password
           </h3>

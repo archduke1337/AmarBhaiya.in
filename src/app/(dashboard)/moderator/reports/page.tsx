@@ -1,9 +1,9 @@
 import { Flag } from "lucide-react";
 
 import {
-  applyModerationActionAction,
-  resolveModerationActionAction,
-} from "@/actions/moderation";
+  applyModerationActionFormAction,
+  resolveModerationActionFormAction,
+} from "@/actions/form-wrappers";
 import { getModeratorReports } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +56,7 @@ export default async function ModeratorReportsPage() {
 
                 {report.status === "pending" && (
                   <form
-                    action={resolveModerationActionAction}
+                    action={resolveModerationActionFormAction}
                     className="shrink-0"
                   >
                     <input type="hidden" name="actionId" value={report.id} />
@@ -81,7 +81,7 @@ export default async function ModeratorReportsPage() {
               {/* Quick action form */}
               {report.targetUserId && (
                 <form
-                  action={applyModerationActionAction}
+                  action={applyModerationActionFormAction}
                   className="border-t border-border bg-muted/20 px-5 py-4"
                 >
                   <input type="hidden" name="targetUserId" value={report.targetUserId} />

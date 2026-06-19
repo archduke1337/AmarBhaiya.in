@@ -1,10 +1,10 @@
 import { Folder, Plus } from "lucide-react";
 
 import {
-  createCategoryAction,
-  updateCategoryAction,
-} from "@/actions/categories";
-import { deleteCategoryAction } from "@/actions/delete";
+  createCategoryFormAction,
+  updateCategoryFormAction,
+} from "@/actions/form-wrappers";
+import { deleteCategoryFormAction } from "@/actions/form-wrappers";
 import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 
@@ -25,7 +25,7 @@ export default async function AdminCategoriesPage() {
           <Plus className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-medium">Create Category</h2>
         </div>
-        <form action={createCategoryAction} className="grid gap-4 p-5 md:grid-cols-2">
+        <form action={createCategoryFormAction} className="grid gap-4 p-5 md:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="text-muted-foreground">Name</span>
             <input
@@ -90,7 +90,7 @@ export default async function AdminCategoriesPage() {
           <div className="flex flex-col gap-3">
             {categories.map((category) => (
               <article key={category.id} className="border border-border">
-                <form action={updateCategoryAction} className="grid gap-4 p-5 md:grid-cols-2">
+                <form action={updateCategoryFormAction} className="grid gap-4 p-5 md:grid-cols-2">
                   <input type="hidden" name="categoryId" value={category.id} />
 
                   <label className="flex flex-col gap-1.5 text-sm">
@@ -144,7 +144,7 @@ export default async function AdminCategoriesPage() {
                   </div>
                 </form>
                 <div className="flex items-center px-5 pb-4">
-                  <form action={deleteCategoryAction}>
+                  <form action={deleteCategoryFormAction}>
                     <input type="hidden" name="categoryId" value={category.id} />
                     <button
                       type="submit"

@@ -10,7 +10,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
@@ -113,16 +113,16 @@ async function listComments(queries: string[]): Promise<DiscussionComment[]> {
 
 export async function postLessonCommentAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
   const lessonId = String(formData.get("lessonId") ?? "");
   const courseId = String(formData.get("courseId") ?? "");
   let text = String(formData.get("text") ?? "").trim();
 
-  if (!lessonId || !courseId || !text) return;
-  if (!(await userHasCourseAccess({ courseId, userId: user.$id, lessonId }))) return;
+  if (!lessonId || !courseId || !text) return actionError("Missing required fields.");
+  if (!(await userHasCourseAccess({ courseId, userId: user.$id, lessonId })))
+    return actionError("You do not have access to this course.");
 
-  // SECURITY: Sanitize HTML to prevent XSS attacks
   text = sanitizeHtml(text);
 
   try {
@@ -136,12 +136,9 @@ export async function postLessonCommentAction(
     });
 
     revalidatePath(`/app/learn/${courseId}/${lessonId}`);
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to post comment."
-    );
-    actionError(error instanceof Error ? error.message : "Failed to post comment.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to post comment.");
   }
 }
 
@@ -159,13 +156,14 @@ export async function getLessonComments(
 
 export async function postCourseCommentAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
   const courseId = String(formData.get("courseId") ?? "");
   let text = String(formData.get("text") ?? "").trim();
 
-  if (!courseId || !text) return;
-  if (!(await userHasCourseAccess({ courseId, userId: user.$id }))) return;
+  if (!courseId || !text) return actionError("Missing required fields.");
+  if (!(await userHasCourseAccess({ courseId, userId: user.$id })))
+    return actionError("You do not have access to this course.");
 
   text = sanitizeHtml(text);
 
@@ -183,12 +181,9 @@ export async function postCourseCommentAction(
     revalidateEach(
       getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
     );
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to post course comment."
-    );
-    actionError(error instanceof Error ? error.message : "Failed to post course comment.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to post course comment.");
   }
 }
 

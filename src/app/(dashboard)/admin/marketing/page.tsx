@@ -1,21 +1,31 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
+  BarChart3,
   FileText,
   Globe2,
   Megaphone,
   NotebookPen,
   RefreshCw,
+  TrendingUp,
   Trash2,
+  Users,
+  BookOpen,
+  CreditCard,
 } from "lucide-react";
 
 import {
-  createBlogPostAction,
-  upsertSiteCopyAction,
-  updateBlogPostAction,
-  deleteBlogPostAction,
-  getAdminBlogPosts,
-} from "@/actions/marketing";
+  upsertSiteCopyFormAction,
+  createBlogPostFormAction,
+  updateBlogPostFormAction,
+  deleteBlogPostFormAction,
+} from "@/actions/form-wrappers";
+import { getAdminBlogPosts } from "@/actions/marketing";
+import { getAdminDashboardStats } from "@/lib/appwrite/dashboard-data";
+import {
+  formatCompactNumber,
+  formatCurrency,
+} from "@/lib/utils/format";
 import { PageHeader } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,7 +98,10 @@ const fieldSelectClassName =
 
 export default async function AdminMarketingPage() {
   await requireRole(["admin"]);
-  const posts = await getAdminBlogPosts();
+  const [posts, stats] = await Promise.all([
+    getAdminBlogPosts(),
+    getAdminDashboardStats(),
+  ]);
   const publishedCount = posts.filter((post) => post.isPublished).length;
   const draftCount = posts.length - publishedCount;
 
@@ -97,7 +110,7 @@ export default async function AdminMarketingPage() {
       <PageHeader
         eyebrow="Admin"
         title="Marketing Command Center"
-        description="Manage homepage copy, update structured sections, publish blog posts, and instantly preview the live marketing experience."
+        description="Manage homepage copy, publish blog posts, track marketing performance, and preview the live experience."
         actions={
           <>
             <Button asChild variant="outline">
@@ -118,38 +131,144 @@ export default async function AdminMarketingPage() {
         }
       />
 
-      <section className="grid gap-3 md:grid-cols-3">
+      {/* ── Marketing Performance Metrics ─────────────────────────────────── */}
+      <section className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Card size="sm" className="ring-1 ring-border/60">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Structured Site Keys</CardTitle>
-            <CardDescription>Editable content map entries</CardDescription>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Users className="size-3.5 text-muted-foreground" />
+              Total Users
+            </CardTitle>
+            <CardDescription>Platform-wide registrations</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">{suggestedSiteKeys.length}</p>
+            <p className="text-3xl font-semibold tracking-tight">
+              {formatCompactNumber(stats.totalUsers)}
+            </p>
           </CardContent>
         </Card>
 
         <Card size="sm" className="ring-1 ring-border/60">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Published Blog Posts</CardTitle>
-            <CardDescription>Currently visible on /blog</CardDescription>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <BookOpen className="size-3.5 text-muted-foreground" />
+              Active Enrollments
+            </CardTitle>
+            <CardDescription>{stats.completionRate}% completion rate</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">{publishedCount}</p>
+            <p className="text-3xl font-semibold tracking-tight">
+              {formatCompactNumber(stats.activeEnrollments)}
+            </p>
           </CardContent>
         </Card>
 
         <Card size="sm" className="ring-1 ring-border/60">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Draft Blog Posts</CardTitle>
-            <CardDescription>Ready for publishing workflow</CardDescription>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CreditCard className="size-3.5 text-muted-foreground" />
+              Monthly Revenue
+            </CardTitle>
+            <CardDescription>Total: {formatCurrency(stats.totalRevenue)}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">{draftCount}</p>
+            <p className="text-3xl font-semibold tracking-tight">
+              {formatCurrency(stats.monthlyRevenue)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card size="sm" className="ring-1 ring-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <TrendingUp className="size-3.5 text-muted-foreground" />
+              Content Pipeline
+            </CardTitle>
+            <CardDescription>Blog posts in queue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-semibold tracking-tight">{posts.length}</p>
+              <span className="text-xs text-muted-foreground">
+                {publishedCount} published · {draftCount} draft
+              </span>
+            </div>
           </CardContent>
         </Card>
       </section>
 
+      {/* ── Quick Management Links ────────────────────────────────────────── */}
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Link
+          href="/admin/courses"
+          className="group bg-surface border border-border/40 rounded-2xl p-4 transition-all hover:bg-surface-hover hover:border-border/60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-surface-hover flex items-center justify-center text-accent shrink-0 group-hover:scale-105 transition-transform">
+              <BookOpen className="size-4.5" />
+            </div>
+            <div>
+              <span className="font-bold text-sm group-hover:text-accent transition-colors">
+                Course Management
+              </span>
+              <p className="text-xs text-foreground/50">Publish, feature, archive</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/categories"
+          className="group bg-surface border border-border/40 rounded-2xl p-4 transition-all hover:bg-surface-hover hover:border-border/60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-surface-hover flex items-center justify-center text-accent shrink-0 group-hover:scale-105 transition-transform">
+              <BarChart3 className="size-4.5" />
+            </div>
+            <div>
+              <span className="font-bold text-sm group-hover:text-accent transition-colors">
+                Categories
+              </span>
+              <p className="text-xs text-foreground/50">Organize course taxonomy</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/payments"
+          className="group bg-surface border border-border/40 rounded-2xl p-4 transition-all hover:bg-surface-hover hover:border-border/60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-surface-hover flex items-center justify-center text-accent shrink-0 group-hover:scale-105 transition-transform">
+              <CreditCard className="size-4.5" />
+            </div>
+            <div>
+              <span className="font-bold text-sm group-hover:text-accent transition-colors">
+                Payment Records
+              </span>
+              <p className="text-xs text-foreground/50">Transactions and refunds</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/students"
+          className="group bg-surface border border-border/40 rounded-2xl p-4 transition-all hover:bg-surface-hover hover:border-border/60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-surface-hover flex items-center justify-center text-accent shrink-0 group-hover:scale-105 transition-transform">
+              <Users className="size-4.5" />
+            </div>
+            <div>
+              <span className="font-bold text-sm group-hover:text-accent transition-colors">
+                Student Insights
+              </span>
+              <p className="text-xs text-foreground/50">Profiles and engagement</p>
+            </div>
+          </div>
+        </Link>
+      </section>
+
+      {/* ── Content Management ────────────────────────────────────────────── */}
       <section className="grid gap-6 xl:grid-cols-2">
         <Card className="ring-1 ring-border/70">
           <CardHeader>
@@ -162,7 +281,7 @@ export default async function AdminMarketingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={upsertSiteCopyAction} className="space-y-4">
+            <form action={upsertSiteCopyFormAction} className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1.5 md:col-span-2">
                   <Label htmlFor="site-copy-key">Key</Label>
@@ -249,7 +368,7 @@ export default async function AdminMarketingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={createBlogPostAction} className="space-y-4">
+            <form action={createBlogPostFormAction} className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1.5 md:col-span-2">
                   <Label htmlFor="blog-title">Title</Label>
@@ -353,6 +472,7 @@ export default async function AdminMarketingPage() {
         </Card>
       </section>
 
+      {/* ── Live Marketing Routes ─────────────────────────────────────────── */}
       <section className="space-y-3">
         <div>
           <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
@@ -384,6 +504,7 @@ export default async function AdminMarketingPage() {
         </div>
       </section>
 
+      {/* ── Blog Post Management ──────────────────────────────────────────── */}
       <section>
         <Card className="overflow-hidden ring-1 ring-border/70">
           <CardHeader className="border-b border-border/70">
@@ -430,7 +551,7 @@ export default async function AdminMarketingPage() {
                         </Link>
                       </Button>
 
-                      <form action={deleteBlogPostAction}>
+                      <form action={deleteBlogPostFormAction}>
                         <input type="hidden" name="postId" value={post.id} />
                         <Button type="submit" size="sm" variant="destructive">
                           <Trash2 className="size-3.5" />
@@ -440,8 +561,7 @@ export default async function AdminMarketingPage() {
                     </div>
                   </div>
 
-                  <form
-                    action={updateBlogPostAction}
+                  <form action={updateBlogPostFormAction}
                     className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3"
                   >
                     <input type="hidden" name="postId" value={post.id} />

@@ -1,7 +1,7 @@
 import { Users } from "lucide-react";
 
 import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
-import { updateUserRoleAction } from "@/actions/operations";
+import { updateUserRoleFormAction } from "@/actions/form-wrappers";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +93,7 @@ export default async function AdminUsersPage() {
 
                 {/* Role change form */}
                 <form
-                  action={updateUserRoleAction}
+                  action={updateUserRoleFormAction}
                   className="flex items-center gap-2"
                 >
                   <input type="hidden" name="userId" value={user.id} />

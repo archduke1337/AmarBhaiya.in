@@ -3,9 +3,9 @@ import { Send, Megaphone } from "lucide-react";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import {
-  sendNotificationAction,
-  broadcastNotificationAction,
-} from "@/actions/notifications";
+  sendNotificationFormAction,
+  broadcastNotificationFormAction,
+} from "@/actions/form-wrappers";
 import { PageHeader } from "@/components/dashboard";
 import { formatAdminUserOption } from "@/lib/utils/admin-select";
 
@@ -30,7 +30,7 @@ export default async function AdminNotificationsPage() {
         </div>
 
         <form
-          action={sendNotificationAction}
+          action={sendNotificationFormAction}
           className="grid gap-4 p-5 md:grid-cols-2"
         >
           <label className="flex flex-col gap-1.5 text-sm">
@@ -122,7 +122,7 @@ export default async function AdminNotificationsPage() {
         </div>
 
         <form
-          action={broadcastNotificationAction}
+          action={broadcastNotificationFormAction}
           className="grid gap-4 p-5 md:grid-cols-2"
         >
           <label className="flex flex-col gap-1.5 text-sm">

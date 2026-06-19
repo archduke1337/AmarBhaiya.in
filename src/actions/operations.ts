@@ -8,7 +8,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { parseLineSeparatedList } from "@/lib/utils/form-lists";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 const roleEnum = z.enum(["admin", "instructor", "moderator", "student"]);
 
@@ -106,7 +106,7 @@ async function userCanManageCourse(courseId: string, role: string, userId: strin
   return course.instructorId === userId ? course : null;
 }
 
-export async function updateUserRoleAction(formData: FormData): Promise<void> {
+export async function updateUserRoleAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const parsed = updateUserRoleSchema.safeParse({
@@ -115,19 +115,17 @@ export async function updateUserRoleAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: userId and role are required");
-    return;
+    return actionError("Invalid input: userId and role are required");
   }
 
   await assignRole(parsed.data.userId, parsed.data.role);
 
   revalidatePath("/admin/users");
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
 
-export async function updateCourseVisibilityAction(formData: FormData): Promise<void> {
+export async function updateCourseVisibilityAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const parsed = updateCourseVisibilitySchema.safeParse({
@@ -137,14 +135,12 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: courseId, isPublished, and isFeatured are required");
-    return;
+    return actionError("Invalid input: courseId, isPublished, and isFeatured are required");
   }
 
   const course = await getCourseRow(parsed.data.courseId);
   if (!course) {
-    actionError("Course not found");
-    return;
+    return actionError("Course not found");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -167,11 +163,10 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
   revalidateHomeContentPaths();
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
 
-export async function updateInstructorCourseAction(formData: FormData): Promise<void> {
+export async function updateInstructorCourseAction(formData: FormData): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const parsed = updateInstructorCourseSchema.safeParse({
@@ -186,14 +181,12 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: title (min 6 chars) and shortDescription (min 12 chars) are required");
-    return;
+    return actionError("Invalid input: title (min 6 chars) and shortDescription (min 12 chars) are required");
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
-    actionError("Course not found or you do not have permission to edit it");
-    return;
+    return actionError("Course not found or you do not have permission to edit it");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -218,6 +211,5 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
   revalidatePath("/admin/courses");
   revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }

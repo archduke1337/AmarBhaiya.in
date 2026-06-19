@@ -1,6 +1,6 @@
 import { Video, Radio, Clock, AlertTriangle } from "lucide-react";
 
-import { deleteLiveSessionAction } from "@/actions/delete";
+import { deleteLiveSessionFormAction } from "@/actions/form-wrappers";
 import { getAdminLiveData } from "@/lib/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
@@ -99,7 +99,7 @@ export default async function AdminLivePage() {
                     ) : (
                       <span className="text-muted-foreground">No link</span>
                     )}
-                    <form action={deleteLiveSessionAction}>
+                    <form action={deleteLiveSessionFormAction}>
                       <input type="hidden" name="sessionId" value={session.id} />
                       <button
                         type="submit"

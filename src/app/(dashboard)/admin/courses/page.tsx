@@ -1,7 +1,6 @@
 import { BookOpen, Eye, Star, Layers } from "lucide-react";
 
-import { deleteCourseAction } from "@/actions/delete";
-import { updateCourseVisibilityAction } from "@/actions/operations";
+import { updateCourseVisibilityFormAction, deleteCourseFormAction } from "@/actions/form-wrappers";
 import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
 import { RetroPanel } from "@/components/marketing/retro-panel";
@@ -60,7 +59,7 @@ export default async function AdminCoursesPage() {
             {courses.map((course) => (
               <form
                 key={course.id}
-                action={updateCourseVisibilityAction}
+                action={updateCourseVisibilityFormAction}
                 className="flex flex-col gap-3 px-5 py-4 md:grid md:grid-cols-[1fr_120px_100px_100px_220px] md:items-center md:gap-4"
               >
                 <input type="hidden" name="courseId" value={course.id} />
@@ -103,7 +102,7 @@ export default async function AdminCoursesPage() {
                   </Button>
                   <Button
                     type="submit"
-                    formAction={deleteCourseAction}
+                    formAction={deleteCourseFormAction}
                     formNoValidate
                     variant="destructive"
                     size="xs"

@@ -1,8 +1,11 @@
 import { MessageSquare, Pin, Lock } from "lucide-react";
 
-import { applyModerationActionAction } from "@/actions/moderation";
+import {
+  applyModerationActionFormAction,
+  lockThreadFormAction,
+  unlockThreadFormAction,
+} from "@/actions/form-wrappers";
 import { getModeratorCommunityData } from "@/lib/appwrite/dashboard-data";
-import { lockThreadAction, unlockThreadAction } from "@/actions/community";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 
@@ -84,7 +87,7 @@ export default async function ModeratorCommunityPage() {
                         Locked
                       </span>
                     )}
-                    <form action={thread.locked ? unlockThreadAction : lockThreadAction}>
+                    <form action={thread.locked ? unlockThreadFormAction : lockThreadFormAction}>
                       <input type="hidden" name="threadId" value={thread.id} />
                       <button
                         type="submit"
@@ -99,7 +102,7 @@ export default async function ModeratorCommunityPage() {
                 {/* Moderation form */}
                 {thread.authorId ? (
                   <form
-                    action={applyModerationActionAction}
+                    action={applyModerationActionFormAction}
                     className="bg-muted/20 px-5 py-4"
                   >
                     <input type="hidden" name="targetUserId" value={thread.authorId} />

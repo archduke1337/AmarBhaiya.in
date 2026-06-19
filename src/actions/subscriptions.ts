@@ -10,7 +10,7 @@ import { listAllRows } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
 import { processInBatches } from "@/lib/utils/batch";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 type AnyRow = Models.Row & Record<string, unknown>;
 const VALID_SUBSCRIPTION_STATUSES = new Set(["active", "expired", "cancelled"]);
@@ -222,10 +222,10 @@ export async function getAllSubscriptions(): Promise<UserSubscription[]> {
 
 export async function cancelSubscriptionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
   const subscriptionId = String(formData.get("subscriptionId") ?? "");
-  if (!subscriptionId) return;
+  if (!subscriptionId) return actionError("Subscription ID is required.");
 
   const { tablesDB } = await createAdminClient();
 
@@ -237,7 +237,7 @@ export async function cancelSubscriptionAction(
       rowId: subscriptionId,
     })) as AnyRow;
 
-    if (String(sub.userId) !== user.$id) return;
+    if (String(sub.userId) !== user.$id) return actionError("You do not own this subscription.");
 
     await tablesDB.updateRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -249,12 +249,12 @@ export async function cancelSubscriptionAction(
     });
 
     revalidatePath("/app/billing");
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to cancel subscription."
     );
-    actionError(error instanceof Error ? error.message : "Failed to cancel subscription.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to cancel subscription.");
   }
 }
 
@@ -262,13 +262,13 @@ export async function cancelSubscriptionAction(
 
 export async function adminUpdateSubscriptionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const subscriptionId = String(formData.get("subscriptionId") ?? "");
   const status = String(formData.get("status") ?? "");
-  if (!subscriptionId || !status) return;
-  if (!VALID_SUBSCRIPTION_STATUSES.has(status)) return;
+  if (!subscriptionId || !status) return actionError("Subscription ID and status are required.");
+  if (!VALID_SUBSCRIPTION_STATUSES.has(status)) return actionError("Invalid subscription status.");
 
   const { tablesDB } = await createAdminClient();
 
@@ -278,7 +278,7 @@ export async function adminUpdateSubscriptionAction(
       tableId: APPWRITE_CONFIG.tables.subscriptions,
       rowId: subscriptionId,
     }).catch(() => null)) as AnyRow | null;
-    if (!subscription) return;
+    if (!subscription) return actionError("Subscription not found.");
 
     if (status === "active") {
       await deactivateOtherActiveSubscriptions(
@@ -297,12 +297,12 @@ export async function adminUpdateSubscriptionAction(
 
     revalidatePath("/admin/subscriptions");
     revalidatePath("/app/billing");
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to update subscription."
     );
-    actionError(error instanceof Error ? error.message : "Failed to update subscription.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to update subscription.");
   }
 }
 
@@ -310,7 +310,7 @@ export async function adminUpdateSubscriptionAction(
 
 export async function adminCreateSubscriptionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   await requireRole(["admin"]);
 
   const userId = String(formData.get("userId") ?? "").trim();
@@ -321,7 +321,7 @@ export async function adminCreateSubscriptionAction(
     Math.min(36, Math.floor(parsedDurationMonths ?? 1))
   );
 
-  if (!userId || !planName) return;
+  if (!userId || !planName) return actionError("User ID and plan name are required.");
 
   const startDate = new Date();
   const endDate = new Date();
@@ -349,11 +349,11 @@ export async function adminCreateSubscriptionAction(
 
     revalidatePath("/admin/subscriptions");
     revalidatePath("/app/billing");
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create subscription."
     );
-    actionError(error instanceof Error ? error.message : "Failed to create subscription.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to create subscription.");
   }
 }

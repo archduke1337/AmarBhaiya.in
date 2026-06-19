@@ -9,7 +9,7 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
 import { passwordSchema } from "@/lib/validators/auth";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { handleActionError } from "@/lib/errors/error-handler";
 
 type AnyRow = Record<string, unknown> & { $id: string };
@@ -32,30 +32,26 @@ async function getLiveSessionRow(sessionId: string): Promise<AnyRow | null> {
 
 export async function rsvpToSessionAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
   const sessionId = String(formData.get("sessionId") ?? "");
   if (!sessionId) {
-    actionError("Session ID is required.");
-    return;
+    return actionError("Session ID is required.");
   }
 
   try {
     const session = await getLiveSessionRow(sessionId);
     if (!session) {
-      actionError("Live session not found.");
-      return;
+      return actionError("Live session not found.");
     }
 
     const courseId = String(session.courseId ?? "");
     const status = String(session.status ?? "scheduled");
     if (!courseId || !["scheduled", "live"].includes(status)) {
-      actionError("Session is not available for RSVP.");
-      return;
+      return actionError("Session is not available for RSVP.");
     }
     if (!(await userHasCourseAccess({ courseId, userId: user.$id }))) {
-      actionError("You do not have access to this course.");
-      return;
+      return actionError("You do not have access to this course.");
     }
 
     const { tablesDB } = await createAdminClient();
@@ -73,19 +69,16 @@ export async function rsvpToSessionAction(
 
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     const appwriteError = error as { code?: number };
     if (appwriteError?.code === 409) {
       revalidatePath("/app/dashboard");
       revalidatePath("/app/live");
-      actionError("You already RSVPed to this session.");
-      return;
+      return actionError("You already RSVPed to this session.");
     }
 
-    actionError(handleActionError(error, { category: "DATABASE", action: "rsvpToSession", userId: user.$id }));
-    return;
+    return actionError(handleActionError(error, { category: "DATABASE", action: "rsvpToSession", userId: user.$id }));
   }
 }
 
@@ -93,12 +86,11 @@ export async function rsvpToSessionAction(
 
 export async function cancelRsvpAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
   const sessionId = String(formData.get("sessionId") ?? "");
   if (!sessionId) {
-    actionError("Session ID is required.");
-    return;
+    return actionError("Session ID is required.");
   }
 
   try {
@@ -116,8 +108,7 @@ export async function cancelRsvpAction(
 
     const rsvp = existing.rows[0] as { $id: string } | undefined;
     if (!rsvp) {
-      actionError("RSVP not found.");
-      return;
+      return actionError("RSVP not found.");
     }
 
     const deleted = await executeDeletePlan({
@@ -135,17 +126,14 @@ export async function cancelRsvpAction(
       label: `session RSVP ${rsvp.$id}`,
     });
     if (!deleted) {
-      actionError("Failed to cancel RSVP.");
-      return;
+      return actionError("Failed to cancel RSVP.");
     }
 
     revalidatePath("/app/dashboard");
     revalidatePath("/app/live");
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    actionError(handleActionError(error, { category: "DATABASE", action: "cancelRsvp", userId: user.$id }));
-    return;
+    return actionError(handleActionError(error, { category: "DATABASE", action: "cancelRsvp", userId: user.$id }));
   }
 }
 
@@ -153,7 +141,7 @@ export async function cancelRsvpAction(
 
 export async function changePasswordAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   await requireAuth();
 
   const currentPassword = String(formData.get("currentPassword") ?? "");
@@ -162,17 +150,14 @@ export async function changePasswordAction(
   const parsedPassword = passwordSchema.safeParse(newPassword);
 
   if (!currentPassword) {
-    actionError("Current password is required.");
-    return;
+    return actionError("Current password is required.");
   }
   if (!parsedPassword.success) {
     const issues = parsedPassword.error.issues.map((i) => i.message).join(", ");
-    actionError(issues);
-    return;
+    return actionError(issues);
   }
   if (parsedPassword.data !== confirmPassword) {
-    actionError("Passwords do not match.");
-    return;
+    return actionError("Passwords do not match.");
   }
 
   try {
@@ -181,11 +166,9 @@ export async function changePasswordAction(
       password: parsedPassword.data,
       oldPassword: currentPassword,
     });
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    actionError(handleActionError(error, { category: "AUTHENTICATION", action: "changePassword" }));
-    return;
+    return actionError(handleActionError(error, { category: "AUTHENTICATION", action: "changePassword" }));
   }
 }
 
@@ -193,13 +176,12 @@ export async function changePasswordAction(
 
 export async function updateDisplayNameAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name || name.length < 2) {
-    actionError("Name must be at least 2 characters.");
-    return;
+    return actionError("Name must be at least 2 characters.");
   }
 
   try {
@@ -208,10 +190,8 @@ export async function updateDisplayNameAction(
     revalidatePath("/app/profile/edit");
     revalidatePath("/app/dashboard");
     revalidatePath(`/app/profile/${user.$id}`);
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
-    actionError(handleActionError(error, { category: "DATABASE", action: "updateDisplayName", userId: user.$id }));
-    return;
+    return actionError(handleActionError(error, { category: "DATABASE", action: "updateDisplayName", userId: user.$id }));
   }
 }

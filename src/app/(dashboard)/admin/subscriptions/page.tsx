@@ -1,9 +1,9 @@
 import { requireRole } from "@/lib/appwrite/auth";
+import { getAllSubscriptions } from "@/actions/subscriptions";
 import {
-  getAllSubscriptions,
-  adminCreateSubscriptionAction,
-  adminUpdateSubscriptionAction,
-} from "@/actions/subscriptions";
+  adminCreateSubscriptionFormAction,
+  adminUpdateSubscriptionFormAction,
+} from "@/actions/form-wrappers";
 import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { CreditCard } from "lucide-react";
@@ -32,7 +32,7 @@ export default async function AdminSubscriptionsPage() {
       <section className="border border-border p-5 space-y-4">
         <h2 className="text-sm font-medium">Grant Manual Subscription</h2>
         <form
-          action={adminCreateSubscriptionAction}
+          action={adminCreateSubscriptionFormAction}
           className="grid gap-3 md:grid-cols-4"
         >
           <label className="space-y-1 text-sm">
@@ -168,7 +168,7 @@ export default async function AdminSubscriptionsPage() {
                     </td>
                     <td className="px-5 py-3">
                       <form
-                        action={adminUpdateSubscriptionAction}
+                        action={adminUpdateSubscriptionFormAction}
                         className="flex items-center gap-2"
                       >
                         <input

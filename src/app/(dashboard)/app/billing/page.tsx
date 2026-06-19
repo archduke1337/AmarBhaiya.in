@@ -2,12 +2,13 @@ import Link from "next/link";
 import { CreditCard, Receipt, Clock } from "lucide-react";
 
 import { requireAuth } from "@/lib/appwrite/auth";
+import { upsertBillingInfoFormAction } from "@/actions/form-wrappers";
 import {
-  upsertBillingInfoAction,
   getBillingInfo,
   getBillingPaymentHistory,
 } from "@/actions/profile";
-import { getUserSubscription, cancelSubscriptionAction } from "@/actions/subscriptions";
+import { getUserSubscription } from "@/actions/subscriptions";
+import { cancelSubscriptionFormAction } from "@/actions/form-wrappers";
 import { PageHeader, StatGrid, StatCard } from "@/components/dashboard";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
@@ -77,7 +78,7 @@ export default async function BillingInfoPage() {
               </p>
             </div>
             {subscription.status === "active" && (
-              <form action={cancelSubscriptionAction}>
+              <form action={cancelSubscriptionFormAction}>
                 <input type="hidden" name="subscriptionId" value={subscription.id} />
                 <Button
                   type="submit"
@@ -150,7 +151,7 @@ export default async function BillingInfoPage() {
       </RetroPanel>
 
 
-      <form action={upsertBillingInfoAction} className="flex flex-col gap-6">
+      <form action={upsertBillingInfoFormAction} className="flex flex-col gap-6">
         {/* Name */}
         <RetroPanel tone="card" className="space-y-0 p-0">
           <div className="border-b-2 border-border px-5 py-3">

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Film, Layers, Users } from "lucide-react";
 
-import { updateInstructorCourseAction } from "@/actions/operations";
+import { updateInstructorCourseFormAction } from "@/actions/form-wrappers";
 import { CourseThumbnailUploadForm } from "@/components/instructor/course-thumbnail-upload-form";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -148,7 +148,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
           </Link>
         </div>
 
-        <form action={updateInstructorCourseAction} className="grid gap-4">
+        <form action={updateInstructorCourseFormAction} className="grid gap-4">
           <input type="hidden" name="courseId" value={course.id} />
 
           <label className="space-y-1 text-sm">

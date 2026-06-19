@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MessageSquare, Pin } from "lucide-react";
 
-import { createForumThreadAction } from "@/actions/dashboard";
+import { createForumThreadFormAction } from "@/actions/form-wrappers";
 import { requireAuth } from "@/lib/appwrite/auth";
 import {
   getCommunityCategoriesData,
@@ -46,7 +46,7 @@ export default async function CommunityPage() {
             Abhi community categories set nahi hui hain. Categories publish hote hi thread start kar paoge.
           </div>
         ) : (
-          <form action={createForumThreadAction} className="flex flex-col gap-4 p-5">
+          <form action={createForumThreadFormAction} className="flex flex-col gap-4 p-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="forumCatId">Category</Label>

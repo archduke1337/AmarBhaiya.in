@@ -1,6 +1,6 @@
 import { Activity, AlertTriangle, Clock, Shield } from "lucide-react";
 
-import { resolveModerationActionAction } from "@/actions/moderation";
+import { resolveModerationActionFormAction } from "@/actions/form-wrappers";
 import { getAdminModerationData } from "@/lib/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
@@ -82,7 +82,7 @@ export default async function AdminModerationPage() {
                     </p>
                   )}
                 </div>
-                <form action={resolveModerationActionAction}>
+                <form action={resolveModerationActionFormAction}>
                   <input type="hidden" name="actionId" value={item.id} />
                   <button
                     type="submit"

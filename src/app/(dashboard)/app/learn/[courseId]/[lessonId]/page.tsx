@@ -30,7 +30,8 @@ import { LessonVideoPlayer } from "@/components/lesson-video-player";
 import { Textarea } from "@/components/ui/textarea";
 import { getCourseProgress } from "@/actions/progress";
 import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
-import { postLessonCommentAction, getLessonComments } from "@/actions/comments";
+import { postLessonCommentFormAction } from "@/actions/form-wrappers";
+import { getLessonComments } from "@/actions/comments";
 import { Query } from "node-appwrite";
 
 type AnyRow = Record<string, unknown> & { $id: string };
@@ -504,7 +505,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
               </p>
             </div>
 
-            <form action={postLessonCommentAction} className="space-y-3 border-b-2 border-border p-5">
+            <form action={postLessonCommentFormAction} className="space-y-3 border-b-2 border-border p-5">
               <input type="hidden" name="courseId" value={courseId} />
               <input type="hidden" name="lessonId" value={lessonId} />
               <Textarea

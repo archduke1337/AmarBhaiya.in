@@ -7,7 +7,7 @@ import { z } from "zod";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ async function findRowByUserId(
 
 export async function upsertStudentProfileAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
 
   const parsed = studentProfileSchema.safeParse({
@@ -71,7 +71,7 @@ export async function upsertStudentProfileAction(
     state: String(formData.get("state") ?? "").trim() || undefined,
   });
 
-  if (!parsed.success) return;
+  if (!parsed.success) return actionError("Invalid profile data.");
 
   try {
     const { tablesDB } = await createAdminClient();
@@ -102,12 +102,9 @@ export async function upsertStudentProfileAction(
 
     revalidatePath("/app/dashboard");
     revalidatePath("/app/profile");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to update profile."
-    );
-    actionError(error instanceof Error ? error.message : "Failed to update profile.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to update profile.");
   }
 }
 
@@ -136,7 +133,7 @@ export async function getStudentProfile() {
 
 export async function upsertBillingInfoAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const user = await requireAuth();
 
   const parsed = billingInfoSchema.safeParse({
@@ -151,7 +148,7 @@ export async function upsertBillingInfoAction(
     zipcode: String(formData.get("zipcode") ?? ""),
   });
 
-  if (!parsed.success) return;
+  if (!parsed.success) return actionError("Invalid billing data.");
 
   try {
     const { tablesDB } = await createAdminClient();
@@ -186,12 +183,9 @@ export async function upsertBillingInfoAction(
     revalidatePath("/app/dashboard");
     revalidatePath("/app/profile");
     revalidatePath("/app/billing");
+    return actionSuccess();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : "Failed to update billing info."
-    );
-    actionError(error instanceof Error ? error.message : "Failed to update billing info.");
-    return;
+    return actionError(error instanceof Error ? error.message : "Failed to update billing info.");
   }
 }
 

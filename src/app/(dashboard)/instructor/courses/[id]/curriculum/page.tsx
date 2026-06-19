@@ -13,9 +13,8 @@ import {
   createAssignmentFormAction,
   deleteAssignmentFormAction,
 } from "@/actions/form-wrappers";
-import { deleteModuleAction, deleteLessonAction } from "@/actions/delete";
+import { deleteModuleFormAction, deleteLessonFormAction } from "@/actions/form-wrappers";
 import {
-  addQuizQuestionAction,
   getCourseQuizzes,
 } from "@/actions/quiz";
 import {
@@ -246,7 +245,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               </div>
             </form>
             <div className="flex items-center px-1">
-              <form action={deleteModuleAction}>
+              <form action={deleteModuleFormAction}>
                 <input type="hidden" name="courseId" value={course.id} />
                 <input type="hidden" name="moduleId" value={module.id} />
                 <button
@@ -420,7 +419,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                     </div>
                   </form>
                   <div className="flex items-center pt-2">
-                    <form action={deleteLessonAction}>
+                    <form action={deleteLessonFormAction}>
                       <input type="hidden" name="courseId" value={course.id} />
                       <input type="hidden" name="lessonId" value={lesson.id} />
                       <button

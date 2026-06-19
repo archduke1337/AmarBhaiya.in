@@ -125,25 +125,27 @@ export default async function proxy(request: NextRequest) {
     const referer = request.headers.get("referer");
     const source = origin ?? referer;
 
-    if (source) {
-      try {
-        const sourceUrl = new URL(source);
-        const isAllowed = CSRF_ALLOWED_ORIGINS.some((allowed) => {
-          if (!allowed) return false;
-          try {
-            const allowedUrl = new URL(allowed);
-            return sourceUrl.origin === allowedUrl.origin;
-          } catch {
-            return false;
-          }
-        });
+    if (!source) {
+      return new NextResponse(null, { status: 403 });
+    }
 
-        if (!isAllowed) {
-          return new NextResponse(null, { status: 403 });
+    try {
+      const sourceUrl = new URL(source);
+      const isAllowed = CSRF_ALLOWED_ORIGINS.some((allowed) => {
+        if (!allowed) return false;
+        try {
+          const allowedUrl = new URL(allowed);
+          return sourceUrl.origin === allowedUrl.origin;
+        } catch {
+          return false;
         }
-      } catch {
-        return new NextResponse(null, { status: 400 });
+      });
+
+      if (!isAllowed) {
+        return new NextResponse(null, { status: 403 });
       }
+    } catch {
+      return new NextResponse(null, { status: 400 });
     }
   }
 

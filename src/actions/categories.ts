@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { slugify } from "@/lib/utils/format";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
   if (typeof value !== "string") {
@@ -42,7 +42,7 @@ const updateCategorySchema = z.object({
   order: z.number().int().min(0).default(0),
 });
 
-export async function createCategoryAction(formData: FormData): Promise<void> {
+export async function createCategoryAction(formData: FormData): Promise<ActionResult> {
   const { user } = await requireRole(["admin", "instructor"]);
 
   const parsed = createCategorySchema.safeParse({
@@ -53,8 +53,7 @@ export async function createCategoryAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: name is required (min 2 characters)");
-    return;
+    return actionError("Invalid input: name is required (min 2 characters)");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -89,19 +88,17 @@ export async function createCategoryAction(formData: FormData): Promise<void> {
   }
 
   if (!created) {
-    actionError("Failed to create category: slug conflict after multiple attempts");
-    return;
+    return actionError("Failed to create category: slug conflict after multiple attempts");
   }
 
   revalidatePath("/admin/categories");
   revalidatePath("/instructor/categories");
   revalidatePath("/courses");
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
 
-export async function updateCategoryAction(formData: FormData): Promise<void> {
+export async function updateCategoryAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["admin", "instructor"]);
 
   const parsed = updateCategorySchema.safeParse({
@@ -113,8 +110,7 @@ export async function updateCategoryAction(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: categoryId and name are required");
-    return;
+    return actionError("Invalid input: categoryId and name are required");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -138,6 +134,5 @@ export async function updateCategoryAction(formData: FormData): Promise<void> {
   revalidatePath("/instructor/categories");
   revalidatePath("/courses");
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }

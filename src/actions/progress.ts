@@ -163,15 +163,14 @@ export async function completeLessonForUser({
 
 export async function markLessonCompleteAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   try {
     const user = await requireAuth();
     const courseId = String(formData.get("courseId") ?? "");
     const lessonId = String(formData.get("lessonId") ?? "");
-    await completeLessonForUser({ courseId, lessonId, userId: user.$id });
+    return await completeLessonForUser({ courseId, lessonId, userId: user.$id });
   } catch (error) {
-    actionError(error instanceof Error ? error.message : "Unexpected error");
-    return;
+    return actionError(error instanceof Error ? error.message : "Unexpected error");
   }
 }
 

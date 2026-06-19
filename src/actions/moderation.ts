@@ -7,7 +7,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
 const applyModerationSchema = z.object({
   targetUserId: z.string().trim().min(1),
@@ -48,7 +48,7 @@ function revalidateEach(paths: string[]): void {
   }
 }
 
-export async function applyModerationActionAction(formData: FormData): Promise<void> {
+export async function applyModerationActionAction(formData: FormData): Promise<ActionResult> {
   const { user } = await requireRole(["admin", "moderator"]);
 
   const parsed = applyModerationSchema.safeParse({
@@ -63,13 +63,11 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: targetUserId and reason are required");
-    return;
+    return actionError("Invalid input: targetUserId and reason are required");
   }
 
   if (parsed.data.targetUserId === user.$id) {
-    actionError("You cannot moderate yourself");
-    return;
+    return actionError("You cannot moderate yourself");
   }
 
   const entityType = parsed.data.entityType;
@@ -81,8 +79,7 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
     entityId.length > 0;
 
   if ((parsed.data.action === "pin" || parsed.data.action === "unpin") && !isThreadAction) {
-    actionError("Pin/unpin action requires a valid thread entity");
-    return;
+    return actionError("Pin/unpin action requires a valid thread entity");
   }
 
   const { tablesDB, users } = await createAdminClient();
@@ -137,11 +134,10 @@ export async function applyModerationActionAction(formData: FormData): Promise<v
   revalidatePath("/admin");
   revalidatePath("/admin/moderation");
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
 
-export async function resolveModerationActionAction(formData: FormData): Promise<void> {
+export async function resolveModerationActionAction(formData: FormData): Promise<ActionResult> {
   const { user } = await requireRole(["admin", "moderator"]);
 
   const parsed = resolveModerationSchema.safeParse({
@@ -149,8 +145,7 @@ export async function resolveModerationActionAction(formData: FormData): Promise
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: actionId is required");
-    return;
+    return actionError("Invalid input: actionId is required");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -171,6 +166,5 @@ export async function resolveModerationActionAction(formData: FormData): Promise
   revalidatePath("/admin");
   revalidatePath("/admin/moderation");
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
