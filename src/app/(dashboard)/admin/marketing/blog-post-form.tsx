@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   NotebookPen,
   Megaphone,
@@ -28,6 +28,7 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [restored, setRestored] = useState(false);
+  const slugManuallyEdited = useRef(false);
 
   const autoSave = useAutoSave({
     key: "create-blog-post",
@@ -117,7 +118,18 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
             required
             minLength={6}
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              const newTitle = e.target.value;
+              setTitle(newTitle);
+              if (!slugManuallyEdited.current) {
+                setSlug(
+                  newTitle
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-+|-+$/g, "")
+                );
+              }
+            }}
           />
         </label>
 
@@ -128,7 +140,10 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
             name="slug"
             placeholder="optional-custom-slug"
             value={slug}
-            onChange={(e) => setSlug(e.target.value)}
+            onChange={(e) => {
+              slugManuallyEdited.current = true;
+              setSlug(e.target.value);
+            }}
           />
         </label>
 
