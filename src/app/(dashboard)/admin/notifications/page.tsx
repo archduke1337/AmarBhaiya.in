@@ -23,8 +23,8 @@ export default async function AdminNotificationsPage() {
       />
 
       {/* Send to specific user */}
-      <section className="border border-border">
-        <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+      <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-border/40 px-5 py-3">
           <Send className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-medium">Send to User</h2>
         </div>
@@ -115,8 +115,8 @@ export default async function AdminNotificationsPage() {
       </section>
 
       {/* Broadcast to all users */}
-      <section className="border border-border">
-        <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+      <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-border/40 px-5 py-3">
           <Megaphone className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-medium">Broadcast to All Users</h2>
         </div>
@@ -179,7 +179,7 @@ export default async function AdminNotificationsPage() {
       </section>
 
       {/* Info */}
-      <div className="border border-amber-500/30 bg-amber-500/5 px-5 py-3 text-sm">
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 px-5 py-3 text-sm">
         <p className="font-medium">Note</p>
         <p className="text-xs text-muted-foreground mt-1">
           Broadcasts create one notification per user. For large user bases,

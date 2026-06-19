@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { parseLineSeparatedList } from "@/lib/utils/form-lists";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { revalidateEach } from "@/lib/utils/revalidate";
 
 const roleEnum = z.enum(["admin", "instructor", "moderator", "student"]);
 
@@ -50,12 +51,6 @@ function parseInteger(value: FormDataEntryValue | null, fallback = 0): number {
   }
 
   return Math.round(numeric);
-}
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
-  }
 }
 
 function revalidateHomeContentPaths(): void {

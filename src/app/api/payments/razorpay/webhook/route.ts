@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/lib/payments/course-payment";
 import { verifyRazorpayWebhookSignature } from "@/lib/payments/razorpay";
+import { revalidateEach } from "@/lib/utils/revalidate";
 
 export const runtime = "nodejs";
 
@@ -54,12 +55,6 @@ function parseWebhookPayment(rawBody: string): {
     event: parsed.event ?? "",
     payment: parsed.payload?.payment?.entity ?? null,
   };
-}
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
-  }
 }
 
 export async function POST(request: Request) {

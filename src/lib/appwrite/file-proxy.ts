@@ -18,6 +18,16 @@ function jsonError(message: string, status: number): Response {
   });
 }
 
+const VALID_RANGE_PATTERN = /^bytes=\d*-\d*(,\s*bytes=\d*-\d*)*$/;
+
+function sanitizeRangeHeader(raw: string | null): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!VALID_RANGE_PATTERN.test(trimmed)) return null;
+  if (trimmed.length > 200) return null;
+  return trimmed;
+}
+
 export async function proxyAppwriteBucketFile({
   request,
   bucketId,
@@ -29,6 +39,9 @@ export async function proxyAppwriteBucketFile({
     return jsonError("Missing APPWRITE_API_KEY environment variable.", 500);
   }
 
+  const rangeHeader = request.headers.get("range");
+  const sanitizedRange = sanitizeRangeHeader(rangeHeader);
+
   const upstreamResponse = await fetch(
     `${APPWRITE_CONFIG.endpoint}/storage/buckets/${bucketId}/files/${fileId}/${mode}`,
     {
@@ -36,9 +49,7 @@ export async function proxyAppwriteBucketFile({
       headers: {
         "X-Appwrite-Project": APPWRITE_CONFIG.projectId,
         "X-Appwrite-Key": apiKey,
-        ...(request.headers.get("range")
-          ? { Range: request.headers.get("range") as string }
-          : {}),
+        ...(sanitizedRange ? { Range: sanitizedRange } : {}),
       },
       cache: "no-store",
     }

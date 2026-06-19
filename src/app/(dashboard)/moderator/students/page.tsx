@@ -59,7 +59,7 @@ export default async function ModeratorStudentsPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {students.map((student) => (
-            <article key={student.id} className="border border-border">
+            <article key={student.id} className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
               {/* User header */}
               <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-0.5">

@@ -153,8 +153,8 @@ export default async function InstructorStudentsPage() {
             </div>
           </section>
 
-          <section id="recent-enrollments" className="border border-border scroll-mt-24">
-            <div className="border-b border-border px-5 py-3">
+          <section id="recent-enrollments" className="bg-surface border border-border/40 rounded-2xl scroll-mt-24 overflow-hidden">
+            <div className="border-b border-border/40 px-5 py-3">
               <h2 className="text-sm font-medium">Recent Enrollments</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 New learners who joined in the last two weeks.
@@ -192,15 +192,15 @@ export default async function InstructorStudentsPage() {
             )}
           </section>
 
-          <section id="all-students" className="border border-border scroll-mt-24">
-            <div className="border-b border-border px-5 py-3">
+          <section id="all-students" className="bg-surface border border-border/40 rounded-2xl scroll-mt-24 overflow-hidden">
+            <div className="border-b border-border/40 px-5 py-3">
               <h2 className="text-sm font-medium">All Learners</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 Every active enrollment, ordered to surface students who likely need attention first.
               </p>
             </div>
 
-            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1.1fr_1fr_1fr_140px_140px]">
+            <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1.1fr_1fr_1fr_140px_140px]">
               <span>Student</span>
               <span>Email</span>
               <span>Course</span>

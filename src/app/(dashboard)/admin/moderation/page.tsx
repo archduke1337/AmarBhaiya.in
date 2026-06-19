@@ -56,7 +56,7 @@ export default async function AdminModerationPage() {
             description="All flagged items have been resolved."
           />
         ) : (
-          <div className="border border-border divide-y divide-border">
+          <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden divide-y divide-border/40">
             {data.escalationItems.map((item) => (
               <div
                 key={item.id}
@@ -98,7 +98,7 @@ export default async function AdminModerationPage() {
       </section>
 
       {/* Guidance panel */}
-      <section className="border border-border p-6">
+      <section className="bg-surface border border-border/40 rounded-2xl p-6">
         <h2 className="mb-3 text-sm font-medium">Moderation Policy Notes</h2>
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
           <p>

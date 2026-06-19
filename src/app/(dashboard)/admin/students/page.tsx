@@ -46,7 +46,7 @@ export default async function AdminStudentProfilesPage() {
       />
 
       {/* Manual enrollment */}
-      <section className="border border-border p-5 space-y-3">
+      <section className="bg-surface border border-border/40 rounded-2xl p-5 space-y-3">
         <h2 className="text-sm font-medium">Manual Enrollment</h2>
         <form action={adminEnrollFormAction} className="grid gap-3 md:grid-cols-3">
           <label className="space-y-1 text-sm">
@@ -109,8 +109,8 @@ export default async function AdminStudentProfilesPage() {
           description="Students will appear here once they fill out their personal information from their dashboard."
         />
       ) : (
-        <section className="border border-border">
-          <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_150px_100px_80px]">
+        <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+          <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_150px_100px_80px]">
             <span>User ID</span>
             <span>Grade</span>
             <span>School</span>
@@ -118,7 +118,7 @@ export default async function AdminStudentProfilesPage() {
             <span></span>
           </div>
 
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/40">
             {profiles.map((profile) => (
               <div
                 key={profile.$id}

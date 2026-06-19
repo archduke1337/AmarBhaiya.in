@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RetroPanel } from "@/components/marketing/retro-panel";
+
 
 export default async function BillingInfoPage() {
   await requireAuth();
@@ -59,7 +59,7 @@ export default async function BillingInfoPage() {
 
       {/* Active Subscription */}
       {subscription && (
-        <RetroPanel tone="secondary" className="space-y-0 p-0">
+        <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
               Active subscription
@@ -90,11 +90,11 @@ export default async function BillingInfoPage() {
               </form>
             )}
           </div>
-        </RetroPanel>
+        </div>
       )}
 
-      <RetroPanel tone="card" className="space-y-0 p-0">
-        <div className="flex items-center justify-between border-b-2 border-border px-5 py-3">
+      <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
           <div>
             <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
               Payment history
@@ -110,7 +110,7 @@ export default async function BillingInfoPage() {
             Abhi course payment record nahi hai.
           </div>
         ) : (
-          <div className="divide-y-2 divide-border">
+          <div className="divide-y divide-border/40">
             {payments.map((payment) => (
               <div
                 key={payment.id}
@@ -148,13 +148,13 @@ export default async function BillingInfoPage() {
             ))}
           </div>
         )}
-      </RetroPanel>
+      </div>
 
 
       <form action={upsertBillingInfoFormAction} className="flex flex-col gap-6">
         {/* Name */}
-        <RetroPanel tone="card" className="space-y-0 p-0">
-          <div className="border-b-2 border-border px-5 py-3">
+        <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+          <div className="border-b border-border/40 px-5 py-3">
             <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
               Personal details
             </h2>
@@ -194,11 +194,11 @@ export default async function BillingInfoPage() {
               />
             </div>
           </div>
-        </RetroPanel>
+        </div>
 
         {/* Address */}
-        <RetroPanel tone="card" className="space-y-0 p-0">
-          <div className="border-b-2 border-border px-5 py-3">
+        <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+          <div className="border-b border-border/40 px-5 py-3">
             <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
               Billing address
             </h2>
@@ -269,7 +269,7 @@ export default async function BillingInfoPage() {
               />
             </div>
           </div>
-        </RetroPanel>
+        </div>
 
         <div className="flex justify-end">
           <Button

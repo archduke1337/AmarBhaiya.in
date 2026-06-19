@@ -51,8 +51,8 @@ export default async function AdminLivePage() {
             description="Instructors can schedule live sessions from their dashboard."
           />
         ) : (
-          <div className="border border-border">
-            <div className="hidden items-center gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_120px_200px_80px]">
+          <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+            <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_120px_200px_80px]">
               <span>Session</span>
               <span>Status</span>
               <span>RSVPs</span>
@@ -60,7 +60,7 @@ export default async function AdminLivePage() {
               <span>Links</span>
             </div>
 
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-border/40">
               {data.upcoming.map((session) => (
                 <div
                   key={session.id}

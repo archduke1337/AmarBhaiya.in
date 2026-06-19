@@ -1,7 +1,7 @@
 import { Query } from "node-appwrite";
-import { revalidatePath } from "next/cache";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { revalidateEach } from "@/lib/utils/revalidate";
 import {
   executeDeletePlan,
   mergeDeletePlans,
@@ -108,12 +108,6 @@ async function syncCourseLessonStats(
     });
   } catch {
     // Non-critical
-  }
-}
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
   }
 }
 

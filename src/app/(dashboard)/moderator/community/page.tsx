@@ -58,7 +58,7 @@ export default async function ModeratorCommunityPage() {
               <article
                 key={thread.id}
                 id={`thread-${thread.id}`}
-                className="scroll-mt-24 border border-border"
+                className="scroll-mt-24 bg-surface border border-border/40 rounded-2xl overflow-hidden"
               >
                 {/* Thread header */}
                 <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between">

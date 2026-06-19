@@ -12,14 +12,12 @@ export default async function InstructorCategoriesPage() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          Instructor Categories
-        </p>
-        <h1 className="text-3xl mt-2">Category Setup for Course Publishing</h1>
+        <p className="eyebrow self-start">Instructor Categories</p>
+        <h1 className="font-heading text-3xl font-black tracking-[-0.05em] mt-2">Category Setup for Course Publishing</h1>
       </div>
 
-      <section className="border border-border p-6 space-y-4">
-        <h2 className="text-xl">Add a category</h2>
+      <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
+        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Add a category</h2>
         <p className="text-sm text-muted-foreground">
           Create and refine categories here so your courses are mapped correctly in discovery.
         </p>
@@ -77,14 +75,14 @@ export default async function InstructorCategoriesPage() {
         </form>
       </section>
 
-      <section className="border border-border p-6 space-y-4">
-        <h2 className="text-xl">Edit categories</h2>
+      <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
+        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Edit categories</h2>
         {categories.length === 0 ? (
           <p className="text-sm text-muted-foreground">No categories found yet.</p>
         ) : null}
 
         {categories.map((category) => (
-          <article key={category.id} className="border border-border p-4">
+          <article key={category.id} className="bg-surface border border-border/40 rounded-xl p-4">
             <form action={updateCategoryFormAction} className="grid gap-3 md:grid-cols-2">
               <input type="hidden" name="categoryId" value={category.id} />
 

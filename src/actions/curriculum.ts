@@ -12,6 +12,7 @@ import { getBlogDetailPaths, getCourseDetailPaths } from "@/lib/utils/cache-path
 import { listAllRows, type AnyAppwriteRow } from "@/lib/appwrite/row-pagination";
 import { userCanManageCourse, getCourseRow } from "@/lib/appwrite/access";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { revalidateEach } from "@/lib/utils/revalidate";
 
 function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
   if (typeof value !== "string") {
@@ -61,12 +62,6 @@ async function updateCourseLessonStats(
       totalDuration,
     },
   });
-}
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
-  }
 }
 
 function revalidateHomeContentPaths(): void {

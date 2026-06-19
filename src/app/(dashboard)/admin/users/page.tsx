@@ -3,7 +3,6 @@ import { Users } from "lucide-react";
 import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import { updateUserRoleFormAction } from "@/actions/form-wrappers";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -31,16 +30,15 @@ export default async function AdminUsersPage() {
       {/* Role breakdown */}
       <div className="grid gap-3 sm:grid-cols-4">
         {Object.entries(roleCounts).map(([role, count]) => (
-          <RetroPanel
+          <div
             key={role}
-            tone={role === "student" ? "accent" : "card"}
-            className="flex items-center justify-between p-4"
+            className="bg-surface border border-border/40 rounded-2xl flex items-center justify-between p-4"
           >
             <span className="font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground">
               {role}
             </span>
             <span className="text-2xl tabular-nums">{count}</span>
-          </RetroPanel>
+          </div>
         ))}
       </div>
 
@@ -52,9 +50,9 @@ export default async function AdminUsersPage() {
           description="Users will appear here once they register on the platform."
         />
       ) : (
-        <RetroPanel tone="card" className="overflow-hidden p-0">
+        <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
           {/* Table header */}
-          <div className="hidden items-center gap-4 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_1fr_120px_100px_190px]">
+          <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_1fr_120px_100px_190px]">
             <span>Name</span>
             <span>Email</span>
             <span>Role</span>
@@ -63,7 +61,7 @@ export default async function AdminUsersPage() {
           </div>
 
           {/* User rows */}
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/40">
             {users.map((user) => (
               <div
                 key={user.id}
@@ -118,7 +116,7 @@ export default async function AdminUsersPage() {
               </div>
             ))}
           </div>
-        </RetroPanel>
+        </div>
       )}
     </div>
   );

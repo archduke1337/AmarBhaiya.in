@@ -10,17 +10,12 @@ import { listAllRows, type AnyAppwriteRow } from "@/lib/appwrite/row-pagination"
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
+import { revalidateEach } from "@/lib/utils/revalidate";
 
 type AnyRow = AnyAppwriteRow;
 
 function isCompletedProgressRow(row: Record<string, unknown>): boolean {
   return typeof row.completedAt === "string" && row.completedAt.trim().length > 0;
-}
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
-  }
 }
 
 export async function completeLessonForUser({

@@ -11,17 +11,12 @@ import { listAllRows, type AnyAppwriteRow } from "@/lib/appwrite/row-pagination"
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
+import { revalidateEach } from "@/lib/utils/revalidate";
 
 type AnyRow = AnyAppwriteRow;
 
 function isActiveEnrollmentRow(row: Record<string, unknown>): boolean {
   return row.isActive !== false && String(row.status ?? "active") !== "cancelled";
-}
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
-  }
 }
 
 // ── Shared Enrollment Data ───────────────────────────────────────────────────

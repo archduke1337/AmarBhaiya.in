@@ -9,6 +9,7 @@ import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/lib/payments/course-payment";
 import { verifyRazorpayPaymentSignature } from "@/lib/payments/razorpay";
+import { revalidateEach } from "@/lib/utils/revalidate";
 
 export const runtime = "nodejs";
 
@@ -34,12 +35,6 @@ async function getAuthenticatedUser() {
     return await account.get();
   } catch {
     return null;
-  }
-}
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
   }
 }
 

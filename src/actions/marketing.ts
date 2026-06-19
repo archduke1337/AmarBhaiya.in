@@ -14,6 +14,7 @@ import {
   type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { revalidateEach } from "@/lib/utils/revalidate";
 
 const upsertSiteCopySchema = z.object({
   key: z.string().trim().min(3),
@@ -80,12 +81,6 @@ function normalizeJsonPayload(value: string | undefined): string | null {
 }
 
 type AnyRow = AnyAppwriteRow;
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
-  }
-}
 
 function revalidateHomeContentPaths(): void {
   revalidatePath("/");

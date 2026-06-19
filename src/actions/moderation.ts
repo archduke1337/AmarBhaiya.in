@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { revalidateEach } from "@/lib/utils/revalidate";
 
 const applyModerationSchema = z.object({
   targetUserId: z.string().trim().min(1),
@@ -40,12 +41,6 @@ function parseBoolean(value: FormDataEntryValue | null, fallback = false): boole
 
   const normalized = value.toLowerCase().trim();
   return normalized === "true" || normalized === "1" || normalized === "on";
-}
-
-function revalidateEach(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path);
-  }
 }
 
 export async function applyModerationActionAction(formData: FormData): Promise<ActionResult> {

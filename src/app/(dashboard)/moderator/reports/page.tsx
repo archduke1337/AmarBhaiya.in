@@ -30,11 +30,10 @@ export default async function ModeratorReportsPage() {
         />
       ) : (
         <div id="flagged-reports" className="scroll-mt-24 flex flex-col gap-4">
-          {reports.map((report) => (
-            <article
-              key={report.id}
-              id={`report-${report.id}`}
-              className="border border-border"
+          {reports.map((report) => (              <article
+                key={report.id}
+                id={`report-${report.id}`}
+                className="bg-surface border border-border/40 rounded-2xl overflow-hidden"
             >
               {/* Report header */}
               <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">

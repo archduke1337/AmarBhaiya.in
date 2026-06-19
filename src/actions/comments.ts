@@ -1,6 +1,7 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
+import { revalidatePath } from "next/cache";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { getCourseRow, userHasCourseAccess } from "@/lib/appwrite/access";

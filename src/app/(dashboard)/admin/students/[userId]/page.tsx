@@ -214,8 +214,8 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
       />
 
       {data.profile && (
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
+        <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+          <div className="border-b border-border/40 px-5 py-3">
             <h2 className="text-sm font-medium">Profile</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-5">
@@ -236,8 +236,8 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3">
+      <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+        <div className="border-b border-border/40 px-5 py-3">
           <h2 className="text-sm font-medium">
             Enrollments ({data.enrollments.length})
           </h2>
@@ -293,8 +293,8 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
         )}
       </section>
 
-      <section className="border border-border">
-        <div className="border-b border-border px-5 py-3">
+      <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+        <div className="border-b border-border/40 px-5 py-3">
           <h2 className="text-sm font-medium">
             Payments ({data.payments.length})
           </h2>

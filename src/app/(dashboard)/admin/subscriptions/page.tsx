@@ -29,7 +29,7 @@ export default async function AdminSubscriptionsPage() {
       />
 
       {/* Create manual subscription */}
-      <section className="border border-border p-5 space-y-4">
+      <section className="bg-surface border border-border/40 rounded-2xl p-5 space-y-4">
         <h2 className="text-sm font-medium">Grant Manual Subscription</h2>
         <form
           action={adminCreateSubscriptionFormAction}
@@ -102,8 +102,8 @@ export default async function AdminSubscriptionsPage() {
           description="Subscriptions will appear here once students purchase plans."
         />
       ) : (
-        <section className="border border-border">
-          <div className="border-b border-border px-5 py-3">
+        <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+          <div className="border-b border-border/40 px-5 py-3">
             <h2 className="text-sm font-medium">
               All Subscriptions ({subscriptions.length})
             </h2>

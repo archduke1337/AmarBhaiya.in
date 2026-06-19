@@ -91,7 +91,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
 
       <section
         id="publish-readiness"
-        className="border border-border p-6 space-y-4 scroll-mt-24"
+        className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4 scroll-mt-24"
       >
         <div className="flex flex-col gap-2">
           <h2 className="text-xl">Publish Readiness</h2>
@@ -137,9 +137,9 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
         ) : null}
       </section>
 
-      <section className="border border-border p-6 space-y-4">
+      <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl">Course metadata</h2>
+          <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Course metadata</h2>
           <Link
             href={`/instructor/courses/${course.id}/curriculum`}
             className="text-sm underline underline-offset-4"
@@ -245,8 +245,8 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
       </section>
 
       {/* Thumbnail upload */}
-      <section className="border border-border p-6 space-y-4">
-        <h2 className="text-xl">Course Thumbnail</h2>
+      <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
+        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Course Thumbnail</h2>
         <p className="text-sm text-muted-foreground">
           Upload a cover image for this course. Recommended: 1280×720px, max 5MB.
           {course.thumbnailId
@@ -268,19 +268,19 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
       </section>
 
       <section className="grid md:grid-cols-2 gap-4">
-        <div className="border border-border p-4">
+        <div className="bg-surface border border-border/40 rounded-xl p-4">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Current publish state</p>
           <p>{course.isPublished ? "Published" : "Draft"}</p>
         </div>
-        <div className="border border-border p-4">
+        <div className="bg-surface border border-border/40 rounded-xl p-4">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Current access model</p>
           <p className="capitalize">{course.accessModel}</p>
         </div>
-        <div className="border border-border p-4">
+        <div className="bg-surface border border-border/40 rounded-xl p-4">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Current price</p>
           <p>{course.price > 0 ? formatCurrency(course.price) : "Free"}</p>
         </div>
-        <div className="border border-border p-4">
+        <div className="bg-surface border border-border/40 rounded-xl p-4">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Lesson Stats</p>
           <p>
             {course.moduleCount} modules · {course.totalLessons} lessons · {formatDuration(course.totalDuration)}

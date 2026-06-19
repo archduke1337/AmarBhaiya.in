@@ -3,7 +3,6 @@ import { BookOpen, Eye, Star, Layers } from "lucide-react";
 import { updateCourseVisibilityFormAction, deleteCourseFormAction } from "@/actions/form-wrappers";
 import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -45,9 +44,9 @@ export default async function AdminCoursesPage() {
           description="Instructors can create courses from their dashboard. They will appear here for admin review."
         />
         ) : (
-          <RetroPanel tone="card" className="overflow-hidden p-0">
+          <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
             {/* Table header */}
-            <div className="hidden items-center gap-4 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_100px_100px_220px]">
+            <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_120px_100px_100px_220px]">
               <span>Course</span>
               <span>Category</span>
               <span>Status</span>
@@ -55,7 +54,7 @@ export default async function AdminCoursesPage() {
               <span>Actions</span>
           </div>
 
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/40">
             {courses.map((course) => (
               <form
                 key={course.id}
@@ -113,7 +112,7 @@ export default async function AdminCoursesPage() {
               </form>
             ))}
           </div>
-        </RetroPanel>
+        </div>
       )}
     </div>
   );
