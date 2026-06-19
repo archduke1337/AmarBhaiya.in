@@ -40,7 +40,7 @@ export default async function AdminNotificationsPage() {
               required
               disabled={directMessageUsers.length === 0}
               defaultValue=""
-              className="h-10 border border-border bg-background px-3 text-sm disabled:opacity-60"
+              className="input-field h-10 text-sm disabled:opacity-60"
             >
               <option value="" disabled>
                 {directMessageUsers.length > 0 ? "Select user" : "No users available"}
@@ -57,7 +57,7 @@ export default async function AdminNotificationsPage() {
             <span className="text-muted-foreground">Type</span>
             <select
               name="type"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             >
               <option value="info">Info</option>
               <option value="course">Course</option>
@@ -74,7 +74,7 @@ export default async function AdminNotificationsPage() {
               required
               minLength={3}
               placeholder="Notification title"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             />
           </label>
 
@@ -84,7 +84,7 @@ export default async function AdminNotificationsPage() {
               name="body"
               rows={3}
               placeholder="Additional message..."
-              className="border border-border bg-background px-3 py-2 text-sm"
+              className="input-field--textarea text-sm"
             />
           </label>
 
@@ -93,7 +93,7 @@ export default async function AdminNotificationsPage() {
             <input
               name="link"
               placeholder="/app/dashboard"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             />
           </label>
 
@@ -129,7 +129,7 @@ export default async function AdminNotificationsPage() {
             <span className="text-muted-foreground">Type</span>
             <select
               name="type"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             >
               <option value="announcement">Announcement</option>
               <option value="system">System Update</option>
@@ -142,7 +142,7 @@ export default async function AdminNotificationsPage() {
             <input
               name="link"
               placeholder="/courses"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             />
           </label>
 
@@ -153,7 +153,7 @@ export default async function AdminNotificationsPage() {
               required
               minLength={3}
               placeholder="Announcement title"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             />
           </label>
 
@@ -163,7 +163,7 @@ export default async function AdminNotificationsPage() {
               name="body"
               rows={3}
               placeholder="Broadcast message..."
-              className="border border-border bg-background px-3 py-2 text-sm"
+              className="input-field--textarea text-sm"
             />
           </label>
 

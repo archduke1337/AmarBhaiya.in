@@ -7,7 +7,6 @@ import {
 } from "@/actions/form-wrappers";
 import { deleteLiveSessionFormAction } from "@/actions/form-wrappers";
 import { EmptyState, PageHeader, StatCard, StatGrid } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,9 +91,9 @@ export default async function InstructorLivePage() {
         />
       </StatGrid>
 
-      <RetroPanel tone="accent" className="text-sm font-semibold leading-7 text-muted-foreground">
+      <div className="rounded-2xl border border-border/40 bg-surface p-5 text-sm font-semibold leading-7 text-muted-foreground">
         Tip for Amar Bhaiya-style classes: keep the title specific, add one clear outcome, and paste the join link before announcing the session. A confused student will usually not try twice on mobile.
-      </RetroPanel>
+      </div>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
         <div className="flex flex-col gap-4">
@@ -120,11 +119,10 @@ export default async function InstructorLivePage() {
             />
           ) : (
             sessions.map((session) => (
-              <RetroPanel
+              <div
                 key={session.id}
                 id={`session-${session.id}`}
-                tone={session.status === "live" ? "secondary" : "card"}
-                className="scroll-mt-24 overflow-hidden p-0"
+                className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface"
               >
                 <div className="flex flex-col gap-4 p-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -269,15 +267,14 @@ export default async function InstructorLivePage() {
                     </Button>
                   </div>
                 </form>
-              </RetroPanel>
+              </div>
             ))
           )}
         </div>
 
-        <RetroPanel
+        <div
           id="create-session"
-          tone="secondary"
-          className="scroll-mt-24 self-start xl:sticky xl:top-24"
+          className="scroll-mt-24 self-start rounded-2xl border border-border/40 bg-surface p-5 xl:sticky xl:top-24"
         >
           <div className="mb-5 flex items-center gap-2">
             <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-accent)] p-2 shadow-retro-sm">
@@ -353,7 +350,7 @@ export default async function InstructorLivePage() {
               </Button>
             </form>
           )}
-        </RetroPanel>
+        </div>
       </section>
     </div>
   );

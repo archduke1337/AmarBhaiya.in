@@ -11,8 +11,6 @@ import { formatRelativeTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RetroPanel } from "@/components/marketing/retro-panel";
-
 export default async function NotificationsPage() {
   await requireAuth();
   const notifications = await getUserNotifications();
@@ -51,7 +49,7 @@ export default async function NotificationsPage() {
           description="Abhi koi update nahi hai. Jab instructor, admin, ya system kuch important bhejega, woh yahin dikhega."
         />
       ) : (
-        <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           {notifications.map((notification) => (
             <article
               key={notification.id}
@@ -127,7 +125,7 @@ export default async function NotificationsPage() {
               )}
             </article>
           ))}
-        </RetroPanel>
+        </div>
       )}
     </div>
   );

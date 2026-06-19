@@ -136,7 +136,7 @@ export function CoursePlayer({ courseTitle, modules, resources }: CoursePlayerPr
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Write key takeaways or doubts for this lesson"
-                className="w-full min-h-32 border border-border bg-background px-3 py-2"
+                className="input-field--textarea w-full min-h-32"
               />
               <p className="text-xs text-muted-foreground">
                 Notes are currently local to this session. Server persistence can be connected next.

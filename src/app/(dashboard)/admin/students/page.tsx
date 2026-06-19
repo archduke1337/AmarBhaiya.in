@@ -55,7 +55,7 @@ export default async function AdminStudentProfilesPage() {
               name="userId"
               required
               disabled={!canManuallyEnroll}
-              className="h-9 w-full border border-border bg-background px-3 text-xs disabled:opacity-60"
+              className="input-field h-9 w-full text-xs disabled:opacity-60"
               defaultValue=""
             >
               <option value="" disabled>
@@ -74,7 +74,7 @@ export default async function AdminStudentProfilesPage() {
               name="courseId"
               required
               disabled={!canManuallyEnroll}
-              className="h-9 w-full border border-border bg-background px-3 text-xs disabled:opacity-60"
+              className="input-field h-9 w-full text-xs disabled:opacity-60"
               defaultValue=""
             >
               <option value="" disabled>

@@ -150,7 +150,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               required
               minLength={4}
               placeholder="Module 1 - Foundations"
-              className="h-10 w-full border border-border bg-background px-3"
+              className="input-field h-10 w-full"
             />
           </label>
 
@@ -161,7 +161,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               type="number"
               min={0}
               defaultValue={0}
-              className="h-10 w-full border border-border bg-background px-3"
+              className="input-field h-10 w-full"
             />
           </label>
 
@@ -171,7 +171,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               name="description"
               rows={2}
               placeholder="What this module covers"
-              className="w-full border border-border bg-background px-3 py-2"
+              className="input-field--textarea w-full"
             />
           </label>
 
@@ -210,7 +210,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   required
                   minLength={4}
                   defaultValue={module.title}
-                  className="h-10 w-full border border-border bg-background px-3"
+                  className="input-field h-10 w-full"
                 />
               </label>
 
@@ -220,7 +220,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   name="description"
                   rows={2}
                   defaultValue={module.description}
-                  className="w-full border border-border bg-background px-3 py-2"
+                  className="input-field--textarea w-full"
                 />
               </label>
 
@@ -231,7 +231,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   type="number"
                   min={0}
                   defaultValue={module.order}
-                  className="h-10 w-full border border-border bg-background px-3"
+                  className="input-field h-10 w-full"
                 />
               </label>
 
@@ -270,7 +270,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   required
                   minLength={4}
                   placeholder="Lesson title"
-                  className="h-10 w-full border border-border bg-background px-3"
+                  className="input-field h-10 w-full"
                 />
               </label>
 
@@ -280,7 +280,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   name="description"
                   rows={2}
                   placeholder="Optional lesson summary"
-                  className="w-full border border-border bg-background px-3 py-2"
+                  className="input-field--textarea w-full"
                 />
               </label>
 
@@ -292,7 +292,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                     type="number"
                     min={0}
                     defaultValue={0}
-                    className="h-10 w-full border border-border bg-background px-3"
+                    className="input-field h-10 w-full"
                   />
                 </label>
                 <label className="space-y-1 text-sm">
@@ -302,7 +302,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                     type="number"
                     min={0}
                     defaultValue={module.lessons.length + 1}
-                    className="h-10 w-full border border-border bg-background px-3"
+                    className="input-field h-10 w-full"
                   />
                 </label>
               </div>
@@ -361,7 +361,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                         required
                         minLength={4}
                         defaultValue={lesson.title}
-                        className="h-10 w-full border border-border bg-background px-3"
+                        className="input-field h-10 w-full"
                       />
                     </label>
 
@@ -371,7 +371,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                         name="description"
                         rows={2}
                         defaultValue={lesson.description}
-                        className="w-full border border-border bg-background px-3 py-2"
+                        className="input-field--textarea w-full"
                       />
                     </label>
 
@@ -383,7 +383,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                           type="number"
                           min={0}
                           defaultValue={lesson.duration}
-                          className="h-10 w-full border border-border bg-background px-3"
+                          className="input-field h-10 w-full"
                         />
                       </label>
 
@@ -394,7 +394,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                           type="number"
                           min={0}
                           defaultValue={lesson.order}
-                          className="h-10 w-full border border-border bg-background px-3"
+                          className="input-field h-10 w-full"
                         />
                       </label>
                     </div>
@@ -512,7 +512,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   name="text"
                   required
                   placeholder="What is...?"
-                  className="h-9 w-full border border-border bg-background px-3 text-xs"
+                  className="input-field h-9 w-full text-xs"
                 />
               </label>
 
@@ -520,7 +520,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 <span className="text-muted-foreground">Type</span>
                 <select
                   name="type"
-                  className="h-9 w-full border border-border bg-background px-3 text-xs"
+                  className="input-field h-9 w-full text-xs"
                 >
                   <option value="mcq">Multiple Choice</option>
                   <option value="true_false">True / False</option>
@@ -534,7 +534,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   name="correctAnswer"
                   required
                   placeholder="The correct option text"
-                  className="h-9 w-full border border-border bg-background px-3 text-xs"
+                  className="input-field h-9 w-full text-xs"
                 />
               </label>
 
@@ -543,7 +543,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 <input
                   name="options"
                   placeholder="Option A, Option B, Option C, Option D"
-                  className="h-9 w-full border border-border bg-background px-3 text-xs"
+                  className="input-field h-9 w-full text-xs"
                 />
               </label>
 

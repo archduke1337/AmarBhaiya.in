@@ -5,7 +5,6 @@ import { BookOpenCheck, Download, Lock, MessageSquareMore } from "lucide-react";
 import { postCourseCommentFormAction } from "@/actions/form-wrappers";
 import { getCourseComments } from "@/actions/comments";
 import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,7 +76,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6 pb-6">
-      <RetroPanel tone="card" size="lg" className="space-y-5">
+      <div className="space-y-5 rounded-2xl border border-border/40 bg-surface p-6">
         <div className="flex flex-wrap gap-2">
           <Badge variant="ghost">{course.accessModel}</Badge>
           <Badge variant="secondary">{course.totalLessons} lessons</Badge>
@@ -123,26 +122,25 @@ export default async function CoursePlayerPage({ params }: PageProps) {
             ) : null}
           </div>
         </div>
-      </RetroPanel>
+      </div>
 
       <section className="grid gap-4 lg:grid-cols-3">
         {courseSignals.map((item, index) => (
-          <RetroPanel
+          <div
             key={item.title}
-            tone={index === 1 ? "accent" : "card"}
-            className="space-y-3"
+            className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5"
           >
             <item.icon className="size-4" />
             <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
               {item.title}
             </h2>
             <p className="text-sm font-medium leading-7 text-foreground/80">{item.body}</p>
-          </RetroPanel>
+          </div>
         ))}
       </section>
 
       {!hasFullAccess && isPaidCourse ? (
-        <RetroPanel tone="muted" className="text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-border/40 bg-surface p-5 text-sm text-muted-foreground">
           <div className="flex items-start gap-3">
             <Lock className="mt-0.5 size-4 shrink-0" />
             <div className="space-y-1">
@@ -155,19 +153,19 @@ export default async function CoursePlayerPage({ params }: PageProps) {
               </p>
             </div>
           </div>
-        </RetroPanel>
+        </div>
       ) : null}
 
       {visibleModules.length === 0 ? (
-        <RetroPanel tone="muted" className="text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-border/40 bg-surface p-5 text-sm text-muted-foreground">
           {hasFullAccess
             ? "Is course mein abhi lessons add nahi hue hain."
             : "Is course ka free preview abhi available nahi hai."}
-        </RetroPanel>
+        </div>
       ) : (
         <section className="space-y-4">
           {visibleModules.map((module, moduleIndex) => (
-            <RetroPanel key={module.id} tone={moduleIndex % 2 === 0 ? "card" : "accent"} className="space-y-0 p-0">
+            <div key={module.id} className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
               <div className="border-b-2 border-border px-5 py-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Module {moduleIndex + 1}
@@ -209,12 +207,12 @@ export default async function CoursePlayerPage({ params }: PageProps) {
                   </li>
                 ))}
               </ul>
-            </RetroPanel>
+            </div>
           ))}
         </section>
       )}
 
-      <RetroPanel tone="card" className="space-y-0 p-0">
+      <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
         <div className="border-b-2 border-border px-5 py-3">
           <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
             Course Discussion ({courseComments.length})
@@ -275,7 +273,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
             Course discussion join karne ke liye enroll karna hoga.
           </div>
         )}
-      </RetroPanel>
+      </div>
     </div>
   );
 }

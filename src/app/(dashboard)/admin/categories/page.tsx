@@ -33,7 +33,7 @@ export default async function AdminCategoriesPage() {
               required
               minLength={2}
               placeholder="Career Growth"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
@@ -41,7 +41,7 @@ export default async function AdminCategoriesPage() {
             <input
               name="slug"
               placeholder="career-growth"
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm md:col-span-2">
@@ -50,7 +50,7 @@ export default async function AdminCategoriesPage() {
               name="description"
               rows={2}
               placeholder="Used for upskilling and placement-focused programs."
-              className="border border-border bg-background px-3 py-2 text-sm"
+              className="input-field--textarea text-sm"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm md:max-w-[200px]">
@@ -60,7 +60,7 @@ export default async function AdminCategoriesPage() {
               type="number"
               min={0}
               defaultValue={0}
-              className="h-10 border border-border bg-background px-3 text-sm"
+              className="input-field h-10 text-sm"
             />
           </label>
           <div className="flex items-end md:col-span-2">
@@ -100,7 +100,7 @@ export default async function AdminCategoriesPage() {
                       required
                       minLength={2}
                       defaultValue={category.name}
-                      className="h-10 border border-border bg-background px-3 text-sm"
+                      className="input-field h-10 text-sm"
                     />
                   </label>
 
@@ -109,7 +109,7 @@ export default async function AdminCategoriesPage() {
                     <input
                       name="slug"
                       defaultValue={category.slug}
-                      className="h-10 border border-border bg-background px-3 text-sm"
+                      className="input-field h-10 text-sm"
                     />
                   </label>
 
@@ -119,7 +119,7 @@ export default async function AdminCategoriesPage() {
                       name="description"
                       rows={2}
                       defaultValue={category.description}
-                      className="border border-border bg-background px-3 py-2 text-sm"
+                      className="input-field--textarea text-sm"
                     />
                   </label>
 
@@ -130,7 +130,7 @@ export default async function AdminCategoriesPage() {
                       type="number"
                       min={0}
                       defaultValue={category.order}
-                      className="h-10 border border-border bg-background px-3 text-sm"
+                      className="input-field h-10 text-sm"
                     />
                   </label>
 

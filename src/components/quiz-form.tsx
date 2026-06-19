@@ -93,7 +93,7 @@ export function QuizForm({
                 required
                 placeholder="Your answer..."
                 aria-label="Short answer input"
-                className="h-10 w-full border border-border bg-background px-3 text-sm"
+                className="input-field h-10 w-full text-sm"
               />
             ) : (
               <div className="flex flex-col gap-2" role="group" aria-labelledby={`question-${q.id}`}>

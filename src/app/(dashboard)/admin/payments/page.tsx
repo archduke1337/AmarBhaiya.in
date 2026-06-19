@@ -22,7 +22,6 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 
 type CourseRevenueItem = {
@@ -125,10 +124,9 @@ export default async function AdminPaymentsPage() {
         />
       ) : (
         <div className="grid gap-6 xl:grid-cols-3">
-          <RetroPanel
+          <div
             id="payments-list"
-            tone="card"
-            className="scroll-mt-24 overflow-hidden p-0 xl:col-span-2"
+            className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface xl:col-span-2"
           >
             <div className="flex flex-col gap-3 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -217,7 +215,7 @@ export default async function AdminPaymentsPage() {
                 </div>
               ))}
             </div>
-          </RetroPanel>
+          </div>
 
           <aside className="flex flex-col gap-6">
             <ActivityFeed
@@ -246,7 +244,7 @@ export default async function AdminPaymentsPage() {
               }))}
             />
 
-            <RetroPanel tone="secondary" className="overflow-hidden p-0">
+            <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
               <div className="border-b-2 border-border px-5 py-3">
                 <h2 className="font-heading text-base font-black tracking-[-0.03em]">
                   Top Grossing Courses
@@ -289,9 +287,9 @@ export default async function AdminPaymentsPage() {
                   ))
                 )}
               </div>
-            </RetroPanel>
+            </div>
 
-            <RetroPanel tone="card" className="overflow-hidden p-0">
+            <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
               <div className="border-b-2 border-border px-5 py-3">
                 <h2 className="font-heading text-base font-black tracking-[-0.03em]">
                   Status Breakdown
@@ -339,7 +337,7 @@ export default async function AdminPaymentsPage() {
                   </div>
                 ))}
               </div>
-            </RetroPanel>
+            </div>
           </aside>
         </div>
       )}

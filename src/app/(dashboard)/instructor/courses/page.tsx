@@ -9,7 +9,6 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { requireRole } from "@/lib/appwrite/auth";
@@ -78,9 +77,9 @@ export default async function InstructorCoursesPage() {
         />
       </StatGrid>
 
-      <RetroPanel tone="accent" className="text-sm font-semibold leading-7 text-muted-foreground">
+      <div className="rounded-2xl border border-border/40 bg-surface p-5 text-sm font-semibold leading-7 text-muted-foreground">
         Before publishing, keep the course promise simple: clear thumbnail, one useful module, one real lesson, and at least one playable video. For paid courses, add a free preview so students can trust the teaching style before paying.
-      </RetroPanel>
+      </div>
 
       {courses.length === 0 ? (
         <EmptyState
@@ -133,10 +132,9 @@ export default async function InstructorCoursesPage() {
 
 function CourseCard({ course }: { course: InstructorCourseListItem }) {
   return (
-    <RetroPanel
+    <div
       id={`course-${course.id}`}
-      tone={course.status === "Published" ? "secondary" : "card"}
-      className="group scroll-mt-24 transition-transform hover:-translate-y-1"
+      className="group scroll-mt-24 rounded-2xl border border-border/40 bg-surface transition-transform hover:-translate-y-1"
     >
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -255,6 +253,6 @@ function CourseCard({ course }: { course: InstructorCourseListItem }) {
           </div>
         ) : null}
       </div>
-    </RetroPanel>
+    </div>
   );
 }

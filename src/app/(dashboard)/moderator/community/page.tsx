@@ -117,7 +117,7 @@ export default async function ModeratorCommunityPage() {
                         <select
                           name="action"
                           defaultValue={thread.pinned ? "unpin" : "pin"}
-                          className="h-9 border border-border bg-background px-3 text-sm"
+                          className="input-field h-9"
                         >
                           <option value="pin">Pin thread</option>
                           <option value="unpin">Unpin thread</option>
@@ -136,7 +136,7 @@ export default async function ModeratorCommunityPage() {
                         <input
                           name="duration"
                           placeholder="24h"
-                          className="h-9 border border-border bg-background px-3 text-sm"
+                          className="input-field h-9"
                         />
                       </label>
 
@@ -148,7 +148,7 @@ export default async function ModeratorCommunityPage() {
                           minLength={3}
                           defaultValue={`Thread moderation: ${thread.title}`}
                           rows={2}
-                          className="border border-border bg-background px-3 py-2 text-sm"
+                          className="input-field--textarea text-sm"
                         />
                       </label>
 

@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Textarea } from "@/components/ui/textarea";
 
 export default async function CommunityPage() {
@@ -31,7 +30,7 @@ export default async function CommunityPage() {
       />
 
       {/* Create thread form */}
-      <RetroPanel tone="card" className="space-y-0 p-0">
+      <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
         <div className="border-b-2 border-border px-5 py-4">
           <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
             Start a discussion
@@ -96,7 +95,7 @@ export default async function CommunityPage() {
             </div>
           </form>
         )}
-      </RetroPanel>
+      </div>
 
       {/* Thread list */}
       <section className="flex flex-col gap-3">
@@ -112,10 +111,9 @@ export default async function CommunityPage() {
           />
         ) : (
           threads.map((thread) => (
-            <RetroPanel
+            <div
               key={thread.id}
-              tone={thread.pinned ? "secondary" : "card"}
-              className="group space-y-3 transition-transform hover:-translate-y-1"
+              className="group space-y-3 rounded-2xl border border-border/40 bg-surface transition-transform hover:-translate-y-1"
             >
               <div className="flex items-center justify-between gap-4">
                 <Badge variant="outline">{thread.category}</Badge>
@@ -143,7 +141,7 @@ export default async function CommunityPage() {
                   {thread.replies} replies
                 </span>
               </div>
-            </RetroPanel>
+            </div>
           ))
         )}
       </section>

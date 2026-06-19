@@ -15,7 +15,6 @@ import {
   getInstructorResources,
 } from "@/actions/resources";
 import { DirectAppwriteUploadForm } from "@/components/instructor/direct-appwrite-upload-form";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { formatCurrency } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +47,7 @@ export default async function InstructorResourcesPage() {
       />
 
       <section className="grid gap-3 md:grid-cols-3">
-        <RetroPanel tone="accent" className="p-4">
+        <div className="rounded-2xl border border-border/40 bg-surface p-4">
           <p className="font-heading text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
             Course-linked
           </p>
@@ -56,8 +55,8 @@ export default async function InstructorResourcesPage() {
           <p className="mt-1 text-xs font-semibold leading-6 text-muted-foreground">
             Files and links attached directly to lessons.
           </p>
-        </RetroPanel>
-        <RetroPanel tone="card" className="p-4">
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-surface p-4">
           <p className="font-heading text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
             Published standalone
           </p>
@@ -65,8 +64,8 @@ export default async function InstructorResourcesPage() {
           <p className="mt-1 text-xs font-semibold leading-6 text-muted-foreground">
             Visible in the independent resources library.
           </p>
-        </RetroPanel>
-        <RetroPanel tone="secondary" className="p-4">
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-surface p-4">
           <p className="font-heading text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
             Free standalone
           </p>
@@ -74,14 +73,13 @@ export default async function InstructorResourcesPage() {
           <p className="mt-1 text-xs font-semibold leading-6 text-muted-foreground">
             Open access resources that do not need a purchase.
           </p>
-        </RetroPanel>
+        </div>
       </section>
 
       {/* Course-linked resources */}
-      <RetroPanel
+      <div
         id="create-course-resource"
-        tone="card"
-        className="scroll-mt-24 overflow-hidden p-0"
+        className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface"
       >
         <div className="flex items-center gap-2 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-3">
           <BookOpen className="size-4 text-muted-foreground" />
@@ -160,7 +158,7 @@ export default async function InstructorResourcesPage() {
         <div className="border-t-2 border-border bg-[color:var(--surface-muted)] px-5 py-3 text-xs font-semibold leading-6 text-muted-foreground">
           These resources are attached to specific lessons and inherit course access automatically.
         </div>
-      </RetroPanel>
+      </div>
 
       <section
         id="course-resources"
@@ -178,11 +176,10 @@ export default async function InstructorResourcesPage() {
           />
         ) : (
           courseResources.map((resource) => (
-            <RetroPanel
+            <div
               key={resource.id}
               id={`course-resource-${resource.id}`}
-              tone="card"
-              className="scroll-mt-24 overflow-hidden p-0"
+              className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface"
             >
               <div className="flex flex-col gap-2 p-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex flex-col gap-1">
@@ -287,16 +284,15 @@ export default async function InstructorResourcesPage() {
                   Delete resource
                 </Button>
               </form>
-            </RetroPanel>
+            </div>
           ))
         )}
       </section>
 
       {/* Create standalone resource form */}
-      <RetroPanel
+      <div
         id="create-standalone-resource"
-        tone="accent"
-        className="scroll-mt-24 overflow-hidden p-0"
+        className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface"
       >
         <div className="flex items-center gap-2 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-3">
           <Plus className="size-4 text-muted-foreground" />
@@ -382,7 +378,7 @@ export default async function InstructorResourcesPage() {
             </Button>
           </div>
         </form>
-      </RetroPanel>
+      </div>
 
       {/* Standalone resource list */}
       <section
@@ -401,11 +397,10 @@ export default async function InstructorResourcesPage() {
           />
         ) : (
           resources.map((resource) => (
-            <RetroPanel
+            <div
               key={resource.id}
               id={`standalone-resource-${resource.id}`}
-              tone={resource.isPublished ? "secondary" : "card"}
-              className="scroll-mt-24 overflow-hidden p-0"
+              className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface"
             >
               <div className="flex flex-col gap-2 p-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex flex-col gap-1">
@@ -562,7 +557,7 @@ export default async function InstructorResourcesPage() {
                   Delete resource
                 </Button>
               </form>
-            </RetroPanel>
+            </div>
           ))
         )}
       </section>

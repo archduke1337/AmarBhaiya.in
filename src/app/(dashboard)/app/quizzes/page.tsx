@@ -10,7 +10,6 @@ import {
   listRowsByFieldValues,
 } from "@/lib/appwrite/row-pagination";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 
 type AnyRow = Models.Row & Record<string, unknown>;
@@ -121,33 +120,33 @@ export default async function StudentQuizHistoryPage() {
       ) : (
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            <RetroPanel tone="secondary" className="space-y-1">
+            <div className="space-y-1 rounded-2xl border border-border/40 bg-surface">
               <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Attempts
               </p>
               <p className="font-heading text-4xl font-black tracking-[-0.08em]">
                 {attempts.length}
               </p>
-            </RetroPanel>
-            <RetroPanel tone="accent" className="space-y-1">
+            </div>
+            <div className="space-y-1 rounded-2xl border border-border/40 bg-surface">
               <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Passed
               </p>
               <p className="font-heading text-4xl font-black tracking-[-0.08em]">
                 {passed}
               </p>
-            </RetroPanel>
-            <RetroPanel tone="card" className="space-y-1">
+            </div>
+            <div className="space-y-1 rounded-2xl border border-border/40 bg-surface">
               <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Average
               </p>
               <p className="font-heading text-4xl font-black tracking-[-0.08em]">
                 {avgScore}%
               </p>
-            </RetroPanel>
+            </div>
           </div>
 
-          <RetroPanel tone="card" className="space-y-0 p-0">
+          <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
             <div className="border-b-2 border-border px-5 py-4">
               <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
                 Attempt history
@@ -196,7 +195,7 @@ export default async function StudentQuizHistoryPage() {
               </div>
             ))}
             </div>
-          </RetroPanel>
+          </div>
         </div>
       )}
     </div>

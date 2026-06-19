@@ -22,7 +22,6 @@ import {
   getFilePreviewUrl,
 } from "@/lib/utils/file-urls";
 import { normalizeHttpUrl } from "@/lib/utils/url";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -81,7 +80,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
 
   if (!hasAccess) {
     return (
-      <RetroPanel tone="muted" size="lg" className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 py-14 text-center">
+      <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 rounded-2xl border border-border/40 bg-surface py-14 text-center">
         <Lock className="size-10 text-muted-foreground" />
         <h1 className="font-heading text-3xl font-black tracking-[-0.05em]">Lesson Locked</h1>
         <p className="max-w-md text-sm font-medium leading-7 text-muted-foreground">
@@ -90,7 +89,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
         <Button asChild size="lg">
           <Link href={`/courses/${String(course.slug ?? courseId)}`}>View Course</Link>
         </Button>
-      </RetroPanel>
+      </div>
     );
   }
 
@@ -221,7 +220,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
         {String(course.title ?? "Back to Course")}
       </Link>
 
-      <RetroPanel tone="secondary" className="space-y-3">
+      <div className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">Lesson view</Badge>
           <Badge variant="ghost">
@@ -234,7 +233,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
         <p className="text-sm font-medium leading-7 text-foreground/80">
           This page is designed for actual studying on smaller screens: watch the video, grab the notes or files you need, then move to the next lesson without losing your place.
         </p>
-      </RetroPanel>
+      </div>
 
       {/* Video player */}
       <LessonVideoPlayer
@@ -250,7 +249,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
       />
 
       <div className="sticky bottom-[5.7rem] z-10 md:static">
-        <RetroPanel tone="accent" className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 py-3 md:flex md:justify-between">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl border border-border/40 bg-surface px-3 py-3 md:flex md:justify-between">
           <div className="justify-self-start">
             {prevLesson ? (
               canOpenLesson(prevLesson) ? (
@@ -299,7 +298,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
               <span />
             )}
           </div>
-        </RetroPanel>
+        </div>
       </div>
 
       <Tabs defaultValue="study" className="gap-4">
@@ -312,7 +311,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
 
         <TabsContent value="study" className="space-y-4">
           <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <RetroPanel tone="card" className="space-y-5">
+            <div className="space-y-5 rounded-2xl border border-border/40 bg-surface p-5">
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline">{String(course.title ?? "Course")}</Badge>
                 <Badge variant="ghost">
@@ -361,10 +360,10 @@ export default async function LessonViewerPage({ params }: PageProps) {
                   Preview lesson
                 </span>
               )}
-            </RetroPanel>
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
-              <RetroPanel tone="secondary" className="space-y-2">
+              <div className="space-y-2 rounded-2xl border border-border/40 bg-surface p-5">
                 <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                   Progress
                 </p>
@@ -374,8 +373,8 @@ export default async function LessonViewerPage({ params }: PageProps) {
                 <p className="text-sm font-medium leading-6 text-foreground/75">
                   Saved while you watch, so budget-phone study breaks do not reset the flow.
                 </p>
-              </RetroPanel>
-              <RetroPanel tone="accent" className="space-y-2">
+              </div>
+              <div className="space-y-2 rounded-2xl border border-border/40 bg-surface p-5">
                 <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                   Resources
                 </p>
@@ -385,15 +384,15 @@ export default async function LessonViewerPage({ params }: PageProps) {
                 <p className="text-sm font-medium leading-6 text-foreground/75">
                   PDFs, files, and useful links attached to this exact lesson.
                 </p>
-              </RetroPanel>
-              <RetroPanel tone="muted" className="space-y-2">
+              </div>
+              <div className="space-y-2 rounded-2xl border border-border/40 bg-surface p-5">
                 <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                   Study tip
                 </p>
                 <p className="text-sm font-medium leading-6 text-foreground/75">
                   Pehle video samjho. Phir notes kholke 10-minute revision karo. Doubt bache toh tabhi pooch do.
                 </p>
-              </RetroPanel>
+              </div>
             </div>
           </div>
         </TabsContent>
@@ -401,7 +400,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
         <TabsContent value="notes" className="space-y-4">
           {lessonResourceItems.length > 0 ? (
             <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
-              <RetroPanel tone="card" size="lg" className="space-y-4">
+              <div className="space-y-4 rounded-2xl border border-border/40 bg-surface p-5">
                 {previewResource ? (
                   <>
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -427,7 +426,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                     </div>
                   </>
                 ) : (
-                  <RetroPanel tone="muted" className="space-y-3">
+                  <div className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5">
                     <FileText className="size-5" />
                     <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
                       Preview ke liye PDF attached nahi hai.
@@ -435,11 +434,11 @@ export default async function LessonViewerPage({ params }: PageProps) {
                     <p className="text-sm font-medium leading-7 text-foreground/80">
                       Is lesson ke resources available hain, lekin browser preview sirf PDF files ke liye dikhaya jata hai.
                     </p>
-                  </RetroPanel>
+                  </div>
                 )}
-              </RetroPanel>
+              </div>
 
-              <RetroPanel tone="secondary" className="space-y-0 p-0">
+              <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
                 <div className="border-b-2 border-border px-5 py-4">
                   <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
                     Lesson resources ({lessonResourceItems.length})
@@ -479,10 +478,10 @@ export default async function LessonViewerPage({ params }: PageProps) {
                     </li>
                   ))}
                 </ul>
-              </RetroPanel>
+              </div>
             </div>
           ) : (
-            <RetroPanel tone="muted" size="lg" className="space-y-3">
+            <div className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5">
               <FileText className="size-6" />
               <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
                 Is lesson mein abhi notes attach nahi hue hain.
@@ -490,12 +489,12 @@ export default async function LessonViewerPage({ params }: PageProps) {
               <p className="max-w-2xl text-sm font-medium leading-7 text-foreground/80">
                 Jab instructor PDF ya resource attach karega, woh yahin preview aur download ke saath dikhega.
               </p>
-            </RetroPanel>
+            </div>
           )}
         </TabsContent>
 
         <TabsContent value="doubts" className="space-y-4">
-          <RetroPanel tone="muted" className="space-y-0 p-0">
+          <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
             <div className="border-b-2 border-border px-5 py-4">
               <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
                 Lesson discussion ({comments.length})
@@ -552,11 +551,11 @@ export default async function LessonViewerPage({ params }: PageProps) {
                 </div>
               ))}
             </div>
-          </RetroPanel>
+          </div>
         </TabsContent>
 
         <TabsContent value="path" className="space-y-4">
-          <RetroPanel tone="card" className="space-y-0 p-0">
+          <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
             <div className="border-b-2 border-border px-5 py-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="size-4" />
@@ -609,7 +608,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                 );
               })}
             </ul>
-          </RetroPanel>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -116,7 +116,7 @@ export default async function ModeratorStudentsPage() {
                     <select
                       name="action"
                       defaultValue="warn"
-                      className="h-9 border border-border bg-background px-3 text-sm"
+                      className="input-field h-9"
                     >
                       <option value="warn">Warn</option>
                       <option value="mute">Mute</option>
@@ -132,7 +132,7 @@ export default async function ModeratorStudentsPage() {
                     <input
                       name="duration"
                       placeholder="48h"
-                      className="h-9 border border-border bg-background px-3 text-sm"
+                      className="input-field h-9"
                     />
                   </label>
 
@@ -144,7 +144,7 @@ export default async function ModeratorStudentsPage() {
                       minLength={3}
                       rows={2}
                       defaultValue={student.latestReason}
-                      className="border border-border bg-background px-3 py-2 text-sm"
+                      className="input-field--textarea text-sm"
                     />
                   </label>
 

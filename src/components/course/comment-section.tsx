@@ -57,7 +57,7 @@ export function CommentSection({ initialComments = [] }: CommentSectionProps) {
           onChange={(event) => setText(event.target.value)}
           placeholder="Ask a doubt or share an insight from this lesson"
           aria-label="Comment input"
-          className="w-full min-h-24 border border-border bg-background px-3 py-2"
+          className="input-field--textarea w-full min-h-24"
         />
         <button
           type="submit"

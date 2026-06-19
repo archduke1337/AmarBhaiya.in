@@ -318,6 +318,34 @@
     border: 1px solid color-mix(in oklab, var(--accent) 25%, transparent);
   }
 
+  /* ── Form input fields ──────────────────────────────────── */
+  .input-field {
+    border: 2px solid var(--border);
+    border-radius: calc(var(--radius) + 2px);
+    background: var(--field-background);
+    padding: 0 0.875rem;
+    box-shadow: var(--field-shadow);
+    outline: none;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  .input-field:focus-visible {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--focus) 25%, transparent);
+  }
+  .input-field--textarea {
+    padding: 0.5rem 0.875rem;
+    min-height: 5rem;
+  }
+  .input-field--select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+  }
+
   /* Animate reveal — scroll entry */
   .reveal {
     opacity: 0;

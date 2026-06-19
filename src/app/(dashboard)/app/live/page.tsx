@@ -10,8 +10,6 @@ import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RetroPanel } from "@/components/marketing/retro-panel";
-
 export default async function StudentLivePage() {
   await requireAuth();
   const [sessions, recordings] = await Promise.all([
@@ -43,18 +41,17 @@ export default async function StudentLivePage() {
               Upcoming & live
             </h2>
             {sessions.length === 0 ? (
-              <RetroPanel tone="muted">
+              <div className="rounded-2xl border border-border/40 bg-surface p-5">
                 <p className="text-sm font-medium leading-7 text-muted-foreground">
                   Abhi upcoming session scheduled nahi hai. Recordings section check kar sakte ho.
                 </p>
-              </RetroPanel>
+              </div>
             ) : (
               sessions.map((session) => (
-                <RetroPanel
+                <div
                   key={session.id}
                   id={`session-${session.id}`}
-                  tone={session.status === "live" ? "secondary" : "card"}
-                  className="scroll-mt-24"
+                  className="scroll-mt-24 rounded-2xl border border-border/40 bg-surface p-5"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-col gap-1.5">
@@ -114,7 +111,7 @@ export default async function StudentLivePage() {
                       )}
                     </div>
                   </div>
-                </RetroPanel>
+                </div>
               ))
             )}
           </section>
@@ -127,18 +124,17 @@ export default async function StudentLivePage() {
               Recent recordings
             </h2>
             {recordings.length === 0 ? (
-              <RetroPanel tone="muted">
+              <div className="rounded-2xl border border-border/40 bg-surface p-5">
                 <p className="text-sm font-medium leading-7 text-muted-foreground">
                   Session khatam hone ke baad jab recording publish hogi, woh yahin aa jayegi.
                 </p>
-              </RetroPanel>
+              </div>
             ) : (
               recordings.map((recording) => (
-                <RetroPanel
+                <div
                   key={recording.id}
                   id={`recording-${recording.id}`}
-                  tone="card"
-                  className="scroll-mt-24"
+                  className="scroll-mt-24 rounded-2xl border border-border/40 bg-surface p-5"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-col gap-1.5">
@@ -161,7 +157,7 @@ export default async function StudentLivePage() {
                       </a>
                     </Button>
                   </div>
-                </RetroPanel>
+                </div>
               ))
             )}
           </section>

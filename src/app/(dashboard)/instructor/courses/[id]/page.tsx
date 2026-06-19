@@ -158,7 +158,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
               required
               minLength={6}
               defaultValue={course.title}
-              className="h-10 w-full border border-border bg-background px-3"
+              className="input-field h-10 w-full"
             />
           </label>
 
@@ -170,7 +170,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
               minLength={12}
               rows={4}
               defaultValue={course.shortDescription}
-              className="w-full border border-border bg-background px-3 py-2"
+              className="input-field--textarea w-full"
             />
           </label>
 
@@ -181,7 +181,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
               rows={5}
               defaultValue={formatLineSeparatedList(course.whatYouLearn)}
               placeholder={"One learning outcome per line\nUnderstand core concepts\nSolve exam-style problems faster"}
-              className="w-full border border-border bg-background px-3 py-2"
+              className="input-field--textarea w-full"
             />
           </label>
 
@@ -192,7 +192,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
               rows={5}
               defaultValue={formatLineSeparatedList(course.requirements)}
               placeholder={"One requirement per line\nBasic arithmetic\nNotebook and pen"}
-              className="w-full border border-border bg-background px-3 py-2"
+              className="input-field--textarea w-full"
             />
           </label>
 
@@ -202,7 +202,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
               <select
                 name="accessModel"
                 defaultValue={course.accessModel}
-                className="h-10 w-full border border-border bg-background px-3"
+                className="input-field h-10 w-full"
               >
                 <option value="free">Free</option>
                 <option value="paid">Paid</option>
@@ -217,7 +217,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
                 type="number"
                 min={0}
                 defaultValue={course.price}
-                className="h-10 w-full border border-border bg-background px-3"
+                className="input-field h-10 w-full"
               />
             </label>
 

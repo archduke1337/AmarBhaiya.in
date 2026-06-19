@@ -11,7 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Textarea } from "@/components/ui/textarea";
 
 function getInitials(value: string): string {
@@ -45,7 +44,7 @@ export default async function StudentProfileEditPage() {
 
       {/* Email verification banner */}
       {!user.emailVerification && (
-        <RetroPanel tone="secondary" className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border/40 bg-surface p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold">Email verify karna baaki hai</p>
             <p className="mt-1 text-xs font-medium text-muted-foreground">
@@ -60,16 +59,16 @@ export default async function StudentProfileEditPage() {
               Send verification email
             </Button>
           </form>
-        </RetroPanel>
+        </div>
       )}
 
       {user.emailVerification && (
-        <RetroPanel tone="accent" className="text-sm font-semibold">
+        <div className="rounded-2xl border border-border/40 bg-surface p-5 text-sm font-semibold">
           Email verified · {user.email}
-        </RetroPanel>
+        </div>
       )}
 
-      <RetroPanel tone="card" className="space-y-0 p-0">
+      <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
         <div className="border-b-2 border-border px-5 py-3">
           <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Avatar</h2>
         </div>
@@ -96,14 +95,14 @@ export default async function StudentProfileEditPage() {
 
           <AvatarUploadForm />
         </div>
-      </RetroPanel>
+      </div>
 
       <form
         action={upsertStudentProfileFormAction}
         className="flex flex-col gap-6"
       >
         {/* Basic Info */}
-        <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Basic information</h2>
           </div>
@@ -159,10 +158,10 @@ export default async function StudentProfileEditPage() {
               />
             </div>
           </div>
-        </RetroPanel>
+        </div>
 
         {/* Location */}
-        <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Location</h2>
           </div>
@@ -187,10 +186,10 @@ export default async function StudentProfileEditPage() {
               />
             </div>
           </div>
-        </RetroPanel>
+        </div>
 
         {/* Guardian */}
-        <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Guardian information</h2>
           </div>
@@ -216,7 +215,7 @@ export default async function StudentProfileEditPage() {
               />
             </div>
           </div>
-        </RetroPanel>
+        </div>
 
         <div className="flex justify-end">
           <Button
@@ -230,7 +229,7 @@ export default async function StudentProfileEditPage() {
       </form>
 
       {/* Account Settings */}
-      <RetroPanel tone="card" className="space-y-0 p-0">
+      <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
         <div className="border-b-2 border-border px-5 py-3">
           <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Account settings</h2>
         </div>
@@ -304,7 +303,7 @@ export default async function StudentProfileEditPage() {
             </Button>
           </div>
         </form>
-      </RetroPanel>
+      </div>
     </div>
   );
 }

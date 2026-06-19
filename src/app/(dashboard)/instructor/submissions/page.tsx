@@ -15,7 +15,6 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -220,10 +219,9 @@ function SubmissionCard({
   const isOverdue = variant === "pending" && submission.isOverdueReview;
 
   return (
-    <RetroPanel
+    <div
       id={`submission-${submission.id}`}
-      tone={variant === "pending" ? "accent" : "card"}
-      className="scroll-mt-24 overflow-hidden p-0"
+      className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface"
     >
       <div className="flex flex-col gap-4 px-5 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -329,6 +327,6 @@ function SubmissionCard({
           </Button>
         </div>
       </form>
-    </RetroPanel>
+    </div>
   );
 }

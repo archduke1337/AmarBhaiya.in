@@ -30,7 +30,7 @@ export default async function InstructorCategoriesPage() {
               required
               minLength={2}
               placeholder="Placement Preparation"
-              className="h-10 w-full border border-border bg-background px-3"
+              className="input-field h-10 w-full"
             />
           </label>
 
@@ -39,7 +39,7 @@ export default async function InstructorCategoriesPage() {
             <input
               name="slug"
               placeholder="placement-preparation"
-              className="h-10 w-full border border-border bg-background px-3"
+              className="input-field h-10 w-full"
             />
           </label>
 
@@ -48,7 +48,7 @@ export default async function InstructorCategoriesPage() {
             <textarea
               name="description"
               rows={3}
-              className="w-full border border-border bg-background px-3 py-2"
+              className="input-field--textarea w-full"
               placeholder="Focused interview and hiring-readiness content."
             />
           </label>
@@ -60,7 +60,7 @@ export default async function InstructorCategoriesPage() {
               type="number"
               min={0}
               defaultValue={0}
-              className="h-10 w-full border border-border bg-background px-3"
+              className="input-field h-10 w-full"
             />
           </label>
 
@@ -93,7 +93,7 @@ export default async function InstructorCategoriesPage() {
                   required
                   minLength={2}
                   defaultValue={category.name}
-                  className="h-10 w-full border border-border bg-background px-3"
+                  className="input-field h-10 w-full"
                 />
               </label>
 
@@ -102,7 +102,7 @@ export default async function InstructorCategoriesPage() {
                 <input
                   name="slug"
                   defaultValue={category.slug}
-                  className="h-10 w-full border border-border bg-background px-3"
+                  className="input-field h-10 w-full"
                 />
               </label>
 
@@ -112,7 +112,7 @@ export default async function InstructorCategoriesPage() {
                   name="description"
                   rows={2}
                   defaultValue={category.description}
-                  className="w-full border border-border bg-background px-3 py-2"
+                  className="input-field--textarea w-full"
                 />
               </label>
 
@@ -123,7 +123,7 @@ export default async function InstructorCategoriesPage() {
                   type="number"
                   min={0}
                   defaultValue={category.order}
-                  className="h-10 w-full border border-border bg-background px-3"
+                  className="input-field h-10 w-full"
                 />
               </label>
 

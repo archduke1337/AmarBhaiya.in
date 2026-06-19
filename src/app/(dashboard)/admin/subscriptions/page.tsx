@@ -42,7 +42,7 @@ export default async function AdminSubscriptionsPage() {
               required
               disabled={studentOptions.length === 0}
               defaultValue=""
-              className="h-9 w-full border border-border bg-background px-3 text-xs disabled:opacity-60"
+              className="input-field h-9 w-full text-xs disabled:opacity-60"
             >
               <option value="" disabled>
                 {studentOptions.length > 0 ? "Select student" : "No students available"}

@@ -7,7 +7,6 @@ import { getStudentProfile } from "@/actions/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import Link from "next/link";
 
 type PageProps = {
@@ -59,7 +58,7 @@ export default async function ProfilePage({ params }: PageProps) {
 
   return (
     <div className="max-w-5xl space-y-8">
-      <RetroPanel tone="card" size="lg">
+      <div className="rounded-2xl border border-border/40 bg-surface p-6">
         <div className="flex flex-col gap-5 md:flex-row md:items-center">
           <Avatar data-size="lg">
             {avatarFileId ? (
@@ -87,43 +86,43 @@ export default async function ProfilePage({ params }: PageProps) {
             </Button>
           ) : null}
         </div>
-      </RetroPanel>
+      </div>
 
       <section className="grid md:grid-cols-3 gap-4">
-        <RetroPanel tone="secondary">
+        <div className="rounded-2xl border border-border/40 bg-surface p-5">
           <p className="mb-2 font-heading text-xs uppercase tracking-widest text-muted-foreground">Current streak</p>
           <p className="font-heading text-3xl font-black tracking-[-0.06em]">
             {profileStats ? `${profileStats.currentStreakDays} days` : "Private"}
           </p>
-        </RetroPanel>
-        <RetroPanel tone="accent">
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-surface p-5">
           <p className="mb-2 font-heading text-xs uppercase tracking-widest text-muted-foreground">Courses active</p>
           <p className="font-heading text-3xl font-black tracking-[-0.06em]">
             {profileStats ? profileStats.activeCourses : "Private"}
           </p>
-        </RetroPanel>
-        <RetroPanel tone="card">
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-surface p-5">
           <p className="mb-2 font-heading text-xs uppercase tracking-widest text-muted-foreground">Certificates</p>
           <p className="font-heading text-3xl font-black tracking-[-0.06em]">
             {profileStats ? profileStats.certificates : "Private"}
           </p>
-        </RetroPanel>
+        </div>
       </section>
 
       {isOwner ? (
         <section className="grid gap-4 md:grid-cols-2">
           {personalMeta.map((item) => (
-            <RetroPanel key={item.label} tone="muted">
+            <div key={item.label} className="rounded-2xl border border-border/40 bg-surface p-5">
               <p className="mb-2 font-heading text-xs uppercase tracking-widest text-muted-foreground">
                 {item.label}
               </p>
               <p className="text-lg font-semibold">{item.value}</p>
-            </RetroPanel>
+            </div>
           ))}
         </section>
       ) : null}
 
-      <RetroPanel tone="card">
+      <div className="rounded-2xl border border-border/40 bg-surface p-5">
         <h2 className="mb-3 font-heading text-2xl font-black tracking-[-0.04em]">About</h2>
         <p className="font-medium leading-8 text-muted-foreground">
           {isOwner
@@ -137,7 +136,7 @@ export default async function ProfilePage({ params }: PageProps) {
             Interests: {profile.hobby}
           </p>
         ) : null}
-      </RetroPanel>
+      </div>
     </div>
   );
 }

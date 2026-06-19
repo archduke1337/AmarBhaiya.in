@@ -4,7 +4,6 @@ import type { Models } from "node-appwrite";
 import { requireAuth } from "@/lib/appwrite/auth";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { submitAssignmentFormAction } from "@/actions/form-wrappers";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -156,7 +155,7 @@ export default async function StudentAssignmentsPage() {
         />
       ) : (
         <div className="flex flex-col gap-6">
-          <RetroPanel tone="accent" className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/40 bg-surface p-5 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
               <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Submission desk
@@ -169,7 +168,7 @@ export default async function StudentAssignmentsPage() {
               <Badge variant="outline">{pending.length} pending</Badge>
               <Badge variant="ghost">{done.length} submitted</Badge>
             </div>
-          </RetroPanel>
+          </div>
 
           {/* Pending */}
           {pending.length > 0 && (
@@ -181,11 +180,10 @@ export default async function StudentAssignmentsPage() {
                 Pending ({pending.length})
               </h2>
               {pending.map((a) => (
-                <RetroPanel
+                <div
                   key={a.id}
                   id={`assignment-${a.id}`}
-                  tone="card"
-                  className="scroll-mt-24 space-y-0 p-0"
+                  className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface"
                 >
                   <div className="flex flex-col gap-3 px-5 py-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -238,7 +236,7 @@ export default async function StudentAssignmentsPage() {
                       Max {Math.round(ASSIGNMENT_SUBMISSION_MAX_BYTES / (1024 * 1024))} MB · Accepted: {acceptedAssignmentFileTypes}
                     </p>
                   </form>
-                </RetroPanel>
+                </div>
               ))}
             </section>
           )}
@@ -253,11 +251,10 @@ export default async function StudentAssignmentsPage() {
                 Submitted ({done.length})
               </h2>
               {done.map((a) => (
-                <RetroPanel
+                <div
                   key={a.id}
                   id={`assignment-${a.id}`}
-                  tone={a.isGraded ? "secondary" : "muted"}
-                  className="scroll-mt-24 space-y-0 p-0"
+                  className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface"
                 >
                   <div className="px-5 py-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -310,7 +307,7 @@ export default async function StudentAssignmentsPage() {
                       </div>
                     )}
                   </div>
-                </RetroPanel>
+                </div>
               ))}
             </section>
           )}

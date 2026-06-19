@@ -8,7 +8,6 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/dashboard";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { requireRole } from "@/lib/appwrite/auth";
@@ -103,12 +102,8 @@ export default async function InstructorEarningsPage() {
             </div>
           </section>
 
-          <RetroPanel
-            id="course-revenue"
-            tone="card"
-            className="scroll-mt-24 overflow-hidden p-0"
-          >
-            <div className="border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-3">
+          <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden scroll-mt-24">
+            <div className="border-b border-border/40 bg-surface-hover px-5 py-3">
               <h2 className="font-heading text-lg font-black tracking-[-0.04em]">
                 Revenue by Course
               </h2>
@@ -117,7 +112,7 @@ export default async function InstructorEarningsPage() {
               </p>
             </div>
 
-            <div className="hidden items-center gap-4 border-b-2 border-border bg-[color:var(--surface-muted)] px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground lg:grid lg:grid-cols-[1.4fr_120px_140px_140px_140px]">
+            <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.15em] text-muted-foreground lg:grid lg:grid-cols-[1.4fr_120px_140px_140px_140px]">
               <span>Course</span>
               <span>Type</span>
               <span>This Month</span>
@@ -125,7 +120,7 @@ export default async function InstructorEarningsPage() {
               <span>Enrollments</span>
             </div>
 
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-border/40">
               {revenue.courseEarnings.map((course) => (
                 <article
                   key={course.id}
@@ -181,7 +176,7 @@ export default async function InstructorEarningsPage() {
                 </article>
               ))}
             </div>
-          </RetroPanel>
+          </div>
         </>
       )}
     </div>

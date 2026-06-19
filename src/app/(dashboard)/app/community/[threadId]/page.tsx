@@ -17,7 +17,6 @@ import { EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Textarea } from "@/components/ui/textarea";
 
 type PageProps = {
@@ -51,7 +50,7 @@ export default async function ThreadDetailPage({ params }: PageProps) {
       </Link>
 
       {/* Thread header */}
-      <RetroPanel tone="card" size="lg" className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border/40 bg-surface p-6">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{thread.categoryName}</Badge>
           {thread.pinned && (
@@ -88,14 +87,14 @@ export default async function ThreadDetailPage({ params }: PageProps) {
             <span>{formatRelativeTime(thread.createdAt)}</span>
           )}
         </div>
-      </RetroPanel>
+      </div>
 
       {/* Thread body */}
-      <RetroPanel tone="muted">
+      <div className="rounded-2xl border border-border/40 bg-surface p-5">
         <p className="whitespace-pre-wrap text-sm font-medium leading-8 text-foreground/85">
           {thread.body}
         </p>
-      </RetroPanel>
+      </div>
 
       {/* Replies section */}
       <section className="flex flex-col gap-4">
@@ -116,10 +115,9 @@ export default async function ThreadDetailPage({ params }: PageProps) {
         ) : (
           <div className="flex flex-col gap-3">
             {replies.map((reply) => (
-              <RetroPanel
+              <div
                 key={reply.id}
-                tone={reply.userRole !== "student" ? "secondary" : "card"}
-                className="space-y-3"
+                className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5"
               >
                 <div className="flex flex-wrap items-center gap-3 text-sm">
                   <span className="font-semibold">{reply.userName}</span>
@@ -159,7 +157,7 @@ export default async function ThreadDetailPage({ params }: PageProps) {
                     )}
                   </>
                 )}
-              </RetroPanel>
+              </div>
             ))}
           </div>
         )}
@@ -167,12 +165,12 @@ export default async function ThreadDetailPage({ params }: PageProps) {
 
       {/* Reply form */}
       {thread.locked ? (
-        <RetroPanel tone="muted" className="text-sm font-medium text-muted-foreground">
+        <div className="rounded-2xl border border-border/40 bg-surface p-5 text-sm font-medium text-muted-foreground">
           <Lock className="mb-1 inline-block size-4" /> This thread is locked.
           New replies are disabled.
-        </RetroPanel>
+        </div>
       ) : (
-        <RetroPanel tone="card" className="space-y-0 p-0">
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-4">
             <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
               Write a reply
@@ -205,7 +203,7 @@ export default async function ThreadDetailPage({ params }: PageProps) {
               </Button>
             </div>
           </form>
-        </RetroPanel>
+        </div>
       )}
     </div>
   );
