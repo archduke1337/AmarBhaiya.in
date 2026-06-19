@@ -36,6 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireRole } from "@/lib/appwrite/auth";
 import { BlogPreviewButton } from "./blog-preview";
+import { BlogPostForm } from "./blog-post-form";
 import { JsonEditor } from "./json-editor";
 import { CollectionReorder } from "./collection-reorder";
 import { MarkdownEditor } from "./markdown-editor";
@@ -540,104 +541,7 @@ export default async function AdminMarketingPage() {
             </div>
           </div>
 
-          <form action={createBlogPostFormAction} className="flex flex-col gap-4 p-5">
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="space-y-1.5 md:col-span-2">
-                <Label htmlFor="blog-title">Title</Label>
-                <Input
-                  id="blog-title"
-                  name="title"
-                  placeholder="Post title"
-                  required
-                  minLength={6}
-                />
-              </label>
-
-              <label className="space-y-1.5">
-                <Label htmlFor="blog-slug">Slug</Label>
-                <Input
-                  id="blog-slug"
-                  name="slug"
-                  placeholder="optional-custom-slug"
-                />
-              </label>
-
-              <label className="space-y-1.5">
-                <Label htmlFor="blog-category">Category</Label>
-                <Input
-                  id="blog-category"
-                  name="category"
-                  placeholder="Guides"
-                  required
-                />
-              </label>
-
-              <label className="space-y-1.5">
-                <Label htmlFor="blog-author">Author name</Label>
-                <Input
-                  id="blog-author"
-                  name="authorName"
-                  placeholder="Team Amar"
-                />
-              </label>
-
-              <label className="space-y-1.5">
-                <Label htmlFor="blog-status">Publish state</Label>
-                <select
-                  id="blog-status"
-                  name="isPublished"
-                  className="input-field--select w-full"
-                  defaultValue="true"
-                >
-                  <option value="true">Published</option>
-                  <option value="false">Draft</option>
-                </select>
-              </label>
-
-              <label className="space-y-1.5">
-                <Label htmlFor="blog-published-at">Publish at</Label>
-                <Input id="blog-published-at" type="datetime-local" name="publishedAt" />
-              </label>
-
-              <label className="space-y-1.5">
-                <Label htmlFor="blog-read-minutes">Read time (minutes)</Label>
-                <Input
-                  id="blog-read-minutes"
-                  type="number"
-                  min={1}
-                  name="readMinutes"
-                  defaultValue={5}
-                />
-              </label>
-            </div>
-
-            <label className="space-y-1.5">
-              <Label htmlFor="blog-excerpt">Excerpt</Label>
-              <textarea
-                id="blog-excerpt"
-                name="excerpt"
-                placeholder="Short summary shown in cards and previews"
-                required
-                minLength={12}
-                className="input-field--textarea min-h-24 w-full"
-              />
-            </label>
-
-            <MarkdownEditor
-              id="blog-content"
-              name="content"
-              placeholder="Write full post content here using markdown..."
-              label="Content"
-              minHeight="min-h-52"
-              required
-              minLength={24}
-            />
-
-            <Button type="submit" className="w-full sm:w-auto">
-              <Megaphone className="size-4" />
-              Save Blog Post
-            </Button>
-          </form>
+          <BlogPostForm createBlogPostFormAction={createBlogPostFormAction} />
         </div>
       </section>
 

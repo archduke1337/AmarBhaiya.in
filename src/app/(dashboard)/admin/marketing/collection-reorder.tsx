@@ -41,6 +41,17 @@ export function CollectionReorder({ id, name, defaultValue }: CollectionReorderP
   const [canRedo, setCanRedo] = useState(false);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
+  const toJson = useCallback((items: Collection[]): string => {
+    return JSON.stringify({ collections: items }, null, 2);
+  }, []);
+
+  const syncHiddenInput = useCallback((items: Collection[]) => {
+    const json = toJson(items);
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.value = json;
+    }
+  }, [toJson]);
+
   // ── Undo / Redo history stack ───────────────────────────────────────────
   const historyRef = useRef<Collection[][]>([[]]);
   const historyIndexRef = useRef(0);
@@ -95,17 +106,6 @@ export function CollectionReorder({ id, name, defaultValue }: CollectionReorderP
       }
     }
   }, [undo, redo]);
-
-  const toJson = useCallback((items: Collection[]): string => {
-    return JSON.stringify({ collections: items }, null, 2);
-  }, []);
-
-  const syncHiddenInput = useCallback((items: Collection[]) => {
-    const json = toJson(items);
-    if (hiddenInputRef.current) {
-      hiddenInputRef.current.value = json;
-    }
-  }, [toJson]);
 
   const emitChange = useCallback((items: Collection[]) => {
     setCollections(items);

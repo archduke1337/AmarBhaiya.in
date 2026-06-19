@@ -15,6 +15,7 @@ type MarkdownEditorProps = {
   minHeight?: string;
   required?: boolean;
   minLength?: number;
+  onChange?: (value: string) => void;
 };
 
 type UploadState = {
@@ -32,6 +33,7 @@ export function MarkdownEditor({
   minHeight = "min-h-52",
   required,
   minLength,
+  onChange,
 }: MarkdownEditorProps) {
   const [mode, setMode] = useState<"write" | "preview">("write");
   const [content, setContent] = useState(defaultValue);
@@ -43,7 +45,8 @@ export function MarkdownEditor({
 
   const handleChange = useCallback((value: string) => {
     setContent(value);
-  }, []);
+    onChange?.(value);
+  }, [onChange]);
 
   const insertAtCursor = useCallback((before: string, after = "") => {
     const textarea = textareaRef.current;
@@ -109,7 +112,13 @@ export function MarkdownEditor({
         return;
       }
 
-      const markdown = `![${file.name}](${result.data.url})`;
+      const url = result.data?.url;
+      if (!url) {
+        setUpload({ uploading: false, progress: 0, error: "No URL returned from upload." });
+        toast.error("Upload failed: no URL returned.");
+        return;
+      }
+      const markdown = `![${file.name}](${url})`;
       insertAtCursor(markdown);
       setUpload({ uploading: false, progress: 100, error: null });
       toast.success("Image uploaded and inserted.");
