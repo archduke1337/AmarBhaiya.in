@@ -9,8 +9,6 @@ import {
   CreditCard,
   Search,
   Receipt,
-  ArrowUpRight,
-  RotateCcw,
 } from "lucide-react";
 import {
   formatCurrency,
@@ -19,7 +17,6 @@ import {
 } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { updatePaymentStatusAction } from "@/actions/admin-payments";
 
 type Payment = {
@@ -51,13 +48,6 @@ const statusColors: Record<string, string> = {
   pending: "border-amber-500/30 bg-amber-500/5 text-amber-600 dark:text-amber-400",
   failed: "border-destructive/30 bg-destructive/5 text-destructive",
   refunded: "border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400",
-};
-
-const statusIcons: Record<string, typeof CheckCircle2> = {
-  completed: CheckCircle2,
-  pending: Clock,
-  failed: AlertTriangle,
-  refunded: Receipt,
 };
 
 // ── Payment row component ───────────────────────────────────────────────────
