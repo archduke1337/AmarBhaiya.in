@@ -13,7 +13,11 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { normalizeHttpUrl } from "@/lib/utils/url";
-import { actionSuccess, actionError } from "@/lib/errors/action-result";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import {
+  listAllRows,
+  listRowsByFieldValues,
+} from "@/lib/appwrite/row-pagination";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -75,93 +79,11 @@ export type InstructorCourseResource = {
 
 type AnyRow = Record<string, unknown> & { $id: string };
 
-function chunkValues<T>(values: T[], chunkSize = 20): T[][] {
-  if (values.length <= chunkSize) {
-    return [values];
-  }
-
-  const chunks: T[][] = [];
-  for (let index = 0; index < values.length; index += chunkSize) {
-    chunks.push(values.slice(index, index + chunkSize));
-  }
-  return chunks;
-}
-
-async function listRowsByFieldValues(
-  tableId: string,
-  field: string,
-  values: string[]
-): Promise<AnyRow[]> {
-  if (values.length === 0) {
-    return [];
-  }
-
-  const { tablesDB } = await createAdminClient();
-  const rows: AnyRow[] = [];
-
-  for (const chunk of chunkValues(values, 20)) {
-    try {
-      let offset = 0;
-
-      while (true) {
-        const result = await tablesDB.listRows({
-          databaseId: APPWRITE_CONFIG.databaseId,
-          tableId,
-          queries: [
-            Query.equal(field, chunk),
-            Query.limit(500),
-            Query.offset(offset),
-          ],
-        });
-
-        rows.push(...(result.rows as AnyRow[]));
-
-        if (result.rows.length < 500) {
-          break;
-        }
-
-        offset += result.rows.length;
-      }
-    } catch {
-      // Skip failing chunks
-    }
-  }
-
-  return rows;
-}
-
-async function listAllRows(
-  tableId: string,
-  queries: string[]
-): Promise<AnyRow[]> {
-  const { tablesDB } = await createAdminClient();
-  const rows: AnyRow[] = [];
-  let offset = 0;
-
-  while (true) {
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId,
-      queries: [...queries, Query.limit(500), Query.offset(offset)],
-    });
-
-    rows.push(...(result.rows as AnyRow[]));
-
-    if (result.rows.length < 500) {
-      break;
-    }
-
-    offset += result.rows.length;
-  }
-
-  return rows;
-}
-
 // ── Course-Linked Resources ────────────────────────────────────────────────
 
 export async function createCourseResourceAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const parsed = createCourseResourceSchema.safeParse({
@@ -172,13 +94,11 @@ export async function createCourseResourceAction(
   });
 
   if (!parsed.success) {
-    actionError("Invalid course resource data.");
-    return;
+    return actionError("Invalid course resource data.");
   }
   const lessonContext = await userCanManageLesson(parsed.data.lessonId, role, user.$id);
   if (!lessonContext) {
-    actionError("You do not have permission to manage this lesson.");
-    return;
+    return actionError("You do not have permission to manage this lesson.");
   }
   try {
     const { tablesDB } = await createAdminClient();
@@ -203,32 +123,28 @@ export async function createCourseResourceAction(
     revalidatePath(`/instructor/courses/${lessonContext.course.$id}/curriculum`);
     revalidatePath(`/app/learn/${lessonContext.course.$id}/${lessonContext.lesson.$id}`);
 
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to create course resource."
     );
 
-    actionError("Failed to create course resource.");
-    return;
+    return actionError("Failed to create course resource.");
   }
 }
 
 export async function updateCourseResourceAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   if (!resourceId) {
-    actionError("Resource ID is required.");
-    return;
+    return actionError("Resource ID is required.");
   }
   const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
   if (!resourceContext) {
-    actionError("You do not have permission to manage this resource.");
-    return;
+    return actionError("You do not have permission to manage this resource.");
   }
   const parsed = courseResourceFieldsSchema.safeParse({
     title: String(formData.get("title") ?? ""),
@@ -237,8 +153,7 @@ export async function updateCourseResourceAction(
   });
 
   if (!parsed.success) {
-    actionError("Invalid course resource data.");
-    return;
+    return actionError("Invalid course resource data.");
   }
   const data = {
     title: parsed.data.title,
@@ -263,32 +178,28 @@ export async function updateCourseResourceAction(
     revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
     revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
 
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to update course resource."
     );
 
-    actionError("Failed to update course resource.");
-    return;
+    return actionError("Failed to update course resource.");
   }
 }
 
 export async function deleteCourseResourceAction(
   formData: FormData
-): Promise<void> {
+): Promise<ActionResult> {
   const { user, role } = await requireRole(["admin", "instructor"]);
 
   const resourceId = String(formData.get("resourceId") ?? "");
   if (!resourceId) {
-    actionError("Resource ID is required.");
-    return;
+    return actionError("Resource ID is required.");
   }
   const resourceContext = await userCanManageCourseResource(resourceId, role, user.$id);
   if (!resourceContext) {
-    actionError("You do not have permission to manage this resource.");
-    return;
+    return actionError("You do not have permission to manage this resource.");
   }
   try {
     const { tablesDB, storage } = await createAdminClient();
@@ -313,22 +224,19 @@ export async function deleteCourseResourceAction(
       label: `course resource ${resourceId}`,
     });
     if (!deleted) {
-      actionError("Failed to delete course resource.");
-      return;
+      return actionError("Failed to delete course resource.");
     }
     revalidatePath("/instructor/resources");
     revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
     revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
 
-    actionSuccess();
-    return;
+    return actionSuccess();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : "Failed to delete course resource."
     );
 
-    actionError("Failed to delete course resource.");
-    return;
+    return actionError("Failed to delete course resource.");
   }
 }
 
@@ -344,7 +252,9 @@ export async function getInstructorCourseResourceOptions(
             Query.orderDesc("$updatedAt"),
           ];
 
+    const { tablesDB } = await createAdminClient();
     const courseRows = await listAllRows(
+      tablesDB,
       APPWRITE_CONFIG.tables.courses,
       courseQueries
     );
@@ -353,6 +263,7 @@ export async function getInstructorCourseResourceOptions(
     );
     const courseIds = courseRows.map((course) => course.$id);
     const lessonRows = await listRowsByFieldValues(
+      tablesDB,
       APPWRITE_CONFIG.tables.lessons,
       "courseId",
       courseIds
@@ -405,11 +316,12 @@ export async function getInstructorCourseResources(
       },
     ])
   );
-
-  const resourceRows = await listRowsByFieldValues(
-    APPWRITE_CONFIG.tables.resources,
-    "lessonId",
-    lessonIds
+    const { tablesDB } = await createAdminClient();
+    const resourceRows = await listRowsByFieldValues(
+      tablesDB,
+      APPWRITE_CONFIG.tables.resources,
+      "lessonId",
+      lessonIds
   );
 
   return resourceRows

@@ -8,7 +8,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 
-import { gradeSubmissionAction } from "@/actions/submissions";
+import { gradeSubmissionFormAction } from "@/actions/form-wrappers";
 import {
   EmptyState,
   PageHeader,
@@ -287,8 +287,7 @@ function SubmissionCard({
         ) : null}
       </div>
 
-      <form
-        action={gradeSubmissionAction}
+      <form action={gradeSubmissionFormAction}
         className="grid gap-4 border-t-2 border-border bg-[color:var(--surface-muted)] px-5 py-4 md:grid-cols-[120px_minmax(0,1fr)_auto]"
       >
         <input type="hidden" name="submissionId" value={submission.id} />

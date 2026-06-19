@@ -164,8 +164,7 @@ export async function createCurriculumModuleAction(formData: FormData): Promise<
   revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, String(course.slug ?? "")));
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
 
 export async function createCurriculumLessonAction(formData: FormData): Promise<ActionResult> {
@@ -183,14 +182,12 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: title (min 4 chars) is required");
-    return;
+    return actionError("Invalid input: title (min 4 chars) is required");
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
-    actionError("Course not found or you do not have permission to edit it");
-    return;
+    return actionError("Course not found or you do not have permission to edit it");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -203,12 +200,10 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
     })) as { courseId?: string };
 
     if (moduleRow.courseId !== parsed.data.courseId) {
-      actionError("Module does not belong to the specified course");
-      return;
+      return actionError("Module does not belong to the specified course");
     }
   } catch {
-    actionError("Module not found");
-    return;
+    return actionError("Module not found");
   }
 
   await tablesDB.createRow({
@@ -233,8 +228,7 @@ export async function createCurriculumLessonAction(formData: FormData): Promise<
   revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateCourseAudiencePaths(parsed.data.courseId, String(course.slug ?? ""));
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
 
 export async function updateCurriculumModuleAction(formData: FormData): Promise<ActionResult> {
@@ -249,14 +243,12 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: title (min 4 chars) is required");
-    return;
+    return actionError("Invalid input: title (min 4 chars) is required");
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
-    actionError("Course not found or you do not have permission to edit it");
-    return;
+    return actionError("Course not found or you do not have permission to edit it");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -269,12 +261,10 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
     })) as { courseId?: string };
 
     if (moduleRow.courseId !== parsed.data.courseId) {
-      actionError("Module does not belong to the specified course");
-      return;
+      return actionError("Module does not belong to the specified course");
     }
   } catch {
-    actionError("Module not found");
-    return;
+    return actionError("Module not found");
   }
 
   await tablesDB.updateRow({
@@ -291,8 +281,7 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
   revalidateCourseEditorPaths(parsed.data.courseId);
   revalidateEach(getCourseDetailPaths(parsed.data.courseId, String(course.slug ?? "")));
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }
 
 export async function updateCurriculumLessonAction(formData: FormData): Promise<ActionResult> {
@@ -311,14 +300,12 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
   });
 
   if (!parsed.success) {
-    actionError("Invalid input: title (min 4 chars) is required");
-    return;
+    return actionError("Invalid input: title (min 4 chars) is required");
   }
 
   const course = await userCanManageCourse(parsed.data.courseId, role, user.$id);
   if (!course) {
-    actionError("Course not found or you do not have permission to edit it");
-    return;
+    return actionError("Course not found or you do not have permission to edit it");
   }
 
   const { tablesDB } = await createAdminClient();
@@ -334,12 +321,10 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
       lessonRow.courseId !== parsed.data.courseId ||
       lessonRow.moduleId !== parsed.data.moduleId
     ) {
-      actionError("Lesson does not belong to the specified course or module");
-      return;
+      return actionError("Lesson does not belong to the specified course or module");
     }
   } catch {
-    actionError("Lesson not found");
-    return;
+    return actionError("Lesson not found");
   }
 
   await tablesDB.updateRow({
@@ -362,6 +347,5 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
   revalidateCourseAudiencePaths(parsed.data.courseId, String(course.slug ?? ""));
   revalidatePath(`/app/learn/${parsed.data.courseId}/${parsed.data.lessonId}`);
 
-  actionSuccess();
-  return;
+  return actionSuccess();
 }

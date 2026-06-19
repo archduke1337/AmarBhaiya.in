@@ -3,22 +3,23 @@ import { notFound } from "next/navigation";
 import { Film, Layers, PlaySquare, ShieldCheck } from "lucide-react";
 
 import {
-  createCurriculumLessonAction,
-  createCurriculumModuleAction,
-  updateCurriculumLessonAction,
-  updateCurriculumModuleAction,
-} from "@/actions/curriculum";
+  createCurriculumModuleFormAction,
+  createCurriculumLessonFormAction,
+  updateCurriculumModuleFormAction,
+  updateCurriculumLessonFormAction,
+  createQuizFormAction,
+  addQuizQuestionFormAction,
+  deleteQuizFormAction,
+  createAssignmentFormAction,
+  deleteAssignmentFormAction,
+} from "@/actions/form-wrappers";
 import { deleteModuleAction, deleteLessonAction } from "@/actions/delete";
 import {
-  createQuizAction,
   addQuizQuestionAction,
   getCourseQuizzes,
-  deleteQuizAction,
 } from "@/actions/quiz";
 import {
-  createAssignmentAction,
   getCourseAssignments,
-  deleteAssignmentAction,
 } from "@/actions/assignments";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { LessonVideoUploadForm } from "@/components/instructor/lesson-video-upload-form";
@@ -140,7 +141,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
       <section className="border border-border p-6 space-y-4">
         <h2 className="text-xl">Create module</h2>
-        <form action={createCurriculumModuleAction} className="grid gap-3 md:grid-cols-2">
+        <form action={createCurriculumModuleFormAction} className="grid gap-3 md:grid-cols-2">
           <input type="hidden" name="courseId" value={course.id} />
 
           <label className="space-y-1 text-sm">
@@ -199,7 +200,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               Module {module.order}
             </p>
 
-            <form action={updateCurriculumModuleAction} className="grid gap-3">
+            <form action={updateCurriculumModuleFormAction} className="grid gap-3">
               <input type="hidden" name="courseId" value={course.id} />
               <input type="hidden" name="moduleId" value={module.id} />
 
@@ -257,7 +258,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               </form>
             </div>
 
-            <form action={createCurriculumLessonAction} className="border border-border p-4 space-y-3">
+            <form action={createCurriculumLessonFormAction} className="border border-border p-4 space-y-3">
               <input type="hidden" name="courseId" value={course.id} />
               <input type="hidden" name="moduleId" value={module.id} />
 
@@ -349,7 +350,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                     lessonId={lesson.id}
                   />
 
-                  <form action={updateCurriculumLessonAction} className="grid gap-3">
+                  <form action={updateCurriculumLessonFormAction} className="grid gap-3">
                     <input type="hidden" name="courseId" value={course.id} />
                     <input type="hidden" name="moduleId" value={module.id} />
                     <input type="hidden" name="lessonId" value={lesson.id} />
@@ -442,7 +443,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
         <h2 className="text-xl">Course Quizzes ({quizzes.length})</h2>
 
         {/* Create quiz form */}
-        <form action={createQuizAction} className="grid gap-3 md:grid-cols-4 border border-border p-4">
+        <form action={createQuizFormAction} className="grid gap-3 md:grid-cols-4 border border-border p-4">
           <input type="hidden" name="courseId" value={course.id} />
 
           <label className="space-y-1 text-sm md:col-span-2">
@@ -488,7 +489,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   Pass mark: {quiz.passMark}% · Time limit: {quiz.timeLimit || "None"}
                 </p>
               </div>
-              <form action={deleteQuizAction}>
+              <form action={deleteQuizFormAction}>
                 <input type="hidden" name="quizId" value={quiz.id} />
                 <button
                   type="submit"
@@ -501,7 +502,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
             {/* Add question form */}
             <form
-              action={addQuizQuestionAction}
+              action={addQuizQuestionFormAction}
               className="grid gap-3 p-5 md:grid-cols-2"
             >
               <input type="hidden" name="quizId" value={quiz.id} />
@@ -564,7 +565,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
       <section className="border border-border p-6 space-y-6">
         <h2 className="text-xl">Assignments ({assignments.length})</h2>
 
-        <form action={createAssignmentAction} className="grid gap-3 md:grid-cols-2 border border-border p-4">
+        <form action={createAssignmentFormAction} className="grid gap-3 md:grid-cols-2 border border-border p-4">
           <input type="hidden" name="courseId" value={course.id} />
 
           <label className="space-y-1 text-sm">
@@ -616,7 +617,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   {a.dueDate ? `Due: ${a.dueDate}` : "No deadline"}
                 </p>
               </div>
-              <form action={deleteAssignmentAction}>
+              <form action={deleteAssignmentFormAction}>
                 <input type="hidden" name="assignmentId" value={a.id} />
                 <button
                   type="submit"

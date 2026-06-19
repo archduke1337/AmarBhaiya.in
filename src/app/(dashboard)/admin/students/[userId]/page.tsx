@@ -71,9 +71,9 @@ async function loadCourseMetaByIds(
           queries: [Query.equal("$id", chunk), Query.limit(100)],
         });
 
-        return result.rows as AnyRow[];
+        return result.rows as AnyAppwriteRow[];
       } catch {
-        return [] as AnyRow[];
+        return [] as AnyAppwriteRow[];
       }
     })
   );
@@ -103,14 +103,14 @@ async function getStudentDetail(userId: string) {
     // user may not exist
   }
 
-  let profile: AnyRow | null = null;
+  let profile: AnyAppwriteRow | null = null;
   try {
     const profileResult = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.studentProfiles,
       queries: [Query.equal("userId", [userId]), Query.limit(1)],
     });
-    profile = (profileResult.rows[0] as AnyRow) ?? null;
+    profile = (profileResult.rows[0] as AnyAppwriteRow) ?? null;
   } catch {
     // skip
   }
@@ -221,7 +221,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-5">
             {["grade", "school", "city", "dateOfBirth", "guardianName", "phone"].map(
               (field) => {
-                const value = String((data.profile as AnyRow)[field] ?? "—");
+                const value = String((data.profile as AnyAppwriteRow)[field] ?? "—");
                 return (
                   <div key={field}>
                     <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">

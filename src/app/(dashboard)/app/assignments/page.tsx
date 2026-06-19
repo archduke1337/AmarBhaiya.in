@@ -3,7 +3,7 @@ import type { Models } from "node-appwrite";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { submitAssignmentAction } from "@/actions/submissions";
+import { submitAssignmentFormAction } from "@/actions/form-wrappers";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -213,8 +213,7 @@ export default async function StudentAssignmentsPage() {
                   </div>
 
                   {/* Submit form */}
-                  <form
-                    action={submitAssignmentAction}
+                  <form action={submitAssignmentFormAction}
                     className="grid gap-3 border-t-2 border-border px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
                     encType="multipart/form-data"
                   >

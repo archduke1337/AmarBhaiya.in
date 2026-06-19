@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/utils/format";
 import {
   listAllRows,
   listRowsByFieldValues,
+  type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 
 type InstructorInfo = {
@@ -30,7 +31,7 @@ async function getInstructorActivity(): Promise<InstructorInfo[]> {
 
   const courses = await listAllRows(tablesDB, APPWRITE_CONFIG.tables.courses);
 
-  const instructorCourses = new Map<string, AnyRow[]>();
+  const instructorCourses = new Map<string, AnyAppwriteRow[]>();
   for (const course of courses) {
     const instId = String(course.instructorId ?? "");
     if (!instId) continue;

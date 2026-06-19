@@ -11,6 +11,7 @@ import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { listAllRows } from "@/lib/appwrite/row-pagination";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -231,6 +232,7 @@ export async function getInstructorResources(
             Query.orderDesc("$createdAt"),
           ];
 
+    const { tablesDB } = await createAdminClient();
     const rows = await listAllRows(
       tablesDB,
       APPWRITE_CONFIG.tables.standaloneResources,

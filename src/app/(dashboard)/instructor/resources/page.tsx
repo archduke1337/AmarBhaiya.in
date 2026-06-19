@@ -2,15 +2,17 @@ import { BookOpen, Download, Eye, EyeOff, FileText, Plus } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import {
-  createCourseResourceAction,
-  createStandaloneResourceAction,
-  deleteCourseResourceAction,
-  deleteStandaloneResourceAction,
+  createCourseResourceFormAction,
+  updateCourseResourceFormAction,
+  deleteCourseResourceFormAction,
+  createStandaloneResourceFormAction,
+  updateStandaloneResourceFormAction,
+  deleteStandaloneResourceFormAction,
+} from "@/actions/form-wrappers";
+import {
   getInstructorCourseResourceOptions,
   getInstructorCourseResources,
   getInstructorResources,
-  updateCourseResourceAction,
-  updateStandaloneResourceAction,
 } from "@/actions/resources";
 import { DirectAppwriteUploadForm } from "@/components/instructor/direct-appwrite-upload-form";
 import { RetroPanel } from "@/components/marketing/retro-panel";
@@ -94,8 +96,7 @@ export default async function InstructorResourcesPage() {
             links, and downloadable files exactly where students need them.
           </div>
         ) : (
-          <form
-            action={createCourseResourceAction}
+          <form action={createCourseResourceFormAction}
             className="grid gap-4 p-5 md:grid-cols-2"
           >
             <label className="flex flex-col gap-2 md:col-span-2">
@@ -210,8 +211,7 @@ export default async function InstructorResourcesPage() {
                 </div>
               </div>
 
-              <form
-                action={updateCourseResourceAction}
+              <form action={updateCourseResourceFormAction}
                 className="border-t-2 border-border bg-[color:var(--surface-muted)] px-5 py-4"
               >
                 <input type="hidden" name="resourceId" value={resource.id} />
@@ -275,8 +275,7 @@ export default async function InstructorResourcesPage() {
                 />
               </div>
 
-              <form
-                action={deleteCourseResourceAction}
+              <form action={deleteCourseResourceFormAction}
                 className="flex justify-end border-t-2 border-border px-5 py-3"
               >
                 <input type="hidden" name="resourceId" value={resource.id} />
@@ -305,8 +304,7 @@ export default async function InstructorResourcesPage() {
             Create Standalone Resource
           </h2>
         </div>
-        <form
-          action={createStandaloneResourceAction}
+        <form action={createStandaloneResourceFormAction}
           className="grid gap-4 p-5 md:grid-cols-2"
         >
           <label className="flex flex-col gap-2 md:col-span-2">
@@ -455,8 +453,7 @@ export default async function InstructorResourcesPage() {
               </div>
 
               {/* Inline edit form */}
-              <form
-                action={updateStandaloneResourceAction}
+              <form action={updateStandaloneResourceFormAction}
                 className="border-t-2 border-border bg-[color:var(--surface-muted)] px-5 py-4"
               >
                 <input type="hidden" name="resourceId" value={resource.id} />
@@ -553,8 +550,7 @@ export default async function InstructorResourcesPage() {
               </div>
 
               {/* Delete */}
-              <form
-                action={deleteStandaloneResourceAction}
+              <form action={deleteStandaloneResourceFormAction}
                 className="flex justify-end border-t-2 border-border px-5 py-3"
               >
                 <input type="hidden" name="resourceId" value={resource.id} />

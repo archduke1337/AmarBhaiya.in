@@ -164,12 +164,10 @@ export async function addQuizQuestionAction(
   try {
     const quiz = await getQuizRow(quizId);
     if (!quiz) {
-      actionError("Quiz not found.");
-      return;
+      return actionError("Quiz not found.");
     }
     if (!(await userCanManageCourse(String(quiz.courseId ?? ""), role, user.$id))) {
-      actionError("You do not have permission to manage this quiz.");
-      return;
+      return actionError("You do not have permission to manage this quiz.");
     }
 
     const { tablesDB } = await createAdminClient();
