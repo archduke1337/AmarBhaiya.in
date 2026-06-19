@@ -34,6 +34,7 @@ export function getNavItems(role: Role, userId: string): NavItem[] {
     return [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
       { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
+      { label: "Blog", href: "/admin/blog", icon: FileText },
       { label: "Users", href: "/admin/users", icon: Users },
       { label: "Student Data", href: "/admin/students", icon: GraduationCap },
       { label: "Instructors", href: "/admin/instructors", icon: UserCheck },

@@ -5,11 +5,8 @@ import {
   FileText,
   Globe2,
   Megaphone,
-  NotebookPen,
   RefreshCw,
   Star,
-  TrendingUp,
-  Trash2,
   Users,
   BookOpen,
   CreditCard,
@@ -18,12 +15,8 @@ import {
 
 import {
   upsertSiteCopyFormAction,
-  createBlogPostFormAction,
-  updateBlogPostFormAction,
-  deleteBlogPostFormAction,
   updateCourseVisibilityFormAction,
 } from "@/actions/form-wrappers";
-import { getAdminBlogPosts } from "@/actions/marketing";
 import { getAdminDashboardStats, getAdminCourses } from "@/lib/appwrite/dashboard-data";
 import {
   formatCompactNumber,
@@ -35,11 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireRole } from "@/lib/appwrite/auth";
-import { BlogPreviewButton } from "./blog-preview";
-import { BlogPostForm } from "./blog-post-form";
 import { CollectionsForm } from "./collections-form";
 import { JsonEditor } from "./json-editor";
-import { MarkdownEditor } from "./markdown-editor";
 
 const suggestedSiteKeys = [
   "home.domains",
@@ -109,12 +99,6 @@ const routePreviews: Array<{
     description: "Featured courses and discovery surface.",
   },
   {
-    title: "Blog",
-    href: "/blog",
-    keyHint: "blogPosts",
-    description: "Published blog posts and editorial feed.",
-  },
-  {
     title: "Contact",
     href: "/contact",
     keyHint: "contact.channels",
@@ -124,27 +108,24 @@ const routePreviews: Array<{
 
 export default async function AdminMarketingPage() {
   await requireRole(["admin"]);
-  const [posts, stats, courses] = await Promise.all([
-    getAdminBlogPosts(),
+  const [stats, courses] = await Promise.all([
     getAdminDashboardStats(),
     getAdminCourses(),
   ]);
-  const publishedCount = posts.filter((post) => post.isPublished).length;
-  const draftCount = posts.length - publishedCount;
   const featuredCount = courses.filter((c) => c.featured === "yes").length;
 
   return (
     <div className="flex flex-col gap-8 max-w-7xl">
       <PageHeader
         eyebrow="Admin"
-        title="Content Management System"
-        description="Manage site copy, publish blog posts, control featured courses, and track marketing performance. SEO meta lives in the layout layer — this is purely for what students see."
+        title="Marketing CMS"
+        description="Manage homepage content, featured courses, collections, announcements, and site copy. Blog management has moved to its own panel."
         actions={
           <>
             <Button asChild variant="outline">
-              <Link href="/blog" target="_blank" rel="noreferrer">
+              <Link href="/admin/blog">
                 <FileText className="size-4" />
-                Public Blog
+                Blog Manager
                 <ArrowUpRight className="size-3.5" />
               </Link>
             </Button>
@@ -180,10 +161,10 @@ export default async function AdminMarketingPage() {
           description={`Total: ${formatCurrency(stats.totalRevenue)}`}
         />
         <StatCard
-          label="Content Pipeline"
-          value={posts.length}
-          icon={TrendingUp}
-          description={`${publishedCount} published · ${draftCount} draft`}
+          label="Featured Courses"
+          value={featuredCount}
+          icon={Star}
+          description={`${stats.totalCourses} published courses`}
         />
       </StatGrid>
 
@@ -414,114 +395,94 @@ export default async function AdminMarketingPage() {
         </div>
       </section>
 
-      {/* ── Content Management — Dual Panel ──────────────────────────────── */}
-      <section className="grid gap-6 xl:grid-cols-2">
-        {/* Site Copy Panel */}
-        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface self-start">
-          <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
-            <RefreshCw className="size-4 text-muted-foreground" />
-            <div>
-              <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
-                Site Copy Manager
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Keep homepage, about, and contact sections in sync.
-              </p>
-            </div>
-          </div>
-
-          <form action={upsertSiteCopyFormAction} className="flex flex-col gap-4 p-5">
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="space-y-1.5 md:col-span-2">
-                <Label htmlFor="site-copy-key">Key</Label>
-                <Input
-                  id="site-copy-key"
-                  name="key"
-                  placeholder="example: home.domains"
-                  required
-                />
-              </label>
-
-              <label className="space-y-1.5">
-                <Label htmlFor="site-copy-title">Title</Label>
-                <Input
-                  id="site-copy-title"
-                  name="title"
-                  placeholder="Optional heading"
-                />
-              </label>
-
-              <label className="space-y-1.5">
-                <Label htmlFor="site-copy-status">Publish state</Label>
-                <select
-                  id="site-copy-status"
-                  name="isPublished"
-                  className="input-field--select w-full"
-                  defaultValue="true"
-                >
-                  <option value="true">Published</option>
-                  <option value="false">Draft</option>
-                </select>
-              </label>
-            </div>
-
-            <label className="space-y-1.5">
-              <Label htmlFor="site-copy-body">Body</Label>
-              <textarea
-                id="site-copy-body"
-                name="body"
-                placeholder="Short copy for this section"
-                className="input-field--textarea min-h-24 w-full"
-              />
-            </label>
-
-            <label className="space-y-1.5">
-              <Label htmlFor="site-copy-payload">JSON payload</Label>
-              <textarea
-                id="site-copy-payload"
-                name="payload"
-                placeholder='{"items":[{"title":"Example","value":"Data"}]}'
-                className="input-field--textarea w-full min-h-40 font-mono text-xs"
-              />
-            </label>
-
-            <div className="flex items-center justify-between gap-3">
-              <Button type="submit" className="w-full sm:w-auto">
-                <RefreshCw className="size-4" />
-                Sync Site Copy
-              </Button>
-            </div>
-          </form>
-
-          <div className="border-t border-border/40 bg-surface-hover px-5 py-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground">
-              Suggested Keys
+      {/* ── Site Copy Manager ───────────────────────────────────────────── */}
+      <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+        <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
+          <RefreshCw className="size-4 text-muted-foreground" />
+          <div>
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+              Site Copy Manager
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Keep homepage, about, and contact sections in sync.
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {suggestedSiteKeys.map((key) => (
-                <Badge key={key} variant="outline" className="font-mono text-[11px]">
-                  {key}
-                </Badge>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* Blog Post Panel */}
-        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface self-start">
-          <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
-            <NotebookPen className="size-4 text-muted-foreground" />
-            <div>
-              <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
-                Create Blog Post
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Draft and publish long-form updates.
-              </p>
-            </div>
+        <form action={upsertSiteCopyFormAction} className="flex flex-col gap-4 p-5">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="site-copy-key">Key</Label>
+              <Input
+                id="site-copy-key"
+                name="key"
+                placeholder="example: home.domains"
+                required
+              />
+            </label>
+
+            <label className="space-y-1.5">
+              <Label htmlFor="site-copy-title">Title</Label>
+              <Input
+                id="site-copy-title"
+                name="title"
+                placeholder="Optional heading"
+              />
+            </label>
+
+            <label className="space-y-1.5">
+              <Label htmlFor="site-copy-status">Publish state</Label>
+              <select
+                id="site-copy-status"
+                name="isPublished"
+                className="input-field--select w-full"
+                defaultValue="true"
+              >
+                <option value="true">Published</option>
+                <option value="false">Draft</option>
+              </select>
+            </label>
           </div>
 
-          <BlogPostForm createBlogPostFormAction={createBlogPostFormAction} />
+          <label className="space-y-1.5">
+            <Label htmlFor="site-copy-body">Body</Label>
+            <textarea
+              id="site-copy-body"
+              name="body"
+              placeholder="Short copy for this section"
+              className="input-field--textarea min-h-24 w-full"
+            />
+          </label>
+
+          <label className="space-y-1.5">
+            <Label htmlFor="site-copy-payload">JSON payload</Label>
+            <textarea
+              id="site-copy-payload"
+              name="payload"
+              placeholder='{"items":[{"title":"Example","value":"Data"}]}'
+              className="input-field--textarea w-full min-h-40 font-mono text-xs"
+            />
+          </label>
+
+          <div className="flex items-center justify-between gap-3">
+            <Button type="submit" className="w-full sm:w-auto">
+              <RefreshCw className="size-4" />
+              Sync Site Copy
+            </Button>
+          </div>
+        </form>
+
+        <div className="border-t border-border/40 bg-surface-hover px-5 py-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+            Suggested Keys
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {suggestedSiteKeys.map((key) => (
+              <Badge key={key} variant="outline" className="font-mono text-[11px]">
+                {key}
+              </Badge>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -565,167 +526,6 @@ export default async function AdminMarketingPage() {
         </div>
       </section>
 
-      {/* ── Blog Post Management ──────────────────────────────────────────── */}
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
-              Blog Post Management
-            </p>
-            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
-              Edit or remove existing posts
-            </h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">Total: {posts.length}</Badge>
-            <Badge variant="outline">Published: {publishedCount}</Badge>
-            <Badge variant="outline">Draft: {draftCount}</Badge>
-          </div>
-        </div>
-
-        {posts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/40 bg-surface p-8 text-center text-sm font-medium text-muted-foreground">
-            No blog posts available. Create your first post above.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="overflow-hidden rounded-2xl border border-border/40 bg-surface"
-              >
-                <div className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-1 min-w-0">
-                    <h3 className="font-heading text-lg font-black tracking-[-0.04em]">
-                      {post.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      /{post.slug} · {post.category}
-                      {post.publishedAt ? ` · ${formatPublishedAt(post.publishedAt)}` : ""}
-                    </p>
-                    <p className="max-w-4xl text-sm font-medium leading-7 text-muted-foreground line-clamp-2">
-                      {post.excerpt}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
-                    <Badge variant={post.isPublished ? "default" : "outline"}>
-                      {post.isPublished ? "Published" : "Draft"}
-                    </Badge>
-
-                    <BlogPreviewButton
-                      title={post.title}
-                      content={post.content}
-                    />
-
-                    <Button asChild size="sm" variant="outline">
-                      <Link href={`/blog/${post.slug}`} target="_blank" rel="noreferrer">
-                        View
-                        <ExternalLink className="size-3.5" />
-                      </Link>
-                    </Button>
-
-                    <form action={deleteBlogPostFormAction}>
-                      <input type="hidden" name="postId" value={post.id} />
-                      <Button type="submit" size="sm" variant="destructive">
-                        <Trash2 className="size-3.5" />
-                        Delete
-                      </Button>
-                    </form>
-                  </div>
-                </div>
-
-                <form
-                  action={updateBlogPostFormAction}
-                  className="border-t border-border/40 bg-surface-hover p-5 space-y-4"
-                >
-                  <input type="hidden" name="postId" value={post.id} />
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <label className="space-y-1.5">
-                      <Label htmlFor={`post-title-${post.id}`}>Title</Label>
-                      <Input
-                        id={`post-title-${post.id}`}
-                        name="title"
-                        defaultValue={post.title}
-                        placeholder="Title"
-                      />
-                    </label>
-
-                    <label className="space-y-1.5">
-                      <Label htmlFor={`post-category-${post.id}`}>Category</Label>
-                      <Input
-                        id={`post-category-${post.id}`}
-                        name="category"
-                        defaultValue={post.category}
-                        placeholder="Category"
-                      />
-                    </label>
-
-                    <label className="space-y-1.5 md:col-span-2">
-                      <Label htmlFor={`post-excerpt-${post.id}`}>Excerpt</Label>
-                      <textarea
-                        id={`post-excerpt-${post.id}`}
-                        name="excerpt"
-                        defaultValue={post.excerpt}
-                        className="input-field--textarea min-h-20 w-full"
-                      />
-                    </label>
-
-                    <div className="md:col-span-2">
-                      <MarkdownEditor
-                        id={`post-content-${post.id}`}
-                        name="content"
-                        defaultValue={post.content}
-                        label="Content"
-                        minHeight="min-h-28"
-                      />
-                    </div>
-
-                    <label className="space-y-1.5">
-                      <Label htmlFor={`post-state-${post.id}`}>Publish state</Label>
-                      <select
-                        id={`post-state-${post.id}`}
-                        name="isPublished"
-                        defaultValue={post.isPublished ? "true" : "false"}
-                        className="input-field--select w-full"
-                      >
-                        <option value="true">Published</option>
-                        <option value="false">Draft</option>
-                      </select>
-                    </label>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <Button type="submit" size="sm">
-                      <NotebookPen className="size-3.5" />
-                      Save Changes
-                    </Button>
-                    {!post.isPublished && (
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                        Draft — publish to make visible on /blog
-                      </p>
-                    )}
-                  </div>
-                </form>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
-}
-
-function formatPublishedAt(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown date";
-  }
-
-  return date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
 }
