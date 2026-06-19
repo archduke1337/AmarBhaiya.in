@@ -6,14 +6,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
-  CreditCard,
   Search,
   Receipt,
 } from "lucide-react";
 import {
   formatCurrency,
   formatDateTime,
-  formatRelativeTime,
 } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -41,13 +39,20 @@ type StatusBreakdown = {
   value: string;
 };
 
-// ── Status color map ────────────────────────────────────────────────────────
+// ── Status helpers ──────────────────────────────────────────────────────────
 
 const statusColors: Record<string, string> = {
   completed: "border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400",
   pending: "border-amber-500/30 bg-amber-500/5 text-amber-600 dark:text-amber-400",
   failed: "border-destructive/30 bg-destructive/5 text-destructive",
   refunded: "border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400",
+};
+
+const statusIconMap: Record<string, React.ElementType> = {
+  completed: CheckCircle2,
+  pending: Clock,
+  failed: AlertTriangle,
+  refunded: Receipt,
 };
 
 // ── Payment row component ───────────────────────────────────────────────────
@@ -159,7 +164,6 @@ function PaymentRow({
         )}
       </div>
 
-      {/* Inline status controls (expandable) */}
       {showControls && (
         <div className="col-span-full flex items-center gap-2 border-t border-border/40 pt-3">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
@@ -238,13 +242,9 @@ export function PaymentsManager({
 
   const filteredPayments = useMemo(() => {
     let result = payments;
-
-    // Status filter
     if (statusFilter) {
       result = result.filter((p) => p.status === statusFilter);
     }
-
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -255,14 +255,11 @@ export function PaymentsManager({
           p.id.toLowerCase().includes(q)
       );
     }
-
     return result;
   }, [payments, searchQuery, statusFilter]);
 
-  // Inline state update after action
   const [localPayments, setLocalPayments] = useState(payments);
 
-  // Sync local state when the server-rendered props change
   useEffect(() => {
     setLocalPayments(payments);
   }, [payments]);
@@ -273,7 +270,6 @@ export function PaymentsManager({
     );
   };
 
-  // Use localPayments for filtered view
   const localCompleted = localPayments.filter((p) => p.status === "completed");
   const localPending = localPayments.filter((p) => p.status === "pending");
   const localFailed = localPayments.filter((p) => p.status === "failed");
@@ -288,12 +284,11 @@ export function PaymentsManager({
 
   return (
     <>
-      {/* Search + filter bar */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search by student, course, or reference…"
+            placeholder="Search by student, course, or reference..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-8 h-9 text-sm"
@@ -326,7 +321,6 @@ export function PaymentsManager({
         </div>
       </div>
 
-      {/* Transaction table */}
       <div
         id="payments-list"
         className="scroll-mt-24 overflow-hidden rounded-2xl border border-border/40 bg-surface xl:col-span-2"
@@ -386,9 +380,7 @@ export function PaymentsManager({
         </div>
       </div>
 
-      {/* Sidebar */}
       <aside className="flex flex-col gap-6">
-        {/* Needs Attention */}
         <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-base font-black tracking-[-0.03em] flex items-center gap-2">
@@ -411,7 +403,7 @@ export function PaymentsManager({
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{payment.userName}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
-                      {formatCurrency(payment.amount, payment.currency)} · {payment.courseTitle}
+                      {formatCurrency(payment.amount, payment.currency)} &middot; {payment.courseTitle}
                     </p>
                   </div>
                   <span
@@ -425,7 +417,6 @@ export function PaymentsManager({
           )}
         </div>
 
-        {/* Recent Successful */}
         <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-base font-black tracking-[-0.03em] flex items-center gap-2">
@@ -460,7 +451,6 @@ export function PaymentsManager({
           )}
         </div>
 
-        {/* Top Grossing Courses */}
         <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-base font-black tracking-[-0.03em]">
@@ -506,7 +496,6 @@ export function PaymentsManager({
           </div>
         </div>
 
-        {/* Status Breakdown */}
         <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
             <h2 className="font-heading text-base font-black tracking-[-0.03em]">
@@ -515,14 +504,14 @@ export function PaymentsManager({
           </div>
           <div className="divide-y divide-border">
             {statusBreakdown.map((item) => {
-              const Icon = item.icon;
+              const IconCmp = statusIconMap[item.icon] || statusIconMap.completed;
               return (
                 <div
                   key={item.label}
                   className="flex items-center justify-between gap-3 px-5 py-3.5"
                 >
                   <div className="flex items-center gap-2 text-sm font-semibold">
-                    <Icon className="size-4 text-muted-foreground" />
+                    <IconCmp className="size-4 text-muted-foreground" />
                     {item.label}
                   </div>
                   <div className="text-right">

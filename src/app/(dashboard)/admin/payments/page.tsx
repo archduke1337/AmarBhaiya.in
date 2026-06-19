@@ -1,12 +1,4 @@
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  CreditCard,
-  DollarSign,
-  Receipt,
-  TrendingUp,
-} from "lucide-react";
+import { CreditCard, DollarSign, TrendingUp, Clock, AlertTriangle } from "lucide-react";
 
 import { getAdminPayments } from "@/lib/appwrite/dashboard-data";
 import { formatCurrency } from "@/lib/utils/format";
@@ -129,10 +121,10 @@ export default async function AdminPaymentsPage() {
             topCourseItems={topCourseItems}
             attentionPayments={attentionPayments}
             statusBreakdown={[
-              { label: "Completed", count: completedPayments.length, icon: CheckCircle2, value: formatCurrency(totalRevenue) },
-              { label: "Pending", count: pendingPayments.length, icon: Clock, value: `${pendingPayments.length} records` },
-              { label: "Failed", count: failedPayments.length, icon: AlertTriangle, value: `${failedPayments.length} records` },
-              { label: "Refunded", count: refundedPayments.length, icon: Receipt, value: `${refundedPayments.length} records` },
+              { label: "Completed", count: completedPayments.length, icon: "completed", value: formatCurrency(totalRevenue) },
+              { label: "Pending", count: pendingPayments.length, icon: "pending", value: `${pendingPayments.length} records` },
+              { label: "Failed", count: failedPayments.length, icon: "failed", value: `${failedPayments.length} records` },
+              { label: "Refunded", count: refundedPayments.length, icon: "refunded", value: `${refundedPayments.length} records` },
             ]}
           />
         </div>
