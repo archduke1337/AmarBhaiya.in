@@ -12,6 +12,7 @@ import {
   Users,
   BookOpen,
   CreditCard,
+  ExternalLink,
 } from "lucide-react";
 
 import {
@@ -26,16 +27,9 @@ import {
   formatCompactNumber,
   formatCurrency,
 } from "@/lib/utils/format";
-import { PageHeader } from "@/components/dashboard";
+import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireRole } from "@/lib/appwrite/auth";
@@ -90,12 +84,6 @@ const routePreviews: Array<{
   },
 ];
 
-const fieldTextareaClassName =
-  "min-h-24 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
-
-const fieldSelectClassName =
-  "h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
-
 export default async function AdminMarketingPage() {
   await requireRole(["admin"]);
   const [posts, stats] = await Promise.all([
@@ -106,11 +94,11 @@ export default async function AdminMarketingPage() {
   const draftCount = posts.length - publishedCount;
 
   return (
-    <div className="space-y-8 max-w-7xl">
+    <div className="flex flex-col gap-8 max-w-7xl">
       <PageHeader
         eyebrow="Admin"
-        title="Marketing Command Center"
-        description="Manage homepage copy, publish blog posts, track marketing performance, and preview the live experience."
+        title="Content Management System"
+        description="Manage site copy, publish blog posts, and control all marketing content from one panel. SEO meta lives in the layout layer — this is purely for what students see."
         actions={
           <>
             <Button asChild variant="outline">
@@ -123,7 +111,7 @@ export default async function AdminMarketingPage() {
             <Button asChild>
               <Link href="/" target="_blank" rel="noreferrer">
                 <Globe2 className="size-4" />
-                Open Website
+                View Site
                 <ArrowUpRight className="size-3.5" />
               </Link>
             </Button>
@@ -132,70 +120,32 @@ export default async function AdminMarketingPage() {
       />
 
       {/* ── Marketing Performance Metrics ─────────────────────────────────── */}
-      <section className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <Card size="sm" className="ring-1 ring-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="size-3.5 text-muted-foreground" />
-              Total Users
-            </CardTitle>
-            <CardDescription>Platform-wide registrations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">
-              {formatCompactNumber(stats.totalUsers)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card size="sm" className="ring-1 ring-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <BookOpen className="size-3.5 text-muted-foreground" />
-              Active Enrollments
-            </CardTitle>
-            <CardDescription>{stats.completionRate}% completion rate</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">
-              {formatCompactNumber(stats.activeEnrollments)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card size="sm" className="ring-1 ring-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <CreditCard className="size-3.5 text-muted-foreground" />
-              Monthly Revenue
-            </CardTitle>
-            <CardDescription>Total: {formatCurrency(stats.totalRevenue)}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">
-              {formatCurrency(stats.monthlyRevenue)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card size="sm" className="ring-1 ring-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp className="size-3.5 text-muted-foreground" />
-              Content Pipeline
-            </CardTitle>
-            <CardDescription>Blog posts in queue</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-semibold tracking-tight">{posts.length}</p>
-              <span className="text-xs text-muted-foreground">
-                {publishedCount} published · {draftCount} draft
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      <StatGrid columns={4}>
+        <StatCard
+          label="Total Users"
+          value={formatCompactNumber(stats.totalUsers)}
+          icon={Users}
+          description="Platform-wide registrations"
+        />
+        <StatCard
+          label="Active Enrollments"
+          value={formatCompactNumber(stats.activeEnrollments)}
+          icon={BookOpen}
+          description={`${stats.completionRate}% completion rate`}
+        />
+        <StatCard
+          label="Monthly Revenue"
+          value={formatCurrency(stats.monthlyRevenue)}
+          icon={CreditCard}
+          description={`Total: ${formatCurrency(stats.totalRevenue)}`}
+        />
+        <StatCard
+          label="Content Pipeline"
+          value={posts.length}
+          icon={TrendingUp}
+          description={`${publishedCount} published · ${draftCount} draft`}
+        />
+      </StatGrid>
 
       {/* ── Quick Management Links ────────────────────────────────────────── */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -268,369 +218,391 @@ export default async function AdminMarketingPage() {
         </Link>
       </section>
 
-      {/* ── Content Management ────────────────────────────────────────────── */}
+      {/* ── Content Management — Dual Panel ──────────────────────────────── */}
       <section className="grid gap-6 xl:grid-cols-2">
-        <Card className="ring-1 ring-border/70">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="size-4 text-muted-foreground" />
-              Upsert Site Copy
-            </CardTitle>
-            <CardDescription>
-              Keep structured content in sync for homepage, about, and contact sections.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form action={upsertSiteCopyFormAction} className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="space-y-1.5 md:col-span-2">
-                  <Label htmlFor="site-copy-key">Key</Label>
-                  <Input
-                    id="site-copy-key"
-                    name="key"
-                    placeholder="example: home.domains"
-                    required
-                  />
-                </label>
+        {/* Site Copy Panel */}
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface self-start">
+          <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
+            <RefreshCw className="size-4 text-muted-foreground" />
+            <div>
+              <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+                Site Copy Manager
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Keep homepage, about, and contact sections in sync.
+              </p>
+            </div>
+          </div>
 
-                <label className="space-y-1.5">
-                  <Label htmlFor="site-copy-title">Title</Label>
-                  <Input
-                    id="site-copy-title"
-                    name="title"
-                    placeholder="Optional heading"
-                  />
-                </label>
-
-                <label className="space-y-1.5">
-                  <Label htmlFor="site-copy-status">Publish state</Label>
-                  <select
-                    id="site-copy-status"
-                    name="isPublished"
-                    className={fieldSelectClassName}
-                    defaultValue="true"
-                  >
-                    <option value="true">Published</option>
-                    <option value="false">Draft</option>
-                  </select>
-                </label>
-              </div>
-
-              <label className="space-y-1.5 block">
-                <Label htmlFor="site-copy-body">Body</Label>
-                <textarea
-                  id="site-copy-body"
-                  name="body"
-                  placeholder="Short copy for this section"
-                  className={fieldTextareaClassName}
+          <form action={upsertSiteCopyFormAction} className="flex flex-col gap-4 p-5">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="space-y-1.5 md:col-span-2">
+                <Label htmlFor="site-copy-key">Key</Label>
+                <Input
+                  id="site-copy-key"
+                  name="key"
+                  placeholder="example: home.domains"
+                  required
                 />
               </label>
 
-              <label className="space-y-1.5 block">
-                <Label htmlFor="site-copy-payload">JSON payload</Label>
-                <textarea
-                  id="site-copy-payload"
-                  name="payload"
-                  placeholder='{"items":[{"title":"Example","value":"Data"}]}'
-                  className={`${fieldTextareaClassName} min-h-40 font-mono text-xs`}
+              <label className="space-y-1.5">
+                <Label htmlFor="site-copy-title">Title</Label>
+                <Input
+                  id="site-copy-title"
+                  name="title"
+                  placeholder="Optional heading"
                 />
               </label>
 
+              <label className="space-y-1.5">
+                <Label htmlFor="site-copy-status">Publish state</Label>
+                <select
+                  id="site-copy-status"
+                  name="isPublished"
+                  className="input-field--select w-full"
+                  defaultValue="true"
+                >
+                  <option value="true">Published</option>
+                  <option value="false">Draft</option>
+                </select>
+              </label>
+            </div>
+
+            <label className="space-y-1.5">
+              <Label htmlFor="site-copy-body">Body</Label>
+              <textarea
+                id="site-copy-body"
+                name="body"
+                placeholder="Short copy for this section"
+                className="input-field--textarea min-h-24 w-full"
+              />
+            </label>
+
+            <label className="space-y-1.5">
+              <Label htmlFor="site-copy-payload">JSON payload</Label>
+              <textarea
+                id="site-copy-payload"
+                name="payload"
+                placeholder='{"items":[{"title":"Example","value":"Data"}]}'
+                className="input-field--textarea w-full min-h-40 font-mono text-xs"
+              />
+            </label>
+
+            <div className="flex items-center justify-between gap-3">
               <Button type="submit" className="w-full sm:w-auto">
                 <RefreshCw className="size-4" />
                 Sync Site Copy
               </Button>
-            </form>
-
-            <div className="mt-5 rounded-lg border border-dashed border-border p-3">
-              <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
-                Suggested Keys
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {suggestedSiteKeys.map((key) => (
-                  <Badge key={key} variant="outline" className="font-mono text-[11px]">
-                    {key}
-                  </Badge>
-                ))}
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          </form>
 
-        <Card className="ring-1 ring-border/70">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <NotebookPen className="size-4 text-muted-foreground" />
-              Publish Blog Post
-            </CardTitle>
-            <CardDescription>
-              Draft and publish long-form updates for the public blog route.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form action={createBlogPostFormAction} className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="space-y-1.5 md:col-span-2">
-                  <Label htmlFor="blog-title">Title</Label>
-                  <Input
-                    id="blog-title"
-                    name="title"
-                    placeholder="Post title"
-                    required
-                    minLength={6}
-                  />
-                </label>
+          <div className="border-t border-border/40 bg-surface-hover px-5 py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+              Suggested Keys
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {suggestedSiteKeys.map((key) => (
+                <Badge key={key} variant="outline" className="font-mono text-[11px]">
+                  {key}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
 
-                <label className="space-y-1.5">
-                  <Label htmlFor="blog-slug">Slug</Label>
-                  <Input
-                    id="blog-slug"
-                    name="slug"
-                    placeholder="optional-custom-slug"
-                  />
-                </label>
+        {/* Blog Post Panel */}
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface self-start">
+          <div className="flex items-center gap-2 border-b border-border/40 bg-surface-hover px-5 py-3.5">
+            <NotebookPen className="size-4 text-muted-foreground" />
+            <div>
+              <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+                Create Blog Post
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Draft and publish long-form updates.
+              </p>
+            </div>
+          </div>
 
-                <label className="space-y-1.5">
-                  <Label htmlFor="blog-category">Category</Label>
-                  <Input
-                    id="blog-category"
-                    name="category"
-                    placeholder="Guides"
-                    required
-                  />
-                </label>
-
-                <label className="space-y-1.5">
-                  <Label htmlFor="blog-author">Author name</Label>
-                  <Input
-                    id="blog-author"
-                    name="authorName"
-                    placeholder="Team Amar"
-                  />
-                </label>
-
-                <label className="space-y-1.5">
-                  <Label htmlFor="blog-status">Publish state</Label>
-                  <select
-                    id="blog-status"
-                    name="isPublished"
-                    className={fieldSelectClassName}
-                    defaultValue="true"
-                  >
-                    <option value="true">Published</option>
-                    <option value="false">Draft</option>
-                  </select>
-                </label>
-
-                <label className="space-y-1.5">
-                  <Label htmlFor="blog-published-at">Publish at</Label>
-                  <Input id="blog-published-at" type="datetime-local" name="publishedAt" />
-                </label>
-
-                <label className="space-y-1.5">
-                  <Label htmlFor="blog-read-minutes">Read time (minutes)</Label>
-                  <Input
-                    id="blog-read-minutes"
-                    type="number"
-                    min={1}
-                    name="readMinutes"
-                    defaultValue={5}
-                  />
-                </label>
-              </div>
-
-              <label className="space-y-1.5 block">
-                <Label htmlFor="blog-excerpt">Excerpt</Label>
-                <textarea
-                  id="blog-excerpt"
-                  name="excerpt"
-                  placeholder="Short summary shown in cards and previews"
+          <form action={createBlogPostFormAction} className="flex flex-col gap-4 p-5">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="space-y-1.5 md:col-span-2">
+                <Label htmlFor="blog-title">Title</Label>
+                <Input
+                  id="blog-title"
+                  name="title"
+                  placeholder="Post title"
                   required
-                  minLength={12}
-                  className={fieldTextareaClassName}
+                  minLength={6}
                 />
               </label>
 
-              <label className="space-y-1.5 block">
-                <Label htmlFor="blog-content">Content</Label>
-                <textarea
-                  id="blog-content"
-                  name="content"
-                  placeholder="Write full post content here"
-                  required
-                  minLength={24}
-                  className={`${fieldTextareaClassName} min-h-52`}
+              <label className="space-y-1.5">
+                <Label htmlFor="blog-slug">Slug</Label>
+                <Input
+                  id="blog-slug"
+                  name="slug"
+                  placeholder="optional-custom-slug"
                 />
               </label>
 
-              <Button type="submit" className="w-full sm:w-auto">
-                <Megaphone className="size-4" />
-                Save Blog Post
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <label className="space-y-1.5">
+                <Label htmlFor="blog-category">Category</Label>
+                <Input
+                  id="blog-category"
+                  name="category"
+                  placeholder="Guides"
+                  required
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <Label htmlFor="blog-author">Author name</Label>
+                <Input
+                  id="blog-author"
+                  name="authorName"
+                  placeholder="Team Amar"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <Label htmlFor="blog-status">Publish state</Label>
+                <select
+                  id="blog-status"
+                  name="isPublished"
+                  className="input-field--select w-full"
+                  defaultValue="true"
+                >
+                  <option value="true">Published</option>
+                  <option value="false">Draft</option>
+                </select>
+              </label>
+
+              <label className="space-y-1.5">
+                <Label htmlFor="blog-published-at">Publish at</Label>
+                <Input id="blog-published-at" type="datetime-local" name="publishedAt" />
+              </label>
+
+              <label className="space-y-1.5">
+                <Label htmlFor="blog-read-minutes">Read time (minutes)</Label>
+                <Input
+                  id="blog-read-minutes"
+                  type="number"
+                  min={1}
+                  name="readMinutes"
+                  defaultValue={5}
+                />
+              </label>
+            </div>
+
+            <label className="space-y-1.5">
+              <Label htmlFor="blog-excerpt">Excerpt</Label>
+              <textarea
+                id="blog-excerpt"
+                name="excerpt"
+                placeholder="Short summary shown in cards and previews"
+                required
+                minLength={12}
+                className="input-field--textarea min-h-24 w-full"
+              />
+            </label>
+
+            <label className="space-y-1.5">
+              <Label htmlFor="blog-content">Content</Label>
+              <textarea
+                id="blog-content"
+                name="content"
+                placeholder="Write full post content here"
+                required
+                minLength={24}
+                className="input-field--textarea w-full min-h-52"
+              />
+            </label>
+
+            <Button type="submit" className="w-full sm:w-auto">
+              <Megaphone className="size-4" />
+              Save Blog Post
+            </Button>
+          </form>
+        </div>
       </section>
 
       {/* ── Live Marketing Routes ─────────────────────────────────────────── */}
-      <section className="space-y-3">
+      <section className="flex flex-col gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
             Live Marketing Routes
           </p>
-          <h2 className="text-xl font-semibold tracking-tight">Connected Page Previews</h2>
+          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+            Connected Page Previews
+          </h2>
+          <p className="mt-1 text-sm font-medium leading-7 text-muted-foreground">
+            Open each page to see how site copy content renders on the public site.
+          </p>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {routePreviews.map((route) => (
-            <Card key={route.href} size="sm" className="ring-1 ring-border/60">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">{route.title}</CardTitle>
-                <CardDescription className="text-xs">{route.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-[11px] text-muted-foreground">
-                  Source key: <span className="font-mono">{route.keyHint}</span>
-                </p>
-                <Button asChild size="sm" variant="outline" className="w-full justify-between">
+            <div
+              key={route.href}
+              className="flex flex-col gap-3 rounded-2xl border border-border/40 bg-surface p-4 transition-all hover:bg-surface-hover"
+            >
+              <div>
+                <p className="text-sm font-bold">{route.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{route.description}</p>
+              </div>
+              <div className="mt-auto flex items-center justify-between gap-2">
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  {route.keyHint}
+                </span>
+                <Button asChild size="xs" variant="outline" className="shrink-0">
                   <Link href={route.href} target="_blank" rel="noreferrer">
                     Preview
-                    <ArrowUpRight className="size-3.5" />
+                    <ExternalLink className="size-3" />
                   </Link>
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       </section>
 
       {/* ── Blog Post Management ──────────────────────────────────────────── */}
-      <section>
-        <Card className="overflow-hidden ring-1 ring-border/70">
-          <CardHeader className="border-b border-border/70">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <CardTitle>Blog Post Management</CardTitle>
-                <CardDescription>Edit or remove existing blog posts.</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Total: {posts.length}</Badge>
-                <Badge variant="outline">Published: {publishedCount}</Badge>
-                <Badge variant="outline">Draft: {draftCount}</Badge>
-              </div>
-            </div>
-          </CardHeader>
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+              Blog Post Management
+            </p>
+            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+              Edit or remove existing posts
+            </h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline">Total: {posts.length}</Badge>
+            <Badge variant="outline">Published: {publishedCount}</Badge>
+            <Badge variant="outline">Draft: {draftCount}</Badge>
+          </div>
+        </div>
 
-          {posts.length === 0 ? (
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              No blog posts available. Create your first post above.
-            </CardContent>
-          ) : (
-            <div className="divide-y divide-border/70">
-              {posts.map((post) => (
-                <article key={post.id} className="space-y-4 px-4 py-5 md:px-5">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-medium leading-tight">{post.title}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        /{post.slug} · {post.category}
-                        {post.publishedAt ? ` · ${formatPublishedAt(post.publishedAt)}` : ""}
-                      </p>
-                      <p className="max-w-4xl text-sm text-muted-foreground">{post.excerpt}</p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={post.isPublished ? "default" : "outline"}>
-                        {post.isPublished ? "Published" : "Draft"}
-                      </Badge>
-
-                      <Button asChild size="sm" variant="outline">
-                        <Link href={`/blog/${post.slug}`} target="_blank" rel="noreferrer">
-                          View
-                          <ArrowUpRight className="size-3.5" />
-                        </Link>
-                      </Button>
-
-                      <form action={deleteBlogPostFormAction}>
-                        <input type="hidden" name="postId" value={post.id} />
-                        <Button type="submit" size="sm" variant="destructive">
-                          <Trash2 className="size-3.5" />
-                          Delete
-                        </Button>
-                      </form>
-                    </div>
+        {posts.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border/40 bg-surface p-8 text-center text-sm font-medium text-muted-foreground">
+            No blog posts available. Create your first post above.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {posts.map((post) => (
+              <div
+                key={post.id}
+                className="overflow-hidden rounded-2xl border border-border/40 bg-surface"
+              >
+                <div className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="font-heading text-lg font-black tracking-[-0.04em]">
+                      {post.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      /{post.slug} · {post.category}
+                      {post.publishedAt ? ` · ${formatPublishedAt(post.publishedAt)}` : ""}
+                    </p>
+                    <p className="max-w-4xl text-sm font-medium leading-7 text-muted-foreground line-clamp-2">
+                      {post.excerpt}
+                    </p>
                   </div>
 
-                  <form action={updateBlogPostFormAction}
-                    className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3"
-                  >
-                    <input type="hidden" name="postId" value={post.id} />
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <Badge variant={post.isPublished ? "default" : "outline"}>
+                      {post.isPublished ? "Published" : "Draft"}
+                    </Badge>
 
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <label className="space-y-1.5">
-                        <Label htmlFor={`post-title-${post.id}`}>Title</Label>
-                        <Input
-                          id={`post-title-${post.id}`}
-                          name="title"
-                          defaultValue={post.title}
-                          placeholder="Title"
-                        />
-                      </label>
-
-                      <label className="space-y-1.5">
-                        <Label htmlFor={`post-category-${post.id}`}>Category</Label>
-                        <Input
-                          id={`post-category-${post.id}`}
-                          name="category"
-                          defaultValue={post.category}
-                          placeholder="Category"
-                        />
-                      </label>
-
-                      <label className="space-y-1.5 md:col-span-2">
-                        <Label htmlFor={`post-excerpt-${post.id}`}>Excerpt</Label>
-                        <textarea
-                          id={`post-excerpt-${post.id}`}
-                          name="excerpt"
-                          defaultValue={post.excerpt}
-                          className={fieldTextareaClassName}
-                        />
-                      </label>
-
-                      <label className="space-y-1.5 md:col-span-2">
-                        <Label htmlFor={`post-content-${post.id}`}>Content</Label>
-                        <textarea
-                          id={`post-content-${post.id}`}
-                          name="content"
-                          defaultValue={post.content}
-                          className={`${fieldTextareaClassName} min-h-28`}
-                        />
-                      </label>
-
-                      <label className="space-y-1.5">
-                        <Label htmlFor={`post-state-${post.id}`}>Publish state</Label>
-                        <select
-                          id={`post-state-${post.id}`}
-                          name="isPublished"
-                          defaultValue={post.isPublished ? "true" : "false"}
-                          className={fieldSelectClassName}
-                        >
-                          <option value="true">Published</option>
-                          <option value="false">Draft</option>
-                        </select>
-                      </label>
-                    </div>
-
-                    <Button type="submit" size="sm">
-                      <NotebookPen className="size-3.5" />
-                      Save Changes
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/blog/${post.slug}`} target="_blank" rel="noreferrer">
+                        View
+                        <ExternalLink className="size-3.5" />
+                      </Link>
                     </Button>
-                  </form>
-                </article>
-              ))}
-            </div>
-          )}
-        </Card>
+
+                    <form action={deleteBlogPostFormAction}>
+                      <input type="hidden" name="postId" value={post.id} />
+                      <Button type="submit" size="sm" variant="destructive">
+                        <Trash2 className="size-3.5" />
+                        Delete
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+
+                <form
+                  action={updateBlogPostFormAction}
+                  className="border-t border-border/40 bg-surface-hover p-5 space-y-4"
+                >
+                  <input type="hidden" name="postId" value={post.id} />
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="space-y-1.5">
+                      <Label htmlFor={`post-title-${post.id}`}>Title</Label>
+                      <Input
+                        id={`post-title-${post.id}`}
+                        name="title"
+                        defaultValue={post.title}
+                        placeholder="Title"
+                      />
+                    </label>
+
+                    <label className="space-y-1.5">
+                      <Label htmlFor={`post-category-${post.id}`}>Category</Label>
+                      <Input
+                        id={`post-category-${post.id}`}
+                        name="category"
+                        defaultValue={post.category}
+                        placeholder="Category"
+                      />
+                    </label>
+
+                    <label className="space-y-1.5 md:col-span-2">
+                      <Label htmlFor={`post-excerpt-${post.id}`}>Excerpt</Label>
+                      <textarea
+                        id={`post-excerpt-${post.id}`}
+                        name="excerpt"
+                        defaultValue={post.excerpt}
+                        className="input-field--textarea min-h-20 w-full"
+                      />
+                    </label>
+
+                    <label className="space-y-1.5 md:col-span-2">
+                      <Label htmlFor={`post-content-${post.id}`}>Content</Label>
+                      <textarea
+                        id={`post-content-${post.id}`}
+                        name="content"
+                        defaultValue={post.content}
+                        className="input-field--textarea w-full min-h-28"
+                      />
+                    </label>
+
+                    <label className="space-y-1.5">
+                      <Label htmlFor={`post-state-${post.id}`}>Publish state</Label>
+                      <select
+                        id={`post-state-${post.id}`}
+                        name="isPublished"
+                        defaultValue={post.isPublished ? "true" : "false"}
+                        className="input-field--select w-full"
+                      >
+                        <option value="true">Published</option>
+                        <option value="false">Draft</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <Button type="submit" size="sm">
+                    <NotebookPen className="size-3.5" />
+                    Save Changes
+                  </Button>
+                </form>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
