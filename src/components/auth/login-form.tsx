@@ -76,8 +76,16 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
           />
         </div>
 
-        <div className="flex flex-col gap-1.5 relative">
-          <label className="text-sm font-semibold text-foreground/70">Password</label>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-foreground/70">Password</label>
+            <Link
+              href={forgotPasswordHref}
+              className="text-xs font-bold uppercase tracking-[0.1em] text-accent hover:text-accent-foreground transition-colors"
+            >
+              Forgot?
+            </Link>
+          </div>
           <Input
             required
             placeholder="••••••••"
@@ -87,12 +95,6 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             autoComplete="current-password"
             className="bg-surface shadow-[var(--field-shadow)]"
           />
-          <Link
-            href={forgotPasswordHref}
-            className="absolute right-2 top-3 text-xs font-bold uppercase tracking-[0.1em] text-accent hover:text-accent-foreground transition-colors z-10"
-          >
-            Forgot?
-          </Link>
         </div>
 
         <Button
