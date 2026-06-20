@@ -10,10 +10,7 @@ import {
 } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/appwrite/auth";
-import {
-  getInstructorStudents,
-  type InstructorStudentItem,
-} from "@/lib/appwrite/dashboard-data";
+import { getInstructorStudents } from "@/lib/appwrite/dashboard-data";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { InstructorStudentsTable } from "./students-table";
 
@@ -206,72 +203,5 @@ export default async function InstructorStudentsPage() {
         </>
       )}
     </div>
-  );
-}
-
-function StudentRow({ student }: { student: InstructorStudentItem }) {
-  return (
-    <article
-      id={`student-${student.courseId}-${student.id}`}
-      className="scroll-mt-24 px-5 py-4"
-    >
-      <div className="flex flex-col gap-3 md:grid md:grid-cols-[1.1fr_1fr_1fr_140px_140px] md:items-center md:gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium">{student.name}</span>
-          {student.enrolledAt ? (
-            <span className="text-xs text-muted-foreground">
-              Enrolled {formatRelativeTime(student.enrolledAt)}
-            </span>
-          ) : null}
-        </div>
-
-        <span className="text-sm text-muted-foreground">{student.email}</span>
-
-        <div className="flex flex-col gap-1">
-          <Link
-            href={`/instructor/courses/${student.courseId}`}
-            className="text-sm text-foreground transition-colors hover:text-muted-foreground"
-          >
-            {student.courseTitle}
-          </Link>
-          <span className="text-xs text-muted-foreground">
-            Enrollment-specific progress
-          </span>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {student.needsAttention ? (
-            <Badge variant="destructive">Needs attention</Badge>
-          ) : null}
-          {student.isNearCompletion ? (
-            <Badge variant="secondary">Near completion</Badge>
-          ) : null}
-          {student.isNewEnrollment ? (
-            <Badge variant="outline">New</Badge>
-          ) : null}
-          {!student.needsAttention && !student.isNearCompletion && !student.isNewEnrollment ? (
-            <Badge variant="outline">Steady</Badge>
-          ) : null}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 flex-1 overflow-hidden bg-muted">
-            <div
-              className={`h-full transition-all ${
-                student.progressPercent >= 100
-                  ? "bg-emerald-500 dark:bg-emerald-400"
-                  : student.needsAttention
-                    ? "bg-amber-500 dark:bg-amber-400"
-                    : "bg-foreground"
-              }`}
-              style={{ width: `${Math.max(2, student.progressPercent)}%` }}
-            />
-          </div>
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {student.progressPercent}%
-          </span>
-        </div>
-      </div>
-    </article>
   );
 }

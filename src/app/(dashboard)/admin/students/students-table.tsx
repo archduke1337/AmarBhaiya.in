@@ -3,20 +3,12 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search, Filter, ChevronRight } from "lucide-react";
-
-type ProfileRow = {
-  $id: string;
-  userId: string;
-  grade: string;
-  school: string;
-  city: string;
-  guardianName: string;
-};
+import type { AnyAppwriteRow } from "@/lib/appwrite/row-pagination";
 
 export function AdminStudentsTable({
   profiles,
 }: {
-  profiles: ProfileRow[];
+  profiles: AnyAppwriteRow[];
 }) {
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState<string>("all");
@@ -32,16 +24,16 @@ export function AdminStudentsTable({
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return profiles.filter((p) => {
+    return profiles.filter((p: Record<string, unknown>) => {
       const matchesSearch =
         !q ||
-        String(p.userId).toLowerCase().includes(q) ||
-        String(p.grade).toLowerCase().includes(q) ||
-        String(p.school).toLowerCase().includes(q) ||
-        String(p.city).toLowerCase().includes(q) ||
-        String(p.guardianName).toLowerCase().includes(q);
+        String(p.userId ?? "").toLowerCase().includes(q) ||
+        String(p.grade ?? "").toLowerCase().includes(q) ||
+        String(p.school ?? "").toLowerCase().includes(q) ||
+        String(p.city ?? "").toLowerCase().includes(q) ||
+        String(p.guardianName ?? "").toLowerCase().includes(q);
       const matchesCity =
-        cityFilter === "all" || String(p.city) === cityFilter;
+        cityFilter === "all" || String(p.city ?? "") === cityFilter;
       return matchesSearch && matchesCity;
     });
   }, [profiles, search, cityFilter]);
@@ -99,9 +91,9 @@ export function AdminStudentsTable({
         </div>
       ) : (
         <div className="divide-y divide-border/40">
-          {filtered.map((profile) => (
+          {filtered.map((profile: Record<string, unknown>) => (
             <div
-              key={profile.$id}
+              key={String(profile.$id ?? "")}
               className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_150px_100px_100px_80px] md:items-center md:gap-4 hover:bg-surface-hover transition-colors"
             >
               <span className="font-mono text-xs truncate">
