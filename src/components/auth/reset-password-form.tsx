@@ -16,11 +16,18 @@ export function ResetPasswordForm({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const strength = useMemo(() => getPasswordStrength(password), [password]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -90,6 +97,32 @@ export function ResetPasswordForm({
           {password.length === 0 && (
             <p className="text-xs text-foreground/50 px-2 font-medium">
               At least 8 characters with a letter, number, and special character.
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-foreground/70">
+            Confirm password
+          </label>
+          <Input
+            required
+            name="confirmPassword"
+            placeholder="Re-enter your new password"
+            type="password"
+            minLength={8}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="bg-surface shadow-[var(--field-shadow)]"
+          />
+          {confirmPassword.length > 0 && password !== confirmPassword && (
+            <p className="text-xs font-semibold text-danger px-1 animate-fade-in-up">
+              Passwords do not match
+            </p>
+          )}
+          {confirmPassword.length > 0 && password === confirmPassword && (
+            <p className="text-xs font-semibold text-emerald-500 px-1 animate-fade-in-up">
+              Passwords match
             </p>
           )}
         </div>
