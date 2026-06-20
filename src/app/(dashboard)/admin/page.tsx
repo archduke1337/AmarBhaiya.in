@@ -6,10 +6,12 @@ import {
   BookOpen,
   Video,
   Megaphone,
-  ArrowRight,
   Shield,
   FileText,
   TrendingUp,
+  Tag,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { Button } from "@heroui/react";
 
@@ -47,11 +49,17 @@ export default async function AdminDashboardPage() {
     (session) => !session.streamUrl
   ).length;
 
+  // Payment stats for alerts
+  const pendingPayments = payments.filter((p) => p.status === "pending");
+  const failedPayments = payments.filter((p) => p.status === "failed");
+  const refundedPayments = payments.filter((p) => p.status === "refunded");
+
   const quickActions = [
     { label: "User Management", href: "/admin/users", icon: Users, description: "Manage roles and access" },
     { label: "Marketing CMS", href: "/admin/marketing", icon: Megaphone, description: "Homepage copy and blog content" },
     { label: "Course Oversight", href: "/admin/courses", icon: BookOpen, description: "Publish, feature, or archive" },
-    { label: "Payment Records", href: "/admin/payments", icon: CreditCard, description: "Transactions and refunds" },
+    { label: "Payment Records", href: "/admin/payments", icon: CreditCard, description: `Transactions and refunds` },
+    { label: "Coupon Management", href: "/admin/coupons", icon: Tag, description: "Discount codes and analytics" },
     { label: "Live Session Control", href: "/admin/live", icon: Video, description: "Active and scheduled sessions" },
     { label: "Moderation Queue", href: "/admin/moderation", icon: Shield, description: "Escalations and timeouts" },
     { label: "Notifications", href: "/admin/notifications", icon: Bell, description: "Broadcast updates across the platform" },
@@ -94,10 +102,10 @@ export default async function AdminDashboardPage() {
           description={`Total: ${formatCurrency(stats.totalRevenue)}`}
         />
         <StatCard
-          label="Live Sessions"
-          value={formatCompactNumber(stats.liveSessions)}
-          icon={Video}
-          description="Scheduled or active"
+          label="Pending Payments"
+          value={formatCompactNumber(pendingPayments.length)}
+          icon={Clock}
+          description={pendingPayments.length > 0 ? `${pendingPayments.length} need confirmation` : "All clear"}
         />
       </StatGrid>
 
@@ -143,6 +151,8 @@ export default async function AdminDashboardPage() {
               openEscalations: moderationData.openEscalations,
               recordingFailures: liveData.recordingFailures,
               sessionsMissingJoinLink,
+              pendingPayments: pendingPayments.length,
+              failedPayments: failedPayments.length,
             })}
           />
 
@@ -150,7 +160,7 @@ export default async function AdminDashboardPage() {
             title="Revenue Pulse"
             viewAllHref="/admin/payments"
             emptyText="No recent payments."
-            items={payments.map((payment) => ({
+            items={payments.slice(0, 6).map((payment) => ({
               id: payment.id,
               label: payment.userName,
               description: `${payment.courseTitle} · ${formatCurrency(payment.amount, payment.currency)}`,
@@ -201,6 +211,8 @@ function buildAlerts(
     openEscalations: number;
     recordingFailures: number;
     sessionsMissingJoinLink: number;
+    pendingPayments: number;
+    failedPayments: number;
   }
 ) {
   const alerts: Array<{
@@ -267,6 +279,26 @@ function buildAlerts(
       description: "Check whether instructors still need to publish replay links.",
       badge: "Recordings",
       href: "/admin/live#upcoming-sessions",
+    });
+  }
+
+  if (context.pendingPayments > 0) {
+    alerts.push({
+      id: "pending-payments",
+      label: `${context.pendingPayments} payment${context.pendingPayments === 1 ? "" : "s"} pending confirmation`,
+      description: "Check pending transactions and verify with Razorpay if needed.",
+      badge: "Pending",
+      href: "/admin/payments",
+    });
+  }
+
+  if (context.failedPayments > 0) {
+    alerts.push({
+      id: "failed-payments",
+      label: `${context.failedPayments} failed payment${context.failedPayments === 1 ? "" : "s"}`,
+      description: "Review failed payments and contact affected students if necessary.",
+      badge: "Failed",
+      href: "/admin/payments",
     });
   }
 
