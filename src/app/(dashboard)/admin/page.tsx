@@ -10,7 +10,6 @@ import {
   FileText,
   TrendingUp,
   Tag,
-  AlertTriangle,
   Clock,
 } from "lucide-react";
 import { Button } from "@heroui/react";
@@ -38,7 +37,7 @@ import {
 export default async function AdminDashboardPage() {
   const [stats, payments, liveData, moderationData, auditLogs] = await Promise.all([
     getAdminDashboardStats(),
-    getAdminPayments({ limit: 4 }),
+    getAdminPayments(),
     getAdminLiveData({ upcomingLimit: 8 }),
     getAdminModerationData({ escalationLimit: 2 }),
     getAdminAuditLogs({ limit: 1 }),
