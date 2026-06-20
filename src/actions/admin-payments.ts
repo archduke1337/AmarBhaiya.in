@@ -141,7 +141,7 @@ export async function updatePaymentStatusAction(formData: FormData): Promise<Act
  * Process a refund via Razorpay API and update the payment status.
  * Requires the payment to have a valid providerRef (Razorpay payment ID).
  */
-export async function processRefundAction(formData: FormData): Promise<ActionResult> {
+export async function processRefundAction(formData: FormData): Promise<ActionResult<string>> {
   await requireRole(["admin"]);
 
   const paymentId = String(formData.get("paymentId") ?? "").trim();
@@ -299,7 +299,7 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
 /**
  * Send a payment reminder notification to a user with a pending/failed payment.
  */
-export async function sendPaymentReminderAction(formData: FormData): Promise<ActionResult> {
+export async function sendPaymentReminderAction(formData: FormData): Promise<ActionResult<string>> {
   await requireRole(["admin"]);
 
   const paymentId = String(formData.get("paymentId") ?? "").trim();
