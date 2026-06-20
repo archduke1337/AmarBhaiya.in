@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { adminEnrollFormAction } from "@/actions/enrollment-form-wrapper";
 import { formatAdminCourseOption, formatAdminUserOption } from "@/lib/utils/admin-select";
+import { AdminStudentsTable } from "./students-table";
 
 async function getAllStudentProfiles() {
   const { tablesDB } = await createAdminClient();
@@ -140,52 +141,7 @@ export default async function AdminStudentProfilesPage() {
             <Badge variant="outline">{profiles.length} students</Badge>
           </div>
 
-          <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1fr_100px_150px_100px_100px_80px]">
-            <span>User</span>
-            <span>Grade</span>
-            <span>School</span>
-            <span>City</span>
-            <span>Guardian</span>
-            <span></span>
-          </div>
-
-          <div className="divide-y divide-border/40">
-            {profiles.map((profile) => (
-              <div
-                key={profile.$id}
-                className="flex flex-col gap-2 px-5 py-4 md:grid md:grid-cols-[1fr_100px_150px_100px_100px_80px] md:items-center md:gap-4 hover:bg-surface-hover transition-colors"
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-mono text-xs">
-                    {String(profile.userId ?? "")}
-                  </span>
-                </div>
-                <span className="text-sm flex items-center gap-1.5">
-                  <MapPin className="size-3 text-muted-foreground md:hidden" />
-                  {String(profile.grade ?? "—")}
-                </span>
-                <span className="text-sm text-muted-foreground line-clamp-1 flex items-center gap-1.5">
-                  <School className="size-3 text-muted-foreground md:hidden" />
-                  {String(profile.school ?? "—")}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {String(profile.city ?? "—")}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {typeof profile.guardianName === "string" && profile.guardianName.length > 0
-                    ? profile.guardianName
-                    : "—"}
-                </span>
-                <Link
-                  href={`/admin/students/${String(profile.userId ?? "")}`}
-                  className="text-xs font-semibold text-accent hover:underline underline-offset-4 inline-flex items-center gap-1"
-                >
-                  Details
-                  <ChevronRight className="size-3" />
-                </Link>
-              </div>
-            ))}
-          </div>
+          <AdminStudentsTable profiles={profiles} />
         </section>
       )}
     </div>
