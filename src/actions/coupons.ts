@@ -330,6 +330,168 @@ export type CouponItem = {
   createdAt: string;
 };
 
+// ── Coupon Analytics ───────────────────────────────────────────────────────
+
+export type CouponAnalytics = {
+  totalCoupons: number;
+  activeCoupons: number;
+  totalUsageCount: number;
+  totalDiscountGiven: number;
+  topCoupons: Array<{
+    code: string;
+    courseTitle: string;
+    usedCount: number;
+    type: string;
+    value: number;
+  }>;
+  usageByCourse: Array<{
+    courseTitle: string;
+    couponCount: number;
+    totalUsed: number;
+  }>;
+};
+
+export async function getCouponAnalytics(): Promise<CouponAnalytics> {
+  await requireRole(["admin", "instructor"]);
+
+  try {
+    const { tablesDB } = await createAdminClient();
+
+    // Get all coupons with course enrichment
+    const coupons = await getCoupons();
+
+    const totalCoupons = coupons.length;
+    const activeCoupons = coupons.filter((c) => c.isActive).length;
+    const totalUsageCount = coupons.reduce((sum, c) => sum + c.usedCount, 0);
+
+    // Calculate total discount given by looking at payments with couponCode
+    // This queries the payments table for records that have a couponCode field
+    let totalDiscountGiven = 0;
+    try {
+      const couponPayments = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.payments,
+        queries: [Query.isNotNull("couponCode") as unknown as string, Query.equal("status", ["completed"])],
+      });
+
+      for (const row of couponPayments.rows) {
+        const originalAmount = Number((row as Record<string, unknown>).originalAmount ?? 0);
+        const amount = Number((row as Record<string, unknown>).amount ?? 0);
+        if (originalAmount > 0 && amount < originalAmount) {
+          totalDiscountGiven += (originalAmount - amount) / 100;
+        }
+      }
+    } catch {
+      // Non-critical
+    }
+
+    // Top coupons by usage
+    const topCoupons = coupons
+      .sort((a, b) => b.usedCount - a.usedCount)
+      .slice(0, 5)
+      .map((c) => ({
+        code: c.code,
+        courseTitle: c.courseTitle,
+        usedCount: c.usedCount,
+        type: c.type,
+        value: c.value,
+      }));
+
+    // Usage by course
+    const courseMap = new Map<string, { courseTitle: string; couponCount: number; totalUsed: number }>();
+    for (const coupon of coupons) {
+      const key = coupon.courseId || coupon.courseTitle;
+      const existing = courseMap.get(key) ?? {
+        courseTitle: coupon.courseTitle,
+        couponCount: 0,
+        totalUsed: 0,
+      };
+      existing.couponCount += 1;
+      existing.totalUsed += coupon.usedCount;
+      courseMap.set(key, existing);
+    }
+
+    const usageByCourse = Array.from(courseMap.values())
+      .sort((a, b) => b.totalUsed - a.totalUsed)
+      .slice(0, 5);
+
+    return {
+      totalCoupons,
+      activeCoupons,
+      totalUsageCount,
+      totalDiscountGiven,
+      topCoupons,
+      usageByCourse,
+    };
+  } catch {
+    return {
+      totalCoupons: 0,
+      activeCoupons: 0,
+      totalUsageCount: 0,
+      totalDiscountGiven: 0,
+      topCoupons: [],
+      usageByCourse: [],
+    };
+  }
+}
+
+// ── Coupon Payment Stats (for instructor revenue) ────────────────────────────
+
+export type CouponPaymentStat = {
+  courseId: string;
+  couponCode: string;
+  count: number;
+  totalDiscount: number;
+};
+
+export async function getCouponPaymentStats(courseIds: string[]): Promise<CouponPaymentStat[]> {
+  if (courseIds.length === 0) return [];
+
+  try {
+    const { tablesDB } = await createAdminClient();
+    const result = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.payments,
+      queries: [Query.equal("status", ["completed"]), Query.limit(5000)],
+    });
+
+    const courseIdSet = new Set(courseIds);
+    const stats = new Map<string, CouponPaymentStat>();
+
+    for (const row of result.rows) {
+      const r = row as Record<string, unknown>;
+      const courseId = String(r.courseId ?? "");
+      const couponCode = String(r.couponCode ?? "");
+
+      if (!courseIdSet.has(courseId) || !couponCode) continue;
+
+      const key = `${courseId}:${couponCode}`;
+      const existing = stats.get(key) ?? {
+        courseId,
+        couponCode,
+        count: 0,
+        totalDiscount: 0,
+      };
+
+      existing.count += 1;
+
+      const originalAmount = Number(r.originalAmount ?? r.amount ?? 0);
+      const amount = Number(r.amount ?? 0);
+      if (originalAmount > amount) {
+        existing.totalDiscount += (originalAmount - amount) / 100;
+      }
+
+      stats.set(key, existing);
+    }
+
+    return Array.from(stats.values()).sort((a, b) => b.count - a.count);
+  } catch {
+    return [];
+  }
+}
+
+// ── Get Coupons (for dashboard) ─────────────────────────────────────────────
+
 export async function getCoupons(): Promise<CouponItem[]> {
   const user = await requireAuth();
   const role = (user.labels ?? []).includes("admin") ? "admin" : "instructor";

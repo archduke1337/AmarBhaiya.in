@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Tag, Plus, Percent, IndianRupee, Calendar, CheckCircle2, XCircle } from "lucide-react";
+import { Tag, Plus, Percent, IndianRupee, Calendar, CheckCircle2, XCircle, TrendingUp, DollarSign, Hash } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getCoupons,
+  getCouponAnalytics,
   type CouponItem,
 } from "@/actions/coupons";
 import {
@@ -12,15 +13,17 @@ import {
   deleteCouponFormAction,
 } from "@/actions/form-wrappers";
 import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
-import { PageHeader, EmptyState } from "@/components/dashboard";
+import { PageHeader, EmptyState, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/utils/format";
 
 export default async function AdminCouponsPage() {
   await requireRole(["admin", "instructor"]);
-  const [coupons, courses] = await Promise.all([
+  const [coupons, courses, analytics] = await Promise.all([
     getCoupons(),
     getAdminCourses(),
+    getCouponAnalytics(),
   ]);
 
   const activeCoupons = coupons.filter((c) => c.isActive);
@@ -33,6 +36,112 @@ export default async function AdminCouponsPage() {
         title="Coupon Management"
         description={`${coupons.length} total coupon${coupons.length === 1 ? "" : "s"} · ${activeCoupons.length} active · ${expiredCoupons.length} inactive`}
       />
+
+      {/* Analytics overview */}
+      <StatGrid columns={4}>
+        <StatCard
+          label="Total Coupons"
+          value={analytics.totalCoupons}
+          icon={Tag}
+          description={`${analytics.activeCoupons} active`}
+        />
+        <StatCard
+          label="Total Usage"
+          value={analytics.totalUsageCount}
+          icon={Hash}
+          description="Across all coupons"
+        />
+        <StatCard
+          label="Total Discount Given"
+          value={formatCurrency(analytics.totalDiscountGiven)}
+          icon={DollarSign}
+          description="Revenue lost to discounts"
+        />
+        <StatCard
+          label="Avg. Usage per Coupon"
+          value={analytics.totalCoupons > 0 ? (analytics.totalUsageCount / analytics.totalCoupons).toFixed(1) : "0"}
+          icon={TrendingUp}
+          description="Average uses per coupon"
+        />
+      </StatGrid>
+
+      {/* Top coupons + usage by course */}
+      {analytics.totalUsageCount > 0 && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+            <div className="border-b-2 border-border px-5 py-3">
+              <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+                Top Coupons by Usage
+              </h2>
+            </div>
+            {analytics.topCoupons.length === 0 ? (
+              <div className="px-5 py-6 text-center text-xs font-semibold text-muted-foreground">
+                No coupon usage yet.
+              </div>
+            ) : (
+              <div className="divide-y divide-border/40">
+                {analytics.topCoupons.map((coupon, index) => (
+                  <div
+                    key={coupon.code}
+                    className="flex items-center justify-between gap-3 px-5 py-3.5"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-[10px] font-bold text-muted-foreground tabular-nums w-5">
+                        #{index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <code className="rounded-md border border-border/40 bg-background px-1.5 py-0.5 font-mono text-xs font-bold">
+                          {coupon.code}
+                        </code>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground truncate">
+                          {coupon.courseTitle}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold tabular-nums">{coupon.usedCount}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {coupon.type === "percent" ? `${coupon.value}%` : `₹${coupon.value}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+            <div className="border-b-2 border-border px-5 py-3">
+              <h2 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
+                Usage by Course
+              </h2>
+            </div>
+            {analytics.usageByCourse.length === 0 ? (
+              <div className="px-5 py-6 text-center text-xs font-semibold text-muted-foreground">
+                No course coupon usage yet.
+              </div>
+            ) : (
+              <div className="divide-y divide-border/40">
+                {analytics.usageByCourse.map((course) => (
+                  <div
+                    key={course.courseTitle}
+                    className="flex items-center justify-between gap-3 px-5 py-3.5"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{course.courseTitle}</p>
+                      <p className="text-[10px] text-muted-foreground">{course.couponCount} coupons</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold tabular-nums">{course.totalUsed}</p>
+                      <p className="text-[10px] text-muted-foreground">uses</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       {/* Create coupon form */}
       <section className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
