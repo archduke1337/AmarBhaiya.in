@@ -15,6 +15,7 @@ import {
   type InstructorStudentItem,
 } from "@/lib/appwrite/dashboard-data";
 import { formatRelativeTime } from "@/lib/utils/format";
+import { InstructorStudentsTable } from "./students-table";
 
 export default async function InstructorStudentsPage() {
   const { user, role } = await requireRole(["admin", "instructor"]);
@@ -200,19 +201,7 @@ export default async function InstructorStudentsPage() {
               </p>
             </div>
 
-            <div className="hidden items-center gap-4 border-b border-border/40 bg-surface-hover px-5 py-3 text-xs uppercase tracking-[0.15em] text-muted-foreground md:grid md:grid-cols-[1.1fr_1fr_1fr_140px_140px]">
-              <span>Student</span>
-              <span>Email</span>
-              <span>Course</span>
-              <span>Signals</span>
-              <span>Progress</span>
-            </div>
-
-            <div className="divide-y divide-border">
-              {sortedStudents.map((student) => (
-                <StudentRow key={`${student.courseId}-${student.id}`} student={student} />
-              ))}
-            </div>
+            <InstructorStudentsTable students={sortedStudents} />
           </section>
         </>
       )}
