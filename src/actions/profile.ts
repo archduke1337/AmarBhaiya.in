@@ -26,14 +26,22 @@ const studentProfileSchema = z.object({
 const billingInfoSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required.").max(100),
   lastName: z.string().trim().min(1, "Last name is required.").max(100),
-  phone: z.string().trim().min(1, "Phone is required.").max(20),
+  phone: z.string().trim().max(20).optional().or(z.literal("")),
+  parentName: z.string().trim().min(1, "Father/Mother name is required.").max(200),
+  parentPhone: z.string().trim().min(1, "Parent phone is required.").max(20),
   addressLine1: z.string().trim().min(1, "Address is required.").max(300),
   addressLine2: z.string().max(300).optional(),
   city: z.string().trim().min(1, "City is required.").max(100),
   state: z.string().trim().min(1, "State is required.").max(100),
   country: z.string().trim().min(1, "Country is required.").max(100),
   zipcode: z.string().trim().min(1, "Zipcode is required.").max(20),
-});
+}).refine((data) => {
+  // Phone and parent phone cannot be the same
+  if (data.phone && data.parentPhone && data.phone === data.parentPhone) {
+    return false;
+  }
+  return true;
+}, { message: "Student phone and parent phone cannot be the same.", path: ["parentPhone"] });
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -139,7 +147,9 @@ export async function upsertBillingInfoAction(
   const parsed = billingInfoSchema.safeParse({
     firstName: String(formData.get("firstName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
-    phone: String(formData.get("phone") ?? ""),
+    phone: String(formData.get("phone") ?? "").trim() || undefined,
+    parentName: String(formData.get("parentName") ?? ""),
+    parentPhone: String(formData.get("parentPhone") ?? ""),
     addressLine1: String(formData.get("addressLine1") ?? ""),
     addressLine2: String(formData.get("addressLine2") ?? "").trim() || undefined,
     city: String(formData.get("city") ?? ""),
@@ -201,6 +211,8 @@ export async function getBillingInfo() {
     firstName: (row.firstName as string) || "",
     lastName: (row.lastName as string) || "",
     phone: (row.phone as string) || "",
+    parentName: (row.parentName as string) || "",
+    parentPhone: (row.parentPhone as string) || "",
     addressLine1: (row.addressLine1 as string) || "",
     addressLine2: (row.addressLine2 as string) || "",
     city: (row.city as string) || "",
