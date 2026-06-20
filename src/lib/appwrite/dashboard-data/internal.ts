@@ -257,9 +257,17 @@ export type AdminUserItem = {
 export type AdminCourseItem = {
   id: string;
   title: string;
-  state: "published" | "draft";
-  featured: "yes" | "no";
+  slug: string;
+  state: string;
+  featured: string;
   category: string;
+  price: number;
+  instructorName: string;
+  instructorId: string;
+  enrollmentCount: number;
+  totalLessons: number;
+  isPublished: boolean;
+  isFeatured: boolean;
 };
 
 export type AdminCategoryItem = {
