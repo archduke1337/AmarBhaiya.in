@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, DollarSign, Receipt, TrendingUp } from "lucide-react";
+import { BookOpen, DollarSign, Receipt, TrendingUp, Tag } from "lucide-react";
 
 import {
   ActivityFeed,
@@ -12,11 +12,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { requireRole } from "@/lib/appwrite/auth";
 import { getInstructorRevenueOverview } from "@/lib/appwrite/dashboard-data";
+import { getCouponPaymentStats } from "@/actions/coupons";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils/format";
 
 export default async function InstructorEarningsPage() {
   const { user, role } = await requireRole(["admin", "instructor"]);
   const revenue = await getInstructorRevenueOverview({ userId: user.$id, role });
+
+  // Get coupon stats for this instructor's courses
+  const courseIds = revenue.courseEarnings.map((c) => c.id);
+  const couponStats = await getCouponPaymentStats(courseIds);
+  const totalCouponDiscounts = couponStats.reduce((sum, s) => sum + s.totalDiscount, 0);
+  const totalCouponOrders = couponStats.reduce((sum, s) => sum + s.count, 0);
 
   return (
     <div className="flex max-w-6xl flex-col gap-8">
@@ -57,6 +64,39 @@ export default async function InstructorEarningsPage() {
           description={`${revenue.publishedPaidCourses} currently published`}
         />
       </StatGrid>
+
+      {/* Coupon usage summary */}
+      {totalCouponOrders > 0 && (
+        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border/40 bg-surface p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-accent/10 text-accent">
+              <Tag className="size-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Coupon Usage</p>
+              <p className="text-xs text-muted-foreground">
+                {totalCouponOrders} order{totalCouponOrders === 1 ? "" : "s"} with coupons
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6 ml-auto">
+            <div className="text-right">
+              <p className="text-lg font-black tabular-nums">{totalCouponOrders}</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Orders</p>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-black tabular-nums text-destructive">-{formatCurrency(totalCouponDiscounts)}</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Discounts given</p>
+            </div>
+          </div>
+          <Link
+            href="/instructor/coupons"
+            className="text-xs font-semibold text-accent hover:underline underline-offset-4"
+          >
+            Manage coupons →
+          </Link>
+        </div>
+      )}
 
       {revenue.courseEarnings.length === 0 ? (
         <EmptyState

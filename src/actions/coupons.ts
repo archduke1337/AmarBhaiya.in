@@ -365,18 +365,19 @@ export async function getCouponAnalytics(): Promise<CouponAnalytics> {
     const totalUsageCount = coupons.reduce((sum, c) => sum + c.usedCount, 0);
 
     // Calculate total discount given by looking at payments with couponCode
-    // This queries the payments table for records that have a couponCode field
     let totalDiscountGiven = 0;
     try {
-      const couponPayments = await tablesDB.listRows({
+      const allCompleted = await tablesDB.listRows({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.payments,
-        queries: [Query.isNotNull("couponCode") as unknown as string, Query.equal("status", ["completed"])],
+        queries: [Query.equal("status", ["completed"])],
       });
 
-      for (const row of couponPayments.rows) {
-        const originalAmount = Number((row as Record<string, unknown>).originalAmount ?? 0);
-        const amount = Number((row as Record<string, unknown>).amount ?? 0);
+      for (const row of allCompleted.rows) {
+        const r = row as Record<string, unknown>;
+        if (!r.couponCode) continue;
+        const originalAmount = Number(r.originalAmount ?? 0);
+        const amount = Number(r.amount ?? 0);
         if (originalAmount > 0 && amount < originalAmount) {
           totalDiscountGiven += (originalAmount - amount) / 100;
         }
