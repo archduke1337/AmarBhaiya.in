@@ -13,11 +13,14 @@ import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/acti
 
 const createCouponSchema = z.object({
   code: z.string().trim().min(1, "Coupon code is required.").max(50).transform((v) => v.toUpperCase()),
-  courseId: z.string().min(1),
+  courseId: z.string().optional(),
+  resourceId: z.string().optional(),
   type: z.enum(["percent", "fixed"]),
   value: z.coerce.number().positive("Value must be positive.").max(1000000),
   maxUses: z.coerce.number().int().min(1).default(100),
   expiresAt: z.string().optional(),
+}).refine((data) => data.courseId || data.resourceId, {
+  message: "Either course or resource must be specified.",
 });
 
 // ── Helper ──────────────────────────────────────────────────────────────────
@@ -40,7 +43,8 @@ export async function createCouponAction(formData: FormData): Promise<ActionResu
 
   const parsed = createCouponSchema.safeParse({
     code: formData.get("code"),
-    courseId: formData.get("courseId"),
+    courseId: formData.get("courseId") || undefined,
+    resourceId: formData.get("resourceId") || undefined,
     type: formData.get("type"),
     value: formData.get("value"),
     maxUses: formData.get("maxUses") || "100",
@@ -54,11 +58,23 @@ export async function createCouponAction(formData: FormData): Promise<ActionResu
   try {
     const { tablesDB } = await createAdminClient();
 
-    // If instructor, verify they own the course
+    // If instructor, verify ownership
     if (role === "instructor") {
-      const courseIds = await getUserInstructorCourses(user.$id);
-      if (!courseIds.has(parsed.data.courseId)) {
-        return actionError("You can only create coupons for your own courses.");
+      if (parsed.data.courseId) {
+        const courseIds = await getUserInstructorCourses(user.$id);
+        if (!courseIds.has(parsed.data.courseId)) {
+          return actionError("You can only create coupons for your own courses.");
+        }
+      }
+      if (parsed.data.resourceId) {
+        const resource = await tablesDB.getRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.standaloneResources,
+          rowId: parsed.data.resourceId,
+        }).catch(() => null) as Record<string, unknown> | null;
+        if (!resource || String(resource.instructorId ?? "") !== user.$id) {
+          return actionError("You can only create coupons for your own resources.");
+        }
       }
     }
 
@@ -79,7 +95,8 @@ export async function createCouponAction(formData: FormData): Promise<ActionResu
       rowId: ID.unique(),
       data: {
         code: parsed.data.code,
-        courseId: parsed.data.courseId,
+        courseId: parsed.data.courseId || "",
+        resourceId: parsed.data.resourceId || "",
         instructorId: user.$id,
         type: parsed.data.type,
         value: parsed.data.type === "percent" ? Math.min(parsed.data.value, 100) : parsed.data.value,
@@ -202,10 +219,11 @@ export type CouponResult = {
 
 export async function validateCouponAction(
   code: string,
-  courseId: string
+  courseId: string,
+  resourceId?: string
 ): Promise<CouponResult> {
-  if (!code || !courseId) {
-    return { valid: false, message: "Coupon code and course are required." };
+  if (!code || (!courseId && !resourceId)) {
+    return { valid: false, message: "Coupon code and target (course or resource) are required." };
   }
 
   try {
@@ -235,9 +253,17 @@ export async function validateCouponAction(
       }
     }
 
-    // Check if course matches
-    if (String(coupon.courseId ?? "") !== courseId) {
-      return { valid: false, message: "This coupon does not apply to this course." };
+    // Check if course/resource matches
+    const couponCourseId = String(coupon.courseId ?? "");
+    const couponResourceId = String((coupon as Record<string, unknown>).resourceId ?? "");
+    if (resourceId) {
+      if (couponResourceId !== resourceId) {
+        return { valid: false, message: "This coupon does not apply to this resource." };
+      }
+    } else if (courseId) {
+      if (couponCourseId !== courseId) {
+        return { valid: false, message: "This coupon does not apply to this course." };
+      }
     }
 
     // Check usage limit
@@ -247,18 +273,29 @@ export async function validateCouponAction(
       return { valid: false, message: "This coupon has reached its usage limit." };
     }
 
-    // Get course price
-    const course = await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-    }).catch(() => null) as Record<string, unknown> | null;
-
-    if (!course) {
-      return { valid: false, message: "Course not found." };
+    // Get price (course or resource)
+    let price = 0;
+    if (resourceId) {
+      const resource = await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.standaloneResources,
+        rowId: resourceId,
+      }).catch(() => null) as Record<string, unknown> | null;
+      if (!resource) {
+        return { valid: false, message: "Resource not found." };
+      }
+      price = Number(resource.price ?? 0);
+    } else {
+      const course = await tablesDB.getRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courses,
+        rowId: courseId,
+      }).catch(() => null) as Record<string, unknown> | null;
+      if (!course) {
+        return { valid: false, message: "Course not found." };
+      }
+      price = Number(course.price ?? 0);
     }
-
-    const price = Number(course.price ?? 0);
     const couponType = String(coupon.type ?? "percent");
     const couponValue = Number(coupon.value ?? 0);
 
@@ -319,6 +356,8 @@ export type CouponItem = {
   code: string;
   courseId: string;
   courseTitle: string;
+  resourceId: string;
+  resourceTitle: string;
   type: string;
   value: number;
   maxUses: number;
@@ -513,9 +552,11 @@ export async function getCoupons(): Promise<CouponItem[]> {
 
     const rows = result.rows as Array<Record<string, unknown>>;
 
-    // Enrich with course titles
+    // Enrich with course and resource titles
     const courseIds = [...new Set(rows.map((r) => String(r.courseId ?? "")).filter(Boolean))];
+    const resourceIds = [...new Set(rows.map((r) => String((r as Record<string, unknown>).resourceId ?? "")).filter(Boolean))];
     const courseMap = new Map<string, string>();
+    const resourceMap = new Map<string, string>();
 
     if (courseIds.length > 0) {
       const courses = await tablesDB.listRows({
@@ -527,12 +568,24 @@ export async function getCoupons(): Promise<CouponItem[]> {
         courseMap.set(c.$id, String(c.title ?? c.$id));
       }
     }
+    if (resourceIds.length > 0) {
+      const resources = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.standaloneResources,
+        queries: [Query.equal("$id", resourceIds), Query.limit(100)],
+      });
+      for (const r of resources.rows) {
+        resourceMap.set(r.$id, String(r.title ?? r.$id));
+      }
+    }
 
     return rows.map((r) => ({
       id: String(r.$id ?? ""),
       code: String(r.code ?? ""),
       courseId: String(r.courseId ?? ""),
-      courseTitle: courseMap.get(String(r.courseId ?? "")) || "Unknown Course",
+      courseTitle: courseMap.get(String(r.courseId ?? "")) || "",
+      resourceId: String((r as Record<string, unknown>).resourceId ?? ""),
+      resourceTitle: resourceMap.get(String((r as Record<string, unknown>).resourceId ?? "")) || "",
       type: String(r.type ?? "percent"),
       value: Number(r.value ?? 0),
       maxUses: Number(r.maxUses ?? 100),
