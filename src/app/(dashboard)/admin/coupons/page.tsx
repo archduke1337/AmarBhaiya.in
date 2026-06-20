@@ -4,11 +4,13 @@ import { Tag, Plus, Percent, IndianRupee, Calendar, CheckCircle2, XCircle } from
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   getCoupons,
-  createCouponAction,
-  toggleCouponAction,
-  deleteCouponAction,
   type CouponItem,
 } from "@/actions/coupons";
+import {
+  createCouponFormAction,
+  toggleCouponFormAction,
+  deleteCouponFormAction,
+} from "@/actions/form-wrappers";
 import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +48,7 @@ export default async function AdminCouponsPage() {
           </div>
         </div>
 
-        <form action={createCouponAction} className="flex flex-col gap-4 p-5">
+        <form action={createCouponFormAction} className="flex flex-col gap-4 p-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <label htmlFor="code" className="text-xs font-semibold text-muted-foreground">
@@ -257,7 +259,7 @@ function CouponRow({ coupon }: { coupon: CouponItem }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <form action={toggleCouponAction}>
+        <form action={toggleCouponFormAction}>
           <input type="hidden" name="couponId" value={coupon.id} />
           <input type="hidden" name="isActive" value={coupon.isActive ? "false" : "true"} />
           <button
@@ -267,7 +269,7 @@ function CouponRow({ coupon }: { coupon: CouponItem }) {
             {coupon.isActive ? "Deactivate" : "Activate"}
           </button>
         </form>
-        <form action={deleteCouponAction}>
+        <form action={deleteCouponFormAction}>
           <input type="hidden" name="couponId" value={coupon.id} />
           <button
             type="submit"

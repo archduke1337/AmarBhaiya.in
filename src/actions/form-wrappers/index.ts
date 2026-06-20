@@ -17,3 +17,4 @@ export * from "./notifications";
 export * from "./community";
 export * from "./comments";
 export * from "./account";
+export * from "./coupons";

@@ -100,14 +100,14 @@ export async function updatePaymentStatusAction(formData: FormData): Promise<Act
 
     // ── Write audit log ────────────────────────────────────────────────────
     try {
-      const actor = await requireRole(["admin"]);
+      const { user } = await requireRole(["admin"]);
       await tablesDB.createRow({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.auditLogs,
         rowId: ID.unique(),
         data: {
-          actorId: actor.$id,
-          actorName: actor.name || "Admin",
+          actorId: user.$id,
+          actorName: user.name || "Admin",
           action: `payment.${newStatus}`,
           entity: "payment",
           entityId: paymentId,

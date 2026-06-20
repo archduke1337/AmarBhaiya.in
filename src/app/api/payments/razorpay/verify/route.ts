@@ -10,6 +10,7 @@ import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/lib/payments/course-payment";
 import { verifyRazorpayPaymentSignature } from "@/lib/payments/razorpay";
 import { revalidateEach } from "@/lib/utils/revalidate";
+import { incrementCouponUsageAction } from "@/actions/coupons";
 
 export const runtime = "nodejs";
 
@@ -125,6 +126,14 @@ export async function POST(request: Request) {
           ? existingPayment.currency
           : "INR",
     });
+
+    // Increment coupon usage if a coupon was applied
+    const couponCode = json?.couponCode as string | undefined;
+    if (couponCode) {
+      await incrementCouponUsageAction(couponCode).catch(() => {
+        // Non-critical
+      });
+    }
 
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Tag, Plus, Percent, IndianRupee, Calendar } from "lucide-react";
 import { Query } from "node-appwrite";
 
@@ -7,11 +6,13 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import {
   getCoupons,
-  createCouponAction,
-  toggleCouponAction,
-  deleteCouponAction,
   type CouponItem,
 } from "@/actions/coupons";
+import {
+  createCouponFormAction,
+  toggleCouponFormAction,
+  deleteCouponFormAction,
+} from "@/actions/form-wrappers";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 
@@ -65,7 +66,7 @@ export default async function InstructorCouponsPage() {
           </div>
         </div>
 
-        <form action={createCouponAction} className="flex flex-col gap-4 p-5">
+        <form action={createCouponFormAction} className="flex flex-col gap-4 p-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <label htmlFor="code" className="text-xs font-semibold text-muted-foreground">
@@ -258,7 +259,7 @@ export default async function InstructorCouponsPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <form action={toggleCouponAction}>
+                  <form action={toggleCouponFormAction}>
                     <input type="hidden" name="couponId" value={coupon.id} />
                     <input type="hidden" name="isActive" value={coupon.isActive ? "false" : "true"} />
                     <button
@@ -268,7 +269,7 @@ export default async function InstructorCouponsPage() {
                       {coupon.isActive ? "Deactivate" : "Activate"}
                     </button>
                   </form>
-                  <form action={deleteCouponAction}>
+                  <form action={deleteCouponFormAction}>
                     <input type="hidden" name="couponId" value={coupon.id} />
                     <button
                       type="submit"
