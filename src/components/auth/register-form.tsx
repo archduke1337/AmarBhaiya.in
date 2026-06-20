@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { Checkbox, Button, Input } from "@heroui/react";
+import { getPasswordStrength } from "@/lib/utils/password-strength";
 
 export function RegisterForm({ redirectPath }: { redirectPath: string }) {
   const router = useRouter();
@@ -14,6 +15,8 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const strength = useMemo(() => getPasswordStrength(password), [password]);
 
   const loginHref =
     redirectPath === "/app/dashboard"
@@ -104,9 +107,30 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             autoComplete="new-password"
             className="bg-surface shadow-[var(--field-shadow)]"
           />
-          <p className="text-xs text-foreground/50 px-2 font-medium">
-            At least 8 characters with a letter, number, and special character.
-          </p>
+          {password.length > 0 && (
+            <div className="flex flex-col gap-1.5 px-1 animate-fade-in-up">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                      i <= strength.score ? strength.color : "bg-border"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-xs font-semibold px-1" style={{
+                color: strength.score <= 1 ? "var(--danger)" : strength.score <= 2 ? "var(--foreground)" : undefined
+              }}>
+                {strength.label}
+              </p>
+            </div>
+          )}
+          {password.length === 0 && (
+            <p className="text-xs text-foreground/50 px-2 font-medium">
+              At least 8 characters with a letter, number, and special character.
+            </p>
+          )}
         </div>
 
         <div className="bg-surface/50 border border-border/40 rounded-xl px-4 py-3 flex items-start gap-3 mt-1">

@@ -167,6 +167,8 @@ describe("POST /api/payments/razorpay/create-order", () => {
       amount: 49900,
       currency: "INR",
       paymentId: "payment_row_1",
+      couponApplied: false,
+      discountAmount: 0,
     });
   });
 });

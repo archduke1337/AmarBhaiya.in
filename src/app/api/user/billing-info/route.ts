@@ -4,6 +4,9 @@ import { z } from "zod";
 
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
+
+export const runtime = "nodejs";
 
 const billingInfoSchema = z.object({
   firstName: z.string().trim().min(1).max(100),
@@ -77,6 +80,15 @@ export async function POST(request: Request) {
   const user = await getAuthenticatedUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rlKey = `${getRateLimitKey(request)}:billing-info`;
+  const rateLimit = await checkRateLimit(rlKey, 10);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+    );
   }
 
   const json = await request.json().catch(() => null);
