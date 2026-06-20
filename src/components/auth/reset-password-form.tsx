@@ -107,7 +107,6 @@ export function ResetPasswordForm({
           </label>
           <Input
             required
-            name="confirmPassword"
             placeholder="Re-enter your new password"
             type="password"
             minLength={8}
