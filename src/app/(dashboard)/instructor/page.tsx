@@ -336,12 +336,9 @@ export default async function InstructorDashboardPage() {
                 emptyText="No students currently need outreach."
                 items={studentsNeedingAttention.slice(0, 4).map((student) => ({
                   id: `${student.courseId}-${student.id}`,
-                  label: student.name,
-                  description: `${student.courseTitle} · ${student.progressPercent}% complete`,
-                  badge: "Outreach",
-                  timestamp: student.enrolledAt
-                    ? formatRelativeTime(student.enrolledAt)
-                    : undefined,
+                  label: `${student.name} — ${student.progressPercent}%`,
+                  description: `${student.courseTitle} · Enrolled ${student.enrolledAt ? formatRelativeTime(student.enrolledAt) : "recently"}`,
+                  badge: student.progressPercent <= 10 ? "Stalled" : "Outreach",
                   href: getInstructorStudentHref(student.courseId, student.id),
                 }))}
               />
@@ -351,12 +348,9 @@ export default async function InstructorDashboardPage() {
                 emptyText="No learners are near the finish line yet."
                 items={nearCompletionStudents.slice(0, 4).map((student) => ({
                   id: `near-${student.courseId}-${student.id}`,
-                  label: student.name,
-                  description: `${student.courseTitle} · ${student.progressPercent}% complete`,
+                  label: `${student.name} — ${student.progressPercent}%`,
+                  description: `${student.courseTitle}${student.progressPercent >= 95 ? " · Just a few lessons away" : " · Building momentum"}`,
                   badge: student.progressPercent >= 95 ? "Almost done" : "Momentum",
-                  timestamp: student.enrolledAt
-                    ? formatRelativeTime(student.enrolledAt)
-                    : undefined,
                   href: getInstructorStudentHref(student.courseId, student.id),
                 }))}
               />
