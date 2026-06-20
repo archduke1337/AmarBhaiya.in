@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { confirmPasswordRecoveryAction } from "@/actions/verification";
 import { Button, Input } from "@heroui/react";
-import { getPasswordStrength, getPasswordStrengthAriaLabel } from "@/lib/utils/password-strength";
+import { getPasswordStrength } from "@/lib/utils/password-strength";
 
 export function ResetPasswordForm({
   userId,
@@ -78,7 +78,7 @@ export function ResetPasswordForm({
             />
           </div>
           {password.length > 0 && (
-            <div className="flex flex-col gap-1.5 px-1 animate-fade-in-up" role="img" aria-label={getPasswordStrengthAriaLabel(password)}>
+            <div className="flex flex-col gap-1.5 px-1 animate-fade-in-up">
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
