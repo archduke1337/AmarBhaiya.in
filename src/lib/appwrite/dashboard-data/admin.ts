@@ -81,31 +81,33 @@ export async function getAdminCourses(): Promise<AdminCourseItem[]> {
     safeListAllRows<AnyRow & { name?: string }>(tablesDB, APPWRITE_CONFIG.tables.categories, [Query.orderAsc("order")]),
     safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments),
   ]);
-  const categoryNameById = new Map(categoriesResult.map((c) => [c.$id, typeof c.name === "string" ? c.name : "Uncategorized"]));
+  const categoryNameById = new Map<string, string>(categoriesResult.map((c) => [c.$id, typeof c.name === "string" ? c.name : "Uncategorized"]));
 
   // Count active enrollments per course
   const enrollmentCountByCourse = new Map<string, number>();
   for (const e of enrollmentsResult) {
-    const cid = typeof (e as AnyRow).courseId === "string" ? (e as AnyRow).courseId : "";
+    const row = e as AnyRow;
+    const cid = String(row.courseId ?? "");
     if (cid && isActiveEnrollmentRow(e)) {
       enrollmentCountByCourse.set(cid, (enrollmentCountByCourse.get(cid) ?? 0) + 1);
     }
   }
 
   // Resolve instructor names
-  const instructorIds = [...new Set(coursesResult.map((c) => typeof (c as AnyRow).instructorId === "string" ? (c as AnyRow).instructorId as string : "").filter(Boolean))];
+  const rawIds = coursesResult.map((c) => String((c as AnyRow).instructorId ?? ""));
+  const instructorIds = [...new Set(rawIds.filter((id) => id.length > 0))];
   const instructorNameMap = new Map<string, string>();
-  await Promise.all(instructorIds.map(async (id) => {
+  await Promise.all(instructorIds.map(async (id: string) => {
     try { const u = await users.get({ userId: id }); instructorNameMap.set(id, u.name || id); } catch { instructorNameMap.set(id, id); }
   }));
 
   return coursesResult.map((course) => {
     const row = course as AnyRow;
-    const instructorId = typeof row.instructorId === "string" ? row.instructorId : "";
+    const instructorId = String(row.instructorId ?? "");
     return {
       id: course.$id,
       title: typeof course.title === "string" ? course.title : "Untitled course",
-      slug: typeof row.slug === "string" ? row.slug : "",
+      slug: String(row.slug ?? ""),
       state: course.isPublished ? "published" : "draft",
       featured: course.isFeatured ? "yes" : "no",
       category: (typeof course.categoryId === "string" && categoryNameById.get(course.categoryId)) || "Uncategorized",

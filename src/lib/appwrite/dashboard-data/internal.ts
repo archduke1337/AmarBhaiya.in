@@ -254,21 +254,7 @@ export type AdminUserItem = {
   email: string;
 };
 
-export type AdminCourseItem = {
-  id: string;
-  title: string;
-  slug: string;
-  state: string;
-  featured: string;
-  category: string;
-  price: number;
-  instructorName: string;
-  instructorId: string;
-  enrollmentCount: number;
-  totalLessons: number;
-  isPublished: boolean;
-  isFeatured: boolean;
-};
+// AdminCourseItem is defined in admin.ts (supersedes this old minimal type)
 
 export type AdminCategoryItem = {
   id: string;

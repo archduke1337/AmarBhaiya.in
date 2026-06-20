@@ -179,8 +179,8 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
     let refundResult: Record<string, unknown> | null = null;
     try {
       const razorpay = getRazorpayClient();
+      const originalAmount = Number(existing.amount ?? 0);
       const refundOptions: Record<string, unknown> = {
-        payment_id: providerRef,
         notes: {
           reason: reason || "Admin-initiated refund",
           adminRefund: "true",
@@ -189,11 +189,15 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
 
       // If a partial amount is specified (in rupees), convert to paise
       if (amountStr && !isNaN(Number(amountStr)) && Number(amountStr) > 0) {
-        refundOptions.amount = Math.round(Number(amountStr) * 100);
+        const refundAmountPaise = Math.round(Number(amountStr) * 100);
+        if (refundAmountPaise > originalAmount) {
+          return actionError(`Refund amount (₹${amountStr}) exceeds original payment amount (₹${originalAmount / 100}).`);
+        }
+        refundOptions.amount = refundAmountPaise;
       }
       // If no amount specified, Razorpay processes a full refund
 
-      refundResult = await razorpay.payments.refund(providerRef, refundOptions) as Record<string, unknown>;
+      refundResult = await razorpay.payments.refund(providerRef, refundOptions) as unknown as Record<string, unknown>;
     } catch (razorpayError) {
       const message = razorpayError instanceof Error ? razorpayError.message : "Razorpay refund failed";
       return actionError(`Razorpay refund failed: ${message}`);
@@ -207,8 +211,8 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
       data: {
         status: "refunded",
         updatedAt: new Date().toISOString(),
-        refundId: String(refundResult?.$id ?? ""),
-        refundAmount: Number(refundResult?.amount ?? existing.amount),
+        refundId: String((refundResult as Record<string, unknown>)?.id ?? ""),
+        refundAmount: Number((refundResult as Record<string, unknown>)?.amount ?? existing.amount),
       },
     });
 
@@ -249,7 +253,7 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
         userId,
         type: "payment.refunded",
         title: "Payment Refunded",
-        body: `Your payment of ₹${Number(existing.amount ?? 0) / 100} has been refunded. Refund ID: ${String(refundResult?.$id ?? "N/A")}. The amount will be credited to your original payment method within 5-10 business days.`,
+        body: `Your payment of ₹${Number(existing.amount ?? 0) / 100} has been refunded. Refund ID: ${String((refundResult as Record<string, unknown>)?.id ?? "N/A")}. The amount will be credited to your original payment method within 5-10 business days.`,
         link: "/app/billing",
       });
     } catch {
@@ -273,8 +277,8 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
             previousStatus: currentStatus,
             newStatus: "refunded",
             amount: existing.amount,
-            refundId: String(refundResult?.$id ?? ""),
-            refundAmount: Number(refundResult?.amount ?? 0),
+            refundId: String((refundResult as Record<string, unknown>)?.id ?? ""),
+            refundAmount: Number((refundResult as Record<string, unknown>)?.amount ?? 0),
             reason: reason || "Admin-initiated refund",
             courseId: existing.courseId,
             userId: existing.userId,
@@ -290,7 +294,7 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
     revalidatePath("/admin");
     revalidatePath("/app/billing");
 
-    return actionSuccess(`Refund processed successfully. Refund ID: ${String(refundResult?.$id ?? "N/A")}`);
+    return actionSuccess(`Refund processed successfully. Refund ID: ${String((refundResult as Record<string, unknown>)?.id ?? "N/A")}`);
   } catch (error) {
     return actionError(error instanceof Error ? error.message : "Failed to process refund.");
   }
