@@ -12,7 +12,7 @@ import {
 } from "./internal";
 
 export type {
-  AdminDashboardStats, AdminUserItem, AdminCourseItem, AdminCategoryItem,
+  AdminDashboardStats, AdminUserItem, AdminCategoryItem,
   AdminPaymentItem, AdminLiveData, ModerationActionItem, AdminModerationData, AdminAuditItem,
   InstructorLiveSessionItem,
 } from "./internal";
