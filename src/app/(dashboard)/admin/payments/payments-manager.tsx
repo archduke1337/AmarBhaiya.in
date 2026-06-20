@@ -8,14 +8,22 @@ import {
   Clock,
   Search,
   Receipt,
+  Send,
+  RotateCcw,
+  X,
 } from "lucide-react";
 import {
   formatCurrency,
   formatDateTime,
 } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { updatePaymentStatusAction } from "@/actions/admin-payments";
+import {
+  updatePaymentStatusAction,
+  processRefundAction,
+  sendPaymentReminderAction,
+} from "@/actions/admin-payments";
 
 type Payment = {
   id: string;
@@ -55,17 +63,156 @@ const statusIconMap: Record<string, React.ElementType> = {
   refunded: Receipt,
 };
 
+// ── Refund Dialog ───────────────────────────────────────────────────────────
+
+function RefundDialog({
+  payment,
+  onClose,
+  onRefunded,
+}: {
+  payment: Payment;
+  onClose: () => void;
+  onRefunded: (paymentId: string) => void;
+}) {
+  const [amount, setAmount] = useState(String(payment.amount));
+  const [reason, setReason] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleRefund = async () => {
+    setProcessing(true);
+    setError("");
+    const fd = new FormData();
+    fd.set("paymentId", payment.id);
+    fd.set("amount", amount);
+    fd.set("reason", reason);
+    const result = await processRefundAction(fd);
+    setProcessing(false);
+    if (result.success) {
+      onRefunded(payment.id);
+      onClose();
+    } else {
+      setError(result.error || "Refund failed. Please try again.");
+    }
+  };
+
+  const isFullRefund = Number(amount) >= payment.amount;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl border border-border/40 bg-surface p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <RotateCcw className="size-5 text-purple-500" />
+            <h3 className="text-lg font-bold">Process Refund</h3>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-surface-hover transition-colors">
+            <X className="size-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        <div className="rounded-xl border border-border/40 bg-surface-hover p-3 mb-4">
+          <p className="text-sm font-semibold">{payment.userName}</p>
+          <p className="text-xs text-muted-foreground">{payment.courseTitle}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Original: {formatCurrency(payment.amount, payment.currency)} · {payment.providerRef}
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">Refund Amount (₹)</span>
+            <Input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              min={0}
+              max={payment.amount}
+              step={1}
+              className="h-9 text-sm"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAmount(String(payment.amount))}
+                className="text-[10px] font-semibold text-accent hover:underline"
+              >
+                Full refund ({formatCurrency(payment.amount)})
+              </button>
+              {payment.amount > 100 && (
+                <button
+                  type="button"
+                  onClick={() => setAmount(String(Math.round(payment.amount / 2)))}
+                  className="text-[10px] font-semibold text-accent hover:underline"
+                >
+                  50% refund
+                </button>
+              )}
+            </div>
+          </label>
+
+          <label className="space-y-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">Reason (optional)</span>
+            <Input
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Customer request, duplicate charge..."
+              className="h-9 text-sm"
+            />
+          </label>
+        </div>
+
+        {error && (
+          <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+            <p className="text-xs font-semibold text-destructive">{error}</p>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 mt-5">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={onClose}
+            disabled={processing}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={handleRefund}
+            disabled={processing || !amount || Number(amount) <= 0}
+          >
+            {processing ? "Processing..." : isFullRefund ? "Refund Full Amount" : `Refund ₹${amount}`}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Payment row component ───────────────────────────────────────────────────
 
 function PaymentRow({
   payment,
   onStatusUpdate,
+  onRefund,
+  onSendReminder,
 }: {
   payment: Payment;
   onStatusUpdate: (paymentId: string, newStatus: string) => void;
+  onRefund: (payment: Payment) => void;
+  onSendReminder: (paymentId: string) => void;
 }) {
   const [updating, setUpdating] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [reminderSent, setReminderSent] = useState(false);
 
   const allowedTransitions: Record<string, string[]> = {
     pending: ["completed", "failed"],
@@ -143,29 +290,42 @@ function PaymentRow({
             {payment.status}
           </span>
         </button>
-        {payment.status === "completed" && transitions.includes("refunded") && !showControls && (
+
+        {/* Quick refund button for completed payments */}
+        {payment.status === "completed" && transitions.includes("refunded") && (
+          <button
+            type="button"
+            onClick={() => onRefund(payment)}
+            className="text-[10px] font-semibold text-purple-500 hover:underline underline-offset-2"
+            title="Process refund via Razorpay"
+          >
+            <RotateCcw className="size-3 inline mr-0.5" />
+            Refund
+          </button>
+        )}
+
+        {/* Send reminder for pending/failed payments */}
+        {(payment.status === "pending" || payment.status === "failed") && (
           <button
             type="button"
             onClick={async () => {
               const fd = new FormData();
               fd.set("paymentId", payment.id);
-              fd.set("status", "refunded");
-              setUpdating(true);
-              await updatePaymentStatusAction(fd);
-              onStatusUpdate(payment.id, "refunded");
-              setUpdating(false);
+              await sendPaymentReminderAction(fd);
+              setReminderSent(true);
             }}
-            disabled={updating}
-            className="text-[10px] font-semibold text-destructive hover:underline underline-offset-2 disabled:opacity-50"
-            title="Refund this payment"
+            disabled={reminderSent}
+            className="text-[10px] font-semibold text-amber-500 hover:underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
+            title="Send payment reminder notification"
           >
-            Refund
+            <Send className="size-3 inline mr-0.5" />
+            {reminderSent ? "Sent ✓" : "Remind"}
           </button>
         )}
       </div>
 
       {showControls && (
-        <div className="col-span-full flex items-center gap-2 border-t border-border/40 pt-3">
+        <div className="col-span-full flex flex-wrap items-center gap-2 border-t border-border/40 pt-3">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
             Change status:
           </span>
@@ -239,6 +399,7 @@ export function PaymentsManager({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [refundTarget, setRefundTarget] = useState<Payment | null>(null);
 
   const filteredPayments = useMemo(() => {
     let result = payments;
@@ -267,6 +428,12 @@ export function PaymentsManager({
   const handleStatusUpdate = (paymentId: string, newStatus: string) => {
     setLocalPayments((prev) =>
       prev.map((p) => (p.id === paymentId ? { ...p, status: newStatus } : p))
+    );
+  };
+
+  const handleRefunded = (paymentId: string) => {
+    setLocalPayments((prev) =>
+      prev.map((p) => (p.id === paymentId ? { ...p, status: "refunded" } : p))
     );
   };
 
@@ -301,6 +468,7 @@ export function PaymentsManager({
           </span>
           {[
             { label: "All", key: null, count: localPayments.length },
+            { label: "Completed", key: "completed", count: localCompleted.length },
             { label: "Pending", key: "pending", count: localPending.length },
             { label: "Failed", key: "failed", count: localFailed.length },
             { label: "Refunded", key: "refunded", count: localRefunded.length },
@@ -374,6 +542,8 @@ export function PaymentsManager({
                 key={payment.id}
                 payment={payment}
                 onStatusUpdate={handleStatusUpdate}
+                onRefund={setRefundTarget}
+                onSendReminder={() => {}}
               />
             ))
           )}
@@ -403,7 +573,7 @@ export function PaymentsManager({
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{payment.userName}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
-                      {formatCurrency(payment.amount, payment.currency)} &middot; {payment.courseTitle}
+                      {formatCurrency(payment.amount, payment.currency)} · {payment.courseTitle}
                     </p>
                   </div>
                   <span
@@ -524,6 +694,15 @@ export function PaymentsManager({
           </div>
         </div>
       </aside>
+
+      {/* Refund Dialog */}
+      {refundTarget && (
+        <RefundDialog
+          payment={refundTarget}
+          onClose={() => setRefundTarget(null)}
+          onRefunded={handleRefunded}
+        />
+      )}
     </>
   );
 }

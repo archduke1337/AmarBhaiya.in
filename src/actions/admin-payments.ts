@@ -7,6 +7,8 @@ import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import { getRazorpayClient } from "@/lib/payments/razorpay";
+import { createNotificationEntry } from "@/actions/notifications";
 
 /**
  * Update a payment's status manually from the admin panel.
@@ -132,5 +134,265 @@ export async function updatePaymentStatusAction(formData: FormData): Promise<Act
     return actionSuccess();
   } catch (error) {
     return actionError(error instanceof Error ? error.message : "Failed to update payment status.");
+  }
+}
+
+/**
+ * Process a refund via Razorpay API and update the payment status.
+ * Requires the payment to have a valid providerRef (Razorpay payment ID).
+ */
+export async function processRefundAction(formData: FormData): Promise<ActionResult> {
+  await requireRole(["admin"]);
+
+  const paymentId = String(formData.get("paymentId") ?? "").trim();
+  const amountStr = String(formData.get("amount") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "").trim();
+
+  if (!paymentId) {
+    return actionError("Payment ID is required.");
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const existing = await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.payments,
+      rowId: paymentId,
+    }).catch(() => null) as Record<string, unknown> | null;
+
+    if (!existing) {
+      return actionError("Payment record not found.");
+    }
+
+    const currentStatus = String(existing.status ?? "");
+    if (currentStatus !== "completed") {
+      return actionError(`Cannot refund a payment with status "${currentStatus}". Only completed payments can be refunded.`);
+    }
+
+    const providerRef = String(existing.providerRef ?? "");
+    if (!providerRef) {
+      return actionError("No Razorpay payment reference found. Cannot process refund via Razorpay.");
+    }
+
+    // Process refund via Razorpay
+    let refundResult: Record<string, unknown> | null = null;
+    try {
+      const razorpay = getRazorpayClient();
+      const refundOptions: Record<string, unknown> = {
+        payment_id: providerRef,
+        notes: {
+          reason: reason || "Admin-initiated refund",
+          adminRefund: "true",
+        },
+      };
+
+      // If a partial amount is specified (in rupees), convert to paise
+      if (amountStr && !isNaN(Number(amountStr)) && Number(amountStr) > 0) {
+        refundOptions.amount = Math.round(Number(amountStr) * 100);
+      }
+      // If no amount specified, Razorpay processes a full refund
+
+      refundResult = await razorpay.payments.refund(providerRef, refundOptions) as Record<string, unknown>;
+    } catch (razorpayError) {
+      const message = razorpayError instanceof Error ? razorpayError.message : "Razorpay refund failed";
+      return actionError(`Razorpay refund failed: ${message}`);
+    }
+
+    // Update payment status to refunded
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.payments,
+      rowId: paymentId,
+      data: {
+        status: "refunded",
+        updatedAt: new Date().toISOString(),
+        refundId: String(refundResult?.$id ?? ""),
+        refundAmount: Number(refundResult?.amount ?? existing.amount),
+      },
+    });
+
+    // Deactivate enrollment
+    const courseId = String(existing.courseId ?? "");
+    const userId = String(existing.userId ?? "");
+    if (courseId && userId) {
+      try {
+        const enrollments = await tablesDB.listRows({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.enrollments,
+          queries: [
+            Query.equal("courseId", [courseId]),
+            Query.equal("userId", [userId]),
+            Query.equal("isActive", [true]),
+          ],
+        });
+
+        for (const enrollment of enrollments.rows) {
+          await tablesDB.updateRow({
+            databaseId: APPWRITE_CONFIG.databaseId,
+            tableId: APPWRITE_CONFIG.tables.enrollments,
+            rowId: enrollment.$id,
+            data: {
+              isActive: false,
+              status: "cancelled",
+            },
+          });
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+
+    // Notify the user about the refund
+    try {
+      await createNotificationEntry({
+        userId,
+        type: "payment.refunded",
+        title: "Payment Refunded",
+        body: `Your payment of ₹${Number(existing.amount ?? 0) / 100} has been refunded. Refund ID: ${String(refundResult?.$id ?? "N/A")}. The amount will be credited to your original payment method within 5-10 business days.`,
+        link: "/app/billing",
+      });
+    } catch {
+      // Non-critical
+    }
+
+    // Write audit log
+    try {
+      const { user } = await requireRole(["admin"]);
+      await tablesDB.createRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.auditLogs,
+        rowId: ID.unique(),
+        data: {
+          actorId: user.$id,
+          actorName: user.name || "Admin",
+          action: "payment.refunded",
+          entity: "payment",
+          entityId: paymentId,
+          metadata: JSON.stringify({
+            previousStatus: currentStatus,
+            newStatus: "refunded",
+            amount: existing.amount,
+            refundId: String(refundResult?.$id ?? ""),
+            refundAmount: Number(refundResult?.amount ?? 0),
+            reason: reason || "Admin-initiated refund",
+            courseId: existing.courseId,
+            userId: existing.userId,
+          }),
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch {
+      // Non-critical
+    }
+
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin");
+    revalidatePath("/app/billing");
+
+    return actionSuccess(`Refund processed successfully. Refund ID: ${String(refundResult?.$id ?? "N/A")}`);
+  } catch (error) {
+    return actionError(error instanceof Error ? error.message : "Failed to process refund.");
+  }
+}
+
+/**
+ * Send a payment reminder notification to a user with a pending/failed payment.
+ */
+export async function sendPaymentReminderAction(formData: FormData): Promise<ActionResult> {
+  await requireRole(["admin"]);
+
+  const paymentId = String(formData.get("paymentId") ?? "").trim();
+
+  if (!paymentId) {
+    return actionError("Payment ID is required.");
+  }
+
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const existing = await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.payments,
+      rowId: paymentId,
+    }).catch(() => null) as Record<string, unknown> | null;
+
+    if (!existing) {
+      return actionError("Payment record not found.");
+    }
+
+    const currentStatus = String(existing.status ?? "");
+    if (currentStatus !== "pending" && currentStatus !== "failed") {
+      return actionError(`Cannot send reminder for a payment with status "${currentStatus}". Only pending or failed payments qualify.`);
+    }
+
+    const userId = String(existing.userId ?? "");
+    const courseId = String(existing.courseId ?? "");
+    const amount = Number(existing.amount ?? 0) / 100;
+
+    if (!userId) {
+      return actionError("No user associated with this payment.");
+    }
+
+    // Resolve course title
+    let courseTitle = "your course";
+    if (courseId) {
+      try {
+        const courseRow = await tablesDB.getRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.courses,
+          rowId: courseId,
+        }).catch(() => null) as Record<string, unknown> | null;
+        if (courseRow && typeof courseRow.title === "string") {
+          courseTitle = courseRow.title;
+        }
+      } catch {
+        // Use default
+      }
+    }
+
+    const reminderMessage = currentStatus === "pending"
+      ? `Hi! This is a friendly reminder that your payment of ₹${amount} for "${courseTitle}" is still pending. Please complete the payment to access your course content.`
+      : `Hi! Your previous payment of ₹${amount} for "${courseTitle}" did not go through. Please try purchasing the course again to continue learning.`;
+
+    await createNotificationEntry({
+      userId,
+      type: "payment.reminder",
+      title: currentStatus === "pending" ? "Payment Pending — Reminder" : "Payment Failed — Please Retry",
+      body: reminderMessage,
+      link: `/courses/${courseId}`,
+    });
+
+    // Write audit log
+    try {
+      const { user } = await requireRole(["admin"]);
+      await tablesDB.createRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.auditLogs,
+        rowId: ID.unique(),
+        data: {
+          actorId: user.$id,
+          actorName: user.name || "Admin",
+          action: "payment.reminder_sent",
+          entity: "payment",
+          entityId: paymentId,
+          metadata: JSON.stringify({
+            paymentStatus: currentStatus,
+            amount: existing.amount,
+            courseId,
+            userId,
+          }),
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch {
+      // Non-critical
+    }
+
+    revalidatePath("/admin/payments");
+
+    return actionSuccess("Payment reminder sent successfully.");
+  } catch (error) {
+    return actionError(error instanceof Error ? error.message : "Failed to send payment reminder.");
   }
 }

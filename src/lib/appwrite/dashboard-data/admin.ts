@@ -58,14 +58,66 @@ export async function getAdminUsers() {
   } catch { return []; }
 }
 
-export async function getAdminCourses() {
-  const { tablesDB } = await createAdminClient();
-  const [coursesResult, categoriesResult] = await Promise.all([
+export type AdminCourseItem = {
+  id: string;
+  title: string;
+  slug: string;
+  state: string;
+  featured: string;
+  category: string;
+  price: number;
+  instructorName: string;
+  instructorId: string;
+  enrollmentCount: number;
+  totalLessons: number;
+  isPublished: boolean;
+  isFeatured: boolean;
+};
+
+export async function getAdminCourses(): Promise<AdminCourseItem[]> {
+  const { tablesDB, users } = await createAdminClient();
+  const [coursesResult, categoriesResult, enrollmentsResult] = await Promise.all([
     safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses),
     safeListAllRows<AnyRow & { name?: string }>(tablesDB, APPWRITE_CONFIG.tables.categories, [Query.orderAsc("order")]),
+    safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments),
   ]);
   const categoryNameById = new Map(categoriesResult.map((c) => [c.$id, typeof c.name === "string" ? c.name : "Uncategorized"]));
-  return coursesResult.map((course) => ({ id: course.$id, title: typeof course.title === "string" ? course.title : "Untitled course", state: course.isPublished ? "published" : "draft", featured: course.isFeatured ? "yes" : "no", category: (typeof course.categoryId === "string" && categoryNameById.get(course.categoryId)) || "Uncategorized" }));
+
+  // Count active enrollments per course
+  const enrollmentCountByCourse = new Map<string, number>();
+  for (const e of enrollmentsResult) {
+    const cid = typeof (e as AnyRow).courseId === "string" ? (e as AnyRow).courseId : "";
+    if (cid && isActiveEnrollmentRow(e)) {
+      enrollmentCountByCourse.set(cid, (enrollmentCountByCourse.get(cid) ?? 0) + 1);
+    }
+  }
+
+  // Resolve instructor names
+  const instructorIds = [...new Set(coursesResult.map((c) => typeof (c as AnyRow).instructorId === "string" ? (c as AnyRow).instructorId as string : "").filter(Boolean))];
+  const instructorNameMap = new Map<string, string>();
+  await Promise.all(instructorIds.map(async (id) => {
+    try { const u = await users.get({ userId: id }); instructorNameMap.set(id, u.name || id); } catch { instructorNameMap.set(id, id); }
+  }));
+
+  return coursesResult.map((course) => {
+    const row = course as AnyRow;
+    const instructorId = typeof row.instructorId === "string" ? row.instructorId : "";
+    return {
+      id: course.$id,
+      title: typeof course.title === "string" ? course.title : "Untitled course",
+      slug: typeof row.slug === "string" ? row.slug : "",
+      state: course.isPublished ? "published" : "draft",
+      featured: course.isFeatured ? "yes" : "no",
+      category: (typeof course.categoryId === "string" && categoryNameById.get(course.categoryId)) || "Uncategorized",
+      price: Number(row.price ?? 0) / 100,
+      instructorName: instructorNameMap.get(instructorId) || "Unknown",
+      instructorId,
+      enrollmentCount: enrollmentCountByCourse.get(course.$id) ?? Number(row.enrollmentCount ?? row.enrolledCount ?? 0),
+      totalLessons: Number(row.totalLessons ?? 0),
+      isPublished: Boolean(course.isPublished),
+      isFeatured: Boolean(course.isFeatured),
+    };
+  });
 }
 
 export async function getAdminCategories() {
