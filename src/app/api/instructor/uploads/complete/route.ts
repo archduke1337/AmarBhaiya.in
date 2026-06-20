@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getUserRole } from "@/lib/appwrite/auth-utils";
 import { finalizeInstructorUpload } from "@/lib/appwrite/instructor-file-upload";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,15 @@ async function getAuthenticatedManager() {
 }
 
 export async function POST(request: Request) {
+  const rlKey = `${getRateLimitKey(request)}:instructor-upload-complete`;
+  const rateLimit = await checkRateLimit(rlKey, 10);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+    );
+  }
+
   const authenticated = await getAuthenticatedManager();
   if (!authenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

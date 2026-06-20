@@ -301,6 +301,9 @@ export default async function AdminCouponsPage() {
 }
 
 function CouponRow({ coupon }: { coupon: CouponItem }) {
+  const deleteId = `delete-${coupon.id}`;
+  const toggleId = `toggle-${coupon.id}`;
+
   return (
     <div className="flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-accent/30 md:grid md:grid-cols-[100px_1fr_80px_80px_100px_80px_100px_80px] md:items-center md:gap-3">
       <div>
@@ -368,17 +371,36 @@ function CouponRow({ coupon }: { coupon: CouponItem }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <form action={toggleCouponFormAction}>
-          <input type="hidden" name="couponId" value={coupon.id} />
-          <input type="hidden" name="isActive" value={coupon.isActive ? "false" : "true"} />
-          <button
-            type="submit"
-            className="text-[10px] font-semibold text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-          >
-            {coupon.isActive ? "Deactivate" : "Activate"}
-          </button>
-        </form>
-        <form action={deleteCouponFormAction}>
+        <label htmlFor={toggleId} className="cursor-pointer">
+          <input
+            type="checkbox"
+            id={toggleId}
+            defaultChecked={coupon.isActive}
+            className="peer sr-only"
+            onChange={(e) => {
+              const form = e.currentTarget.closest("form");
+              if (form && !confirm(coupon.isActive ? `Deactivate coupon ${coupon.code}?` : `Activate coupon ${coupon.code}?`)) {
+                e.currentTarget.checked = coupon.isActive;
+              }
+            }}
+          />
+          <form action={toggleCouponFormAction} className="inline">
+            <input type="hidden" name="couponId" value={coupon.id} />
+            <input type="hidden" name="isActive" value={coupon.isActive ? "false" : "true"} />
+            <button
+              type="submit"
+              className="text-[10px] font-semibold text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+            >
+              {coupon.isActive ? "Deactivate" : "Activate"}
+            </button>
+          </form>
+        </label>
+        <span className="text-border">·</span>
+        <form action={deleteCouponFormAction} onSubmit={(e) => {
+          if (!confirm(`Permanently delete coupon ${coupon.code}? This cannot be undone.`)) {
+            e.preventDefault();
+          }
+        }}>
           <input type="hidden" name="couponId" value={coupon.id} />
           <button
             type="submit"

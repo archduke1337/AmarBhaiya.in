@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { validateStoredAppwriteFileSignature } from "@/lib/appwrite/file-signature";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 
 export const runtime = "nodejs";
 
@@ -38,6 +39,15 @@ async function deleteUploadedFileIfPresent(
 }
 
 export async function POST(request: Request) {
+  const rlKey = `${getRateLimitKey(request)}:avatar-complete`;
+  const rateLimit = await checkRateLimit(rlKey, 5);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+    );
+  }
+
   const json = await request.json().catch(() => null);
   const parsed = completeAvatarSchema.safeParse(json);
   if (!parsed.success) {

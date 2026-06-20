@@ -1,4 +1,4 @@
-import { FileText, Filter } from "lucide-react";
+import { FileText, Filter, Search } from "lucide-react";
 import Link from "next/link";
 
 import { getAdminAuditLogs } from "@/lib/appwrite/dashboard-data";
@@ -21,7 +21,7 @@ function getActionColor(action: string): string {
 
 function filterLogs(
   logs: AdminAuditItem[],
-  params: { action?: string; entity?: string }
+  params: { action?: string; entity?: string; q?: string }
 ): AdminAuditItem[] {
   let filtered = logs;
   if (params.action) {
@@ -29,6 +29,16 @@ function filterLogs(
   }
   if (params.entity) {
     filtered = filtered.filter((l) => l.entity === params.entity);
+  }
+  if (params.q) {
+    const q = params.q.toLowerCase();
+    filtered = filtered.filter(
+      (l) =>
+        l.actor.toLowerCase().includes(q) ||
+        l.action.toLowerCase().includes(q) ||
+        l.entity.toLowerCase().includes(q) ||
+        l.entityId.toLowerCase().includes(q)
+    );
   }
   return filtered;
 }
@@ -38,11 +48,13 @@ function filterLogs(
 export default async function AdminAuditPage({
   searchParams,
 }: {
-  searchParams: Promise<{ action?: string; entity?: string }>;
+  searchParams: Promise<{ action?: string; entity?: string; q?: string }>;
 }) {
   const allLogs = await getAdminAuditLogs();
   const params = await searchParams;
   const logs = filterLogs(allLogs, params);
+
+  const hasActiveFilter = params.action || params.entity || params.q;
 
   // Group logs by action type for summary
   const actionCounts = allLogs.reduce(
@@ -59,7 +71,6 @@ export default async function AdminAuditPage({
 
   const uniqueEntities = [...new Set(allLogs.map((l) => l.entity).filter(Boolean))].sort();
 
-  const hasActiveFilter = params.action || params.entity;
 
   return (
     <div className="flex flex-col gap-8">
@@ -92,6 +103,22 @@ export default async function AdminAuditPage({
               </Link>
             </div>
           )}
+
+          {/* Search input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <form method="get">
+              {params.action && <input type="hidden" name="action" value={params.action} />}
+              {params.entity && <input type="hidden" name="entity" value={params.entity} />}
+              <input
+                type="text"
+                name="q"
+                defaultValue={params.q ?? ""}
+                placeholder="Search by actor, action, entity, or ID..."
+                className="w-full h-10 pl-9 pr-4 text-sm rounded-xl border border-border/40 bg-surface placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
+              />
+            </form>
+          </div>
 
           {/* Action filter chips */}
           <div className="flex flex-wrap items-center gap-2">
