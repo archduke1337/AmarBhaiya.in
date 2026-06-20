@@ -5,7 +5,6 @@ import { getAdminAuditLogs } from "@/lib/appwrite/dashboard-data";
 import type { AdminAuditItem } from "@/lib/appwrite/dashboard-data";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { Badge } from "@/components/ui/badge";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
