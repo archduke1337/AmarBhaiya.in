@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { Checkbox, Button, Input } from "@heroui/react";
-import { getPasswordStrength } from "@/lib/utils/password-strength";
+import { getPasswordStrength, getPasswordStrengthAriaLabel } from "@/lib/utils/password-strength";
 
 export function RegisterForm({ redirectPath }: { redirectPath: string }) {
   const router = useRouter();
@@ -108,7 +108,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             className="bg-surface shadow-[var(--field-shadow)]"
           />
           {password.length > 0 && (
-            <div className="flex flex-col gap-1.5 px-1 animate-fade-in-up">
+            <div className="flex flex-col gap-1.5 px-1 animate-fade-in-up" role="img" aria-label={getPasswordStrengthAriaLabel(password)}>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div

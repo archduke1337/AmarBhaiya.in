@@ -382,7 +382,7 @@ function CouponRow({ coupon }: { coupon: CouponItem }) {
             {coupon.isActive ? "Deactivate" : "Activate"}
           </button>
         </form>
-        <span className="text-border">·</span>
+        <span className="text-border" aria-hidden="true">·</span>
         <form action={deleteCouponFormAction} onSubmit={(e) => {
           if (!confirm(`Permanently delete coupon ${coupon.code}? This cannot be undone.`)) {
             e.preventDefault();

@@ -19,3 +19,12 @@ export function getPasswordStrength(password: string): {
   if (score <= 3) return { score, label: "Good", color: "bg-accent" };
   return { score, label: "Strong", color: "bg-emerald-500" };
 }
+
+/**
+ * Renders a password strength bar accessible to screen readers.
+ * Usage: <div role="img" aria-label={getPasswordStrengthAriaLabel(password)}>
+ */
+export function getPasswordStrengthAriaLabel(password: string): string {
+  const strength = getPasswordStrength(password);
+  return `Password strength: ${strength.label} (${strength.score} of 5)`;
+}
