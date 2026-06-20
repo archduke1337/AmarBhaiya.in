@@ -11,7 +11,7 @@ import { getLoggedInUser } from "@/lib/appwrite/auth";
 import { isEnrolled } from "@/actions/enroll";
 import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
 import { RetroPanel } from "@/components/marketing/retro-panel";
-import { RazorpayCheckout } from "@/components/razorpay-checkout";
+import { BillingCheckout } from "@/components/billing-checkout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -144,7 +144,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 </Button>
               </form>
             ) : (
-              <RazorpayCheckout
+              <BillingCheckout
                 courseId={course.id}
                 courseTitle={course.title}
                 priceInr={course.priceInr}

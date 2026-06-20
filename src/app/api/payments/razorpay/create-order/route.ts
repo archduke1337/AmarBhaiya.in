@@ -12,9 +12,12 @@ import {
 
 export const runtime = "nodejs";
 
+import { validateCouponAction } from "@/actions/coupons";
+
 const createOrderSchema = z.object({
   courseId: z.string().min(1),
   currency: z.string().length(3).default("INR"),
+  couponCode: z.string().optional(),
 });
 
 async function getAuthenticatedUser() {
@@ -106,8 +109,28 @@ export async function POST(request: Request) {
       );
     }
 
+    // Apply coupon if provided
+    let finalPrice = price;
+    let discountAmount = 0;
+    let appliedCouponCode = "";
+
+    if (parsed.data.couponCode) {
+      const couponResult = await validateCouponAction(
+        parsed.data.couponCode,
+        parsed.data.courseId
+      );
+      if (couponResult.valid && couponResult.finalAmount !== undefined) {
+        finalPrice = couponResult.finalAmount;
+        discountAmount = couponResult.discountAmount ?? 0;
+        appliedCouponCode = parsed.data.couponCode.toUpperCase();
+      } else {
+        // Invalid coupon — still proceed but without discount
+        console.warn("Invalid coupon:", couponResult.message);
+      }
+    }
+
     // Amount in paise (smallest currency unit)
-    const amountInPaise = price * 100;
+    const amountInPaise = finalPrice * 100;
     const receipt = `r_${Date.now()}_${user.$id.slice(0, 8)}`;
 
     const order = await createRazorpayOrder({
@@ -135,6 +158,8 @@ export async function POST(request: Request) {
         method: "razorpay",
         status: "pending",
         providerRef: order.id,
+        couponCode: appliedCouponCode || null,
+        originalAmount: price * 100,
         createdAt: new Date().toISOString(),
       },
     });
@@ -145,6 +170,8 @@ export async function POST(request: Request) {
       amount: order.amount,
       currency: order.currency,
       paymentId,
+      couponApplied: !!appliedCouponCode,
+      discountAmount,
     });
   } catch (error) {
     console.error("[Razorpay Create Order]", error);

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { Query } from "node-appwrite";
+import { ID, Query } from "node-appwrite";
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
@@ -96,6 +96,33 @@ export async function updatePaymentStatusAction(formData: FormData): Promise<Act
           // Non-critical - enrollment deactivation is best-effort
         }
       }
+    }
+
+    // ── Write audit log ────────────────────────────────────────────────────
+    try {
+      const actor = await requireRole(["admin"]);
+      await tablesDB.createRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.auditLogs,
+        rowId: ID.unique(),
+        data: {
+          actorId: actor.$id,
+          actorName: actor.name || "Admin",
+          action: `payment.${newStatus}`,
+          entity: "payment",
+          entityId: paymentId,
+          metadata: JSON.stringify({
+            previousStatus: currentStatus,
+            newStatus,
+            amount: existing.amount,
+            courseId: existing.courseId,
+            userId: existing.userId,
+          }),
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch {
+      // Non-critical — audit log failure shouldn't block the operation
     }
 
     // Revalidate payment-related paths

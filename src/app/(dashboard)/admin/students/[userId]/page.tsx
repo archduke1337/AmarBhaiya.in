@@ -115,6 +115,18 @@ async function getStudentDetail(userId: string) {
     // skip
   }
 
+  let billing: AnyAppwriteRow | null = null;
+  try {
+    const billingResult = await tablesDB.listRows({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.billingInfo,
+      queries: [Query.equal("userId", [userId]), Query.limit(1)],
+    });
+    billing = (billingResult.rows[0] as AnyAppwriteRow) ?? null;
+  } catch {
+    // skip
+  }
+
   const enrollments: EnrollmentInfo[] = [];
   try {
     const enrollmentRows = await listAllRows(
@@ -191,6 +203,7 @@ async function getStudentDetail(userId: string) {
     userEmail,
     userFound,
     profile,
+    billing,
     enrollments,
     payments,
   };
@@ -232,6 +245,34 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
                 );
               }
             )}
+          </div>
+        </section>
+      )}
+
+      {data.billing && (
+        <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
+          <div className="border-b border-border/40 px-5 py-3">
+            <h2 className="text-sm font-medium">Billing Info</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-5">
+            {[
+              { label: "Name", value: `${String(data.billing.firstName ?? "")} ${String(data.billing.lastName ?? "")}` },
+              { label: "Phone", value: String(data.billing.phone ?? "—") },
+              { label: "Parent", value: String(data.billing.parentName ?? "—") },
+              { label: "Parent Phone", value: String(data.billing.parentPhone ?? "—") },
+              { label: "Address", value: `${String(data.billing.addressLine1 ?? "")}${data.billing.addressLine2 ? `, ${data.billing.addressLine2}` : ""}` },
+              { label: "City", value: String(data.billing.city ?? "—") },
+              { label: "State", value: String(data.billing.state ?? "—") },
+              { label: "Country", value: String(data.billing.country ?? "—") },
+              { label: "PIN Code", value: String(data.billing.zipcode ?? "—") },
+            ].map((field) => (
+              <div key={field.label}>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">
+                  {field.label}
+                </p>
+                <p className="text-sm">{field.value || "—"}</p>
+              </div>
+            ))}
           </div>
         </section>
       )}

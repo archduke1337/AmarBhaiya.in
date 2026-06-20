@@ -290,6 +290,24 @@ export interface BlogPostRecord extends AppwriteRow {
   isPublished: boolean;
 }
 
+// ── Coupons ───────────────────────────────────────────────────────────────
+
+export interface Coupon extends AppwriteRow {
+  code: string;
+  courseId: string;
+  instructorId: string;
+  type: "percent" | "fixed";
+  value: number;
+  maxUses: number;
+  usedCount: number;
+  expiresAt: string;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
+// ── Marketing & Editorial ─────────────────────────────────────────────────
+
 export interface SiteCopyRecord extends AppwriteRow {
   key: string;
   title: string;

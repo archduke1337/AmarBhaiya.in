@@ -1,4 +1,4 @@
-import { CreditCard, DollarSign, TrendingUp, Clock, AlertTriangle } from "lucide-react";
+import { CreditCard, DollarSign, TrendingUp, Clock, AlertTriangle, Download } from "lucide-react";
 
 import { getAdminPayments } from "@/lib/appwrite/dashboard-data";
 import { formatCurrency } from "@/lib/utils/format";
@@ -69,11 +69,20 @@ export default async function AdminPaymentsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        eyebrow="Admin · Payments"
-        title="Transactions & Revenue"
-        description={`${payments.length} total transaction records across all courses and users. Use this view to spot pending confirmations, failed payments, refunds, and course revenue health.`}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          eyebrow="Admin · Payments"
+          title="Transactions & Revenue"
+          description={`${payments.length} total transaction records across all courses and users. Use this view to spot pending confirmations, failed payments, refunds, and course revenue health.`}
+        />
+        <a
+          href="/api/payments/razorpay/export"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border/40 bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-border/60 transition-colors mt-1"
+        >
+          <Download className="size-3.5" />
+          Export CSV
+        </a>
+      </div>
 
       <StatGrid columns={4}>
         <StatCard

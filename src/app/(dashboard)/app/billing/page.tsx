@@ -183,14 +183,36 @@ export default async function BillingInfoPage() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="phone">Phone number</Label>
+              <Label htmlFor="phone">Phone number <span className="text-muted-foreground font-normal">(optional)</span></Label>
               <Input
                 id="phone"
                 name="phone"
                 type="tel"
-                required
                 placeholder="+91 98765 43210"
                 defaultValue={billing?.phone ?? ""}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parentName">Father / Mother name</Label>
+              <Input
+                id="parentName"
+                name="parentName"
+                required
+                placeholder="Parent's full name"
+                defaultValue={billing?.parentName ?? ""}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parentPhone">Parent phone number</Label>
+              <Input
+                id="parentPhone"
+                name="parentPhone"
+                type="tel"
+                required
+                placeholder="+91 98765 43210"
+                defaultValue={billing?.parentPhone ?? ""}
               />
             </div>
           </div>

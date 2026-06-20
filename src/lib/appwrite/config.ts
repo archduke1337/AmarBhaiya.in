@@ -50,6 +50,7 @@ export const APPWRITE_CONFIG = {
     studentProfiles: "student_profiles",
     billingInfo: "billing_info",
     standaloneResources: "standalone_resources",
+    coupons: "coupons",
   },
 
   // ── Storage Buckets ───────────────────────────────────────────────────────

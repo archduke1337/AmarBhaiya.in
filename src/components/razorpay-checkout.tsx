@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,8 @@ type RazorpayCheckoutProps = {
   priceInr: number;
   userName: string;
   userEmail: string;
+  couponCode?: string;
+  originalPrice?: number;
 };
 
 type RazorpayPaymentSuccessResponse = {
@@ -33,6 +36,8 @@ export function RazorpayCheckout({
   priceInr,
   userName,
   userEmail,
+  couponCode,
+  originalPrice,
 }: RazorpayCheckoutProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,13 +48,18 @@ export function RazorpayCheckout({
 
     try {
       // 1. Create Razorpay order via our API
+      const body: Record<string, unknown> = {
+        courseId,
+        currency: "INR",
+      };
+      if (couponCode) {
+        body.couponCode = couponCode;
+      }
+
       const res = await fetch("/api/payments/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId,
-          currency: "INR",
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -57,7 +67,7 @@ export function RazorpayCheckout({
         throw new Error(data.error || "Failed to create order");
       }
 
-      const { keyId, orderId, amount, currency } = await res.json();
+      const { keyId, orderId, amount, currency, couponApplied, discountAmount } = await res.json();
 
       // 2. Load Razorpay script if not already loaded
       if (!window.Razorpay) {
@@ -71,12 +81,16 @@ export function RazorpayCheckout({
       }
 
       // 3. Open Razorpay checkout modal
+      const description = couponApplied
+        ? `${courseTitle} (₹${(amount / 100).toFixed(0)})`
+        : courseTitle;
+
       const rzp = new window.Razorpay({
         key: keyId,
         amount,
         currency,
         name: "AmarBhaiya",
-        description: courseTitle,
+        description,
         order_id: orderId,
         prefill: {
           name: userName,
@@ -87,15 +101,20 @@ export function RazorpayCheckout({
         },
         handler: async function (response: RazorpayPaymentSuccessResponse) {
           try {
+            const verifyBody: Record<string, unknown> = {
+              courseId,
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            };
+            if (couponCode) {
+              verifyBody.couponCode = couponCode;
+            }
+
             const verifyResponse = await fetch("/api/payments/razorpay/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                courseId,
-                orderId: response.razorpay_order_id,
-                paymentId: response.razorpay_payment_id,
-                signature: response.razorpay_signature,
-              }),
+              body: JSON.stringify(verifyBody),
             });
 
             const verifyData = await verifyResponse.json().catch(() => null);
@@ -137,8 +156,18 @@ export function RazorpayCheckout({
     }
   }
 
+  const hasDiscount = typeof originalPrice === "number" && originalPrice > priceInr;
+
   return (
     <div className="space-y-3">
+      {hasDiscount && (
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+          <CheckCircle2 className="size-3.5 text-emerald-500" />
+          <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            ₹{originalPrice - priceInr} discount applied
+          </p>
+        </div>
+      )}
       <Button
         onClick={handleCheckout}
         disabled={loading}
