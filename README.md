@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# amarbhaiya.in
 
-## Getting Started
+Creator-led learning platform and personal brand for Amar Bhaiya.
 
-First, run the development server:
+The repository is managed as an npm workspaces monorepo with Turborepo. The current product lives in `apps/web`; future mobile, admin, or shared packages can be added without mixing their runtime concerns into the web app.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Repository Layout
+
+```text
+apps/
+  web/                 Next.js application, public site, dashboards, and API routes
+
+packages/
+  (shared packages are added only when a second consumer exists)
+
+tooling/
+  scripts/             Infrastructure and Appwrite setup scripts
+
+docs/
+  architecture.md     Workspace boundaries and extraction rules
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Requirements
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js 20+
+- npm 10+
+- Appwrite project configuration for runtime features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
 
-## Learn More
+Run from the repository root:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+npm run lint
+npm run typecheck
+npm run build
+npm run start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run a command for only the web app:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npx turbo run dev --filter=@amarbhaiya/web
+npx turbo run build --filter=@amarbhaiya/web
+```
 
-## Deploy on Vercel
+Set up the Appwrite project after configuring `apps/web/.env`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run setup:appwrite
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment
+
+Copy `apps/web/.env.example` to `apps/web/.env.local` for local development. Never commit secrets. The web app owns its runtime environment because Next.js resolves environment files relative to the app boundary.
+
+## Architecture
+
+Read [`docs/architecture.md`](docs/architecture.md) before adding a new app or package. The first migration intentionally keeps product-specific authentication, Appwrite, payments, and UI inside `apps/web` until their contracts are stable enough to share.

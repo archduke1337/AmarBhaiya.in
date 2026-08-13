@@ -10,7 +10,7 @@
  * (varchar, text, mediumtext, url, email, enum), then adds indexes.
  *
  * Usage:
- *   node scripts/setup-appwrite.mjs
+ *   node tooling/scripts/setup-appwrite.mjs
  */
 
 import { Client, TablesDB, Storage, Permission, Role } from "node-appwrite";
