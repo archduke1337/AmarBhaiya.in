@@ -190,18 +190,6 @@ export function MarkdownEditor({
     fileInputRef.current?.click();
   }, []);
 
-  const toolbarButtons = [
-    { icon: Bold, label: "Bold", action: () => insertMarkdown("**", "**") },
-    { icon: Italic, label: "Italic", action: () => insertMarkdown("*", "*") },
-    { icon: Heading1, label: "Heading 1", action: () => insertMarkdown("# ") },
-    { icon: Heading2, label: "Heading 2", action: () => insertMarkdown("## ") },
-    { icon: List, label: "Unordered list", action: () => insertMarkdown("- ") },
-    { icon: ListOrdered, label: "Ordered list", action: () => insertMarkdown("1. ") },
-    { icon: Link2, label: "Link", action: () => insertMarkdown("[", "](url)") },
-    { icon: Code2, label: "Code block", action: () => insertMarkdown("```\n", "\n```") },
-    { icon: ImageIcon, label: "Upload image", action: openFilePicker },
-  ];
-
   return (
     <div className="space-y-2">
       {label && (
@@ -279,17 +267,38 @@ export function MarkdownEditor({
           {/* Toolbar (only in write mode) */}
           {mode === "write" && (
             <div className="flex items-center gap-0.5 pr-2">
-              {toolbarButtons.map((btn) => (
-                <button
-                  key={btn.label}
-                  type="button"
-                  onClick={btn.action}
-                  title={btn.label}
-                  className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors"
-                >
-                  <btn.icon className="size-3.5" />
-                </button>
-              ))}
+              <button type="button" onClick={() => insertMarkdown("**", "**")} title="Bold" className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors">
+                <Bold className="size-3.5" />
+              </button>
+              <button type="button" onClick={() => insertMarkdown("*", "*")} title="Italic" className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors">
+                <Italic className="size-3.5" />
+              </button>
+              <button type="button" onClick={() => insertMarkdown("# ")} title="Heading 1" className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors">
+                <Heading1 className="size-3.5" />
+              </button>
+              <button type="button" onClick={() => insertMarkdown("## ")} title="Heading 2" className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors">
+                <Heading2 className="size-3.5" />
+              </button>
+              <button type="button" onClick={() => insertMarkdown("- ")} title="Unordered list" className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors">
+                <List className="size-3.5" />
+              </button>
+              <button type="button" onClick={() => insertMarkdown("1. ")} title="Ordered list" className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors">
+                <ListOrdered className="size-3.5" />
+              </button>
+              <button type="button" onClick={() => insertMarkdown("[", "](url)")} title="Link" className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors">
+                <Link2 className="size-3.5" />
+              </button>
+              <button type="button" onClick={() => insertMarkdown("```\n", "\n```")} title="Code block" className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors">
+                <Code2 className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={openFilePicker}
+                title="Upload image"
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition-colors"
+              >
+                <ImageIcon className="size-3.5" />
+              </button>
             </div>
           )}
         </div>

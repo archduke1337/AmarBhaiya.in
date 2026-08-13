@@ -54,7 +54,7 @@ npm run setup:appwrite
 
 ## Environment
 
-Copy `apps/web/.env.example` to `apps/web/.env.local` for local development. Never commit secrets. The web app owns its runtime environment because Next.js resolves environment files relative to the app boundary.
+Copy `apps/web/.env.example` to `apps/web/.env.local` for local development. For infrastructure scripts, either use the same file or set `DOTENV_CONFIG_PATH`. Never commit secrets. The web app owns its runtime environment because Next.js resolves environment files relative to the app boundary.
 
 ## Architecture
 

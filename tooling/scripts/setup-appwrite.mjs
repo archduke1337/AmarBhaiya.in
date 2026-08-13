@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * amarbhaiya.in — Appwrite Database Setup Script (v2)
@@ -16,7 +19,19 @@
 import { Client, TablesDB, Storage, Permission, Role } from "node-appwrite";
 import { config } from "dotenv";
 
-config();
+const repositoryRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
+const environmentFiles = [
+  process.env.DOTENV_CONFIG_PATH,
+  path.join(repositoryRoot, "apps", "web", ".env.local"),
+  path.join(repositoryRoot, "apps", "web", ".env"),
+].filter(Boolean);
+
+for (const environmentFile of environmentFiles) {
+  config({ path: environmentFile });
+}
 
 // ── Configuration ───────────────────────────────────────────────────────────
 
