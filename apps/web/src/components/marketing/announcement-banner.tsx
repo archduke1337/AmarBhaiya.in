@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { X, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -14,25 +14,30 @@ export type AnnouncementData = {
 };
 
 const DISMISSED_KEY = "ab-announcement-dismissed";
+const subscribeToDismissal = () => () => {};
+const getDismissedSnapshot = () =>
+  typeof window !== "undefined" && window.localStorage.getItem(DISMISSED_KEY) === "true";
+const getServerDismissedSnapshot = () => true;
 
 type Props = {
   announcement: AnnouncementData | null;
 };
 
 export function AnnouncementBanner({ announcement }: Props) {
-  const [dismissed, setDismissed] = useState(true);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(DISMISSED_KEY);
-    setDismissed(stored === "true");
-  }, []);
+  const storedDismissed = useSyncExternalStore(
+    subscribeToDismissal,
+    getDismissedSnapshot,
+    getServerDismissedSnapshot,
+  );
+  const [dismissedForSession, setDismissedForSession] = useState(false);
+  const dismissed = storedDismissed || dismissedForSession;
 
   if (!announcement || !announcement.isActive || dismissed) {
     return null;
   }
 
   const handleDismiss = () => {
-    setDismissed(true);
+    setDismissedForSession(true);
     localStorage.setItem(DISMISSED_KEY, "true");
   };
 

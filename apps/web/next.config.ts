@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 export default async function getConfig(): Promise<NextConfig> {
@@ -31,6 +32,11 @@ export default async function getConfig(): Promise<NextConfig> {
   }
 
   const nextConfig: NextConfig = {
+    // Keep Turbopack rooted at the monorepo instead of an unrelated parent lockfile.
+    turbopack: {
+      root: path.join(__dirname, "../.."),
+    },
+
     // ── Images ────────────────────────────────────────────────────────────────
     images: {
       remotePatterns,

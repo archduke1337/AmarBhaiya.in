@@ -23,12 +23,6 @@ export function CollectionsForm({ upsertSiteCopyFormAction, defaults }: Collecti
   const [restored, setRestored] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Track JSON from hidden input for auto-save
-  const getHiddenPayload = useCallback((): string => {
-    const hidden = formRef.current?.querySelector<HTMLInputElement>('input[type="hidden"][name="payload"]');
-    return hidden?.value ?? payload;
-  }, [payload]);
-
   // Read current payload from the form for preview
   const [previewPayload, setPreviewPayload] = useState(payload);
 
@@ -36,7 +30,7 @@ export function CollectionsForm({ upsertSiteCopyFormAction, defaults }: Collecti
     key: "collections",
     fields: {
       title,
-      payload: getHiddenPayload(),
+      payload,
     },
     delay: 2000,
   });
@@ -70,12 +64,12 @@ export function CollectionsForm({ upsertSiteCopyFormAction, defaults }: Collecti
 
   // Sync preview payload periodically (every 800ms debounce)
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const syncPreview = useCallback(() => {
+  const syncPreview = useCallback((nextPayload: string) => {
     if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
     previewTimerRef.current = setTimeout(() => {
-      setPreviewPayload(getHiddenPayload());
+      setPreviewPayload(nextPayload);
     }, 800);
-  }, [getHiddenPayload]);
+  }, []);
 
   // Cleanup preview timer on unmount
   useEffect(() => {
@@ -88,7 +82,7 @@ export function CollectionsForm({ upsertSiteCopyFormAction, defaults }: Collecti
 
   const handleReorderChange = useCallback((json: string) => {
     setPayload(json);
-    syncPreview();
+    syncPreview(json);
   }, [syncPreview]);
 
   const hasDraft = autoSave.hasDraft();

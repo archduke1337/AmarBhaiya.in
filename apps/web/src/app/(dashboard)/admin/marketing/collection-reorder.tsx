@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from "react";
 import { GripVertical, Trash2, Plus, AlertCircle, CheckCircle2, Undo2, Redo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 type Collection = {
   id: string;
@@ -57,7 +56,7 @@ export function CollectionReorder({ id, name, defaultValue, onChange }: Collecti
   }, [toJson, onChange]);
 
   // ── Undo / Redo history stack ───────────────────────────────────────────
-  const historyRef = useRef<Collection[][]>([[]]);
+  const historyRef = useRef<Collection[][]>([parseCollections(defaultValue)]);
   const historyIndexRef = useRef(0);
 
   const pushHistory = useCallback((items: Collection[]) => {
@@ -117,17 +116,6 @@ export function CollectionReorder({ id, name, defaultValue, onChange }: Collecti
     syncHiddenInput(items);
     pushHistory(items);
   }, [syncHiddenInput, pushHistory]);
-
-  // Initialize history on mount
-  const initialRef = useRef(false);
-  if (!initialRef.current) {
-    const initial = parseCollections(defaultValue);
-    historyRef.current = [initial];
-    historyIndexRef.current = 0;
-    setCanUndo(false);
-    setCanRedo(false);
-    initialRef.current = true;
-  }
 
   // ── Drag handlers ──────────────────────────────────────────────────────
 

@@ -331,7 +331,7 @@ export default async function AdminMarketingPage() {
               Featured Collections
             </h2>
             <p className="text-xs text-muted-foreground">
-              Group courses into curated bundles — like "Class 10 Science Pack" or "Maths Foundation". Collections appear on the homepage below featured courses.
+              Group courses into curated bundles — like &quot;Class 10 Science Pack&quot; or &quot;Maths Foundation&quot;. Collections appear on the homepage below featured courses.
             </p>
           </div>
         </div>

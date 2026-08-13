@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Eye, EyeOff, Edit3, Code2, Link2, List, ListOrdered, Heading1, Heading2, Bold, Italic, Image as ImageIcon, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownRenderer } from "./markdown-renderer";
@@ -64,6 +64,7 @@ export function MarkdownEditor({
 
     setContent(newText);
     textarea.value = newText;
+    onChange?.(newText);
 
     requestAnimationFrame(() => {
       textarea.focus();
@@ -79,7 +80,7 @@ export function MarkdownEditor({
         );
       }
     });
-  }, [content]);
+  }, [content, onChange]);
 
   const insertMarkdown = useCallback((before: string, after = "") => {
     insertAtCursor(before, after);
@@ -185,6 +186,10 @@ export function MarkdownEditor({
     // If no image, let default paste happen
   }, [handleImageFile]);
 
+  const openFilePicker = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   const toolbarButtons = [
     { icon: Bold, label: "Bold", action: () => insertMarkdown("**", "**") },
     { icon: Italic, label: "Italic", action: () => insertMarkdown("*", "*") },
@@ -194,7 +199,7 @@ export function MarkdownEditor({
     { icon: ListOrdered, label: "Ordered list", action: () => insertMarkdown("1. ") },
     { icon: Link2, label: "Link", action: () => insertMarkdown("[", "](url)") },
     { icon: Code2, label: "Code block", action: () => insertMarkdown("```\n", "\n```") },
-    { icon: ImageIcon, label: "Upload image", action: () => fileInputRef.current?.click() },
+    { icon: ImageIcon, label: "Upload image", action: openFilePicker },
   ];
 
   return (
