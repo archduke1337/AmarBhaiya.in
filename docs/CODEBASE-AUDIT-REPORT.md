@@ -35,7 +35,8 @@ All items in the [Critical Fixes Checklist](#10-critical-fixes-checklist) have b
 - **P1 (security)**: login/OAuth routes use `createPublicClient()`; rate limits on verification/recovery actions; `--popover`/`--primary-hover` CSS variables defined; sitemap corrected (`/certificates` added)
 - **P2 (launch)**: OG/Twitter images, JSON-LD (WebSite, Organization, Course, Article, BreadcrumbList), canonicals, shared `AnyRow` type, `prefers-reduced-motion` support, lazy-loaded EmailJS, try-catch + action naming fixes, certificate metadata/noindex, dual UI library resolved (HeroUI fully removed)
 - **P3 (scale)**: duplicated helpers extracted (`form-parsers.ts`, shared `getCourseRow`/`getAssignmentRow`/`chunkValues`/`toStringArray`), Sentry removed entirely, dead deps/components removed, `next build` + `npm audit` in CI, RSS feed, contact-form honeypot, PWA manifest, DM Serif Display loaded via next/font, breadcrumb JSON-LD, pagination on courses/blog
-- **Skipped by decision**: privacy/terms content depth (cookies, children's privacy, DPDP Act, refund policy) and component tests — both deprioritized for now
+- **Skipped by decision**: component tests — deprioritized for now
+- **Privacy/terms depth**: completed — privacy (DPDP Act 2023, children's consent, retention, rights, transfers), terms (eligibility, parental consent, termination, liability, disputes), refund policy (exceptions, chargebacks), cookie policy (consent + third-party list) all expanded
 
 ---
 
@@ -490,7 +491,7 @@ The codebase is remarkably clean:
 - [x] **Remove dead components** — verified none remain (hero-digital-success, unused nav/footer implementations)
 - [x] **Add `next build` to CI pipeline**
 - [x] **Add component tests** and increase coverage — skipped by decision, testing deprioritized for now
-- [ ] **Fix privacy/terms pages** — add cookies, children's privacy, DPDP Act, refund policy
+- [x] **Fix privacy/terms pages** — expanded: DPDP Act 2023 (children's privacy + verifiable parental consent), cookies, data retention, user rights, international transfers, eligibility, termination, liability limits, refund exceptions
 - [x] **Add RSS feed** for blog
 - [x] **Add CAPTCHA/honeypot** to contact form
 - [x] **Create `public/manifest.json`** for PWA support
