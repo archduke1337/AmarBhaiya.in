@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 import { getPublicNotesPageData, formatResourceType } from "@/server/appwrite/marketing-content";
 import { requireAuth } from "@/server/appwrite/auth";
@@ -185,12 +185,12 @@ export default async function StudentNotesPage({
                     <p className="text-sm font-medium text-foreground/50">
                       Browser preview available nahi hai. File download karo aur apne device mein open karo.
                     </p>
-                    <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer">
-                      <Button variant="primary" size="sm" className="font-bold">
-                        <Download className="size-4" />
-                        Download
+                    <Button asChild size="sm" className="font-bold">
+                        <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer">
+                          <Download className="size-4" />
+                          Download
+                        </a>
                       </Button>
-                    </a>
                   </div>
                 ) : (
                   <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center">

@@ -1,5 +1,5 @@
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/server/appwrite/actions";
 import { MobileSidebar } from "@/components/layout/sidebar";
 import type { Role } from "@/lib/utils/constants";
@@ -50,7 +50,7 @@ export function DashboardHeader({
         <div className="flex items-center gap-3 self-end md:self-auto">
           <ThemeToggle />
           <form action={logoutAction} className="hidden sm:block">
-            <Button type="submit" variant="danger-soft" size="sm" className="font-bold border-border/40 hover:bg-surface text-danger hover:text-danger-foreground hover:border-danger hover:bg-danger">
+            <Button type="submit" variant="outline" size="sm" className="font-bold border-danger/30 bg-danger/5 text-danger hover:border-danger hover:bg-danger hover:text-danger-foreground">
               Sign out
             </Button>
           </form>

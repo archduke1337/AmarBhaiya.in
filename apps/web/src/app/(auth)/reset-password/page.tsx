@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Reset Password" };
 
@@ -24,14 +24,9 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        <Link href="/login" className="mx-auto block">
-          <Button
-            variant="outline"
-            className="font-bold border-border/60 hover:bg-surface-hover px-8"
-          >
-            Back to login
+        <Button asChild variant="outline" className="mx-auto block font-bold border-border/60 hover:bg-surface-hover px-8">
+            <Link href="/login">Back to login</Link>
           </Button>
-        </Link>
       </div>
     );
   }

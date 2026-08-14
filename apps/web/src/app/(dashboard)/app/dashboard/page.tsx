@@ -11,7 +11,7 @@ import {
   Video,
   ArrowRight,
 } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 import { requireAuth } from "@/server/appwrite/auth";
 import { getUserRole } from "@/server/appwrite/auth-utils";
@@ -73,16 +73,12 @@ export default async function StudentDashboardPage() {
         description="Pick up where you left off, revise quickly with notes, or move straight into the next lesson."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Link href="/app/notes">
-              <Button variant="outline" className="bg-surface border-border/40 font-bold" size="sm">
-                Notes
+            <Button asChild variant="outline" className="bg-surface border-border/40 font-bold" size="sm">
+                <Link href="/app/notes">Notes</Link>
               </Button>
-            </Link>
-            <Link href="/courses">
-              <Button variant="primary" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
-                Browse courses
-              </Button>
-            </Link>
+            <Button asChild className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
+              <Link href="/courses">Browse courses</Link>
+            </Button>
           </div>
         }
       />

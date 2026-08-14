@@ -8,7 +8,7 @@ import {
   ArrowRight,
   Layers,
 } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 import {
   getInstructorCourseResources,
@@ -124,12 +124,12 @@ export default async function InstructorDashboardPage() {
         title="Course Command Center"
         description="Manage your courses, monitor student progress, and schedule live sessions."
         actions={
-          <Link href="/instructor/courses/new">
-            <Button variant="primary" size="sm" className="font-bold">
-              <Plus className="size-4" />
-              New Course
+          <Button asChild size="sm" className="font-bold">
+              <Link href="/instructor/courses/new">
+                <Plus className="size-4" />
+                New Course
+              </Link>
             </Button>
-          </Link>
         }
       />
 
@@ -172,11 +172,9 @@ export default async function InstructorDashboardPage() {
         <section className="flex flex-col gap-6 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-black tracking-[-0.03em]">My Courses</h2>
-            <Link href="/instructor/courses">
-              <Button variant="ghost" size="sm" className="font-bold">
-                View all
+            <Button asChild variant="ghost" size="sm" className="font-bold">
+                <Link href="/instructor/courses">View all</Link>
               </Button>
-            </Link>
           </div>
 
           {courses.length === 0 ? (
@@ -237,11 +235,9 @@ export default async function InstructorDashboardPage() {
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-black tracking-[-0.03em]">Course Health</h2>
-              <Link href="/instructor/courses">
-                <Button variant="ghost" size="sm" className="font-bold">
-                  Open course library
-                </Button>
-              </Link>
+              <Button asChild variant="ghost" size="sm" className="font-bold">
+                <Link href="/instructor/courses">Open course library</Link>
+              </Button>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -280,11 +276,9 @@ export default async function InstructorDashboardPage() {
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-black tracking-[-0.03em]">Grading Flow</h2>
-              <Link href="/instructor/submissions">
-                <Button variant="ghost" size="sm" className="font-bold">
-                  Open submissions
-                </Button>
-              </Link>
+              <Button asChild variant="ghost" size="sm" className="font-bold">
+                <Link href="/instructor/submissions">Open submissions</Link>
+              </Button>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -323,11 +317,9 @@ export default async function InstructorDashboardPage() {
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-black tracking-[-0.03em]">Learner Signals</h2>
-              <Link href="/instructor/students">
-                <Button variant="ghost" size="sm" className="font-bold">
-                  Open students
-                </Button>
-              </Link>
+              <Button asChild variant="ghost" size="sm" className="font-bold">
+                <Link href="/instructor/students">Open students</Link>
+              </Button>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">

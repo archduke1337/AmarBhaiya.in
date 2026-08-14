@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { forgotPasswordAction } from "@/server/appwrite/actions";
-import { Button, Input } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -40,11 +41,10 @@ export function ForgotPasswordForm() {
         </div>
 
         <Button
-          onPress={() => { setSent(false); setEmail(""); }}
+          onClick={() => { setSent(false); setEmail(""); }}
           variant="outline"
           size="lg"
-          fullWidth
-          className="font-bold border-border/60 hover:bg-surface-hover"
+          className="w-full font-bold border-border/60 hover:bg-surface-hover"
         >
           Try a different email
         </Button>
@@ -91,11 +91,9 @@ export function ForgotPasswordForm() {
 
         <Button
           type="submit"
-          fullWidth
           size="lg"
-          variant="primary"
-          isPending={loading}
-          className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
+          disabled={loading}
+          className="mt-2 w-full font-bold text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
           {loading ? "Sending link..." : "Send reset link"}
         </Button>

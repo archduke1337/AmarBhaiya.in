@@ -3,7 +3,8 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { confirmPasswordRecoveryAction } from "@/server/actions/verification";
-import { Button, Input } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getPasswordStrength } from "@/lib/utils/password-strength";
 
 export function ResetPasswordForm({
@@ -128,11 +129,9 @@ export function ResetPasswordForm({
 
         <Button
           type="submit"
-          fullWidth
           size="lg"
-          variant="primary"
-          isPending={loading}
-          className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
+          disabled={loading}
+          className="mt-2 w-full font-bold text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
           {loading ? "Resetting..." : "Reset Password"}
         </Button>

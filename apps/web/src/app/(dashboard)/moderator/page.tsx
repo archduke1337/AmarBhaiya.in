@@ -6,7 +6,7 @@ import {
   Activity,
   ArrowRight,
 } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 import {
   getModeratorDashboardStats,
@@ -37,18 +37,18 @@ export default async function ModeratorDashboardPage() {
         title="Moderation Dashboard"
         description="Monitor flagged content, manage user behavior, and keep the community healthy."
         actions={
-          <Link href="/moderator/reports">
-            <Button
-              variant={pendingReports.length > 0 ? "primary" : "ghost"}
+          <Button asChild
+              variant={pendingReports.length > 0 ? "default" : "ghost"}
               size="sm"
               className="font-bold"
             >
-              <Flag className="size-4" />
-              {pendingReports.length > 0
-                ? `Review ${pendingReports.length} Reports`
-                : "View Reports"}
+              <Link href="/moderator/reports">
+                <Flag className="size-4" />
+                {pendingReports.length > 0
+                  ? `Review ${pendingReports.length} Reports`
+                  : "View Reports"}
+              </Link>
             </Button>
-          </Link>
         }
       />
 

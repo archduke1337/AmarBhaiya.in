@@ -11,7 +11,7 @@
  */
 
 import Link from "next/link";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { RevealWrapper } from "@/components/ui/reveal-wrapper";
 import { getHomePageContent } from "@/server/appwrite/marketing-content";
@@ -124,26 +124,24 @@ export default async function MarketingPage() {
                 </RevealWrapper>
 
                 <RevealWrapper className="stagger-3 flex flex-wrap gap-3 pt-2">
-                  <Link href="/courses">
-                    <Button
+                  <Button asChild
                       size="lg"
                       className="font-bold px-7 bg-accent text-accent-foreground glow-accent-sm active:scale-[0.97] transition-transform"
                     >
-                      Courses dekho
-                      <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none" aria-hidden>
-                        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <Link href="/courses">
+                        Courses dekho
+                        <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none" aria-hidden>
+                          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </Link>
                     </Button>
-                  </Link>
-                  <Link href="/notes">
-                    <Button
+                    <Button asChild
                       size="lg"
                       variant="outline"
                       className="font-semibold px-7"
                     >
-                      Free notes
+                      <Link href="/notes">Free notes</Link>
                     </Button>
-                  </Link>
                 </RevealWrapper>
 
                 {/* Stats row */}
@@ -363,11 +361,9 @@ export default async function MarketingPage() {
 
               <RevealWrapper>
                 <div className="mt-6 text-center">
-                  <Link href="/courses">
-                    <Button variant="outline" className="font-semibold px-7">
-                      View all courses
-                    </Button>
-                  </Link>
+                  <Button asChild variant="outline" className="font-semibold px-7">
+                    <Link href="/courses">View all courses</Link>
+                  </Button>
                 </div>
               </RevealWrapper>
             </div>
@@ -456,19 +452,15 @@ export default async function MarketingPage() {
                     Account banao — free hai. Har chapter ka notes bhi free hai. Shuruaat karo aaj.
                   </p>
                   <div className="relative z-10 flex flex-wrap gap-3 justify-center">
-                    <Link href="/register">
-                      <Button
+                    <Button asChild
                         size="lg"
                         className="font-bold px-8 bg-accent text-accent-foreground glow-accent active:scale-[0.97] transition-transform"
                       >
-                        Free account banao
+                        <Link href="/register">Free account banao</Link>
                       </Button>
-                    </Link>
-                    <Link href="/courses">
-                      <Button size="lg" variant="outline" className="font-semibold px-8">
-                        Courses browse karo
-                      </Button>
-                    </Link>
+                    <Button asChild size="lg" variant="outline" className="font-semibold px-8">
+                      <Link href="/courses">Courses browse karo</Link>
+                    </Button>
                   </div>
                 </div>
               </div>

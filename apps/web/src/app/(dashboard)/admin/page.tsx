@@ -12,7 +12,7 @@ import {
   Tag,
   Clock,
 } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 import {
   getAdminDashboardStats,
@@ -71,12 +71,12 @@ export default async function AdminDashboardPage() {
         title="Platform Control Center"
         description="System-wide overview of users, revenue, content, and platform health."
         actions={
-          <Link href="/admin/marketing">
-            <Button variant="ghost" size="sm" className="font-bold">
-              <TrendingUp className="size-4" />
-              Marketing CMS
+          <Button asChild variant="ghost" size="sm" className="font-bold">
+              <Link href="/admin/marketing">
+                <TrendingUp className="size-4" />
+                Marketing CMS
+              </Link>
             </Button>
-          </Link>
         }
       />
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
 
@@ -48,7 +48,7 @@ export default async function CertificatesPage({ searchParams }: CertificatesPag
                 className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 text-sm font-medium text-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-accent/40"
               />
             </div>
-            <Button type="submit" variant="primary" size="lg" className="font-bold">
+            <Button type="submit" size="lg" className="font-bold">
               Verify certificate
             </Button>
           </form>

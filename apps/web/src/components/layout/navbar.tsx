@@ -4,13 +4,12 @@
  * Navbar — Fluid Island Nav
  * ─────────────────────────
  * Floating glass pill detached from the top.
- * Uses HeroUI v3 Button + compound component patterns.
  * Optimized for iOS/Android: 44px touch targets, safe-area aware.
  */
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { useSyncExternalStore } from "react";
 import { useTheme } from "@/components/theme/theme-provider";
 
@@ -166,9 +165,8 @@ export function Navbar() {
               {/* Theme toggle */}
               <Button
                 variant="ghost"
-                isIconOnly
-                size="sm"
-                onPress={toggleTheme}
+                size="icon-sm"
+                onClick={toggleTheme}
                 aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
                 className="text-foreground/60 hover:text-foreground"
               >
@@ -176,42 +174,25 @@ export function Navbar() {
               </Button>
 
               {authenticated ? (
-                <Link href="/app/dashboard">
-                  <Button
-                    size="sm"
-                    className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]"
-                  >
-                    Dashboard
-                  </Button>
-                </Link>
+                <Button asChild size="sm" className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]">
+                  <Link href="/app/dashboard">Dashboard</Link>
+                </Button>
               ) : (
                 <>
-                  <Link href="/login">
-                    <Button
-                      variant="tertiary"
-                      size="sm"
-                      className="hidden sm:flex font-semibold"
-                    >
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button
-                      size="sm"
-                      className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]"
-                    >
-                      Start free
-                    </Button>
-                  </Link>
+                  <Button asChild variant="ghost" size="sm" className="hidden sm:flex font-semibold">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild size="sm" className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]">
+                    <Link href="/register">Start free</Link>
+                  </Button>
                 </>
               )}
 
               {/* Mobile hamburger */}
               <Button
                 variant="ghost"
-                isIconOnly
-                size="sm"
-                onPress={() => setMenuOpen((v) => !v)}
+                size="icon-sm"
+                onClick={() => setMenuOpen((v) => !v)}
                 aria-label={menuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={menuOpen}
                 aria-controls="mobile-menu"
@@ -273,23 +254,17 @@ export function Navbar() {
         {/* Mobile CTA */}
         <div className="px-6 mt-6 grid gap-3">
           {authenticated ? (
-            <Link href="/app/dashboard" onClick={() => setMenuOpen(false)}>
-              <Button fullWidth size="lg" className="font-bold text-base bg-accent text-accent-foreground">
-                Dashboard
-              </Button>
-            </Link>
+            <Button asChild size="lg" className="w-full font-bold text-base bg-accent text-accent-foreground">
+              <Link href="/app/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+            </Button>
           ) : (
             <>
-              <Link href="/register" onClick={() => setMenuOpen(false)}>
-                <Button fullWidth size="lg" className="font-bold text-base bg-accent text-accent-foreground">
-                  Abhi start karo — it&apos;s free
-                </Button>
-              </Link>
-              <Link href="/login" onClick={() => setMenuOpen(false)}>
-                <Button fullWidth variant="tertiary" size="lg" className="font-semibold text-base">
-                  Already have an account? Login
-                </Button>
-              </Link>
+              <Button asChild size="lg" className="w-full font-bold text-base bg-accent text-accent-foreground">
+                <Link href="/register" onClick={() => setMenuOpen(false)}>Abhi start karo — it&apos;s free</Link>
+              </Button>
+              <Button asChild variant="ghost" size="lg" className="w-full font-semibold text-base">
+                <Link href="/login" onClick={() => setMenuOpen(false)}>Already have an account? Login</Link>
+              </Button>
             </>
           )}
         </div>

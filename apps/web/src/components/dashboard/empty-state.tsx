@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 
 interface EmptyStateProps {
@@ -44,18 +44,14 @@ export function EmptyState({
       {(action || secondaryAction) && (
         <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
           {action && (
-            <Link href={action.href}>
-              <Button variant="primary" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]">
-                {action.label}
-              </Button>
-            </Link>
+            <Button asChild className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]">
+              <Link href={action.href}>{action.label}</Link>
+            </Button>
           )}
           {secondaryAction && (
-            <Link href={secondaryAction.href}>
-                <Button variant="outline" className="font-bold border-border/40 bg-surface">
-                {secondaryAction.label}
-              </Button>
-            </Link>
+            <Button asChild variant="outline" className="font-bold border-border/40 bg-surface">
+              <Link href={secondaryAction.href}>{secondaryAction.label}</Link>
+            </Button>
           )}
         </div>
       )}

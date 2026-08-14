@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookOpen, ArrowRight, Award } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 import { requireAuth } from "@/server/appwrite/auth";
 import { getStudentEnrolledCourses } from "@/server/appwrite/dashboard-data";
@@ -29,16 +29,12 @@ export default async function StudentCoursesPage() {
         description={`${courses.length} enrolled course${courses.length !== 1 ? "s" : ""} in your library, with ${completed.length} already completed.`}
         actions={
           <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-            <Link href="/app/notes">
-              <Button variant="outline" className="bg-surface font-bold border-border/40" size="sm">
-                Notes
+            <Button asChild variant="outline" className="bg-surface font-bold border-border/40" size="sm">
+                <Link href="/app/notes">Notes</Link>
               </Button>
-            </Link>
-            <Link href="/courses">
-              <Button variant="primary" className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
-                Browse catalogue
-              </Button>
-            </Link>
+            <Button asChild className="font-bold shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]" size="sm">
+              <Link href="/courses">Browse catalogue</Link>
+            </Button>
           </div>
         }
       />

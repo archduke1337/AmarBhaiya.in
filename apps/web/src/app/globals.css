@@ -1,13 +1,12 @@
 /* ============================================================
    AmarBhaiya.in — Global Styles
-   HeroUI v3 + Tailwind v4 + Custom Amarnath Theme
+   Tailwind v4 + Custom Amarnath Theme
    Design: Ethereal glass dark + editorial luxury hybrid
    Optimized: iOS/Android safe areas + fluid touch targets
    ============================================================ */
 
-/* Import order is CRITICAL — Tailwind before HeroUI */
+/* Tailwind first, then custom theme layers */
 @import "tailwindcss";
-@import "@heroui/styles";
 
 /* ── Custom amarbhaiya theme ────────────────────────────────── */
 @layer base {
@@ -151,6 +150,21 @@
   --color-warning:       var(--warning);
   --color-danger:        var(--danger);
   --color-danger-foreground: var(--danger-foreground);
+
+  /* ── Semantic aliases (shadcn/ui components) ───────────── */
+  --color-primary:             var(--accent);
+  --color-primary-foreground:  var(--accent-foreground);
+  --color-secondary:           var(--default);
+  --color-secondary-foreground: var(--default-foreground);
+  --color-muted-foreground:    var(--muted);
+  --color-card:                var(--surface);
+  --color-card-foreground:     var(--surface-foreground);
+  --color-popover:             var(--surface);
+  --color-popover-foreground:  var(--surface-foreground);
+  --color-input:               var(--field-background);
+  --color-ring:                var(--accent);
+  --color-destructive:         var(--danger);
+  --color-destructive-foreground: var(--danger-foreground);
 
   /* ── Typography ─────────────────────────────────────────── */
   /* Geist Mono for hero numbers / code; Plus Jakarta Sans for body */
@@ -373,28 +387,5 @@
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
-  }
-}
-
-/* ── HeroUI Button overrides — pill + brand accent ─────── */
-@layer components {
-  .button {
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    transition:
-      transform 0.18s var(--ease-out-fluid),
-      box-shadow 0.18s var(--ease-out-fluid),
-      background 0.18s ease;
-  }
-  .button:active {
-    transform: scale(0.97);
-  }
-  .button--primary {
-    background: var(--accent);
-    color: var(--accent-foreground);
-  }
-  .button--primary:hover {
-    background: color-mix(in oklab, var(--accent) 90%, var(--accent-foreground) 10%);
-    box-shadow: 0 4px 20px color-mix(in oklab, var(--accent) 40%, transparent);
   }
 }

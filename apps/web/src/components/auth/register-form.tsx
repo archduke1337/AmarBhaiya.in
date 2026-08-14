@@ -4,7 +4,9 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { Checkbox, Button, Input } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { getPasswordStrength } from "@/lib/utils/password-strength";
 
 export function RegisterForm({ redirectPath }: { redirectPath: string }) {
@@ -134,12 +136,13 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
         </div>
 
         <div className="bg-surface/50 border border-border/40 rounded-xl px-4 py-3 flex items-start gap-3 mt-1">
-          <Checkbox
-            isSelected={consent}
-            onChange={setConsent}
-            variant="primary"
-            className="mt-0.5"
-          >
+          <label className="flex items-start gap-3 cursor-pointer">
+            <Checkbox
+              checked={consent}
+              onCheckedChange={(checked) => setConsent(checked === true)}
+              className="mt-1 shrink-0"
+              aria-label="I agree to the Privacy Policy and Terms of Service"
+            />
             <span className="text-sm font-medium text-foreground/80 leading-relaxed block">
               I agree to the{" "}
               <Link href="/privacy" className="text-accent hover:underline font-semibold">
@@ -150,16 +153,14 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
                 Terms of Service
               </Link>.
             </span>
-          </Checkbox>
+          </label>
         </div>
 
         <Button
           type="submit"
-          fullWidth
           size="lg"
-          variant="primary"
-          isPending={loading}
-          className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
+          disabled={loading}
+          className="mt-2 w-full font-bold text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
           {loading ? "Creating account..." : "Create account"}
         </Button>

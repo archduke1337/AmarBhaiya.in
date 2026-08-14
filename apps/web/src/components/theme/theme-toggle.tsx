@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme/theme-provider";
 
 const subscribe = () => () => {};
@@ -14,9 +14,8 @@ export function ThemeToggle() {
     return (
       <Button
         variant="ghost"
-        isIconOnly
-        size="sm"
-        isDisabled
+        size="icon-sm"
+        disabled
         aria-label="Toggle theme"
       >
         <span className="size-4" />
@@ -29,9 +28,8 @@ export function ThemeToggle() {
   return (
     <Button
       variant="secondary"
-      isIconOnly
-      size="sm"
-      onPress={() => setTheme(isDark ? "light" : "dark")}
+      size="icon-sm"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       className="bg-surface border-border/40 text-foreground/70 hover:text-foreground"
     >

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import {
   Menu,
   X,
@@ -91,9 +91,9 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
   return (
     <>
       <Button
-        isIconOnly
+        size="icon-sm"
         variant="ghost"
-        onPress={() => setOpen(true)}
+        onClick={() => setOpen(true)}
         className="md:hidden text-foreground/70"
         aria-label="Open menu"
       >
@@ -110,10 +110,9 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
           <div className="fixed inset-y-0 left-0 z-50 w-[min(86vw,20rem)] overflow-y-auto overscroll-contain border-r border-border/40 bg-background shadow-2xl md:hidden flex flex-col animate-slide-in-left">
             <div className="absolute right-3 top-3 z-10 pt-safe">
               <Button
-                isIconOnly
+                size="icon-sm"
                 variant="ghost"
-                size="sm"
-                onPress={closeDrawer}
+                onClick={closeDrawer}
                 aria-label="Close menu"
                 className="text-foreground/60 rounded-full"
               >
@@ -153,7 +152,7 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
 
             <div className="mt-auto p-4 pb-[calc(var(--safe-bottom)+1.5rem)]">
                <form action={logoutAction} className="w-full">
-                 <Button type="submit" variant="danger-soft" fullWidth className="font-bold border-danger/20 text-danger bg-danger/5 hover:bg-danger hover:text-danger-foreground">
+                 <Button type="submit" variant="outline" className="w-full font-bold border-danger/20 bg-danger/5 text-danger hover:border-danger hover:bg-danger hover:text-danger-foreground">
                    Sign out
                  </Button>
                </form>

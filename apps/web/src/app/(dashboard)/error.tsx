@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardError({
   error,
@@ -19,7 +19,7 @@ export default function DashboardError({
       <div className="flex flex-col gap-2 relative z-10">
         <h2 className="text-2xl font-black tracking-tight">Something went wrong</h2>
         <p className="max-w-md text-base font-medium text-foreground/60 leading-relaxed">
-          {error.message || "An unexpected error occurred while loading this view. Please try reloading."}
+          Something went wrong while loading this view. Your data is safe — please try again, and if the problem persists, contact support.
         </p>
         {error.digest && (
           <p className="text-xs font-mono text-foreground/40 mt-2">
@@ -27,10 +27,10 @@ export default function DashboardError({
           </p>
         )}
       </div>
-      <Button 
-        onPress={reset} 
-        variant="outline" 
-        size="lg" 
+      <Button
+        onClick={reset}
+        variant="outline"
+        size="lg"
         className="font-bold border-border/40 hover:bg-surface-hover mt-4"
       >
         <span className="inline-flex items-center gap-2">

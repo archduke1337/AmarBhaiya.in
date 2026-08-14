@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button, Input } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function LoginForm({ redirectPath }: { redirectPath: string }) {
   const router = useRouter();
@@ -99,11 +100,9 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
 
         <Button
           type="submit"
-          fullWidth
           size="lg"
-          variant="primary"
-          isPending={loading}
-          className="mt-2 font-bold bg-accent text-accent-foreground text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
+          disabled={loading}
+          className="mt-2 w-full font-bold text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
           {loading ? "Signing in..." : "Sign in"}
         </Button>
