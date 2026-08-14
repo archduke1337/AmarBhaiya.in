@@ -24,10 +24,12 @@ const footerLinkGroups: Array<{ title: string; links: FooterLinkItem[] }> = [
   {
     title: "Platform",
     links: [
+      { label: "Pricing", href: "/pricing" },
       { label: "Certificates", href: "/certificates" },
       { label: "Community", href: "/app/community" },
       { label: "Live sessions", href: "/app/live" },
-      { label: "Contact", href: "/contact" },
+      { label: "FAQ", href: "/faq" },
+      { label: "Support", href: "/support" },
     ],
   },
   {
@@ -231,6 +233,18 @@ export function Footer() {
             </Link>
             <Link href="/terms" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
               Terms
+            </Link>
+            <Link href="/refund-policy" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
+              Refunds
+            </Link>
+            <Link href="/cookie-policy" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
+              Cookies
+            </Link>
+            <Link href="/grievance-redressal" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
+              Grievance
+            </Link>
+            <Link href="/legal" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
+              Legal
             </Link>
             <Link href="/certificates" className="hidden min-h-8 items-center transition-colors hover:text-foreground/70 min-[420px]:inline-flex">
               Verify certificates
