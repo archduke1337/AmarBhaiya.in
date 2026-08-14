@@ -452,36 +452,36 @@ The codebase is remarkably clean:
 ## 10. Critical Fixes Checklist
 
 ### Priority 1 — Must Fix Immediately
-- [ ] **Rename `src/proxy.ts` to `src/middleware.ts`** — all security middleware may be bypassed
-- [ ] **Define `--popover`/`--popover-foreground` CSS variables** — sonner toasts may be invisible
-- [ ] **Fix login to use `createPublicClient()`** instead of `createAdminClient()` — principle of least privilege
-- [ ] **Add rate limiting to forgot-password, verify-email, password recovery** endpoints
-- [ ] **Fix sitemap**: Remove `/app/notes`, add `/notes` and `/certificates`
+- [x] **Rename `src/proxy.ts` to `src/middleware.ts`** — resolved: Next 16 renamed middleware to proxy; `src/proxy.ts` is correct
+- [x] **Define `--popover`/`--popover-foreground` CSS variables** — added to light + dark theme
+- [x] **Fix login to use `createPublicClient()`** instead of `createAdminClient()` — principle of least privilege (login + OAuth routes)
+- [x] **Add rate limiting to forgot-password, verify-email, password recovery** endpoints
+- [x] **Fix sitemap**: `/app/notes` already absent; `/notes` present; `/certificates` added
 
 ### Priority 2 — Fix Before Launch
-- [ ] **Add OpenGraph images** — at minimum global `opengraph-image.png`, ideally per-page
-- [ ] **Add JSON-LD structured data** — WebSite, Organization, Course, Article schemas
-- [ ] **Add canonical URLs** — especially on filtered course pages
-- [ ] **Resolve dual UI library** — pick one (HeroUI or shadcn) and migrate consistently
-- [ ] **Extract `AnyRow` type** to shared definition in `types/`
-- [ ] **Add `prefers-reduced-motion` support** to all animations
-- [ ] **Add `next/dynamic`** for MotionDrawer, EmailJS, timeline-animation
-- [ ] **Fix missing try-catch** in 8+ update actions
-- [ ] **Fix `applyModerationActionAction` naming bug**
-- [ ] **Add metadata to certificate detail page** + add `noindex`
+- [x] **Add OpenGraph images** — at minimum global `opengraph-image.png`, ideally per-page
+- [x] **Add JSON-LD structured data** — WebSite, Organization, Course, Article schemas
+- [x] **Add canonical URLs** — especially on filtered course pages
+- [x] **Resolve dual UI library** — HeroUI fully removed; shadcn/ui is the only system — pick one (HeroUI or shadcn) and migrate consistently
+- [x] **Extract `AnyRow` type** to shared definition in `types/`
+- [x] **Add `prefers-reduced-motion` support** to all animations
+- [x] **Add `next/dynamic`** — EmailJS lazy-loaded; MotionDrawer/timeline-animation no longer exist for MotionDrawer, EmailJS, timeline-animation
+- [x] **Fix missing try-catch** in 8+ update actions
+- [x] **Fix `applyModerationActionAction` naming bug**
+- [x] **Add metadata to certificate detail page** + add `noindex`
 
 ### Priority 3 — Fix Before Scale
-- [ ] **Extract duplicated helpers** (parseBoolean, revalidatePaths, getCourseRow, etc.) to shared utilities
-- [ ] **Consolidate error handling** — use `handleActionError` with Sentry everywhere
-- [ ] **Remove dead dependencies** (next-themes, move shadcn to devDependencies)
-- [ ] **Remove dead components** (hero-digital-success, unused nav/footer implementations)
-- [ ] **Add `next build` to CI pipeline**
+- [x] **Extract duplicated helpers** (parseBoolean, revalidatePaths, getCourseRow, etc.) to shared utilities
+- [x] **Consolidate error handling** — Sentry removed entirely; errors log via console.error — use `handleActionError` with Sentry everywhere
+- [x] **Remove dead dependencies** (next-themes, move shadcn to devDependencies)
+- [x] **Remove dead components** — verified none remain (hero-digital-success, unused nav/footer implementations)
+- [x] **Add `next build` to CI pipeline**
 - [x] **Add component tests** and increase coverage — skipped by decision, testing deprioritized for now
 - [ ] **Fix privacy/terms pages** — add cookies, children's privacy, DPDP Act, refund policy
-- [ ] **Add RSS feed** for blog
-- [ ] **Add CAPTCHA/honeypot** to contact form
-- [ ] **Create `public/manifest.json`** for PWA support
-- [ ] **Fix `--font-heading`** — load Clash Display or DM Serif Display via next/font
-- [ ] **Consolidate Sentry server init** — remove duplicate from sentry.server.config.ts
-- [ ] **Add breadcrumb navigation** with schema markup
-- [ ] **Add pagination** to courses and blog pages
+- [x] **Add RSS feed** for blog
+- [x] **Add CAPTCHA/honeypot** to contact form
+- [x] **Create `public/manifest.json`** for PWA support
+- [x] **Fix `--font-heading`** — DM Serif Display loaded via next/font — load Clash Display or DM Serif Display via next/font
+- [x] **Consolidate Sentry server init** — moot, Sentry fully removed — remove duplicate from sentry.server.config.ts
+- [x] **Add breadcrumb navigation** with schema markup
+- [x] **Add pagination** to courses and blog pages
