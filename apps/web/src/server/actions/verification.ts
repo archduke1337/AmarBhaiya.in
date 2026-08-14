@@ -1,22 +1,36 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createPublicClient, createSessionClient } from "@/server/appwrite/server";
 import { requireAuth } from "@/server/appwrite/auth";
 import { passwordSchema } from "@/server/validators/auth";
+import { checkRateLimit } from "@/server/rate-limiter";
 import { actionSuccess, actionError } from "@/lib/errors/action-result";
 import type { ActionResult } from "@/lib/errors/action-result";
+
+async function getClientIpKey(): Promise<string> {
+  const h = await headers();
+  const forwarded = h.get("x-forwarded-for");
+  return forwarded?.split(",")[0]?.trim() ?? "unknown";
+}
 
 // ── Send Verification Email ─────────────────────────────────────────────────
 // Sends a magic link to the user's email. When clicked, Appwrite confirms
 // the email and sets emailVerification = true on the user record.
 
 export async function sendVerificationEmailAction(): Promise<ActionResult> {
+  let user;
   try {
-    await requireAuth();
+    user = await requireAuth();
   } catch {
     return actionError("You must be signed in to verify your email.");
+  }
+
+  const rateLimit = await checkRateLimit(`verify-email:${user.$id}`, 3);
+  if (!rateLimit.allowed) {
+    return actionError("Too many verification emails. Please try again later.");
   }
 
   try {
@@ -44,6 +58,14 @@ export async function confirmEmailVerificationAction(
   userId: string,
   secret: string
 ): Promise<ActionResult> {
+  const rateLimit = await checkRateLimit(
+    `${await getClientIpKey()}:verify-email-confirm`,
+    10
+  );
+  if (!rateLimit.allowed) {
+    return actionError("Too many attempts. Please try again later.");
+  }
+
   try {
     const { account } = await createPublicClient();
     await account.updateVerification({ userId, secret });
@@ -68,6 +90,14 @@ export async function sendPasswordRecoveryAction(
 ): Promise<ActionResult> {
   const email = String(formData.get("email") ?? "").trim();
   if (!email) return actionError("Email is required.");
+
+  const rateLimit = await checkRateLimit(
+    `${await getClientIpKey()}:password-recovery`,
+    3
+  );
+  if (!rateLimit.allowed) {
+    return actionError("Too many requests. Please try again later.");
+  }
 
   try {
     const { account } = await createPublicClient();
@@ -101,6 +131,14 @@ export async function confirmPasswordRecoveryAction(
 
   if (!parsedPassword.success) {
     return actionError(parsedPassword.error.issues[0].message);
+  }
+
+  const rateLimit = await checkRateLimit(
+    `${await getClientIpKey()}:password-recovery-confirm`,
+    10
+  );
+  if (!rateLimit.allowed) {
+    return actionError("Too many attempts. Please try again later.");
   }
 
   try {

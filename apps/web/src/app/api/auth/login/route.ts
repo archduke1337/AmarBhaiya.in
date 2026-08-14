@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { buildSessionCookieOptions } from "@/server/appwrite/session-cookie";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
-import { createAdminClient } from "@/server/appwrite/server";
+import { createPublicClient } from "@/server/appwrite/server";
 import { validateOrigin } from "@/server/csrf";
 import { loginSchema } from "@/server/validators/auth";
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { account } = await createAdminClient();
+    const { account } = await createPublicClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,

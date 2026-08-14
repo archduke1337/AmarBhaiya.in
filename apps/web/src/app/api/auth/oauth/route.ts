@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { buildSessionCookieOptions } from "@/server/appwrite/session-cookie";
-import { createAdminClient } from "@/server/appwrite/server";
+import { createPublicClient } from "@/server/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { account } = await createAdminClient();
+    const { account } = await createPublicClient();
     const session = await account.createSession({ userId, secret });
 
     if (!session.secret) {

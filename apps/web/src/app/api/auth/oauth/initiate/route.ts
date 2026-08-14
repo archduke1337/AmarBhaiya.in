@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OAuthProvider } from "node-appwrite";
-import { createAdminClient } from "@/server/appwrite/server";
+import { createPublicClient } from "@/server/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { account } = await createAdminClient();
+    const { account } = await createPublicClient();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://amarbhaiya.in";
 
     const oauthUrl = await account.createOAuth2Token({
