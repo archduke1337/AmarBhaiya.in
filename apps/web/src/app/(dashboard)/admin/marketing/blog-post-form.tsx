@@ -93,16 +93,17 @@ export function BlogPostForm({ createBlogPostFormAction }: BlogPostFormProps) {
       const form = e.currentTarget;
       const formData = new FormData(form);
 
-      // Ensure textarea values are in the form (since content is managed by MarkdownEditor)
+      // Ensure content is in the form (managed by MarkdownEditor). The textarea is
+      // unmounted in preview mode, so fall back to the React state in that case.
       const contentField = form.querySelector<HTMLTextAreaElement>(`#blog-content`);
-      if (contentField && !formData.has("content")) {
-        formData.set("content", contentField.value);
+      if (!formData.has("content")) {
+        formData.set("content", contentField?.value ?? content);
       }
 
       createBlogPostFormAction(formData);
       autoSave.clear();
     },
-    [createBlogPostFormAction, autoSave]
+    [createBlogPostFormAction, autoSave, content]
   );
 
   const hasDraft = autoSave.hasDraft();

@@ -297,14 +297,23 @@ export default async function CourseDetailPage({ params }: PageProps) {
                           >
                             {lesson.title}
                           </Link>
+                        ) : lesson.isFreePreview ? (
+                          <Link
+                            href={
+                              user
+                                ? `/app/learn/${course.id}/${lesson.id}`
+                                : `/login?redirect=${encodeURIComponent(`/app/learn/${course.id}/${lesson.id}`)}`
+                            }
+                            className="inline-flex flex-wrap items-center gap-2 underline decoration-2 underline-offset-4 transition-colors hover:text-primary"
+                          >
+                            {lesson.title}
+                            <Badge variant="secondary" className="text-[0.62rem]">
+                              Free preview
+                            </Badge>
+                          </Link>
                         ) : (
                           <span className="inline-flex flex-wrap items-center gap-2">
                             {lesson.title}
-                            {lesson.isFreePreview && (
-                              <Badge variant="secondary" className="text-[0.62rem]">
-                                Free preview
-                              </Badge>
-                            )}
                           </span>
                         )
                       ) : (

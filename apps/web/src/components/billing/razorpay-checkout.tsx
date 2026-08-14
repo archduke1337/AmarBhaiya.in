@@ -127,7 +127,7 @@ export function RazorpayCheckout({
                 ? verifyData.courseId
                 : courseId;
 
-            window.location.href = `/app/courses/${nextCourseId}?payment=success`;
+            window.location.href = `/app/courses/${nextCourseId}?payment=success&paymentId=${encodeURIComponent(response.razorpay_payment_id)}`;
           } catch (verifyError) {
             setError(
               verifyError instanceof Error

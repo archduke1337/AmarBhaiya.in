@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BookOpenCheck, Download, Lock, MessageSquareMore } from "lucide-react";
+import { BookOpenCheck, CheckCircle2, Download, Lock, MessageSquareMore } from "lucide-react";
 
 import { postCourseCommentFormAction } from "@/server/actions/form-wrappers";
 import { getCourseComments } from "@/server/actions/comments";
@@ -15,11 +15,18 @@ import { formatRelativeTime } from "@/lib/utils/format";
 
 type PageProps = {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ payment?: string; paymentId?: string }>;
 };
 
-export default async function CoursePlayerPage({ params }: PageProps) {
+export default async function CoursePlayerPage({ params, searchParams }: PageProps) {
   const user = await requireAuth();
   const { id } = await params;
+  const query = await searchParams;
+  const paymentSuccess = query?.payment === "success";
+  const paymentId =
+    typeof query?.paymentId === "string" && query.paymentId.length > 0
+      ? query.paymentId
+      : "";
 
   const course = await getPublicCourseBySlug(id);
   if (!course) {
@@ -76,6 +83,31 @@ export default async function CoursePlayerPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6 pb-6">
+      {paymentSuccess && (
+        <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/[0.06] p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-emerald-500" aria-hidden />
+              <div className="space-y-1">
+                <p className="font-heading text-lg font-black tracking-[-0.03em]">
+                  Payment successful — you&apos;re enrolled in {course.title}
+                </p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Your receipt reference is{" "}
+                  <span className="font-bold text-foreground">{paymentId || "available in billing"}</span>
+                  . Keep it handy for support queries — a copy is also saved in your billing history.
+                </p>
+              </div>
+            </div>
+            {firstVisibleLessonId ? (
+              <Button asChild size="lg" className="shrink-0">
+                <Link href={`/app/learn/${course.id}/${firstVisibleLessonId}`}>Start learning</Link>
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-5 rounded-2xl border border-border/40 bg-surface p-6">
         <div className="flex flex-wrap gap-2">
           <Badge variant="ghost">{course.accessModel}</Badge>

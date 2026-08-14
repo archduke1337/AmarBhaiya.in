@@ -38,9 +38,25 @@ export function EditBlogPostForm({
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [slugChecking, setSlugChecking] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [content, setContent] = useState(post.content);
   const slugManuallyEdited = useRef(false);
   const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deleteFormRef = useRef<HTMLFormElement>(null);
+
+  // Ensure content reaches the FormData — the MarkdownEditor textarea is
+  // unmounted in preview mode, so fall back to the React state then.
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      if (!formData.has("content")) {
+        formData.set("content", content);
+      }
+      updateBlogPostFormAction(formData);
+    },
+    [content, updateBlogPostFormAction]
+  );
 
   // Debounced slug uniqueness check
   const checkSlug = useCallback((slugToCheck: string) => {
@@ -71,6 +87,7 @@ export function EditBlogPostForm({
     <>
     <form
       action={updateBlogPostFormAction}
+      onSubmit={handleSubmit}
       className="border-t border-border/40 bg-surface-hover p-5 space-y-4"
     >
       <input type="hidden" name="postId" value={post.id} />
@@ -168,6 +185,7 @@ export function EditBlogPostForm({
           defaultValue={post.content}
           label="Content"
           minHeight="min-h-28"
+          onChange={setContent}
         />
       </div>
 

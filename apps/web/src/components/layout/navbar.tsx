@@ -19,7 +19,7 @@ const subscribe = () => () => {};
 // ── Nav Links ─────────────────────────────────────────────────
 const NAV_LINKS = [
   { label: "Courses",  href: "/courses" },
-  { label: "Notes",    href: "/app/notes"   },
+  { label: "Notes",    href: "/notes"   },
   { label: "Live",     href: "/app/live" },
   { label: "About",    href: "/about"   },
 ] as const;

@@ -28,7 +28,7 @@ export const OWNER = {
 
 export const PUBLIC_NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "Notes", href: "/app/notes" },
+  { label: "Notes", href: "/notes" },
   { label: "Courses", href: "/courses" },
   { label: "About", href: "/about" },
   { label: "Blog", href: "/blog" },
