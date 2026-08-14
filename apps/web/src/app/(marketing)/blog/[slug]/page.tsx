@@ -44,8 +44,28 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
+return (
     <article className="px-6 py-20 md:px-12 md:py-28">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: post.title,
+            description: post.excerpt,
+            url: `https://amarbhaiya.in/blog/${slug}`,
+            datePublished: post.publishedAt,
+            author: { "@type": "Person", name: post.authorName },
+            publisher: {
+              "@type": "Organization",
+              name: "amarbhaiya.in",
+              url: "https://amarbhaiya.in",
+            },
+            mainEntityOfPage: `https://amarbhaiya.in/blog/${slug}`,
+          }),
+        }}
+      />
       <div className="mx-auto max-w-5xl space-y-8">
         <Button asChild variant="link" size="sm">
           <Link href="/blog">Back to blog</Link>

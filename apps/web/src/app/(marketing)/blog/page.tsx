@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Rss as RssIcon } from "lucide-react";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
@@ -37,13 +38,20 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
           description="Writing for students and early builders who want frameworks they can apply this week, not abstract motivation that fades by tomorrow."
           titleAs="h1"
         />
-        <RetroPanel tone="secondary" size="lg" className="space-y-4 xl:translate-y-8">
+<RetroPanel tone="secondary" size="lg" className="space-y-4 xl:translate-y-8">
           <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
             Editorial stance
           </p>
           <p className="text-lg font-bold leading-8 tracking-[-0.03em]">
             Short on jargon. Strong on decisions, systems, and the uncomfortable details that usually get edited out.
           </p>
+          <Link
+            href="/rss.xml"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-accent hover:underline"
+          >
+            <RssIcon className="size-3.5" aria-hidden />
+            RSS feed
+          </Link>
         </RetroPanel>
       </section>
 

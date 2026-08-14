@@ -76,6 +76,33 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-14 px-4 py-10 md:px-6 md:py-16 xl:space-y-18 xl:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Course",
+            name: course.title,
+            description: course.shortDescription,
+            url: `https://amarbhaiya.in/courses/${slug}`,
+            provider: {
+              "@type": "Organization",
+              name: "amarbhaiya.in",
+              url: "https://amarbhaiya.in",
+            },
+            ...(course.accessModel === "free"
+              ? { isAccessibleForFree: true }
+              : {
+                  offers: {
+                    "@type": "Offer",
+                    price: course.priceInr,
+                    priceCurrency: "INR",
+                    category: "Paid",
+                  },
+                }),
+          }),
+        }}
+      />
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
         <RetroPanel tone="card" size="lg" className="space-y-6">
           <div className="flex flex-wrap items-center gap-3">
