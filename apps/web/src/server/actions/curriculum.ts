@@ -255,19 +255,26 @@ export async function updateCurriculumModuleAction(formData: FormData): Promise<
     return actionError("Module not found");
   }
 
-  await tablesDB.updateRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.modules,
-    rowId: parsed.data.moduleId,
-    data: {
-      title: parsed.data.title,
-      description: parsed.data.description,
-      order: parsed.data.order,
-    },
-  });
+  try {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.modules,
+      rowId: parsed.data.moduleId,
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description,
+        order: parsed.data.order,
+      },
+    });
 
-  revalidateCourseEditorPaths(parsed.data.courseId);
-  revalidateEach(getCourseDetailPaths(parsed.data.courseId, String(course.slug ?? "")));
+    revalidateCourseEditorPaths(parsed.data.courseId);
+    revalidateEach(getCourseDetailPaths(parsed.data.courseId, String(course.slug ?? "")));
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to update module."
+    );
+    return actionError("Failed to update module.");
+  }
 
   return actionSuccess();
 }
@@ -315,25 +322,32 @@ export async function updateCurriculumLessonAction(formData: FormData): Promise<
     return actionError("Lesson not found");
   }
 
-  await tablesDB.updateRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.lessons,
-    rowId: parsed.data.lessonId,
-    data: {
-      title: parsed.data.title,
-      description: parsed.data.description,
-      duration: parsed.data.durationSeconds,
-      order: parsed.data.order,
-      isFree: parsed.data.isFree,
-      isFreePreview: parsed.data.isFreePreview,
-    },
-  });
+  try {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      rowId: parsed.data.lessonId,
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description,
+        duration: parsed.data.durationSeconds,
+        order: parsed.data.order,
+        isFree: parsed.data.isFree,
+        isFreePreview: parsed.data.isFreePreview,
+      },
+    });
 
-  await updateCourseLessonStats(tablesDB, parsed.data.courseId);
+    await updateCourseLessonStats(tablesDB, parsed.data.courseId);
 
-  revalidateCourseEditorPaths(parsed.data.courseId);
-  revalidateCourseAudiencePaths(parsed.data.courseId, String(course.slug ?? ""));
-  revalidatePath(`/app/learn/${parsed.data.courseId}/${parsed.data.lessonId}`);
+    revalidateCourseEditorPaths(parsed.data.courseId);
+    revalidateCourseAudiencePaths(parsed.data.courseId, String(course.slug ?? ""));
+    revalidatePath(`/app/learn/${parsed.data.courseId}/${parsed.data.lessonId}`);
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to update lesson."
+    );
+    return actionError("Failed to update lesson.");
+  }
 
   return actionSuccess();
 }

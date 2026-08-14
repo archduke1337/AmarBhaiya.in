@@ -104,26 +104,33 @@ export async function updateCategoryAction(formData: FormData): Promise<ActionRe
     return actionError("Invalid input: categoryId and name are required");
   }
 
-  const { tablesDB } = await createAdminClient();
-  const normalizedSlug =
-    slugify(parsed.data.slug || parsed.data.name) ||
-    `category-${parsed.data.categoryId.slice(0, 8)}`;
+  try {
+    const { tablesDB } = await createAdminClient();
+    const normalizedSlug =
+      slugify(parsed.data.slug || parsed.data.name) ||
+      `category-${parsed.data.categoryId.slice(0, 8)}`;
 
-  await tablesDB.updateRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.categories,
-    rowId: parsed.data.categoryId,
-    data: {
-      name: parsed.data.name,
-      slug: normalizedSlug,
-      description: parsed.data.description,
-      order: parsed.data.order,
-    },
-  });
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.categories,
+      rowId: parsed.data.categoryId,
+      data: {
+        name: parsed.data.name,
+        slug: normalizedSlug,
+        description: parsed.data.description,
+        order: parsed.data.order,
+      },
+    });
 
-  revalidatePath("/admin/categories");
-  revalidatePath("/instructor/categories");
-  revalidatePath("/courses");
+    revalidatePath("/admin/categories");
+    revalidatePath("/instructor/categories");
+    revalidatePath("/courses");
 
-  return actionSuccess();
+    return actionSuccess();
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to update category."
+    );
+    return actionError("Failed to update category.");
+  }
 }

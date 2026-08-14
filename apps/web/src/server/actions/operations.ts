@@ -138,27 +138,34 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
     return actionError("Course not found");
   }
 
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  await tablesDB.updateRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.courses,
-    rowId: parsed.data.courseId,
-    data: {
-      isPublished: parsed.data.isPublished,
-      isFeatured: parsed.data.isFeatured,
-    },
-  });
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courses,
+      rowId: parsed.data.courseId,
+      data: {
+        isPublished: parsed.data.isPublished,
+        isFeatured: parsed.data.isFeatured,
+      },
+    });
 
-  revalidatePath("/app/courses");
-  revalidatePath("/app/dashboard");
-  revalidatePath("/admin/courses");
-  revalidatePath("/admin");
-  revalidatePath("/instructor");
-  revalidateHomeContentPaths();
-  revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+    revalidatePath("/app/courses");
+    revalidatePath("/app/dashboard");
+    revalidatePath("/admin/courses");
+    revalidatePath("/admin");
+    revalidatePath("/instructor");
+    revalidateHomeContentPaths();
+    revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
 
-  return actionSuccess();
+    return actionSuccess();
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to update course visibility."
+    );
+    return actionError("Failed to update course visibility.");
+  }
 }
 
 export async function updateInstructorCourseAction(formData: FormData): Promise<ActionResult> {
@@ -184,27 +191,34 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
     return actionError("Course not found or you do not have permission to edit it");
   }
 
-  const { tablesDB } = await createAdminClient();
+  try {
+    const { tablesDB } = await createAdminClient();
 
-  await tablesDB.updateRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.courses,
-    rowId: parsed.data.courseId,
-    data: {
-      title: parsed.data.title,
-      description: parsed.data.shortDescription,
-      shortDescription: parsed.data.shortDescription,
-      accessModel: parsed.data.accessModel,
-      price: parsed.data.accessModel === "free" ? 0 : parsed.data.price,
-      isPublished: parsed.data.isPublished,
-      requirements: parsed.data.requirements,
-      whatYouLearn: parsed.data.whatYouLearn,
-    },
-  });
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.courses,
+      rowId: parsed.data.courseId,
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.shortDescription,
+        shortDescription: parsed.data.shortDescription,
+        accessModel: parsed.data.accessModel,
+        price: parsed.data.accessModel === "free" ? 0 : parsed.data.price,
+        isPublished: parsed.data.isPublished,
+        requirements: parsed.data.requirements,
+        whatYouLearn: parsed.data.whatYouLearn,
+      },
+    });
 
-  revalidateCourseEditorPaths(parsed.data.courseId);
-  revalidatePath("/admin/courses");
-  revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
+    revalidateCourseEditorPaths(parsed.data.courseId);
+    revalidatePath("/admin/courses");
+    revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
 
-  return actionSuccess();
+    return actionSuccess();
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to update course."
+    );
+    return actionError("Failed to update course.");
+  }
 }

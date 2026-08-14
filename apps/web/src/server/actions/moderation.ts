@@ -33,7 +33,7 @@ const resolveModerationSchema = z.object({
   actionId: z.string().trim().min(1),
 });
 
-export async function applyModerationActionAction(formData: FormData): Promise<ActionResult> {
+export async function applyModerationAction(formData: FormData): Promise<ActionResult> {
   const { user } = await requireRole(["admin", "moderator"]);
 
   const parsed = applyModerationSchema.safeParse({
@@ -77,25 +77,32 @@ export async function applyModerationActionAction(formData: FormData): Promise<A
     // Fall back to the submitted display name when the user record is unavailable.
   }
 
-  await tablesDB.createRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.moderationActions,
-    rowId: ID.unique(),
-    data: {
-      moderatorId: user.$id,
-      moderatorName: user.name,
-      targetUserId: parsed.data.targetUserId,
-      targetUserName,
-      action: parsed.data.action,
-      scope: parsed.data.scope,
-      reason: parsed.data.reason,
-      duration: parsed.data.duration || "",
-      entityType: parsed.data.entityType || "",
-      entityId: parsed.data.entityId || "",
-      createdAt: new Date().toISOString(),
-      revertedBy: "",
-    },
-  });
+  try {
+    await tablesDB.createRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.moderationActions,
+      rowId: ID.unique(),
+      data: {
+        moderatorId: user.$id,
+        moderatorName: user.name,
+        targetUserId: parsed.data.targetUserId,
+        targetUserName,
+        action: parsed.data.action,
+        scope: parsed.data.scope,
+        reason: parsed.data.reason,
+        duration: parsed.data.duration || "",
+        entityType: parsed.data.entityType || "",
+        entityId: parsed.data.entityId || "",
+        createdAt: new Date().toISOString(),
+        revertedBy: "",
+      },
+    });
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to apply moderation action."
+    );
+    return actionError("Failed to apply moderation action.");
+  }
 
   if (isThreadAction && (parsed.data.action === "pin" || parsed.data.action === "unpin")) {
     try {
@@ -122,7 +129,7 @@ export async function applyModerationActionAction(formData: FormData): Promise<A
   return actionSuccess();
 }
 
-export async function resolveModerationActionAction(formData: FormData): Promise<ActionResult> {
+export async function resolveModerationAction(formData: FormData): Promise<ActionResult> {
   const { user } = await requireRole(["admin", "moderator"]);
 
   const parsed = resolveModerationSchema.safeParse({
@@ -135,15 +142,22 @@ export async function resolveModerationActionAction(formData: FormData): Promise
 
   const { tablesDB } = await createAdminClient();
 
-  await tablesDB.updateRow({
-    databaseId: APPWRITE_CONFIG.databaseId,
-    tableId: APPWRITE_CONFIG.tables.moderationActions,
-    rowId: parsed.data.actionId,
-    data: {
-      revertedBy: user.$id,
-      revertedAt: new Date().toISOString(),
-    },
-  });
+  try {
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.moderationActions,
+      rowId: parsed.data.actionId,
+      data: {
+        revertedBy: user.$id,
+        revertedAt: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to resolve moderation action."
+    );
+    return actionError("Failed to resolve moderation action.");
+  }
 
   revalidatePath("/moderator/reports");
   revalidatePath("/moderator");
