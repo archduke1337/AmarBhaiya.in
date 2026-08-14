@@ -8,6 +8,7 @@ import { requireAuth } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import type { AnyRow } from "@/types/rows";
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -44,8 +45,6 @@ const billingInfoSchema = z.object({
 }, { message: "Student phone and parent phone cannot be the same.", path: ["parentPhone"] });
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-
-type AnyRow = Record<string, unknown> & { $id: string };
 
 async function findRowByUserId(
   tableId: string,

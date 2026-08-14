@@ -1,5 +1,4 @@
 import { Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 
 import type { Role } from "@/lib/utils/constants";
 import type {
@@ -7,14 +6,13 @@ import type {
   ForumCategory, ForumThread, Lesson, LiveSession,
   ModerationAction, Module, Payment, Quiz, QuizAttempt, Submission,
 } from "@/types/appwrite";
+import type { AnyRow } from "@/types/rows";
 
 import { APPWRITE_CONFIG } from "../config";
 import { createAdminClient, createSessionClient } from "../server";
 export { isSubmissionReviewed, getSubmissionReviewedAt } from "@/lib/utils/submission-review";
 
-export type AnyRow = Models.Row & {
-  [key: string]: unknown;
-};
+export type { AnyRow } from "@/types/rows";
 
 export type AdminClient = Awaited<ReturnType<typeof createAdminClient>>;
 

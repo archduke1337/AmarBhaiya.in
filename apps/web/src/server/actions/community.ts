@@ -9,11 +9,11 @@ import { getUserRole } from "@/server/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import {
   listAllRows,
-  type AnyAppwriteRow,
 } from "@/server/appwrite/row-pagination";
 import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import type { AnyRow } from "@/types/rows";
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
@@ -49,8 +49,6 @@ export type ForumThreadDetail = {
   replyCount: number;
   createdAt: string;
 };
-
-type AnyRow = AnyAppwriteRow;
 
 async function getForumThreadRow(threadId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();

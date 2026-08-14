@@ -11,8 +11,7 @@ import { createAdminClient, createSessionClient } from "@/server/appwrite/server
 import { passwordSchema } from "@/server/validators/auth";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { handleActionError } from "@/lib/errors/error-handler";
-
-type AnyRow = Record<string, unknown> & { $id: string };
+import type { AnyRow } from "@/types/rows";
 
 async function getLiveSessionRow(sessionId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();

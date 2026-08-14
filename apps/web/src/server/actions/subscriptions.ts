@@ -1,7 +1,6 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/server/appwrite/auth";
@@ -11,8 +10,8 @@ import { createAdminClient } from "@/server/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
 import { processInBatches } from "@/lib/utils/batch";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import type { AnyRow } from "@/types/rows";
 
-type AnyRow = Models.Row & Record<string, unknown>;
 const VALID_SUBSCRIPTION_STATUSES = new Set(["active", "expired", "cancelled"]);
 type AdminTablesDB = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
 type AdminUsers = Awaited<ReturnType<typeof createAdminClient>>["users"];

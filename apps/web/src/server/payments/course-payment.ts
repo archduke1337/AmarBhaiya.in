@@ -2,12 +2,12 @@ import { ID, Query } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import type { createAdminClient } from "@/server/appwrite/server";
+import type { AnyRow } from "@/types/rows";
 
 type TablesDbClient = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
 
 type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
 
-type AnyRow = Record<string, unknown> & { $id: string };
 type PaymentRow = AnyRow & {
   userId?: string;
   courseId?: string;

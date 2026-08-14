@@ -1,7 +1,6 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/server/appwrite/auth";
@@ -11,6 +10,7 @@ import { createAdminClient } from "@/server/appwrite/server";
 import { processInBatches } from "@/lib/utils/batch";
 import { toNotificationActionUrl } from "@/lib/utils/url";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import type { AnyRow } from "@/types/rows";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -24,8 +24,6 @@ export type Notification = {
   isRead: boolean;
   createdAt: string;
 };
-
-type AnyRow = Models.Row & Record<string, unknown>;
 
 type CreateNotificationInput = {
   userId: string;

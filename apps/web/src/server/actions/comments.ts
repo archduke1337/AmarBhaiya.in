@@ -12,8 +12,7 @@ import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { sanitizeHtml } from "@/lib/utils/sanitize";
 import { revalidateEach } from "@/lib/utils/revalidate";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
-
-type AnyRow = Record<string, unknown> & { $id: string };
+import type { AnyRow } from "@/types/rows";
 
 export type DiscussionComment = {
   id: string;

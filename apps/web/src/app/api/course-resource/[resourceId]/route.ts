@@ -5,10 +5,9 @@ import { userCanManageLesson, userHasCourseAccess } from "@/server/appwrite/acce
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
 import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import type { AnyRow } from "@/types/rows";
 
 export const runtime = "nodejs";
-
-type AnyRow = Record<string, unknown> & { $id: string };
 
 async function getAuthenticatedUserContext() {
   try {

@@ -4,10 +4,9 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { userHasCourseAccess } from "@/server/appwrite/access";
 import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
 import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import type { AnyRow } from "@/types/rows";
 
 export const runtime = "nodejs";
-
-type AnyRow = Record<string, unknown> & { $id: string };
 
 function getLessonVideoFileId(lesson: Record<string, unknown>): string {
   return String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? "");

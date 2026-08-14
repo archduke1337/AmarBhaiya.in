@@ -1,10 +1,11 @@
 import { Query } from "node-appwrite";
-import type { Models, TablesDB } from "node-appwrite";
+import type { TablesDB } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { chunkValues } from "@/server/appwrite/dashboard-data/internal";
+import type { AnyRow } from "@/types/rows";
 
-export type AnyAppwriteRow = Models.Row & Record<string, unknown>;
+export type AnyAppwriteRow = AnyRow;
 
 export async function listAllRows<Row extends AnyAppwriteRow>(
   tablesDB: TablesDB,

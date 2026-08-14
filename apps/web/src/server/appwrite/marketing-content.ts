@@ -1,5 +1,4 @@
 import { Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
@@ -24,10 +23,7 @@ import type {
   Module,
   SiteCopyRecord,
 } from "@/types/appwrite";
-
-type AnyRow = Models.Row & {
-  [key: string]: unknown;
-};
+import type { AnyRow } from "@/types/rows";
 
 type TablesDbClient = Awaited<ReturnType<typeof createAdminClient>>["tablesDB"];
 

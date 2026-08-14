@@ -14,7 +14,6 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { executeDeletePlan } from "@/server/appwrite/delete-plan";
 import {
   listAllRows,
-  type AnyAppwriteRow,
 } from "@/server/appwrite/row-pagination";
 import { createAdminClient } from "@/server/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
@@ -22,8 +21,7 @@ import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { handleActionError } from "@/lib/errors/error-handler";
 import { revalidateEach } from "@/lib/utils/revalidate";
-
-type AnyRow = AnyAppwriteRow;
+import type { AnyRow } from "@/types/rows";
 
 async function getQuizRow(quizId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();

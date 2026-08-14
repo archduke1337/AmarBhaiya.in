@@ -1,7 +1,6 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth } from "@/server/appwrite/auth";
@@ -9,8 +8,7 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { listAllRows } from "@/server/appwrite/row-pagination";
 import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
-
-type AnyRow = Models.Row & Record<string, unknown>;
+import type { AnyRow } from "@/types/rows";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

@@ -6,13 +6,12 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { upsertLessonProgressRow } from "@/server/appwrite/progress";
-import { listAllRows, type AnyAppwriteRow } from "@/server/appwrite/row-pagination";
+import { listAllRows } from "@/server/appwrite/row-pagination";
 import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { revalidateEach } from "@/lib/utils/revalidate";
-
-type AnyRow = AnyAppwriteRow;
+import type { AnyRow } from "@/types/rows";
 
 function isCompletedProgressRow(row: Record<string, unknown>): boolean {
   return typeof row.completedAt === "string" && row.completedAt.trim().length > 0;

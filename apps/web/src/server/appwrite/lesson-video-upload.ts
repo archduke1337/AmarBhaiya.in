@@ -11,8 +11,7 @@ import {
   isAllowedLessonVideoExtension,
 } from "@/server/uploads/lesson-video";
 import type { Role } from "@/lib/utils/constants";
-
-type AnyRow = Record<string, unknown> & { $id: string };
+import type { AnyRow } from "@/types/rows";
 
 type FinalizeLessonVideoUploadInput = {
   courseId: string;

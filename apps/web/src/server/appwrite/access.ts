@@ -3,8 +3,7 @@ import { Query } from "node-appwrite";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import type { Role } from "@/lib/utils/constants";
-
-type AnyRow = Record<string, unknown> & { $id: string };
+import type { AnyRow } from "@/types/rows";
 
 async function getRowById(tableId: string, rowId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();
