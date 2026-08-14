@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { DM_Serif_Display, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { SkipLink } from "@/components/layout/skip-link";
@@ -12,6 +12,14 @@ const bodyFont = Plus_Jakarta_Sans({
   variable: "--font-body",
   display: "swap",
   weight: "variable",
+});
+
+// DM Serif Display — editorial luxury serif for headings
+const headingFont = DM_Serif_Display({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  weight: "400",
 });
 
 // ── Metadata ─────────────────────────────────────────────────
@@ -82,7 +90,7 @@ export default function RootLayout({
   return (
     <html
       lang="en-IN"
-      className={`${bodyFont.variable} h-full`}
+      className={`${bodyFont.variable} ${headingFont.variable} h-full`}
       suppressHydrationWarning
       // HeroUI v3 theme switching is done via data-theme + class
     >

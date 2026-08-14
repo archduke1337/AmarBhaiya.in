@@ -54,6 +54,7 @@
     /* ── Brand Accent — vibrant saffron/amber ── */
     --accent:            oklch(0.72 0.17 55);      /* #F5A623-ish warm amber */
     --accent-foreground: var(--eclipse);
+    --primary-hover:     color-mix(in oklab, var(--accent) 88%, var(--eclipse) 12%);
 
     /* Form fields */
     --field-background:   var(--white);
@@ -74,6 +75,10 @@
     --separator:  oklch(0.91 0.005 88);
     --focus:      var(--accent);
     --link:       var(--accent);
+
+    /* Popover (sonner toasts, dropdowns) */
+    --popover:            var(--surface);
+    --popover-foreground: var(--surface-foreground);
 
     /* Shadows — soft ambient, iOS-style */
     --surface-shadow:
@@ -108,6 +113,7 @@
     /* Accent glows warmer in dark */
     --accent:            oklch(0.78 0.17 55);
     --accent-foreground: oklch(0.10 0.005 85);
+    --primary-hover:     color-mix(in oklab, var(--accent) 90%, var(--white) 10%);
 
     --field-background:  oklch(0.190 0.010 262);
     --field-foreground:  oklch(0.940 0.005 88);
@@ -123,6 +129,9 @@
 
     --border:    oklch(0.25 0.008 262 / 70%);
     --separator: oklch(0.22 0.008 262);
+
+    --popover:            var(--surface);
+    --popover-foreground: var(--surface-foreground);
 
     --surface-shadow: 0 0 0 0 transparent;
     --overlay-shadow:
