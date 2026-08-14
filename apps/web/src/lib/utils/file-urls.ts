@@ -1,4 +1,4 @@
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { Client, Storage } from "appwrite";
 
 const storageClient = new Client()

@@ -1,11 +1,11 @@
 import { Send, Megaphone } from "lucide-react";
 
-import { requireRole } from "@/lib/appwrite/auth";
-import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
+import { requireRole } from "@/server/appwrite/auth";
+import { getAdminUsers } from "@/server/appwrite/dashboard-data";
 import {
   sendNotificationFormAction,
   broadcastNotificationFormAction,
-} from "@/actions/form-wrappers";
+} from "@/server/actions/form-wrappers";
 import { PageHeader } from "@/components/dashboard";
 import { formatAdminUserOption } from "@/lib/utils/admin-select";
 

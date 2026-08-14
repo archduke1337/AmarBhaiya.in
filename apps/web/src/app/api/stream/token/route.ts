@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { createSessionClient } from "@/lib/appwrite/server";
-import { createStreamUserToken, ensureStreamUser } from "@/lib/stream/client";
+import { createSessionClient } from "@/server/appwrite/server";
+import { createStreamUserToken, ensureStreamUser } from "@/server/stream/client";
 
 export const runtime = "nodejs";
 

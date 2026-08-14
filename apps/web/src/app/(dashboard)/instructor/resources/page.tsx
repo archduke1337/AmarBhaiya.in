@@ -1,6 +1,6 @@
 import { BookOpen, Download, Eye, EyeOff, FileText, Plus } from "lucide-react";
 
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import {
   createCourseResourceFormAction,
   updateCourseResourceFormAction,
@@ -8,12 +8,12 @@ import {
   createStandaloneResourceFormAction,
   updateStandaloneResourceFormAction,
   deleteStandaloneResourceFormAction,
-} from "@/actions/form-wrappers";
+} from "@/server/actions/form-wrappers";
 import {
   getInstructorCourseResourceOptions,
   getInstructorCourseResources,
   getInstructorResources,
-} from "@/actions/resources";
+} from "@/server/actions/resources";
 import { DirectAppwriteUploadForm } from "@/components/instructor/direct-appwrite-upload-form";
 import { formatCurrency } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";

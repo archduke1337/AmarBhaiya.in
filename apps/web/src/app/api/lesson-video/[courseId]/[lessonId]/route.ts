@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { userHasCourseAccess } from "@/lib/appwrite/access";
-import { proxyAppwriteBucketFile } from "@/lib/appwrite/file-proxy";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { userHasCourseAccess } from "@/server/appwrite/access";
+import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
 
 export const runtime = "nodejs";
 

@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { Eye, EyeOff, Edit3, Code2, Link2, List, ListOrdered, Heading1, Heading2, Bold, Italic, Image as ImageIcon, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownRenderer } from "./markdown-renderer";
-import { uploadBlogImageAction } from "@/actions/upload";
+import { uploadBlogImageAction } from "@/server/actions/upload";
 
 type MarkdownEditorProps = {
   id: string;

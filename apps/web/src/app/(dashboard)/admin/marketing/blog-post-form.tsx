@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAutoSave } from "./use-auto-save";
 import { MarkdownEditor } from "./markdown-editor";
-import { checkSlugUniquenessFormAction } from "@/actions/form-wrappers/marketing";
+import { checkSlugUniquenessFormAction } from "@/server/actions/form-wrappers/marketing";
 
 type BlogPostFormProps = {
   createBlogPostFormAction: (formData: FormData) => Promise<void>;

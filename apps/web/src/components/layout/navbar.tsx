@@ -12,7 +12,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@heroui/react";
 import { useSyncExternalStore } from "react";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/theme/theme-provider";
 
 const subscribe = () => () => {};
 

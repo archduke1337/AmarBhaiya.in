@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
-import { validateStoredAppwriteFileSignature } from "@/lib/appwrite/file-signature";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
+import { validateStoredAppwriteFileSignature } from "@/server/appwrite/file-signature";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 
 export const runtime = "nodejs";
 

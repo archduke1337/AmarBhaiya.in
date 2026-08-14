@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MarkdownEditor } from "../marketing/markdown-editor";
-import { checkSlugUniquenessFormAction } from "@/actions/form-wrappers/marketing";
+import { checkSlugUniquenessFormAction } from "@/server/actions/form-wrappers/marketing";
 
 type EditBlogPostFormProps = {
   post: {

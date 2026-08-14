@@ -16,8 +16,8 @@ import {
 import {
   upsertSiteCopyFormAction,
   updateCourseVisibilityFormAction,
-} from "@/actions/form-wrappers";
-import { getAdminDashboardStats, getAdminCourses } from "@/lib/appwrite/dashboard-data";
+} from "@/server/actions/form-wrappers";
+import { getAdminDashboardStats, getAdminCourses } from "@/server/appwrite/dashboard-data";
 import {
   formatCompactNumber,
   formatCurrency,
@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import { CollectionsForm } from "./collections-form";
 import { JsonEditor } from "./json-editor";
 

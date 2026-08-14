@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSessionClient } from "@/lib/appwrite/server";
+import { createSessionClient } from "@/server/appwrite/server";
 
 export async function GET() {
   try {

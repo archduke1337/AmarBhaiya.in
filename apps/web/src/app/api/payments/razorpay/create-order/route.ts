@@ -2,17 +2,17 @@ import { ID, Query } from "node-appwrite";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 import {
   createRazorpayOrder,
   getRazorpayPublicKey,
-} from "@/lib/payments/razorpay";
+} from "@/server/payments/razorpay";
 
 export const runtime = "nodejs";
 
-import { validateCouponAction } from "@/actions/coupons";
+import { validateCouponAction } from "@/server/actions/coupons";
 
 const createOrderSchema = z.object({
   courseId: z.string().min(1),

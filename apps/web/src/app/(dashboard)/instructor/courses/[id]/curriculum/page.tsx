@@ -12,22 +12,22 @@ import {
   deleteQuizFormAction,
   createAssignmentFormAction,
   deleteAssignmentFormAction,
-} from "@/actions/form-wrappers";
-import { deleteModuleFormAction, deleteLessonFormAction } from "@/actions/form-wrappers";
+} from "@/server/actions/form-wrappers";
+import { deleteModuleFormAction, deleteLessonFormAction } from "@/server/actions/form-wrappers";
 import {
   getCourseQuizzes,
-} from "@/actions/quiz";
+} from "@/server/actions/quiz";
 import {
   getCourseAssignments,
-} from "@/actions/assignments";
+} from "@/server/actions/assignments";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { LessonVideoUploadForm } from "@/components/instructor/lesson-video-upload-form";
 import { Badge } from "@/components/ui/badge";
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import {
   getInstructorCourseSummary,
   getInstructorCurriculum,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import { formatDuration } from "@/lib/utils/format";
 
 type PageProps = {

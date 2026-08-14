@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 
 export default async function InstructorLayout({
   children,

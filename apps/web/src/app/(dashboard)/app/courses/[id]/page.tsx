@@ -2,15 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpenCheck, Download, Lock, MessageSquareMore } from "lucide-react";
 
-import { postCourseCommentFormAction } from "@/actions/form-wrappers";
-import { getCourseComments } from "@/actions/comments";
-import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
+import { postCourseCommentFormAction } from "@/server/actions/form-wrappers";
+import { getCourseComments } from "@/server/actions/comments";
+import { enrollInCourseFormAction } from "@/server/actions/enrollment-form-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { requireAuth } from "@/lib/appwrite/auth";
-import { userHasCourseAccess } from "@/lib/appwrite/access";
-import { getPublicCourseBySlug } from "@/lib/appwrite/dashboard-data";
+import { requireAuth } from "@/server/appwrite/auth";
+import { userHasCourseAccess } from "@/server/appwrite/access";
+import { getPublicCourseBySlug } from "@/server/appwrite/dashboard-data";
 import { formatRelativeTime } from "@/lib/utils/format";
 
 type PageProps = {

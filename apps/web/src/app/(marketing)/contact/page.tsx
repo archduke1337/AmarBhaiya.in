@@ -4,7 +4,7 @@ import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Badge } from "@/components/ui/badge";
 
-import { getContactChannelsContent } from "@/lib/appwrite/marketing-content";
+import { getContactChannelsContent } from "@/server/appwrite/marketing-content";
 import { ContactForm } from "./contact-form";
 
 export const metadata: Metadata = {

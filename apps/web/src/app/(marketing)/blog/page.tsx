@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-import { getPublicBlogPageData } from "@/lib/appwrite/marketing-content";
+import { getPublicBlogPageData } from "@/server/appwrite/marketing-content";
 
 type SearchParams = Promise<{
   category?: string;

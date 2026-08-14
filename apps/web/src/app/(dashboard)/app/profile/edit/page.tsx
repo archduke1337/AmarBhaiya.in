@@ -1,10 +1,10 @@
-import { requireAuth } from "@/lib/appwrite/auth";
-import { upsertStudentProfileFormAction } from "@/actions/form-wrappers";
+import { requireAuth } from "@/server/appwrite/auth";
+import { upsertStudentProfileFormAction } from "@/server/actions/form-wrappers";
 import {
   getStudentProfile,
-} from "@/actions/profile";
-import { updateDisplayNameFormAction, changePasswordFormAction } from "@/actions/form-wrappers";
-import { sendVerificationEmailAction } from "@/actions/verification";
+} from "@/server/actions/profile";
+import { updateDisplayNameFormAction, changePasswordFormAction } from "@/server/actions/form-wrappers";
+import { sendVerificationEmailAction } from "@/server/actions/verification";
 import { AvatarUploadForm } from "@/components/profile/avatar-upload-form";
 import { PageHeader } from "@/components/dashboard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { Query } from "node-appwrite";
 
-import { requireRole } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { requireRole } from "@/server/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
 import {
   safeListAllRows,
   listRowsByFieldValues,
   type AnyRow,
-} from "@/lib/appwrite/dashboard-data/internal";
+} from "@/server/appwrite/dashboard-data/internal";
 
 export async function GET() {
   await requireRole(["admin"]);

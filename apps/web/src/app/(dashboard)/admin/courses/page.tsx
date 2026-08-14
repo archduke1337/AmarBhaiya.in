@@ -1,6 +1,6 @@
 import { BookOpen, GraduationCap, DollarSign, Layers } from "lucide-react";
 
-import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
+import { getAdminCourses } from "@/server/appwrite/dashboard-data";
 import { formatCurrency } from "@/lib/utils/format";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
 import { AdminCoursesTable } from "./courses-table";

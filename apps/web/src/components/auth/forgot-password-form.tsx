@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { forgotPasswordAction } from "@/lib/appwrite/actions";
+import { forgotPasswordAction } from "@/server/appwrite/actions";
 import { Button, Input } from "@heroui/react";
 
 export function ForgotPasswordForm() {

@@ -1,8 +1,8 @@
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomTabBar } from "@/components/layout/bottom-tab-bar";
-import { requireAuth } from "@/lib/appwrite/auth";
-import { getUserRole } from "@/lib/appwrite/auth-utils";
+import { requireAuth } from "@/server/appwrite/auth";
+import { getUserRole } from "@/server/appwrite/auth-utils";
 
 export default async function DashboardLayout({
   children,

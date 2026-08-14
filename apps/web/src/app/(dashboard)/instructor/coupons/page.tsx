@@ -1,17 +1,17 @@
 import { Tag, Plus, Calendar } from "lucide-react";
 import { Query } from "node-appwrite";
 
-import { requireAuth, requireRole } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { requireAuth, requireRole } from "@/server/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
 import {
   getCoupons,
-} from "@/actions/coupons";
+} from "@/server/actions/coupons";
 import {
   createCouponFormAction,
   toggleCouponFormAction,
   deleteCouponFormAction,
-} from "@/actions/form-wrappers";
+} from "@/server/actions/form-wrappers";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 

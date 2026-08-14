@@ -1,15 +1,15 @@
 import { ID } from "node-appwrite";
 import { NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { buildSessionCookieOptions } from "@/lib/appwrite/session-cookie";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { buildSessionCookieOptions } from "@/server/appwrite/session-cookie";
 import {
   createAdminClient,
   createPublicClient,
-} from "@/lib/appwrite/server";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
-import { validateOrigin } from "@/lib/csrf";
-import { registerSchema } from "@/lib/validators/auth";
+} from "@/server/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
+import { validateOrigin } from "@/server/csrf";
+import { registerSchema } from "@/server/validators/auth";
 
 export const runtime = "nodejs";
 

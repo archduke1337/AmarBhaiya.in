@@ -9,7 +9,7 @@ import {
   PUBLIC_APPWRITE_CONFIG,
   getMissingPublicAppwriteEnvKeys,
   hasPublicAppwriteConfig,
-} from "@/lib/appwrite/public-config";
+} from "@/server/appwrite/public-config";
 
 const AVATAR_ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"] as const;
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024;

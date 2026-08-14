@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search, Filter, ChevronRight } from "lucide-react";
-import type { AnyAppwriteRow } from "@/lib/appwrite/row-pagination";
+import type { AnyAppwriteRow } from "@/server/appwrite/row-pagination";
 
 export function AdminStudentsTable({
   profiles,

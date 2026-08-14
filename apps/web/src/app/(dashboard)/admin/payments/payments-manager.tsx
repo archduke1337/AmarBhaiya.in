@@ -23,7 +23,7 @@ import {
   updatePaymentStatusAction,
   processRefundAction,
   sendPaymentReminderAction,
-} from "@/actions/admin-payments";
+} from "@/server/actions/admin-payments";
 
 type Payment = {
   id: string;

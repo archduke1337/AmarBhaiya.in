@@ -11,7 +11,7 @@ import {
 
 import { cn } from "@/lib/utils/cn";
 import type { Role } from "@/lib/utils/constants";
-import { logoutAction } from "@/lib/appwrite/actions";
+import { logoutAction } from "@/server/appwrite/actions";
 import { getNavItems, getWorkspaceCopy, isNavItemActive } from "@/config/dashboard-nav";
 
 type SidebarProps = {

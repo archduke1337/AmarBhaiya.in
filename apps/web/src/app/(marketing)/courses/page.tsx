@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import {
   getPublicCoursesPageData,
   type PublicCourseListItem,
-} from "@/lib/appwrite/marketing-content";
+} from "@/server/appwrite/marketing-content";
 
 type SearchParams = Promise<{
   q?: string;

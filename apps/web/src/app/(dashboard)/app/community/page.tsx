@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { MessageSquare, Pin } from "lucide-react";
 
-import { createForumThreadFormAction } from "@/actions/form-wrappers";
-import { requireAuth } from "@/lib/appwrite/auth";
+import { createForumThreadFormAction } from "@/server/actions/form-wrappers";
+import { requireAuth } from "@/server/appwrite/auth";
 import {
   getCommunityCategoriesData,
   getCommunityThreadsData,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

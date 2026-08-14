@@ -11,13 +11,13 @@ import {
   Lock,
 } from "lucide-react";
 
-import { requireAuth } from "@/lib/appwrite/auth";
-import { userHasCourseAccess } from "@/lib/appwrite/access";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { requireAuth } from "@/server/appwrite/auth";
+import { userHasCourseAccess } from "@/server/appwrite/access";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
 import {
   listAllRows,
-} from "@/lib/appwrite/row-pagination";
+} from "@/server/appwrite/row-pagination";
 import {
   getFilePreviewUrl,
 } from "@/lib/utils/file-urls";
@@ -25,12 +25,12 @@ import { normalizeHttpUrl } from "@/lib/utils/url";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LessonVideoPlayer } from "@/components/lesson-video-player";
+import { LessonVideoPlayer } from "@/components/course/lesson-video-player";
 import { Textarea } from "@/components/ui/textarea";
-import { getCourseProgress } from "@/actions/progress";
-import { markLessonCompleteFormAction } from "@/actions/enrollment-form-wrapper";
-import { postLessonCommentFormAction } from "@/actions/form-wrappers";
-import { getLessonComments } from "@/actions/comments";
+import { getCourseProgress } from "@/server/actions/progress";
+import { markLessonCompleteFormAction } from "@/server/actions/enrollment-form-wrapper";
+import { postLessonCommentFormAction } from "@/server/actions/form-wrappers";
+import { getLessonComments } from "@/server/actions/comments";
 import { Query } from "node-appwrite";
 
 type AnyRow = Record<string, unknown> & { $id: string };

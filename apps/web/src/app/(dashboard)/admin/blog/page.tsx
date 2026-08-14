@@ -10,12 +10,12 @@ import {
   createBlogPostFormAction,
   updateBlogPostFormAction,
   deleteBlogPostFormAction,
-} from "@/actions/form-wrappers";
-import { getAdminBlogPosts } from "@/actions/marketing";
+} from "@/server/actions/form-wrappers";
+import { getAdminBlogPosts } from "@/server/actions/marketing";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import { BlogPreviewButton } from "../marketing/blog-preview";
 import { BlogPostForm } from "../marketing/blog-post-form";
 import { EditBlogPostForm } from "./edit-blog-post-form";

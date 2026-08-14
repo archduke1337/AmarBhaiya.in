@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { confirmPasswordRecoveryAction } from "@/actions/verification";
+import { confirmPasswordRecoveryAction } from "@/server/actions/verification";
 import { Button, Input } from "@heroui/react";
 import { getPasswordStrength } from "@/lib/utils/password-strength";
 

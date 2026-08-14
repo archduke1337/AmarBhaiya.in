@@ -9,8 +9,8 @@ import {
   StatGrid,
 } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
-import { requireRole } from "@/lib/appwrite/auth";
-import { getInstructorStudents } from "@/lib/appwrite/dashboard-data";
+import { requireRole } from "@/server/appwrite/auth";
+import { getInstructorStudents } from "@/server/appwrite/dashboard-data";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { InstructorStudentsTable } from "./students-table";
 

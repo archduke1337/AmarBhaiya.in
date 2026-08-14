@@ -1,6 +1,6 @@
-import { createCourseDraftFormAction } from "@/actions/form-wrappers";
-import { requireRole } from "@/lib/appwrite/auth";
-import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
+import { createCourseDraftFormAction } from "@/server/actions/form-wrappers";
+import { requireRole } from "@/server/appwrite/auth";
+import { getAdminCategories } from "@/server/appwrite/dashboard-data";
 
 export default async function InstructorNewCoursePage() {
   await requireRole(["admin", "instructor"]);

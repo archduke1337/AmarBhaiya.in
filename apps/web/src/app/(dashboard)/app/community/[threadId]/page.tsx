@@ -2,16 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pin, Lock, MessageSquare } from "lucide-react";
 
-import { requireAuth } from "@/lib/appwrite/auth";
+import { requireAuth } from "@/server/appwrite/auth";
 import {
   createForumReplyFormAction,
   deleteForumReplyFormAction,
-} from "@/actions/form-wrappers";
+} from "@/server/actions/form-wrappers";
 import {
   getForumThreadDetail,
   getForumThreadReplies,
-} from "@/actions/community";
-import { getUserRole } from "@/lib/appwrite/auth-utils";
+} from "@/server/actions/community";
+import { getUserRole } from "@/server/appwrite/auth-utils";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";

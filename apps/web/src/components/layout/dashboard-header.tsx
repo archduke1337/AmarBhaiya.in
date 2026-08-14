@@ -1,6 +1,6 @@
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@heroui/react";
-import { logoutAction } from "@/lib/appwrite/actions";
+import { logoutAction } from "@/server/appwrite/actions";
 import { MobileSidebar } from "@/components/layout/sidebar";
 import type { Role } from "@/lib/utils/constants";
 

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Search, Filter } from "lucide-react";
 
-import { updateUserRoleFormAction } from "@/actions/form-wrappers";
+import { updateUserRoleFormAction } from "@/server/actions/form-wrappers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,10 +1,10 @@
 import { Download, Eye, EyeOff, FileText, Plus } from "lucide-react";
 
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import {
   createStandaloneResourceFormAction,
-} from "@/actions/form-wrappers";
-import { getInstructorResources } from "@/actions/resources";
+} from "@/server/actions/form-wrappers";
+import { getInstructorResources } from "@/server/actions/resources";
 import { PageHeader, EmptyState, StatGrid, StatCard } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

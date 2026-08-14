@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
 
-import { getAboutPageContent } from "@/lib/appwrite/marketing-content";
+import { getAboutPageContent } from "@/server/appwrite/marketing-content";
 
 export const metadata: Metadata = {
   title: "About",

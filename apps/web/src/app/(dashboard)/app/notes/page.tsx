@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 import { Button } from "@heroui/react";
 
-import { getPublicNotesPageData, formatResourceType } from "@/lib/appwrite/marketing-content";
-import { requireAuth } from "@/lib/appwrite/auth";
+import { getPublicNotesPageData, formatResourceType } from "@/server/appwrite/marketing-content";
+import { requireAuth } from "@/server/appwrite/auth";
 
 export const dynamic = "force-dynamic";
 

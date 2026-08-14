@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import { Button } from "@heroui/react";
 
-import { requireAuth } from "@/lib/appwrite/auth";
-import { getUserRole } from "@/lib/appwrite/auth-utils";
+import { requireAuth } from "@/server/appwrite/auth";
+import { getUserRole } from "@/server/appwrite/auth-utils";
 import {
   getStudentProfileStats,
   getStudentEnrolledCourses,
@@ -22,12 +22,12 @@ import {
   getUpcomingLiveSessions,
   type StudentEnrolledCourse,
   type UpcomingSessionItem,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import { formatRelativeTime } from "@/lib/utils/format";
 import {
   getUserNotifications,
   getUnreadNotificationCount,
-} from "@/actions/notifications";
+} from "@/server/actions/notifications";
 import {
   PageHeader,
   StatCard,

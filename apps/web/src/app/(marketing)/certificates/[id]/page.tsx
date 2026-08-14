@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Award } from "lucide-react";
 
-import { getCertificateById } from "@/actions/certificate";
+import { getCertificateById } from "@/server/actions/certificate";
 
 type PageProps = {
   params: Promise<{ id: string }>;

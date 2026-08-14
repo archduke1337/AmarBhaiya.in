@@ -3,8 +3,8 @@ import { UserX, Clock, ShieldAlert, History } from "lucide-react";
 import {
   applyModerationActionFormAction,
   resolveModerationActionFormAction,
-} from "@/actions/form-wrappers";
-import { getModeratorStudents } from "@/lib/appwrite/dashboard-data";
+} from "@/server/actions/form-wrappers";
+import { getModeratorStudents } from "@/server/appwrite/dashboard-data";
 import {
   PageHeader,
   EmptyState,

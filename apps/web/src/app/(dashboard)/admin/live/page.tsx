@@ -1,7 +1,7 @@
 import { Video, Radio, Clock, AlertTriangle } from "lucide-react";
 
-import { deleteLiveSessionFormAction } from "@/actions/form-wrappers";
-import { getAdminLiveData } from "@/lib/appwrite/dashboard-data";
+import { deleteLiveSessionFormAction } from "@/server/actions/form-wrappers";
+import { getAdminLiveData } from "@/server/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";

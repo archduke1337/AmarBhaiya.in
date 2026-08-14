@@ -3,13 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Film, Layers, Users } from "lucide-react";
 
-import { updateInstructorCourseFormAction } from "@/actions/form-wrappers";
+import { updateInstructorCourseFormAction } from "@/server/actions/form-wrappers";
 import { CourseThumbnailUploadForm } from "@/components/instructor/course-thumbnail-upload-form";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
-import { requireRole } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { getInstructorCourseSummary } from "@/lib/appwrite/dashboard-data";
+import { requireRole } from "@/server/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { getInstructorCourseSummary } from "@/server/appwrite/dashboard-data";
 import { getFilePreviewUrl } from "@/lib/utils/file-urls";
 import { formatCurrency, formatDuration } from "@/lib/utils/format";
 import { formatLineSeparatedList } from "@/lib/utils/form-lists";

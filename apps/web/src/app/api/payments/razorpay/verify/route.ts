@@ -3,14 +3,14 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
-import { reconcileCoursePayment } from "@/lib/payments/course-payment";
-import { verifyRazorpayPaymentSignature } from "@/lib/payments/razorpay";
+import { reconcileCoursePayment } from "@/server/payments/course-payment";
+import { verifyRazorpayPaymentSignature } from "@/server/payments/razorpay";
 import { revalidateEach } from "@/lib/utils/revalidate";
-import { incrementCouponUsageAction } from "@/actions/coupons";
+import { incrementCouponUsageAction } from "@/server/actions/coupons";
 
 export const runtime = "nodejs";
 

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createSessionClient } from "@/lib/appwrite/server";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createSessionClient } from "@/server/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 
 export const runtime = "nodejs";
 

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { userHasCourseAccess } from "@/lib/appwrite/access";
-import { upsertLessonProgressRow } from "@/lib/appwrite/progress";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { userHasCourseAccess } from "@/server/appwrite/access";
+import { upsertLessonProgressRow } from "@/server/appwrite/progress";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
 
 export const runtime = "nodejs";
 

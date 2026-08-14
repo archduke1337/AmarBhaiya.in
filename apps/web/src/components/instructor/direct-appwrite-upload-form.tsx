@@ -9,13 +9,13 @@ import {
   PUBLIC_APPWRITE_CONFIG,
   getMissingPublicAppwriteEnvKeys,
   hasPublicAppwriteConfig,
-} from "@/lib/appwrite/public-config";
+} from "@/server/appwrite/public-config";
 import {
   type InstructorUploadKind,
   getInstructorUploadMaxBytes,
   getUploadFileExtension,
   isAllowedInstructorUploadExtension,
-} from "@/lib/uploads/instructor-file";
+} from "@/server/uploads/instructor-file";
 
 type DirectAppwriteUploadFormProps = {
   kind: InstructorUploadKind;

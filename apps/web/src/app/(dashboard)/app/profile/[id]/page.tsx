@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { getUserRole } from "@/lib/appwrite/auth-utils";
-import { requireAuth } from "@/lib/appwrite/auth";
-import { getStudentProfileStats } from "@/lib/appwrite/dashboard-data";
-import { getStudentProfile } from "@/actions/profile";
+import { getUserRole } from "@/server/appwrite/auth-utils";
+import { requireAuth } from "@/server/appwrite/auth";
+import { getStudentProfileStats } from "@/server/appwrite/dashboard-data";
+import { getStudentProfile } from "@/server/actions/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

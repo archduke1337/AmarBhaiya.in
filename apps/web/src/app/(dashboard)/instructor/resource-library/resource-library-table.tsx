@@ -11,7 +11,7 @@ import { DirectAppwriteUploadForm } from "@/components/instructor/direct-appwrit
 import {
   updateStandaloneResourceFormAction,
   deleteStandaloneResourceFormAction,
-} from "@/actions/form-wrappers";
+} from "@/server/actions/form-wrappers";
 
 type Resource = {
   id: string;

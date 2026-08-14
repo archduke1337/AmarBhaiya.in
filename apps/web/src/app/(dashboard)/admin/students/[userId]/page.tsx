@@ -2,14 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Query } from "node-appwrite";
 
-import { adminUnenrollFormAction } from "@/actions/enrollment-form-wrapper";
-import { requireRole } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { adminUnenrollFormAction } from "@/server/actions/enrollment-form-wrapper";
+import { requireRole } from "@/server/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
 import {
   listAllRows,
   type AnyAppwriteRow,
-} from "@/lib/appwrite/row-pagination";
+} from "@/server/appwrite/row-pagination";
 import { PageHeader } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";

@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { CreditCard, Receipt, Clock } from "lucide-react";
 
-import { requireAuth } from "@/lib/appwrite/auth";
-import { upsertBillingInfoFormAction } from "@/actions/form-wrappers";
+import { requireAuth } from "@/server/appwrite/auth";
+import { upsertBillingInfoFormAction } from "@/server/actions/form-wrappers";
 import {
   getBillingInfo,
   getBillingPaymentHistory,
-} from "@/actions/profile";
-import { getUserSubscription } from "@/actions/subscriptions";
-import { cancelSubscriptionFormAction } from "@/actions/form-wrappers";
+} from "@/server/actions/profile";
+import { getUserSubscription } from "@/server/actions/subscriptions";
+import { cancelSubscriptionFormAction } from "@/server/actions/form-wrappers";
 import { PageHeader, StatGrid, StatCard } from "@/components/dashboard";
 import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";

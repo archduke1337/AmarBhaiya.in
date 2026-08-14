@@ -1,7 +1,7 @@
 import { Activity, AlertTriangle, Clock, Shield } from "lucide-react";
 
-import { resolveModerationActionFormAction } from "@/actions/form-wrappers";
-import { getAdminModerationData } from "@/lib/appwrite/dashboard-data";
+import { resolveModerationActionFormAction } from "@/server/actions/form-wrappers";
+import { getAdminModerationData } from "@/server/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, StatGrid, StatCard, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";

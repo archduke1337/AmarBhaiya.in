@@ -5,16 +5,16 @@ import { Client, ID, Storage } from "appwrite";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { uploadCourseThumbnailAction } from "@/actions/upload";
+import { uploadCourseThumbnailAction } from "@/server/actions/upload";
 import {
   PUBLIC_APPWRITE_CONFIG,
   hasPublicAppwriteConfig,
-} from "@/lib/appwrite/public-config";
+} from "@/server/appwrite/public-config";
 import {
   getInstructorUploadMaxBytes,
   getUploadFileExtension,
   isAllowedInstructorUploadExtension,
-} from "@/lib/uploads/instructor-file";
+} from "@/server/uploads/instructor-file";
 
 type CourseThumbnailUploadFormProps = {
   courseId: string;

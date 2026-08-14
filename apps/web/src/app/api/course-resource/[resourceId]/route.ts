@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { getUserRole } from "@/lib/appwrite/auth-utils";
-import { userCanManageLesson, userHasCourseAccess } from "@/lib/appwrite/access";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { proxyAppwriteBucketFile } from "@/lib/appwrite/file-proxy";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
+import { getUserRole } from "@/server/appwrite/auth-utils";
+import { userCanManageLesson, userHasCourseAccess } from "@/server/appwrite/access";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
 
 export const runtime = "nodejs";
 

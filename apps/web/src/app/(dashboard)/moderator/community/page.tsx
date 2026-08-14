@@ -4,8 +4,8 @@ import {
   applyModerationActionFormAction,
   lockThreadFormAction,
   unlockThreadFormAction,
-} from "@/actions/form-wrappers";
-import { getModeratorCommunityData } from "@/lib/appwrite/dashboard-data";
+} from "@/server/actions/form-wrappers";
+import { getModeratorCommunityData } from "@/server/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 

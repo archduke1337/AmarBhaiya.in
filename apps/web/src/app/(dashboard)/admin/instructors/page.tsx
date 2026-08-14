@@ -1,16 +1,16 @@
 import { Users } from "lucide-react";
 import { Query } from "node-appwrite";
 
-import { requireRole } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { requireRole } from "@/server/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { formatCurrency } from "@/lib/utils/format";
 import {
   listAllRows,
   listRowsByFieldValues,
   type AnyAppwriteRow,
-} from "@/lib/appwrite/row-pagination";
+} from "@/server/appwrite/row-pagination";
 
 type InstructorInfo = {
   userId: string;

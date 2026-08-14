@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getHomePageContent } from "@/lib/appwrite/marketing-content";
+import { getHomePageContent } from "@/server/appwrite/marketing-content";
 
 export const runtime = "nodejs";
 export const revalidate = 3600;

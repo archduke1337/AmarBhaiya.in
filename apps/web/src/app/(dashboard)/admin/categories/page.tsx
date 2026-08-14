@@ -3,9 +3,9 @@ import { Folder, FolderPlus, Plus } from "lucide-react";
 import {
   createCategoryFormAction,
   updateCategoryFormAction,
-} from "@/actions/form-wrappers";
-import { deleteCategoryFormAction } from "@/actions/form-wrappers";
-import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
+} from "@/server/actions/form-wrappers";
+import { deleteCategoryFormAction } from "@/server/actions/form-wrappers";
+import { getAdminCategories } from "@/server/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

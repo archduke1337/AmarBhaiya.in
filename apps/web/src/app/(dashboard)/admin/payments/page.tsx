@@ -1,6 +1,6 @@
 import { CreditCard, DollarSign, TrendingUp, Clock, AlertTriangle, Download } from "lucide-react";
 
-import { getAdminPayments } from "@/lib/appwrite/dashboard-data";
+import { getAdminPayments } from "@/server/appwrite/dashboard-data";
 import { formatCurrency } from "@/lib/utils/format";
 import {
   EmptyState,

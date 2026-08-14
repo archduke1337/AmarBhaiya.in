@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { requireAuth } from "@/lib/appwrite/auth";
-import { proxyAppwriteBucketFile } from "@/lib/appwrite/file-proxy";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
+import { requireAuth } from "@/server/appwrite/auth";
+import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 
 export const runtime = "nodejs";
 

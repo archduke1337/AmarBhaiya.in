@@ -14,7 +14,7 @@ import Link from "next/link";
 import { Button } from "@heroui/react";
 import { ArrowRight } from "lucide-react";
 import { RevealWrapper } from "@/components/ui/reveal-wrapper";
-import { getHomePageContent } from "@/lib/appwrite/marketing-content";
+import { getHomePageContent } from "@/server/appwrite/marketing-content";
 import { AnnouncementBanner } from "@/components/marketing/announcement-banner";
 
 export const revalidate = 3600;

@@ -6,7 +6,7 @@ import { Search, Filter } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeTime } from "@/lib/utils/format";
-import type { InstructorStudentItem } from "@/lib/appwrite/dashboard-data";
+import type { InstructorStudentItem } from "@/server/appwrite/dashboard-data";
 
 export function InstructorStudentsTable({
   students,

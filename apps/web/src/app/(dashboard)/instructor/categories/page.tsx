@@ -1,9 +1,9 @@
 import {
   createCategoryFormAction,
   updateCategoryFormAction,
-} from "@/actions/form-wrappers";
-import { requireRole } from "@/lib/appwrite/auth";
-import { getAdminCategories } from "@/lib/appwrite/dashboard-data";
+} from "@/server/actions/form-wrappers";
+import { requireRole } from "@/server/appwrite/auth";
+import { getAdminCategories } from "@/server/appwrite/dashboard-data";
 
 export default async function InstructorCategoriesPage() {
   await requireRole(["admin", "instructor"]);

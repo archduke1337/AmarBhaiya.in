@@ -20,7 +20,7 @@ import {
   getAdminLiveData,
   getAdminModerationData,
   getAdminAuditLogs,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import {
   formatCompactNumber,
   formatCurrency,

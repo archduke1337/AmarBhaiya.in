@@ -9,13 +9,13 @@ import {
   PUBLIC_APPWRITE_CONFIG,
   getMissingPublicAppwriteEnvKeys,
   hasPublicAppwriteConfig,
-} from "@/lib/appwrite/public-config";
+} from "@/server/appwrite/public-config";
 import {
   LESSON_VIDEO_ALLOWED_EXTENSIONS,
   LESSON_VIDEO_MAX_BYTES,
   getFileExtension,
   isAllowedLessonVideoExtension,
-} from "@/lib/uploads/lesson-video";
+} from "@/server/uploads/lesson-video";
 
 type LessonVideoUploadFormProps = {
   courseId: string;

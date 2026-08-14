@@ -1,18 +1,18 @@
 import Link from "next/link";
 import { Tag, Plus, Percent, IndianRupee, Calendar, TrendingUp, DollarSign, Hash } from "lucide-react";
 
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import {
   getCoupons,
   getCouponAnalytics,
   type CouponItem,
-} from "@/actions/coupons";
+} from "@/server/actions/coupons";
 import {
   createCouponFormAction,
   toggleCouponFormAction,
   deleteCouponFormAction,
-} from "@/actions/form-wrappers";
-import { getAdminCourses } from "@/lib/appwrite/dashboard-data";
+} from "@/server/actions/form-wrappers";
+import { getAdminCourses } from "@/server/appwrite/dashboard-data";
 import { PageHeader, EmptyState, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

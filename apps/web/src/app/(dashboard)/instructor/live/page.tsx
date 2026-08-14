@@ -4,19 +4,19 @@ import { CalendarClock, Link2, Plus, Radio, Video } from "lucide-react";
 import {
   createLiveSessionFormAction,
   updateLiveSessionFormAction,
-} from "@/actions/form-wrappers";
-import { deleteLiveSessionFormAction } from "@/actions/form-wrappers";
+} from "@/server/actions/form-wrappers";
+import { deleteLiveSessionFormAction } from "@/server/actions/form-wrappers";
 import { EmptyState, PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import {
   getInstructorCourseList,
   getInstructorLiveSessions,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import { formatDateTime } from "@/lib/utils/format";
 
 const selectClassName =

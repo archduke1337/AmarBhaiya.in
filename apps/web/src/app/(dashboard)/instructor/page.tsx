@@ -13,8 +13,8 @@ import { Button } from "@heroui/react";
 import {
   getInstructorCourseResources,
   getInstructorResources,
-} from "@/actions/resources";
-import { requireRole } from "@/lib/appwrite/auth";
+} from "@/server/actions/resources";
+import { requireRole } from "@/server/appwrite/auth";
 import {
   getInstructorDashboardStats,
   getInstructorCourseList,
@@ -22,7 +22,7 @@ import {
   getInstructorRevenueOverview,
   getInstructorSubmissionQueue,
   getInstructorStudents,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import {
   formatCompactNumber,
   formatCurrency,

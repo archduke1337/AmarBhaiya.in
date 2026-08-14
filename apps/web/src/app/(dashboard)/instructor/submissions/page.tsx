@@ -8,7 +8,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 
-import { gradeSubmissionFormAction } from "@/actions/form-wrappers";
+import { gradeSubmissionFormAction } from "@/server/actions/form-wrappers";
 import {
   EmptyState,
   PageHeader,
@@ -20,11 +20,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import {
   getInstructorSubmissionQueue,
   type InstructorSubmissionQueueItem,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 
 export default async function InstructorSubmissionsPage() {

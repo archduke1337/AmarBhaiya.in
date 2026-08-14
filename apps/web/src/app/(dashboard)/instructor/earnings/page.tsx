@@ -10,9 +10,9 @@ import {
 } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { requireRole } from "@/lib/appwrite/auth";
-import { getInstructorRevenueOverview } from "@/lib/appwrite/dashboard-data";
-import { getCouponPaymentStats } from "@/actions/coupons";
+import { requireRole } from "@/server/appwrite/auth";
+import { getInstructorRevenueOverview } from "@/server/appwrite/dashboard-data";
+import { getCouponPaymentStats } from "@/server/actions/coupons";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils/format";
 
 export default async function InstructorEarningsPage() {

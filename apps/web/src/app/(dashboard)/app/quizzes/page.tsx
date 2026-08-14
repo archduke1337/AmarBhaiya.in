@@ -1,13 +1,13 @@
 import { Award, CheckCircle, XCircle } from "lucide-react";
 import { Query } from "node-appwrite";
 
-import { requireAuth } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { requireAuth } from "@/server/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
 import {
   listAllRows,
   listRowsByFieldValues,
-} from "@/lib/appwrite/row-pagination";
+} from "@/server/appwrite/row-pagination";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 

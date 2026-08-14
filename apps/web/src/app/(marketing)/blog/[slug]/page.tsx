@@ -6,7 +6,7 @@ import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { getPublicBlogPostBySlug } from "@/lib/appwrite/marketing-content";
+import { getPublicBlogPostBySlug } from "@/server/appwrite/marketing-content";
 
 export const revalidate = 3600;
 

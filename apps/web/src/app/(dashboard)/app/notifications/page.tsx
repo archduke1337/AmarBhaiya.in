@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Bell, CheckCheck, ExternalLink } from "lucide-react";
 
-import { requireAuth } from "@/lib/appwrite/auth";
+import { requireAuth } from "@/server/appwrite/auth";
 import {
   getUserNotifications,
   markNotificationReadAction,
   markAllNotificationsReadAction,
-} from "@/actions/notifications";
+} from "@/server/actions/notifications";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";

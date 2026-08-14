@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Layers, Plus } from "lucide-react";
 
-import { deleteCourseFormAction } from "@/actions/form-wrappers";
+import { deleteCourseFormAction } from "@/server/actions/form-wrappers";
 import {
   ActivityFeed,
   EmptyState,
@@ -11,11 +11,11 @@ import {
 } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { requireRole } from "@/lib/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import {
   getInstructorCourseList,
   type InstructorCourseListItem,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import { formatCurrency, formatDuration } from "@/lib/utils/format";
 
 export default async function InstructorCoursesPage() {

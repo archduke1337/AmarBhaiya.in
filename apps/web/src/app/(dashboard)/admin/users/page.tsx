@@ -1,6 +1,6 @@
 import { Users } from "lucide-react";
 
-import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
+import { getAdminUsers } from "@/server/appwrite/dashboard-data";
 import { PageHeader, EmptyState, StatGrid, StatCard } from "@/components/dashboard";
 import { UsersTable } from "./users-table";
 

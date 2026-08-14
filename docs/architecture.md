@@ -25,6 +25,39 @@ docs/
 5. Payments, authentication, and storage remain product-domain modules until their contracts are stable.
 6. Root scripts orchestrate work through Turborepo; application scripts describe how one app runs.
 
+## `apps/web/src` Layout
+
+```text
+src/
+  app/                   Next.js App Router routes (URLs are fixed by path)
+  server/
+    actions/             All server actions (+ form-wrappers/)
+    appwrite/            Appwrite data access, auth, uploads, marketing content
+    payments/            Razorpay client + course payment orchestration
+    uploads/             Upload flows (instructor files, lesson video, submissions)
+    stream/              StreamChat client setup
+    cache/               Next.js cache wrappers for public data
+    validators/          Zod schemas
+    csrf.ts, rate-limiter.ts
+  lib/                   Client-safe utilities (utils/, errors/) — importable from anywhere
+  hooks/                 Shared React hooks
+  components/
+    ui/                  Design-system primitives
+    layout/              Navbar, Footer, sidebar, header, skip-link
+    marketing/           Public-site blocks
+    auth/                Login/register/reset forms
+    dashboard/           Shared dashboard primitives (PageHeader, StatCard, EmptyState)
+    course/              Course player, video player, lesson UI, quiz form
+    billing/             Checkout + Razorpay UI
+    instructor/          Instructor upload forms
+    profile/             Avatar/profile UI
+    theme/               Theme provider + toggle
+  config/                Dashboard navigation config
+  types/                 Shared domain types
+```
+
+Rule: `src/server/**` is only reachable from route handlers, server actions, and server components; `src/lib/**` and `src/components/**` stay server-import-safe and never pull in `node-appwrite` server clients.
+
 ## Planned Extraction Order
 
 1. `packages/types` for stable public/domain contracts shared by a future mobile or admin app.

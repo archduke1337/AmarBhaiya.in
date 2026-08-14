@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getUserRole } from "@/lib/appwrite/auth-utils";
-import { finalizeLessonVideoUpload } from "@/lib/appwrite/lesson-video-upload";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
+import { getUserRole } from "@/server/appwrite/auth-utils";
+import { finalizeLessonVideoUpload } from "@/server/appwrite/lesson-video-upload";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 
 export const runtime = "nodejs";
 

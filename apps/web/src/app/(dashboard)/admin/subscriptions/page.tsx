@@ -1,10 +1,10 @@
-import { requireRole } from "@/lib/appwrite/auth";
-import { getAllSubscriptions } from "@/actions/subscriptions";
+import { requireRole } from "@/server/appwrite/auth";
+import { getAllSubscriptions } from "@/server/actions/subscriptions";
 import {
   adminCreateSubscriptionFormAction,
   adminUpdateSubscriptionFormAction,
-} from "@/actions/form-wrappers";
-import { getAdminUsers } from "@/lib/appwrite/dashboard-data";
+} from "@/server/actions/form-wrappers";
+import { getAdminUsers } from "@/server/appwrite/dashboard-data";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

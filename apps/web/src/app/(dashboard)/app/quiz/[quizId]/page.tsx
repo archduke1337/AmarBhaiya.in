@@ -2,13 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
-import { requireAuth } from "@/lib/appwrite/auth";
+import { requireAuth } from "@/server/appwrite/auth";
 import {
   getQuizWithQuestions,
   submitQuizAttemptAction,
   getUserBestAttempt,
-} from "@/actions/quiz";
-import { QuizForm, QuizResult } from "@/components/quiz-form";
+} from "@/server/actions/quiz";
+import { QuizForm, QuizResult } from "@/components/course/quiz-form";
 
 type PageProps = {
   params: Promise<{ quizId: string }>;

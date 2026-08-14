@@ -1,21 +1,21 @@
 import { FileText, Upload, Clock, Download } from "lucide-react";
 import type { Models } from "node-appwrite";
 
-import { requireAuth } from "@/lib/appwrite/auth";
+import { requireAuth } from "@/server/appwrite/auth";
 import { PageHeader, EmptyState } from "@/components/dashboard";
-import { submitAssignmentFormAction } from "@/actions/form-wrappers";
+import { submitAssignmentFormAction } from "@/server/actions/form-wrappers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS,
   ASSIGNMENT_SUBMISSION_MAX_BYTES,
-} from "@/lib/uploads/assignment-submission";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+} from "@/server/uploads/assignment-submission";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
 import {
   listAllRows,
   listRowsByFieldValues,
-} from "@/lib/appwrite/row-pagination";
+} from "@/server/appwrite/row-pagination";
 import { Query } from "node-appwrite";
 
 type AnyRow = Models.Row & Record<string, unknown>;

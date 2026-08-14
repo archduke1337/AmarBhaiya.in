@@ -4,14 +4,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpenCheck, Download, Lock, Play, Video } from "lucide-react";
 
-import { getPublicCourseBySlug } from "@/lib/appwrite/marketing-content";
+import { getPublicCourseBySlug } from "@/server/appwrite/marketing-content";
 
 export const revalidate = 3600;
-import { getLoggedInUser } from "@/lib/appwrite/auth";
-import { isEnrolled } from "@/actions/enroll";
-import { enrollInCourseFormAction } from "@/actions/enrollment-form-wrapper";
+import { getLoggedInUser } from "@/server/appwrite/auth";
+import { isEnrolled } from "@/server/actions/enroll";
+import { enrollInCourseFormAction } from "@/server/actions/enrollment-form-wrapper";
 import { RetroPanel } from "@/components/marketing/retro-panel";
-import { BillingCheckout } from "@/components/billing-checkout";
+import { BillingCheckout } from "@/components/billing/billing-checkout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

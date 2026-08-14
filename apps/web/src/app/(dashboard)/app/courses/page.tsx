@@ -2,9 +2,9 @@ import Link from "next/link";
 import { BookOpen, ArrowRight, Award } from "lucide-react";
 import { Button } from "@heroui/react";
 
-import { requireAuth } from "@/lib/appwrite/auth";
-import { getStudentEnrolledCourses } from "@/lib/appwrite/dashboard-data";
-import { getUserCertificates, issueCertificateAction } from "@/actions/certificate";
+import { requireAuth } from "@/server/appwrite/auth";
+import { getStudentEnrolledCourses } from "@/server/appwrite/dashboard-data";
+import { getUserCertificates, issueCertificateAction } from "@/server/actions/certificate";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 
 export default async function StudentCoursesPage() {

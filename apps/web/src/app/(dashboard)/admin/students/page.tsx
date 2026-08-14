@@ -1,17 +1,17 @@
 import { User, GraduationCap } from "lucide-react";
 import { Query } from "node-appwrite";
 
-import { requireRole } from "@/lib/appwrite/auth";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { getAdminCourses, getAdminUsers } from "@/lib/appwrite/dashboard-data";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { requireRole } from "@/server/appwrite/auth";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { getAdminCourses, getAdminUsers } from "@/server/appwrite/dashboard-data";
+import { createAdminClient } from "@/server/appwrite/server";
 import {
   listAllRows,
-} from "@/lib/appwrite/row-pagination";
+} from "@/server/appwrite/row-pagination";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { adminEnrollFormAction } from "@/actions/enrollment-form-wrapper";
+import { adminEnrollFormAction } from "@/server/actions/enrollment-form-wrapper";
 import { formatAdminCourseOption, formatAdminUserOption } from "@/lib/utils/admin-select";
 import { AdminStudentsTable } from "./students-table";
 

@@ -1,11 +1,11 @@
 import { Video, Calendar, Radio } from "lucide-react";
 
-import { requireAuth } from "@/lib/appwrite/auth";
+import { requireAuth } from "@/server/appwrite/auth";
 import {
   getRecentLiveRecordings,
   getUpcomingLiveSessions,
-} from "@/lib/appwrite/dashboard-data";
-import { rsvpToSessionFormAction } from "@/actions/form-wrappers";
+} from "@/server/appwrite/dashboard-data";
+import { rsvpToSessionFormAction } from "@/server/actions/form-wrappers";
 import { formatDateTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";

@@ -2,11 +2,11 @@ import { Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
-import { reconcileCoursePayment } from "@/lib/payments/course-payment";
-import { verifyRazorpayWebhookSignature } from "@/lib/payments/razorpay";
+import { reconcileCoursePayment } from "@/server/payments/course-payment";
+import { verifyRazorpayWebhookSignature } from "@/server/payments/razorpay";
 import { revalidateEach } from "@/lib/utils/revalidate";
 
 export const runtime = "nodejs";

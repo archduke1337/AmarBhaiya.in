@@ -1,8 +1,8 @@
 import { FileText, Filter, Search } from "lucide-react";
 import Link from "next/link";
 
-import { getAdminAuditLogs } from "@/lib/appwrite/dashboard-data";
-import type { AdminAuditItem } from "@/lib/appwrite/dashboard-data";
+import { getAdminAuditLogs } from "@/server/appwrite/dashboard-data";
+import type { AdminAuditItem } from "@/server/appwrite/dashboard-data";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 

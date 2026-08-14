@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { buildSessionCookieOptions } from "@/lib/appwrite/session-cookie";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
-import { createAdminClient } from "@/lib/appwrite/server";
-import { validateOrigin } from "@/lib/csrf";
-import { loginSchema } from "@/lib/validators/auth";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { buildSessionCookieOptions } from "@/server/appwrite/session-cookie";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
+import { createAdminClient } from "@/server/appwrite/server";
+import { validateOrigin } from "@/server/csrf";
+import { loginSchema } from "@/server/validators/auth";
 
 export const runtime = "nodejs";
 

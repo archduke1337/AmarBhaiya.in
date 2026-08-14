@@ -12,7 +12,7 @@ import {
   getModeratorDashboardStats,
   getModeratorReports,
   getModeratorCommunityData,
-} from "@/lib/appwrite/dashboard-data";
+} from "@/server/appwrite/dashboard-data";
 import { formatCompactNumber, formatRelativeTime } from "@/lib/utils/format";
 import {
   PageHeader,

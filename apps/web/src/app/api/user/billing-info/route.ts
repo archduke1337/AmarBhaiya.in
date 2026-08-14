@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { ID, Query } from "node-appwrite";
 import { z } from "zod";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/server";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 
 export const runtime = "nodejs";
 

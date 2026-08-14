@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   updateCourseVisibilityFormAction,
   deleteCourseFormAction,
-} from "@/actions/form-wrappers";
+} from "@/server/actions/form-wrappers";
 
 type CourseItem = {
   id: string;

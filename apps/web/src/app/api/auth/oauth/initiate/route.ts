@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OAuthProvider } from "node-appwrite";
-import { createAdminClient } from "@/lib/appwrite/server";
+import { createAdminClient } from "@/server/appwrite/server";
 
 export const runtime = "nodejs";
 

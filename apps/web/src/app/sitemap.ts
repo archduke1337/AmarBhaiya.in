@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { createAdminClient } from "@/lib/appwrite/server";
-import { safeListAllRows, type AnyRow } from "@/lib/appwrite/dashboard-data/internal";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
+import { safeListAllRows, type AnyRow } from "@/server/appwrite/dashboard-data/internal";
 
 const STATIC_ROUTES = [
   { path: "/", priority: 1.0, changeFreq: "weekly" as const },

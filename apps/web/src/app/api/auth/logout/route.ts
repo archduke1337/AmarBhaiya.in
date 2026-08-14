@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { buildExpiredSessionCookieOptions } from "@/lib/appwrite/session-cookie";
-import { createSessionClient } from "@/lib/appwrite/server";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { buildExpiredSessionCookieOptions } from "@/server/appwrite/session-cookie";
+import { createSessionClient } from "@/server/appwrite/server";
 
 export const runtime = "nodejs";
 
