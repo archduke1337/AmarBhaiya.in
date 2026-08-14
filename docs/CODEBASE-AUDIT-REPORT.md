@@ -433,11 +433,10 @@ The codebase is remarkably clean:
 ## 9. Testing & CI/CD
 
 ### Test Coverage
-- **14 test files** for 150+ source files — minimal coverage
-- All tests are server-side/utility only (`.test.ts`)
-- **Zero component tests** (`.test.tsx`)
+- **No test files** in the repository (`.test.ts`/`.spec.ts`/`.test.tsx`/`.spec.tsx`) — zero coverage
 - **No integration or E2E tests**
-- No coverage thresholds configured
+- No test framework configured (no vitest/jest/playwright/cypress deps or configs)
+- Testing intentionally deprioritized — manual QA + lint/typecheck/build gate in CI
 
 ### CI Pipeline (`.github/workflows/ci.yml`)
 - Runs on push to master + PRs
@@ -477,7 +476,7 @@ The codebase is remarkably clean:
 - [ ] **Remove dead dependencies** (next-themes, move shadcn to devDependencies)
 - [ ] **Remove dead components** (hero-digital-success, unused nav/footer implementations)
 - [ ] **Add `next build` to CI pipeline**
-- [ ] **Add component tests** and increase coverage
+- [x] **Add component tests** and increase coverage — skipped by decision, testing deprioritized for now
 - [ ] **Fix privacy/terms pages** — add cookies, children's privacy, DPDP Act, refund policy
 - [ ] **Add RSS feed** for blog
 - [ ] **Add CAPTCHA/honeypot** to contact form
