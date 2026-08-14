@@ -26,6 +26,19 @@ AmarBhaiya.in is a **Next.js 16 + Appwrite** edtech platform serving Class 6-12 
 
 ---
 
+## Remediation Status
+
+**Date:** August 14, 2026
+
+All items in the [Critical Fixes Checklist](#10-critical-fixes-checklist) have been completed or deliberately skipped:
+
+- **P1 (security)**: login/OAuth routes use `createPublicClient()`; rate limits on verification/recovery actions; `--popover`/`--primary-hover` CSS variables defined; sitemap corrected (`/certificates` added)
+- **P2 (launch)**: OG/Twitter images, JSON-LD (WebSite, Organization, Course, Article, BreadcrumbList), canonicals, shared `AnyRow` type, `prefers-reduced-motion` support, lazy-loaded EmailJS, try-catch + action naming fixes, certificate metadata/noindex, dual UI library resolved (HeroUI fully removed)
+- **P3 (scale)**: duplicated helpers extracted (`form-parsers.ts`, shared `getCourseRow`/`getAssignmentRow`/`chunkValues`/`toStringArray`), Sentry removed entirely, dead deps/components removed, `next build` + `npm audit` in CI, RSS feed, contact-form honeypot, PWA manifest, DM Serif Display loaded via next/font, breadcrumb JSON-LD, pagination on courses/blog
+- **Skipped by decision**: privacy/terms content depth (cookies, children's privacy, DPDP Act, refund policy) and component tests — both deprioritized for now
+
+---
+
 ## Table of Contents
 
 1. [Architecture & File Structure](#1-architecture--file-structure)
