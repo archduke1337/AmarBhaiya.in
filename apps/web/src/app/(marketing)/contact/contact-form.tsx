@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import emailjs from "@emailjs/browser";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Button } from "@/components/ui/button";
@@ -27,6 +26,7 @@ export function ContactForm() {
   const [form, setForm] = useState<FormState>(initialState);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [feedback, setFeedback] = useState("");
+  const [honeypot, setHoneypot] = useState("");
 
   const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
   const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
@@ -39,6 +39,13 @@ export function ContactForm() {
     setStatus("loading");
     setFeedback("");
 
+    if (honeypot) {
+      setStatus("success");
+      setFeedback("Message sent successfully. You should receive a reply soon.");
+      setForm(initialState);
+      return;
+    }
+
     if (!canSend) {
       setStatus("error");
       setFeedback(
@@ -48,7 +55,8 @@ export function ContactForm() {
     }
 
     try {
-      await emailjs.send(
+      const { send } = await import("@emailjs/browser");
+      await send(
         serviceId!,
         templateId!,
         {
@@ -71,7 +79,20 @@ export function ContactForm() {
 
   return (
     <RetroPanel tone="card" size="lg">
-      <form onSubmit={handleSubmit} className="space-y-6">
+<form onSubmit={handleSubmit} className="space-y-6">
+        <div aria-hidden="true" className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden">
+          <Label htmlFor="contact-website">Website</Label>
+          <Input
+            id="contact-website"
+            name="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(event) => setHoneypot(event.target.value)}
+          />
+        </div>
+
         <div className="space-y-2">
           <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
             Contact form
