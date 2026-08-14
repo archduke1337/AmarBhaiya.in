@@ -21,7 +21,10 @@ type SearchParams = Promise<{
   sort?: string;
   track?: string;
   class?: string;
+  page?: string;
 }>;
+
+const COURSES_PER_PAGE = 6;
 
 export const metadata: Metadata = {
   title: "Courses",
@@ -120,8 +123,10 @@ export default async function CoursesPage({
   const query = typeof params.q === "string" ? params.q.trim().toLowerCase() : "";
   const category = typeof params.category === "string" ? params.category : "all";
   const sort = normalizeSort(params.sort);
-  const track = normalizeTrack(params.track);
+const track = normalizeTrack(params.track);
   const classFilter = typeof params.class === "string" ? params.class : "all";
+  const rawPage = Number(params.page);
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
 
   const { courses: allCourses, categories } = await getPublicCoursesPageData({
     query,
@@ -137,13 +142,32 @@ export default async function CoursesPage({
   const classOptions = Array.from(
     new Set(allCourses.map(getClassLabel).filter(Boolean))
   ).sort((left, right) => left.localeCompare(right, "en-IN", { numeric: true }));
-  const courses = allCourses.filter((course) => {
+  const filteredCourses = allCourses.filter((course) => {
     const trackMatch = track === "all" || inferTrack(course) === track;
     const classMatch =
       classFilter === "all" || getClassLabel(course) === classFilter;
 
     return trackMatch && classMatch;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / COURSES_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const courses = filteredCourses.slice(
+    (currentPage - 1) * COURSES_PER_PAGE,
+    currentPage * COURSES_PER_PAGE
+  );
+
+  const pageHref = (targetPage: number): string => {
+    const url = new URLSearchParams();
+    if (query) url.set("q", query);
+    if (category !== "all") url.set("category", category);
+    if (sort !== "popular") url.set("sort", sort);
+    if (track !== "all") url.set("track", track);
+    if (classFilter !== "all") url.set("class", classFilter);
+    if (targetPage > 1) url.set("page", String(targetPage));
+    const queryString = url.toString();
+    return queryString ? `/courses?${queryString}` : "/courses";
+  };
 
   const activeFilters = [
     query ? `Search: ${query}` : null,
@@ -169,7 +193,7 @@ export default async function CoursesPage({
               <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
                 Courses live
               </p>
-              <p className="font-heading text-4xl font-black tracking-[-0.08em]">{courses.length}</p>
+              <p className="font-heading text-4xl font-black tracking-[-0.08em]">{filteredCourses.length}</p>
             </RetroPanel>
             <RetroPanel tone="accent" className="space-y-2">
               <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
@@ -331,8 +355,8 @@ export default async function CoursesPage({
             <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
               Results
             </p>
-            <p className="text-sm font-medium leading-6 text-foreground/80">
-              Showing {courses.length} course{courses.length === 1 ? "" : "s"} that fit the current view.
+<p className="text-sm font-medium leading-6 text-foreground/80">
+              Showing {filteredCourses.length} course{filteredCourses.length === 1 ? "" : "s"} that fit the current view.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -430,6 +454,32 @@ export default async function CoursesPage({
         ))}
         </div>
       </section>
+
+      {totalPages > 1 && (
+        <section className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+          {currentPage > 1 ? (
+            <Button asChild variant="outline" size="lg">
+              <Link href={pageHref(currentPage - 1)}>Previous</Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="lg" disabled>
+              Previous
+            </Button>
+          )}
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </p>
+          {currentPage < totalPages ? (
+            <Button asChild variant="outline" size="lg">
+              <Link href={pageHref(currentPage + 1)}>Next</Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="lg" disabled>
+              Next
+            </Button>
+          )}
+        </section>
+      )}
 
       {courses.length === 0 && (
         <section className="mx-auto max-w-6xl">

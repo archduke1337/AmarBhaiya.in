@@ -10,8 +10,11 @@ import { Label } from "@/components/ui/label";
 
 import { getPublicBlogPageData } from "@/server/appwrite/marketing-content";
 
+const POSTS_PER_PAGE = 10;
+
 type SearchParams = Promise<{
   category?: string;
+  page?: string;
 }>;
 
 export const metadata: Metadata = {
@@ -24,10 +27,27 @@ export const metadata: Metadata = {
 export default async function BlogPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const activeCategory = typeof params.category === "string" ? params.category : "all";
+  const rawPage = Number(params.page);
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
 
-  const { posts: visiblePosts, categories } = await getPublicBlogPageData({
+  const { posts: allPosts, categories } = await getPublicBlogPageData({
     category: activeCategory,
   });
+
+  const totalPages = Math.max(1, Math.ceil(allPosts.length / POSTS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const visiblePosts = allPosts.slice(
+    (currentPage - 1) * POSTS_PER_PAGE,
+    currentPage * POSTS_PER_PAGE
+  );
+
+  const pageHref = (targetPage: number): string => {
+    const url = new URLSearchParams();
+    if (activeCategory !== "all") url.set("category", activeCategory);
+    if (targetPage > 1) url.set("page", String(targetPage));
+    const query = url.toString();
+    return query ? `/blog?${query}` : "/blog";
+  };
 
   return (
     <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:py-24">
@@ -123,13 +143,39 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
         ))}
       </section>
 
-      {visiblePosts.length === 0 && (
+{visiblePosts.length === 0 && (
         <section className="mx-auto max-w-5xl">
           <RetroPanel tone="muted" className="text-center">
             <p className="text-sm font-medium text-muted-foreground">
               No blog posts in this category yet.
             </p>
           </RetroPanel>
+        </section>
+      )}
+
+      {totalPages > 1 && (
+        <section className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+          {currentPage > 1 ? (
+            <Button asChild variant="outline" size="lg">
+              <Link href={pageHref(currentPage - 1)}>Previous</Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="lg" disabled>
+              Previous
+            </Button>
+          )}
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </p>
+          {currentPage < totalPages ? (
+            <Button asChild variant="outline" size="lg">
+              <Link href={pageHref(currentPage + 1)}>Next</Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="lg" disabled>
+              Next
+            </Button>
+          )}
         </section>
       )}
     </div>

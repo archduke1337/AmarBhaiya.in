@@ -81,6 +81,34 @@ export default async function CourseDetailPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://amarbhaiya.in/",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Courses",
+                item: "https://amarbhaiya.in/courses",
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: course.title,
+              },
+            ],
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
             "@type": "Course",
             name: course.title,
             description: course.shortDescription,
