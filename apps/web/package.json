@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
-    "@sentry/nextjs": "^10.53.1",
     "@vercel/analytics": "^2.0.1",
     "appwrite": "^24.0.0",
     "class-variance-authority": "^0.7.1",

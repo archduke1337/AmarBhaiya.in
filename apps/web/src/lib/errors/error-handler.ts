@@ -1,5 +1,3 @@
-import * as Sentry from "@sentry/nextjs";
-
 /**
  * Production-grade error handling with logging
  * Provides standardized error logging, categorization, and recovery
@@ -36,7 +34,7 @@ function getSafeErrorMessage(error: unknown, category: ErrorCategory): string {
     RATE_LIMIT: 'Too many requests. Please try again in a moment.',
     EXTERNAL_SERVICE: 'An external service is unavailable. Please try again later.',
     DATABASE: 'A database error occurred. Please try again.',
-    INTERNAL: 'An unexpected error occurred. Our team has been notified.',
+    INTERNAL: 'An unexpected error occurred. Please try again later.',
   };
   return errorMap[category];
 }
@@ -60,19 +58,7 @@ export function logError(error: unknown, context: ErrorContext & { category: Err
     details: context.details,
   };
 
-  if (process.env.NODE_ENV === 'production') {
-    Sentry.withScope((scope) => {
-      scope.setLevel('error');
-      scope.setTag('category', context.category);
-      if (context.action) scope.setTag('action', context.action);
-      if (context.userId) scope.setUser({ id: context.userId });
-      if (context.resource) scope.setExtra('resource', context.resource);
-      if (context.details) scope.setExtras(context.details);
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
-    });
-  } else {
-    console.error('[DEV ERROR]', logEntry);
-  }
+  console.error('[ERROR]', logEntry);
 }
 
 /**
