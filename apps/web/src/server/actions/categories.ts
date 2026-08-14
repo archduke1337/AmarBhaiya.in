@@ -7,16 +7,8 @@ import { requireRole } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { slugify } from "@/lib/utils/format";
+import { parseInteger } from "@/lib/utils/form-parsers";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
-
-function parseInteger(value: FormDataEntryValue | null, fallback = 0): number {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    return fallback;
-  }
-
-  return Math.round(numeric);
-}
 
 const createCategorySchema = z.object({
   name: z.string().trim().min(2),

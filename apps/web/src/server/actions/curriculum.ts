@@ -10,26 +10,9 @@ import { createAdminClient } from "@/server/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { listAllRows, type AnyAppwriteRow } from "@/server/appwrite/row-pagination";
 import { userCanManageCourse } from "@/server/appwrite/access";
+import { parseBoolean, parseInteger } from "@/lib/utils/form-parsers";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { revalidateEach } from "@/lib/utils/revalidate";
-
-function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
-  if (typeof value !== "string") {
-    return fallback;
-  }
-
-  const normalized = value.toLowerCase().trim();
-  return normalized === "true" || normalized === "1" || normalized === "on";
-}
-
-function parseInteger(value: FormDataEntryValue | null, fallback = 0): number {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    return fallback;
-  }
-
-  return Math.round(numeric);
-}
 
 type AnyRow = AnyAppwriteRow;
 

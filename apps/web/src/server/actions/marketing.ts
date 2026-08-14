@@ -15,6 +15,7 @@ import {
 } from "@/server/appwrite/row-pagination";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { revalidateEach } from "@/lib/utils/revalidate";
+import { parseBoolean, parseInteger } from "@/lib/utils/form-parsers";
 
 const upsertSiteCopySchema = z.object({
   key: z.string().trim().min(3),
@@ -35,24 +36,6 @@ const createBlogPostSchema = z.object({
   content: z.string().trim().min(24),
   isPublished: z.boolean(),
 });
-
-function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
-  if (typeof value !== "string") {
-    return fallback;
-  }
-
-  const normalized = value.toLowerCase().trim();
-  return normalized === "true" || normalized === "1" || normalized === "on";
-}
-
-function parseInteger(value: FormDataEntryValue | null, fallback = 0): number {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    return fallback;
-  }
-
-  return Math.round(numeric);
-}
 
 function normalizeDateTime(value: string | undefined): string {
   if (!value) {

@@ -7,7 +7,7 @@ import { getFileDownloadUrl, getFilePreviewUrl } from "@/lib/utils/file-urls";
 import {
   extractChapterTag, extractClassTag, extractSubjectTag,
   isActiveEnrollmentRow, listRowsByFieldValues,
-  parseJsonPayload, parseParagraphs, parseStringArray,
+  parseJsonPayload, parseParagraphs, toStringArray,
   safeCountRows, safeListAllRows, safeListRows,
   toDate, toDurationMinutes, toNumber,
 } from "@/server/appwrite/dashboard-data/internal";
@@ -223,7 +223,7 @@ export type NotesPageData = {
 function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
   const accessModel = row.accessModel === "paid" ? "paid" : "free";
   const fileId = typeof row.fileId === "string" ? row.fileId : "";
-  const tags = parseStringArray(row.tags);
+  const tags = toStringArray(row.tags);
   const metadataSources = [
     ...tags,
     typeof row.title === "string" ? row.title : "",
@@ -364,7 +364,7 @@ function toPublicCourse(
           ? row.description
           : "",
     category: categoryEntry?.slug ?? "uncategorized",
-    tags: parseStringArray(row.tags),
+    tags: toStringArray(row.tags),
     priceInr: toNumber(row.price, 0),
     rating: toNumber(row.rating, 0),
     totalLessons: toNumber(row.totalLessons, 0),
@@ -501,8 +501,8 @@ async function getPublicCourseBySlugImpl(
 
   return {
     ...base,
-    whatYouLearn: parseStringArray(row.whatYouLearn),
-    requirements: parseStringArray(row.requirements),
+    whatYouLearn: toStringArray(row.whatYouLearn),
+    requirements: toStringArray(row.requirements),
     curriculum,
   };
 }

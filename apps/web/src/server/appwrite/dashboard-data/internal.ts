@@ -389,11 +389,6 @@ export function toDurationMinutes(value: unknown): number {
   return Math.round(raw);
 }
 
-export function parseStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === "string");
-}
-
 export function normalizeTag(value: string): string {
   return value.trim().toLowerCase();
 }

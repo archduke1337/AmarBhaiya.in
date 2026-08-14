@@ -13,7 +13,7 @@ import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/acti
 
 type AnyRow = AnyAppwriteRow;
 
-async function getAssignmentRow(assignmentId: string): Promise<AnyRow | null> {
+export async function getAssignmentRow(assignmentId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();
 
   try {

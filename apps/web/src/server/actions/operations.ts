@@ -6,8 +6,10 @@ import { z } from "zod";
 import { assignRole, requireRole } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
+import { getCourseRow, userCanManageCourse } from "@/server/appwrite/access";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { parseLineSeparatedList } from "@/lib/utils/form-lists";
+import { parseBoolean, parseInteger } from "@/lib/utils/form-parsers";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { revalidateEach } from "@/lib/utils/revalidate";
 
@@ -35,24 +37,6 @@ const updateInstructorCourseSchema = z.object({
   whatYouLearn: z.array(z.string().trim().min(1)).default([]),
 });
 
-function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
-  if (typeof value !== "string") {
-    return fallback;
-  }
-
-  const normalized = value.toLowerCase().trim();
-  return normalized === "true" || normalized === "1" || normalized === "on";
-}
-
-function parseInteger(value: FormDataEntryValue | null, fallback = 0): number {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    return fallback;
-  }
-
-  return Math.round(numeric);
-}
-
 function revalidateHomeContentPaths(): void {
   revalidatePath("/");
   revalidatePath("/courses");
@@ -72,33 +56,6 @@ function revalidateCourseAudiencePaths(courseId: string, slug?: string): void {
   revalidatePath("/app/dashboard");
   revalidateHomeContentPaths();
   revalidateEach(getCourseDetailPaths(courseId, slug));
-}
-
-async function getCourseRow(courseId: string) {
-  const { tablesDB } = await createAdminClient();
-
-  try {
-    return (await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.courses,
-      rowId: courseId,
-    })) as { $id: string; instructorId?: string; slug?: string } | null;
-  } catch {
-    return null;
-  }
-}
-
-async function userCanManageCourse(courseId: string, role: string, userId: string) {
-  const course = await getCourseRow(courseId);
-  if (!course) {
-    return null;
-  }
-
-  if (role === "admin") {
-    return course;
-  }
-
-  return course.instructorId === userId ? course : null;
 }
 
 export async function updateUserRoleAction(formData: FormData): Promise<ActionResult> {
@@ -157,7 +114,7 @@ export async function updateCourseVisibilityAction(formData: FormData): Promise<
     revalidatePath("/admin");
     revalidatePath("/instructor");
     revalidateHomeContentPaths();
-    revalidateEach(getCourseDetailPaths(parsed.data.courseId, course.slug));
+    revalidateEach(getCourseDetailPaths(parsed.data.courseId, String(course.slug ?? "")));
 
     return actionSuccess();
   } catch (error) {
@@ -212,7 +169,7 @@ export async function updateInstructorCourseAction(formData: FormData): Promise<
 
     revalidateCourseEditorPaths(parsed.data.courseId);
     revalidatePath("/admin/courses");
-    revalidateCourseAudiencePaths(parsed.data.courseId, course.slug);
+    revalidateCourseAudiencePaths(parsed.data.courseId, String(course.slug ?? ""));
 
     return actionSuccess();
   } catch (error) {

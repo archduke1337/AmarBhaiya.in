@@ -11,6 +11,7 @@ import { createNotificationEntry } from "@/server/actions/notifications";
 import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
 import { processInBatches } from "@/lib/utils/batch";
+import { getAssignmentRow } from "@/server/actions/assignments";
 import { ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS, ASSIGNMENT_SUBMISSION_ALLOWED_MIMES, ASSIGNMENT_SUBMISSION_MAX_BYTES, getAssignmentSubmissionFileExtension } from "@/server/uploads/assignment-submission";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 
@@ -78,20 +79,6 @@ async function updateSubmissionRecord(
       rowId,
       data: legacyData,
     });
-  }
-}
-
-async function getAssignmentRow(assignmentId: string): Promise<AnyRow | null> {
-  const { tablesDB } = await createAdminClient();
-
-  try {
-    return (await tablesDB.getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.assignments,
-      rowId: assignmentId,
-    })) as AnyRow;
-  } catch {
-    return null;
   }
 }
 
