@@ -24,12 +24,20 @@ const sections = [
     body: "Free notes, free courses, and public material are not refundable — they are available at no cost by design.",
   },
   {
+    title: "What is not refundable",
+    body: "Refunds are not given for courses substantially completed, for content already consumed beyond the stated window, or for certificate re-issues and convenience charges unless required by law. If your refund request falls outside the window but the content is unusable (for example, a technical fault we could not fix), we will still review it.",
+  },
+  {
     title: "Failed or duplicate payments",
     body: "If your payment succeeded but your course was not activated, or you were charged twice, contact support with the payment reference and we will resolve it, including a full refund where applicable.",
   },
   {
     title: "How to request a refund",
-    body: "Send your request through the contact page or directly by email, mentioning the course or subscription name, the payment reference, and the reason. Requests are processed within 7 business days of confirmation.",
+    body: "Send your request through the contact page or directly by email, mentioning the course or subscription name, the payment reference, and the reason. Requests are acknowledged within 24 hours and processed within 7 business days of confirmation. Refunds are returned to the original payment method; depending on your bank or card issuer, the money may take a few extra days to appear.",
+  },
+  {
+    title: "Chargebacks and disputes",
+    body: "If you open a chargeback with your bank or payment provider before contacting us, resolution takes longer for everyone. Please raise the issue with us first — most billing problems are resolved directly within days.",
   },
 ];
 

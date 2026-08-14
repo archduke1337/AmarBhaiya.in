@@ -13,11 +13,11 @@ export const metadata: Metadata = {
 const cookies = [
   {
     title: "What we use cookies for",
-    body: "Cookies and local storage are used for three things: keeping you signed in (authentication session), remembering your theme preference, and protecting the platform against abuse like rate-limited login attempts.",
+    body: "Cookies and local storage are used for three things: keeping you signed in (authentication session), remembering your theme preference, and protecting the platform against abuse like rate-limited login attempts. There are no third-party advertising or marketing cookies on the platform.",
   },
   {
     title: "Essential cookies",
-    body: "Session and security cookies are strictly necessary for the platform to work. Without them you cannot stay logged in or access protected content. These cannot be switched off.",
+    body: "Session and security cookies are strictly necessary for the platform to work. Without them you cannot stay logged in or access protected content. These cannot be switched off — they are set the moment you log in, which is your consent to their use.",
   },
   {
     title: "Preference cookies",
@@ -25,11 +25,11 @@ const cookies = [
   },
   {
     title: "Third-party services",
-    body: "Payments are processed by Razorpay on their own pages or overlays, and video content may be delivered through external players. Those services may set their own cookies according to their policies. We do not allow third-party advertising cookies on the platform.",
+    body: "Payments are processed by Razorpay on their own pages or overlays, and video content may be delivered through external players. Those services may set their own cookies according to their policies, and we link to their policies where applicable. We do not allow third-party advertising cookies on the platform.",
   },
   {
     title: "Managing cookies",
-    body: "You can clear cookies and site data at any time from your browser settings. Clearing them will sign you out and reset your theme preference, but will not affect your account or purchases.",
+    body: "You can clear cookies and site data at any time from your browser settings. Clearing them will sign you out and reset your theme preference, but will not affect your account or purchases. You can also browse the public parts of the site (courses, notes previews, blog) without logging in, which sets no cookies beyond what your browser needs for the page itself.",
   },
 ];
 
