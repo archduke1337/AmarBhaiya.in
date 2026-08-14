@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import {
-  NotebookPen,
   Megaphone,
   RotateCcw,
   Save,
@@ -12,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { useAutoSave } from "./use-auto-save";
 import { MarkdownEditor } from "./markdown-editor";
 import { checkSlugUniquenessFormAction } from "@/actions/form-wrappers/marketing";

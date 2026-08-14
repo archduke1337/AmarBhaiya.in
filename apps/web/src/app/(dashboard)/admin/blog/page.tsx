@@ -137,7 +137,6 @@ export default async function AdminBlogPage() {
                     </Badge>
 
                     <BlogPreviewButton
-                      title={post.title}
                       content={post.content}
                     />
                   </div>

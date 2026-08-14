@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { User, GraduationCap } from "lucide-react";
 import { Query } from "node-appwrite";
 
@@ -8,7 +7,6 @@ import { getAdminCourses, getAdminUsers } from "@/lib/appwrite/dashboard-data";
 import { createAdminClient } from "@/lib/appwrite/server";
 import {
   listAllRows,
-  type AnyAppwriteRow,
 } from "@/lib/appwrite/row-pagination";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";

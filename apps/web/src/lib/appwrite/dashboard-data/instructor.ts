@@ -11,7 +11,7 @@ import {
   type CourseRow, type EnrollmentRow, type ModuleRow, type LessonRow,
   type PaymentRow, type LiveSessionRow, type AssignmentRow, type SubmissionRow,
 } from "./internal";
-import type { InstructorCourseSummary, InstructorCurriculumModule, InstructorCourseListItem } from "./internal";
+import type { InstructorCourseListItem } from "./internal";
 
 export type {
   InstructorDashboardStats, InstructorCourseListItem, InstructorStudentItem,

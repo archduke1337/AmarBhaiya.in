@@ -1,16 +1,11 @@
-import { BookOpen, Download, Eye, EyeOff, FileText, Plus, Search, Filter } from "lucide-react";
+import { Download, Eye, EyeOff, FileText, Plus } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import {
   createStandaloneResourceFormAction,
-  updateStandaloneResourceFormAction,
-  deleteStandaloneResourceFormAction,
 } from "@/actions/form-wrappers";
 import { getInstructorResources } from "@/actions/resources";
-import { DirectAppwriteUploadForm } from "@/components/instructor/direct-appwrite-upload-form";
-import { formatCurrency } from "@/lib/utils/format";
 import { PageHeader, EmptyState, StatGrid, StatCard } from "@/components/dashboard";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

@@ -3,7 +3,6 @@ import { Query } from "node-appwrite";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { revalidateEach } from "@/lib/utils/revalidate";
 import {
-  executeDeletePlan,
   mergeDeletePlans,
   type DeletePlan,
 } from "@/lib/appwrite/delete-plan";

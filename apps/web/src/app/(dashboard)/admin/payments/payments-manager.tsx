@@ -203,12 +203,10 @@ function PaymentRow({
   payment,
   onStatusUpdate,
   onRefund,
-  onSendReminder,
 }: {
   payment: Payment;
   onStatusUpdate: (paymentId: string, newStatus: string) => void;
   onRefund: (payment: Payment) => void;
-  onSendReminder: (paymentId: string) => void;
 }) {
   const [updating, setUpdating] = useState(false);
   const [showControls, setShowControls] = useState(false);
@@ -370,23 +368,10 @@ function PaymentRow({
 
 export function PaymentsManager({
   payments,
-  completedPayments,
-  pendingPayments,
-  failedPayments,
-  refundedPayments,
-  totalRevenue,
-  monthlyRevenue,
   topCourseItems,
-  attentionPayments,
   statusBreakdown,
 }: {
   payments: Payment[];
-  completedPayments: Payment[];
-  pendingPayments: Payment[];
-  failedPayments: Payment[];
-  refundedPayments: Payment[];
-  totalRevenue: number;
-  monthlyRevenue: number;
   topCourseItems: Array<{
     courseId: string;
     courseSlug: string;
@@ -394,7 +379,6 @@ export function PaymentsManager({
     revenue: number;
     payments: number;
   }>;
-  attentionPayments: Payment[];
   statusBreakdown: StatusBreakdown[];
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -543,7 +527,6 @@ export function PaymentsManager({
                 payment={payment}
                 onStatusUpdate={handleStatusUpdate}
                 onRefund={setRefundTarget}
-                onSendReminder={() => {}}
               />
             ))
           )}

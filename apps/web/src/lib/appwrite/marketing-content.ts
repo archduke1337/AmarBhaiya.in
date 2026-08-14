@@ -5,16 +5,15 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { getFileDownloadUrl, getFilePreviewUrl } from "@/lib/utils/file-urls";
 import {
-  chunkValues, extractChapterTag, extractClassTag, extractSubjectTag,
+  extractChapterTag, extractClassTag, extractSubjectTag,
   isActiveEnrollmentRow, listRowsByFieldValues,
-  normalizeTag, parseJsonPayload, parseParagraphs, parseStringArray,
+  parseJsonPayload, parseParagraphs, parseStringArray,
   safeCountRows, safeListAllRows, safeListRows,
-  toDate, toDurationMinutes, toNumber, toTitleCase,
+  toDate, toDurationMinutes, toNumber,
 } from "@/lib/appwrite/dashboard-data/internal";
-import { unstable_cache } from "next/cache";
 import {
-  cachedAboutPage, cachedBlogPage, cachedBlogPost, cachedContactPage,
-  cachedCourseDetail, cachedCoursesPage, cachedHomePage, cachedNotesPage,
+  cachedAboutPage, cachedBlogPost, cachedContactPage,
+  cachedCourseDetail, cachedHomePage, cachedNotesPage,
 } from "@/lib/cache/public-data";
 import type {
   BlogPostRecord,

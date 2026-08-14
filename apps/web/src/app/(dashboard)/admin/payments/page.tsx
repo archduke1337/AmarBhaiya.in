@@ -44,10 +44,6 @@ export default async function AdminPaymentsPage() {
     return sum + payment.amount;
   }, 0);
 
-  const attentionPayments = payments.filter(
-    (payment) => payment.status === "pending" || payment.status === "failed" || payment.status === "refunded"
-  );
-
   const courseRevenueMap = completedPayments.reduce((map, payment) => {
       const key = payment.courseId || payment.courseTitle;
       const existing = map.get(key) ?? {
@@ -121,14 +117,7 @@ export default async function AdminPaymentsPage() {
         <div className="grid gap-6 xl:grid-cols-3">
           <PaymentsManager
             payments={payments}
-            completedPayments={completedPayments}
-            pendingPayments={pendingPayments}
-            failedPayments={failedPayments}
-            refundedPayments={refundedPayments}
-            totalRevenue={totalRevenue}
-            monthlyRevenue={monthlyRevenue}
             topCourseItems={topCourseItems}
-            attentionPayments={attentionPayments}
             statusBreakdown={[
               { label: "Completed", count: completedPayments.length, icon: "completed", value: formatCurrency(totalRevenue) },
               { label: "Pending", count: pendingPayments.length, icon: "pending", value: `${pendingPayments.length} records` },

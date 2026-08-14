@@ -35,11 +35,6 @@ export function AdminCoursesTable({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const categories = useMemo(() => {
-    const set = new Set(courses.map((c) => c.category).filter(Boolean));
-    return Array.from(set).sort();
-  }, [courses]);
-
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return courses.filter((c) => {

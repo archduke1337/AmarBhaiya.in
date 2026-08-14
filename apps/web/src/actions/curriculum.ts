@@ -7,10 +7,9 @@ import { z } from "zod";
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import type { Role } from "@/lib/utils/constants";
-import { getBlogDetailPaths, getCourseDetailPaths } from "@/lib/utils/cache-paths";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { listAllRows, type AnyAppwriteRow } from "@/lib/appwrite/row-pagination";
-import { userCanManageCourse, getCourseRow } from "@/lib/appwrite/access";
+import { userCanManageCourse } from "@/lib/appwrite/access";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { revalidateEach } from "@/lib/utils/revalidate";
 
@@ -31,12 +30,6 @@ function parseInteger(value: FormDataEntryValue | null, fallback = 0): number {
 
   return Math.round(numeric);
 }
-
-type CourseRowLike = {
-  $id: string;
-  instructorId?: string;
-  slug?: string;
-};
 
 type AnyRow = AnyAppwriteRow;
 

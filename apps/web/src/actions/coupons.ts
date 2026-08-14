@@ -317,7 +317,7 @@ export async function validateCouponAction(
       finalAmount: Math.max(finalAmount, 0),
       couponCode: String(coupon.code ?? ""),
     };
-  } catch (error) {
+  } catch {
     return { valid: false, message: "Failed to validate coupon." };
   }
 }

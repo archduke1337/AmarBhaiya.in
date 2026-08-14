@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { MarkdownEditor } from "../marketing/markdown-editor";
 import { checkSlugUniquenessFormAction } from "@/actions/form-wrappers/marketing";
 
@@ -35,7 +34,6 @@ export function EditBlogPostForm({
   updateBlogPostFormAction,
   deleteBlogPostFormAction,
 }: EditBlogPostFormProps) {
-  const [title, setTitle] = useState(post.title);
   const [slug, setSlug] = useState(post.slug);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [slugChecking, setSlugChecking] = useState(false);
@@ -87,7 +85,6 @@ export function EditBlogPostForm({
             placeholder="Title"
             onChange={(e) => {
               const newTitle = e.target.value;
-              setTitle(newTitle);
               if (!slugManuallyEdited.current) {
                 const newSlug = newTitle
                   .toLowerCase()

@@ -3,7 +3,7 @@ import type { Models } from "node-appwrite";
 
 import type { Role } from "@/lib/utils/constants";
 import type {
-  Assignment, AuditLog, Category, Course, Enrollment,
+  Assignment, AuditLog, Course, Enrollment,
   ForumCategory, ForumThread, Lesson, LiveSession,
   ModerationAction, Module, Payment, Quiz, QuizAttempt, Submission,
 } from "@/types/appwrite";

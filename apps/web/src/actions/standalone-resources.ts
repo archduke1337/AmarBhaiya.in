@@ -43,8 +43,6 @@ export type StandaloneResource = {
   createdAt: string;
 };
 
-type AnyRow = Record<string, unknown> & { $id: string };
-
 // ── Create ──────────────────────────────────────────────────────────────────
 
 export async function createStandaloneResourceAction(

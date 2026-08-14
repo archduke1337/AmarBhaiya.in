@@ -1,6 +1,5 @@
 import { Award, CheckCircle, XCircle } from "lucide-react";
 import { Query } from "node-appwrite";
-import type { Models } from "node-appwrite";
 
 import { requireAuth } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
@@ -11,8 +10,6 @@ import {
 } from "@/lib/appwrite/row-pagination";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
-
-type AnyRow = Models.Row & Record<string, unknown>;
 
 type QuizAttemptDisplay = {
   id: string;

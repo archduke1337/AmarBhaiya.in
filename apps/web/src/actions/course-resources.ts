@@ -77,8 +77,6 @@ export type InstructorCourseResource = {
   fileId: string;
 };
 
-type AnyRow = Record<string, unknown> & { $id: string };
-
 // ── Course-Linked Resources ────────────────────────────────────────────────
 
 export async function createCourseResourceAction(

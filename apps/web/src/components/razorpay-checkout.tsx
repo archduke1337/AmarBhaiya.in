@@ -67,7 +67,7 @@ export function RazorpayCheckout({
         throw new Error(data.error || "Failed to create order");
       }
 
-      const { keyId, orderId, amount, currency, couponApplied, discountAmount } = await res.json();
+      const { keyId, orderId, amount, currency, couponApplied } = await res.json();
 
       // 2. Load Razorpay script if not already loaded
       if (!window.Razorpay) {

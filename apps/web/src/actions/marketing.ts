@@ -7,7 +7,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
-import { getBlogDetailPaths, getCourseDetailPaths } from "@/lib/utils/cache-paths";
+import { getBlogDetailPaths } from "@/lib/utils/cache-paths";
 import { slugify } from "@/lib/utils/format";
 import {
   listAllRows,

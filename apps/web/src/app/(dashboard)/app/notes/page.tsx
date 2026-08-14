@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Download, Eye } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@heroui/react";
 
 import { getPublicNotesPageData, formatResourceType } from "@/lib/appwrite/marketing-content";

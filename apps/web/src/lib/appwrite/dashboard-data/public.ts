@@ -3,7 +3,7 @@ import { APPWRITE_CONFIG } from "../config";
 import { createAdminClient } from "../server";
 import {
   safeListAllRows, safeListRows, safeGetRow, isActiveEnrollmentRow,
-  type AnyRow, type CourseRow, type ModuleRow, type LessonRow, type EnrollmentRow,
+  type CourseRow, type ModuleRow, type LessonRow, type EnrollmentRow,
 } from "./internal";
 
 export {

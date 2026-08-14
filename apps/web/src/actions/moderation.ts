@@ -8,7 +8,6 @@ import { requireRole } from "@/lib/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
-import { revalidateEach } from "@/lib/utils/revalidate";
 
 const applyModerationSchema = z.object({
   targetUserId: z.string().trim().min(1),
@@ -33,15 +32,6 @@ const applyModerationSchema = z.object({
 const resolveModerationSchema = z.object({
   actionId: z.string().trim().min(1),
 });
-
-function parseBoolean(value: FormDataEntryValue | null, fallback = false): boolean {
-  if (typeof value !== "string") {
-    return fallback;
-  }
-
-  const normalized = value.toLowerCase().trim();
-  return normalized === "true" || normalized === "1" || normalized === "on";
-}
 
 export async function applyModerationActionAction(formData: FormData): Promise<ActionResult> {
   const { user } = await requireRole(["admin", "moderator"]);

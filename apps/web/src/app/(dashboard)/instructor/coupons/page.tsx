@@ -1,4 +1,4 @@
-import { Tag, Plus, Percent, IndianRupee, Calendar } from "lucide-react";
+import { Tag, Plus, Calendar } from "lucide-react";
 import { Query } from "node-appwrite";
 
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
@@ -6,7 +6,6 @@ import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
 import { createAdminClient } from "@/lib/appwrite/server";
 import {
   getCoupons,
-  type CouponItem,
 } from "@/actions/coupons";
 import {
   createCouponFormAction,

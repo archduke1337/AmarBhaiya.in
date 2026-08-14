@@ -51,7 +51,6 @@ export default async function AdminDashboardPage() {
   // Payment stats for alerts
   const pendingPayments = payments.filter((p) => p.status === "pending");
   const failedPayments = payments.filter((p) => p.status === "failed");
-  const refundedPayments = payments.filter((p) => p.status === "refunded");
 
   const quickActions = [
     { label: "User Management", href: "/admin/users", icon: Users, description: "Manage roles and access" },

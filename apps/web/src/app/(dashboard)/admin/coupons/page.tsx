@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Tag, Plus, Percent, IndianRupee, Calendar, CheckCircle2, XCircle, TrendingUp, DollarSign, Hash } from "lucide-react";
+import { Tag, Plus, Percent, IndianRupee, Calendar, TrendingUp, DollarSign, Hash } from "lucide-react";
 
 import { requireRole } from "@/lib/appwrite/auth";
 import {

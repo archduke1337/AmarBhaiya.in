@@ -5,11 +5,10 @@ import { Eye, EyeOff, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type BlogPreviewProps = {
-  title: string;
   content: string;
 };
 
-export function BlogPreviewButton({ title, content }: BlogPreviewProps) {
+export function BlogPreviewButton({ content }: BlogPreviewProps) {
   const [showPreview, setShowPreview] = useState(false);
 
   return (

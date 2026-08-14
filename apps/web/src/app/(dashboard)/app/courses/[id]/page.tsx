@@ -125,7 +125,7 @@ export default async function CoursePlayerPage({ params }: PageProps) {
       </div>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        {courseSignals.map((item, index) => (
+        {courseSignals.map((item) => (
           <div
             key={item.title}
             className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5"

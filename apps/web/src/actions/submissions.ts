@@ -3,13 +3,11 @@
 import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/lib/appwrite/auth";
-import { getCourseRow, userCanManageCourse, userHasCourseAccess } from "@/lib/appwrite/access";
+import { userCanManageCourse, userHasCourseAccess } from "@/lib/appwrite/access";
 import { APPWRITE_CONFIG } from "@/lib/appwrite/config";
-import { executeDeletePlan } from "@/lib/appwrite/delete-plan";
 import { listAllRows, type AnyAppwriteRow } from "@/lib/appwrite/row-pagination";
 import { createAdminClient } from "@/lib/appwrite/server";
 import { createNotificationEntry } from "@/actions/notifications";
-import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
 import { validateFileMimeType } from "@/lib/utils/sanitize";
 import { processInBatches } from "@/lib/utils/batch";

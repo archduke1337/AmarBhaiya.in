@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Filter, Eye, EyeOff, Download, Edit2, Trash2 } from "lucide-react";
+import { Search, Filter, Eye, EyeOff, Download, Edit2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
