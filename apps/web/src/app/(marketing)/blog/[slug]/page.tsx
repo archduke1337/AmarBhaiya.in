@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { MarkdownRenderer } from "@/components/marketing/markdown-renderer";
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,16 +70,9 @@ export default async function BlogPostPage({ params }: PageProps) {
           </RetroPanel>
         </RetroPanel>
 
-        <RetroPanel tone="muted" size="lg">
+<RetroPanel tone="muted" size="lg">
           <div className="mx-auto max-w-3xl space-y-6">
-            {post.content.map((paragraph, index) => (
-              <p
-                key={`${index}-${paragraph.slice(0, 24)}`}
-                className="text-base font-medium leading-8 text-foreground/85 md:text-lg"
-              >
-                {paragraph}
-              </p>
-            ))}
+            <MarkdownRenderer content={post.content.join("\n\n")} />
           </div>
         </RetroPanel>
       </div>
