@@ -8,13 +8,12 @@ import { requireRole } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
-import { listAllRows, type AnyAppwriteRow } from "@/server/appwrite/row-pagination";
+import { listAllRows } from "@/server/appwrite/row-pagination";
 import { userCanManageCourse } from "@/server/appwrite/access";
 import { parseBoolean, parseInteger } from "@/lib/utils/form-parsers";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { revalidateEach } from "@/lib/utils/revalidate";
-
-type AnyRow = AnyAppwriteRow;
+import type { AnyRow } from "@/types/rows";
 
 async function updateCourseLessonStats(
   tablesDB: Awaited<ReturnType<typeof createAdminClient>>["tablesDB"],

@@ -9,13 +9,11 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { getBlogDetailPaths } from "@/lib/utils/cache-paths";
 import { slugify } from "@/lib/utils/format";
-import {
-  listAllRows,
-  type AnyAppwriteRow,
-} from "@/server/appwrite/row-pagination";
+import { listAllRows } from "@/server/appwrite/row-pagination";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { revalidateEach } from "@/lib/utils/revalidate";
 import { parseBoolean, parseInteger } from "@/lib/utils/form-parsers";
+import type { AnyRow } from "@/types/rows";
 
 const upsertSiteCopySchema = z.object({
   key: z.string().trim().min(3),
@@ -62,8 +60,6 @@ function normalizeJsonPayload(value: string | undefined): string | null {
     return null;
   }
 }
-
-type AnyRow = AnyAppwriteRow;
 
 function revalidateHomeContentPaths(): void {
   revalidatePath("/");

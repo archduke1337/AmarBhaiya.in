@@ -7,11 +7,9 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import {
   listAllRows,
   listRowsByFieldValues,
-  type AnyAppwriteRow,
 } from "@/server/appwrite/row-pagination";
 import { createAdminClient } from "@/server/appwrite/server";
-
-type AnyRow = AnyAppwriteRow;
+import type { AnyRow } from "@/types/rows";
 
 export type EnrolledCourse = {
   enrollmentId: string;

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/server/appwrite/auth";
 import { userCanManageCourse, userHasCourseAccess } from "@/server/appwrite/access";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
-import { listAllRows, type AnyAppwriteRow } from "@/server/appwrite/row-pagination";
+import { listAllRows } from "@/server/appwrite/row-pagination";
 import { createAdminClient } from "@/server/appwrite/server";
 import { createNotificationEntry } from "@/server/actions/notifications";
 import { clampNumber, parseFiniteNumber } from "@/lib/utils/number";
@@ -14,8 +14,7 @@ import { processInBatches } from "@/lib/utils/batch";
 import { getAssignmentRow } from "@/server/actions/assignments";
 import { ASSIGNMENT_SUBMISSION_ALLOWED_EXTENSIONS, ASSIGNMENT_SUBMISSION_ALLOWED_MIMES, ASSIGNMENT_SUBMISSION_MAX_BYTES, getAssignmentSubmissionFileExtension } from "@/server/uploads/assignment-submission";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
-
-type AnyRow = AnyAppwriteRow;
+import type { AnyRow } from "@/types/rows";
 
 function shouldRetryWithoutGradedAt(error: unknown): boolean {
   if (!(error instanceof Error)) {

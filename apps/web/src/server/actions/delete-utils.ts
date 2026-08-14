@@ -8,11 +8,10 @@ import {
 } from "@/server/appwrite/delete-plan";
 import {
   listAllRows as listAllPaginatedRows,
-  type AnyAppwriteRow,
 } from "@/server/appwrite/row-pagination";
 import { createAdminClient } from "@/server/appwrite/server";
+import type { AnyRow } from "@/types/rows";
 
-type AnyRow = AnyAppwriteRow;
 type AdminServices = Awaited<ReturnType<typeof createAdminClient>>;
 type AdminTablesDB = AdminServices["tablesDB"];
 

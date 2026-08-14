@@ -6,12 +6,11 @@ import { requireRole } from "@/server/appwrite/auth";
 import { getCourseRow, userCanManageCourse } from "@/server/appwrite/access";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { executeDeletePlan } from "@/server/appwrite/delete-plan";
-import { listAllRows, type AnyAppwriteRow } from "@/server/appwrite/row-pagination";
+import { listAllRows } from "@/server/appwrite/row-pagination";
 import { createAdminClient } from "@/server/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
-
-type AnyRow = AnyAppwriteRow;
+import type { AnyRow } from "@/types/rows";
 
 export async function getAssignmentRow(assignmentId: string): Promise<AnyRow | null> {
   const { tablesDB } = await createAdminClient();
