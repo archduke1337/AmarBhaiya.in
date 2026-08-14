@@ -125,7 +125,7 @@ export function JsonEditor({ id, name, defaultValue, placeholder, label }: JsonE
             defaultValue={defaultValue}
             placeholder={placeholder}
             onChange={(e) => handleChange(e.target.value)}
-            className="w-full min-h-40 resize-y border-0 bg-transparent p-3 font-mono text-xs leading-6 text-foreground outline-none placeholder:text-muted-foreground/50"
+            className="w-full min-h-40 resize-y border-0 bg-transparent p-3 font-mono text-xs leading-6 text-foreground outline-none placeholder:text-muted-foreground/50 focus-visible:ring-[3px] focus-visible:ring-ring/40"
             spellCheck={false}
           />
         )}

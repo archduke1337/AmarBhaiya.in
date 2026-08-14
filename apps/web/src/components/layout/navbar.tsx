@@ -98,6 +98,27 @@ export function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  // Focus management: move focus into the menu when opened,
+  // close on Escape and restore focus to the toggle
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const firstFocusable = menuRef.current?.querySelector<HTMLElement>(
+      "a[href], button:not([disabled])"
+    );
+    firstFocusable?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
+
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -190,6 +211,7 @@ export function Navbar() {
 
               {/* Mobile hamburger */}
               <Button
+                ref={menuToggleRef}
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => setMenuOpen((v) => !v)}

@@ -94,7 +94,7 @@ export default function FaqPage() {
                   key={item.q}
                   className="group overflow-hidden rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro"
                 >
-                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 bg-secondary/75 px-4 py-3 text-sm font-heading font-black tracking-[0.03em] outline-none transition-colors hover:bg-accent [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 bg-secondary/75 px-4 py-3 text-sm font-heading font-black tracking-[0.03em] outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
                     {item.q}
                     <span
                       className="mt-0.5 text-xs font-black text-muted-foreground transition-transform duration-200 group-open:rotate-45"

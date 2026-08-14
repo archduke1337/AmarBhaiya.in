@@ -315,7 +315,7 @@ export function MarkdownEditor({
             onPaste={handlePaste}
             required={required}
             minLength={minLength}
-            className={`w-full ${minHeight} resize-y border-0 bg-transparent p-4 text-sm leading-7 text-foreground outline-none placeholder:text-muted-foreground/50`}
+            className={`w-full ${minHeight} resize-y border-0 bg-transparent p-4 text-sm leading-7 text-foreground outline-none placeholder:text-muted-foreground/50 focus-visible:ring-[3px] focus-visible:ring-ring/40`}
             spellCheck
           />
         ) : (
