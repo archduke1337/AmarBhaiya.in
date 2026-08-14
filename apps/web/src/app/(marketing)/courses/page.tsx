@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   title: "Courses",
   description:
     "Browse school-first courses for Classes 6 to 12, plus skill courses when they are available.",
+  alternates: { canonical: "/courses" },
 };
 
 function normalizeSort(value: string | undefined): "popular" | "newest" | "price" {

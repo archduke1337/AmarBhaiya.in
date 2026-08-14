@@ -16,6 +16,9 @@ const bodyFont = Plus_Jakarta_Sans({
 
 // ── Metadata ─────────────────────────────────────────────────
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://amarbhaiya.in"
+  ),
   title: {
     default: "amarbhaiya.in — Learn from Bhaiya",
     template: "%s | amarbhaiya.in",
@@ -35,6 +38,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Amarnath Pandey" }],
   creator: "Amarnath Pandey",
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -93,6 +97,39 @@ export default function RootLayout({
           {children}
         </ThemeProvider>
         <Analytics />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  "@id": "https://amarbhaiya.in/#website",
+                  url: "https://amarbhaiya.in",
+                  name: "amarbhaiya.in",
+                  description:
+                    "School-first learning platform by Amar Bhaiya — notes, courses, and practical guidance for Class 6 to 12 students.",
+                  inLanguage: "en-IN",
+                },
+                {
+                  "@type": "Organization",
+                  "@id": "https://amarbhaiya.in/#organization",
+                  name: "amarbhaiya.in",
+                  url: "https://amarbhaiya.in",
+                  logo: "https://amarbhaiya.in/opengraph-image.png",
+                  founder: { "@type": "Person", name: "Amarnath Pandey" },
+                  sameAs: [
+                    "https://youtube.com/@amarbhaiya",
+                    "https://instagram.com/amarbhaiya",
+                    "https://twitter.com/amarbhaiya",
+                    "https://linkedin.com/in/amarnathpandey",
+                  ],
+                },
+              ],
+            }),
+          }}
+        />
       </body>
     </html>
   );

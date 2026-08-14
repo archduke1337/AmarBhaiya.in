@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   title: "Blog",
   description:
     "Read practical notes on learning systems, productivity, fitness, and student career execution.",
+  alternates: { canonical: "/blog" },
 };
 
 export default async function BlogPage({ searchParams }: { searchParams: SearchParams }) {

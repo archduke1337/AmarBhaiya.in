@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "Free Study Notes — Class 6 to 12",
   description:
     "Free chapter-wise study notes for Class 6 to 12 students. Filter by class, subject, and type — sign in to download.",
+  alternates: { canonical: "/notes" },
 };
 
 export const dynamic = "force-dynamic";

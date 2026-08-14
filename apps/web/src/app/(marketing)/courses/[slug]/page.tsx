@@ -32,6 +32,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: course.title,
     description: course.shortDescription,
+    alternates: { canonical: `/courses/${slug}` },
+    openGraph: {
+      type: "article",
+      title: course.title,
+      description: course.shortDescription,
+      siteName: "amarbhaiya.in",
+    },
   };
 }
 

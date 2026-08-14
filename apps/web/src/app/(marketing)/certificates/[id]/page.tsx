@@ -1,10 +1,18 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Award } from "lucide-react";
 
 import { getCertificateById } from "@/server/actions/certificate";
 
 type PageProps = {
   params: Promise<{ id: string }>;
+};
+
+export const metadata: Metadata = {
+  title: "Certificate Verification — AmarBhaiya.in",
+  description:
+    "Verify an AmarBhaiya.in certificate of completion.",
+  robots: { index: false, follow: false },
 };
 
 export default async function CertificatePage({ params }: PageProps) {
