@@ -4,12 +4,13 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { requireRole } from "@/server/appwrite/auth";
+import { requireAuth, requireRole } from "@/server/appwrite/auth";
 import { userCanManageResource } from "@/server/appwrite/access";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { executeDeletePlan } from "@/server/appwrite/delete-plan";
 import { createAdminClient } from "@/server/appwrite/server";
 import { parseFiniteNumber } from "@/lib/utils/number";
+import { toNumber } from "@/server/appwrite/dashboard-data/internal";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { listAllRows } from "@/server/appwrite/row-pagination";
 
@@ -165,8 +166,46 @@ export async function updateStandaloneResourceAction(
   }
 }
 
-// ── Delete ──────────────────────────────────────────────────────────────────
+// ── Download tracking ───────────────────────────────────────────────────────
 
+export async function incrementResourceDownloadAction(
+  formData: FormData
+): Promise<ActionResult> {
+  await requireAuth();
+
+  const resourceId = String(formData.get("resourceId") ?? "");
+  if (!resourceId) {
+    return actionError("Resource ID is required.");
+  }
+
+  try {
+    const { tablesDB } = await createAdminClient();
+    const current = await tablesDB.getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.standaloneResources,
+      rowId: resourceId,
+    });
+
+    await tablesDB.updateRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.standaloneResources,
+      rowId: resourceId,
+      data: {
+        downloadCount: Math.max(0, Math.round(toNumber(current.downloadCount, 0))) + 1,
+      },
+    });
+
+    return actionSuccess();
+  } catch (error) {
+    console.error(
+      error instanceof Error ? error.message : "Failed to record download."
+    );
+
+    return actionError("Failed to record download.");
+  }
+}
+
+// ── Delete ──────────────────────────────────────────────────────────────────
 export async function deleteStandaloneResourceAction(
   formData: FormData
 ): Promise<ActionResult> {

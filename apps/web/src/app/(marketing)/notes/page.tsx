@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
+
+import { NoteDownloadButton } from "@/components/notes/note-download-button";
 
 import { getPublicNotesPageData, formatResourceType } from "@/server/appwrite/marketing-content";
 import { getLoggedInUser } from "@/server/appwrite/auth";
@@ -241,10 +243,11 @@ export default async function PublicNotesPage({
                         Browser preview is not available — download the file and open it on your device.
                       </p>
                       {user ? (
-                        <a href={selectedNote.downloadUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-bold text-accent-foreground">
-                          <Download className="size-4" aria-hidden />
-                          Download
-                        </a>
+                        <NoteDownloadButton
+                          resourceId={selectedNote.id}
+                          downloadUrl={selectedNote.downloadUrl}
+                          className="w-full rounded-full bg-accent px-4 text-sm font-bold text-accent-foreground hover:bg-accent"
+                        />
                       ) : (
                         <>
                           <p className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/45">
