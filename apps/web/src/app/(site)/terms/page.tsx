@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Terms of Service",
   description:
     "Terms governing use of amarbhaiya.in — accounts, courses, payments, content, termination and Indian governing law.",
+  alternates: { canonical: "/terms" },
 };
 
 const LAST_UPDATED = "23 August 2026";

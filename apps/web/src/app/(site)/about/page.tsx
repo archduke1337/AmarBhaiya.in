@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "About",
   description:
     "Know the story behind amarbhaiya.in and the mission to make practical learning accessible for students.",
+  alternates: { canonical: "/about" },
 };
 
 const workingRules = [

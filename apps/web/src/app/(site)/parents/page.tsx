@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "For Parents — Safety & Learning on amarbhaiya.in",
   description:
     "How amarbhaiya.in keeps students safe: moderated community, no third-party ads on the platform, and clear channels to report concerns.",
+  alternates: { canonical: "/parents" },
 };
 
 const commitments = [

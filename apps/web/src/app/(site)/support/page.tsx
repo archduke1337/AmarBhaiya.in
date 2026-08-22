@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Support — Help & Contact",
   description:
     "Get help with accounts, payments, courses, and technical issues on amarbhaiya.in.",
+  alternates: { canonical: "/support" },
 };
 
 const channels = [

@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "Contact",
   description:
     "Send a message to the amarbhaiya.in team for collaborations, support, or enrollment queries.",
+  alternates: { canonical: "/contact" },
 };
 
 const contactChecklist = [

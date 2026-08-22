@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Legal — Policies & Compliance",
   description:
     "All amarbhaiya.in policies: terms, privacy, refund & cancellation, cookies, grievance redressal (IT Rules 2021), community guidelines and parents safety.",
+  alternates: { canonical: "/legal" },
 };
 
 const LAST_UPDATED = "23 August 2026";

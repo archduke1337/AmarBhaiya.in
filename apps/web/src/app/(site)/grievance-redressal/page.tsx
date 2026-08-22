@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Grievance Redressal — IT Rules 2021",
   description:
     "Grievance Officer for amarbhaiya.in under IT Rules 2021: contact, 24h acknowledgement, 15-day resolution, 36h content takedown and escalation.",
+  alternates: { canonical: "/grievance-redressal" },
 };
 
 const LAST_UPDATED = "23 August 2026";

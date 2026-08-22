@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "How amarbhaiya.in collects, uses, stores and protects student data under the Indian IT Act and DPDP Act. Includes your rights, retention, and grievance contact.",
+  alternates: { canonical: "/privacy" },
 };
 
 const LAST_UPDATED = "23 August 2026";

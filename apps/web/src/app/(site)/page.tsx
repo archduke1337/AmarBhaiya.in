@@ -18,6 +18,10 @@ import { AnnouncementBanner } from "@/components/marketing/announcement-banner";
 
 export const revalidate = 3600;
 
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 const DOMAIN_COLORS = [
   "oklch(0.70 0.14 265)",
   "oklch(0.70 0.14 148)",
@@ -215,6 +219,21 @@ export default async function MarketingPage() {
               </RevealWrapper>
             </div>
           </div>
+        </section>
+
+        {/* Trust strip — social proof */}
+        <section aria-label="Trust indicators" className="mx-auto max-w-5xl px-4 sm:px-6 -mt-4">
+          <RevealWrapper>
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 rounded-full border border-border/40 bg-surface/80 px-4 py-3 backdrop-blur text-xs font-semibold text-foreground/60">
+              <span className="inline-flex items-center gap-1.5"><span className="text-accent">★</span> 4.8/5 from students</span>
+              <span className="hidden sm:inline opacity-30">·</span>
+              <span>10k+ learners</span>
+              <span className="hidden sm:inline opacity-30">·</span>
+              <span>Free notes for Class 6–12</span>
+              <span className="hidden sm:inline opacity-30">·</span>
+              <span className="hidden sm:inline">No spam, just clarity</span>
+            </div>
+          </RevealWrapper>
         </section>
 
         {/* ═══════════════════════════════════════════════════

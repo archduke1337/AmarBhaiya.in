@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "FAQ — Frequently Asked Questions",
   description:
     "Answers about notes, courses, certificates, refunds, and account access on amarbhaiya.in.",
+  alternates: { canonical: "/faq" },
 };
 
 const faqGroups = [

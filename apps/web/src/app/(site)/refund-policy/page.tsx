@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Refund & Cancellation Policy",
   description:
     "Refund, cancellation and duplicate-payment policy for paid courses and subscriptions on amarbhaiya.in — timelines, eligibility and how to request.",
+  alternates: { canonical: "/refund-policy" },
 };
 
 const LAST_UPDATED = "23 August 2026";

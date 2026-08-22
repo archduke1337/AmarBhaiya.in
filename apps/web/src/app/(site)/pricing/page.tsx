@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Pricing — Free Notes, Courses & Premium",
   description:
     "Transparent pricing for amarbhaiya.in: free chapter-wise notes, one-time paid courses, and a premium subscription for everything else.",
+  alternates: { canonical: "/pricing" },
 };
 
 const tiers = [

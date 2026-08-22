@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Cookie Policy",
   description:
     "How amarbhaiya.in uses cookies, localStorage and similar technologies — essential, preferences, analytics, and how to control them.",
+  alternates: { canonical: "/cookie-policy" },
 };
 
 const LAST_UPDATED = "23 August 2026";

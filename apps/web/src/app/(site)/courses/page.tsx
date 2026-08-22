@@ -290,6 +290,11 @@ export default async function CoursesPage({
                 {filter}
               </Badge>
             ))}
+            {(query || category !== "all" || track !== "all" || classFilter !== "all") && (
+              <Link href="/courses" className="ml-2 text-xs font-bold text-accent hover:underline">
+                Clear all
+              </Link>
+            )}
           </div>
         </RetroPanel>
 

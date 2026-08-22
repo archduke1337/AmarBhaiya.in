@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "Certificate Verification",
   description:
     "Verify certificate authenticity by entering a certificate ID from amarbhaiya.in.",
+  alternates: { canonical: "/certificates" },
 };
 
 export default async function CertificatesPage({ searchParams }: CertificatesPageProps) {

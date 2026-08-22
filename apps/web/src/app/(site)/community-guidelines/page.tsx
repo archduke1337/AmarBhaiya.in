@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Community Guidelines",
   description:
     "Rules for amarbhaiya.in community — respect, privacy, no plagiarism, moderation tiers and how to report.",
+  alternates: { canonical: "/community-guidelines" },
 };
 
 const LAST_UPDATED = "23 August 2026";
