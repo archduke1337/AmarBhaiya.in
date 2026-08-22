@@ -14,7 +14,14 @@ function escapeXml(value: string): string {
 }
 
 export async function GET() {
-  const { posts } = await getPublicBlogPageData({});
+  let posts: Awaited<ReturnType<typeof getPublicBlogPageData>>["posts"] = [];
+  try {
+    const data = await getPublicBlogPageData({});
+    posts = data.posts;
+  } catch (error) {
+    console.error("[RSS] Failed to fetch blog data", error);
+    posts = [];
+  }
 
   const items = posts
     .map((post) => {

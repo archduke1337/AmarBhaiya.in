@@ -74,13 +74,16 @@ export async function POST(request: Request) {
     setSessionCookie(request, response, session.secret, session.expire);
     return response;
   } catch (error) {
+    // Do not leak whether an email is already registered. Any failure —
+    // duplicate account, invalid input, or service error — returns the same
+    // generic message so the endpoint cannot be used for email enumeration.
     const message =
       error instanceof Error ? error.message : "Registration failed.";
 
     if (message.toLowerCase().includes("already exists")) {
       return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 }
+        { error: "Registration failed. Please try again." },
+        { status: 500 }
       );
     }
 

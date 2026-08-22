@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ID, Query } from "node-appwrite";
 import { z } from "zod";
 
-import { requireAuth, requireRole } from "@/server/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
@@ -38,8 +38,7 @@ async function getUserInstructorCourses(userId: string) {
 // ── Create Coupon ───────────────────────────────────────────────────────────
 
 export async function createCouponAction(formData: FormData): Promise<ActionResult> {
-  const user = await requireAuth();
-  const role = (user.labels ?? []).includes("admin") ? "admin" : "instructor";
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   const parsed = createCouponSchema.safeParse({
     code: formData.get("code"),
@@ -131,8 +130,7 @@ export async function toggleCouponAction(formData: FormData): Promise<ActionResu
 
   try {
     const { tablesDB } = await createAdminClient();
-    const user = await requireAuth();
-    const role = (user.labels ?? []).includes("admin") ? "admin" : "instructor";
+    const { user, role } = await requireRole(["admin", "instructor"]);
 
     const coupon = await tablesDB.getRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -176,8 +174,7 @@ export async function deleteCouponAction(formData: FormData): Promise<ActionResu
 
   try {
     const { tablesDB } = await createAdminClient();
-    const user = await requireAuth();
-    const role = (user.labels ?? []).includes("admin") ? "admin" : "instructor";
+    const { user, role } = await requireRole(["admin", "instructor"]);
 
     const coupon = await tablesDB.getRow({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -334,15 +331,47 @@ export async function incrementCouponUsageAction(couponCode: string): Promise<vo
     });
 
     const coupon = result.rows[0];
-    if (coupon) {
+    if (!coupon) {
+      return;
+    }
+
+    // Atomic read-modify-write via a transaction: stage the increment and
+    // commit only if the coupon still has capacity, so concurrent payments
+    // cannot overshoot maxUses.
+    const usedCount = Number(coupon.usedCount ?? 0);
+    const maxUses = Number(coupon.maxUses ?? 1);
+    if (usedCount >= maxUses) {
+      return;
+    }
+
+    const transaction = await tablesDB
+      .createTransaction({ ttl: 30 })
+      .catch(() => null);
+    if (!transaction?.$id) {
+      return;
+    }
+
+    try {
       await tablesDB.updateRow({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.coupons,
         rowId: coupon.$id,
+        transactionId: transaction.$id,
         data: {
-          usedCount: Number(coupon.usedCount ?? 0) + 1,
+          usedCount: usedCount + 1,
         },
       });
+      await tablesDB.updateTransaction({
+        transactionId: transaction.$id,
+        commit: true,
+      });
+    } catch {
+      await tablesDB
+        .updateTransaction({
+          transactionId: transaction.$id,
+          rollback: true,
+        })
+        .catch(() => null);
     }
   } catch {
     // Non-critical
@@ -409,7 +438,7 @@ export async function getCouponAnalytics(): Promise<CouponAnalytics> {
       const allCompleted = await tablesDB.listRows({
         databaseId: APPWRITE_CONFIG.databaseId,
         tableId: APPWRITE_CONFIG.tables.payments,
-        queries: [Query.equal("status", ["completed"])],
+        queries: [Query.equal("status", ["completed"]), Query.limit(5000)],
       });
 
       for (const row of allCompleted.rows) {
@@ -533,13 +562,12 @@ export async function getCouponPaymentStats(courseIds: string[]): Promise<Coupon
 // ── Get Coupons (for dashboard) ─────────────────────────────────────────────
 
 export async function getCoupons(): Promise<CouponItem[]> {
-  const user = await requireAuth();
-  const role = (user.labels ?? []).includes("admin") ? "admin" : "instructor";
+  const { user, role } = await requireRole(["admin", "instructor"]);
 
   try {
     const { tablesDB } = await createAdminClient();
 
-    const queries: string[] = [Query.orderDesc("$createdAt")];
+    const queries: string[] = [Query.orderDesc("$createdAt"), Query.limit(100)];
     if (role === "instructor") {
       queries.push(Query.equal("instructorId", [user.$id]));
     }

@@ -207,7 +207,22 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     flushCodeBlock(elementKey++);
   }
 
-  return <div className="prose prose-sm dark:prose-invert max-w-none">{elements}</div>;
+  return <div className="max-w-none space-y-2">{elements}</div>;
+}
+
+function isSafeHttpUrl(href: string): boolean {
+  const trimmed = href.trim();
+  if (!trimmed) return false;
+  // Allow relative URLs, anchors, and http/https/mailto/tel only
+  if (trimmed.startsWith("/") || trimmed.startsWith("#") || trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) {
+    return true;
+  }
+  try {
+    const url = new URL(trimmed, "https://amarbhaiya.in");
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 // ── Inline Markdown Parser ─────────────────────────────────────────────────
@@ -234,7 +249,12 @@ function parseInlineMarkdown(text: string): InlineSegment[] {
     // Link [text](url)
     const linkMatch = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
     if (linkMatch) {
-      segments.push({ type: "link", text: linkMatch[1], href: linkMatch[2] });
+      const href = linkMatch[2].trim();
+      if (isSafeHttpUrl(href)) {
+        segments.push({ type: "link", text: linkMatch[1], href });
+      } else {
+        segments.push({ type: "text", text: linkMatch[1] });
+      }
       remaining = remaining.slice(linkMatch[0].length);
       continue;
     }
@@ -243,7 +263,6 @@ function parseInlineMarkdown(text: string): InlineSegment[] {
     const boldItalicMatch = remaining.match(/^\*\*\*([^*]+)\*\*\*/);
     if (boldItalicMatch) {
       segments.push({ type: "bold", text: boldItalicMatch[1] });
-      segments.push({ type: "italic", text: "" });
       remaining = remaining.slice(boldItalicMatch[0].length);
       continue;
     }
@@ -284,10 +303,15 @@ function parseInlineMarkdown(text: string): InlineSegment[] {
       continue;
     }
 
-    // Image ![alt](url) — treat as link for simplicity
+    // Image ![alt](url) — treat as link for simplicity (only safe URLs)
     const imageMatch = remaining.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
     if (imageMatch) {
-      segments.push({ type: "link", text: imageMatch[1] || "Image", href: imageMatch[2] });
+      const href = imageMatch[2].trim();
+      if (isSafeHttpUrl(href)) {
+        segments.push({ type: "link", text: imageMatch[1] || "Image", href });
+      } else {
+        segments.push({ type: "text", text: imageMatch[1] || "Image" });
+      }
       remaining = remaining.slice(imageMatch[0].length);
       continue;
     }

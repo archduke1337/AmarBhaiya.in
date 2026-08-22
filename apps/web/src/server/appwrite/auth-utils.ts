@@ -22,6 +22,6 @@ export function getUserRole(user: AppwriteUserLike | null): Role {
 // ── Check if User Has Role ──────────────────────────────────────────────────
 
 export function hasRole(user: AppwriteUserLike | null, role: Role): boolean {
-  if (!user) return role === "student";
+  if (!user) return false;
   return (user.labels || []).includes(role);
 }

@@ -398,13 +398,16 @@ export async function uploadBlogImageAction(
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  if (!["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(ext)) {
-    return actionError("Only JPG, PNG, WEBP, GIF, and SVG images are supported.");
+  if (ext === "svg") {
+    return actionError("SVG images are not allowed for security reasons. Please use JPG, PNG, WEBP, or GIF.");
+  }
+  if (!["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) {
+    return actionError("Only JPG, PNG, WEBP, and GIF images are supported.");
   }
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const validMimes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
+    const validMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!validateFileMimeType(buffer, file.name, validMimes)) {
       console.error("Blog image MIME type validation failed");
       return actionError("This file does not look like a valid image.");

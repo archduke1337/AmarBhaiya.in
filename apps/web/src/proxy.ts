@@ -7,8 +7,19 @@ const PROTECTED_PREFIXES = ["/app", "/instructor", "/moderator", "/admin"];
 // Routes that should redirect logged-in users away
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 
-// Community subdomain hostname
+// Subdomain hostnames — single-domain still works, these are optional
 const COMMUNITY_HOST = "community.amarbhaiya.in";
+const APP_HOST = "app.amarbhaiya.in";
+const ADMIN_HOST = "admin.amarbhaiya.in";
+const INSTRUCTOR_HOST = "instructor.amarbhaiya.in";
+const MODERATOR_HOST = "moderator.amarbhaiya.in";
+
+const SUBDOMAIN_MAP: Record<string, string> = {
+  [APP_HOST]: "/app",
+  [ADMIN_HOST]: "/admin",
+  [INSTRUCTOR_HOST]: "/instructor",
+  [MODERATOR_HOST]: "/moderator",
+};
 
 // ── Session Validation Cache ─────────────────────────────────────────────────
 // This is an in-process Map — it resets on cold starts / serverless spin-ups.
@@ -111,16 +122,28 @@ const CSRF_ALLOWED_ORIGINS = [
   "https://amarbhaiya.in",
   "https://www.amarbhaiya.in",
   "https://community.amarbhaiya.in",
+  "https://app.amarbhaiya.in",
+  "https://admin.amarbhaiya.in",
+  "https://instructor.amarbhaiya.in",
+  "https://moderator.amarbhaiya.in",
 ].filter(Boolean);
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+// Server-to-server endpoints authenticated by their own signatures (HMAC
+// webhooks, etc.) receive no Origin/Referer header and must bypass the
+// browser CSRF origin gate.
+const CSRF_BYPASS_PREFIXES = ["/api/payments/razorpay/webhook"];
 
 export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hostname = request.headers.get("host") ?? "";
 
   // ── CSRF origin validation for state-changing requests ─────────────────
-  if (MUTATING_METHODS.has(request.method)) {
+  const isServerToServerEndpoint = CSRF_BYPASS_PREFIXES.some((p) =>
+    pathname.startsWith(p)
+  );
+  if (MUTATING_METHODS.has(request.method) && !isServerToServerEndpoint) {
     const origin = request.headers.get("origin");
     const referer = request.headers.get("referer");
     const source = origin ?? referer;
@@ -156,6 +179,84 @@ export default async function proxy(request: NextRequest) {
   const sessionSecret = session?.value ?? "";
   const hasSessionSecret = sessionSecret.length > 0;
 
+  // ── Subdomain routing: app/admin/instructor/moderator/community → prefix rewrite
+  // All are optional — single domain amarbhaiya.in works without any subdomain DNS.
+  // Detect app/admin/instructor/moderator via exact host or prefix (covers preview deployments community-xxx.vercel.app etc. not needed).
+  const subdomainPrefix = (() => {
+    if (hostname === APP_HOST || hostname.startsWith("app.")) return "/app";
+    if (hostname === ADMIN_HOST || hostname.startsWith("admin.")) return "/admin";
+    if (hostname === INSTRUCTOR_HOST || hostname.startsWith("instructor.")) return "/instructor";
+    if (hostname === MODERATOR_HOST || hostname.startsWith("moderator.")) return "/moderator";
+    return null;
+  })();
+
+  if (subdomainPrefix) {
+    // Let static assets and APIs pass through without rewrite
+    if (
+      pathname.startsWith("/_next") ||
+      pathname.startsWith("/api") ||
+      pathname.includes(".")
+    ) {
+      return NextResponse.next();
+    }
+
+    // Auth routes on subdomains: allow /login etc. without prefix, but redirect logged-in users
+    const isSubAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
+    if (isSubAuthRoute) {
+      if (hasSessionSecret) {
+        const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
+        if (isValidSession) {
+          const redirectTarget = request.nextUrl.searchParams.get("redirect");
+          if (
+            typeof redirectTarget === "string" &&
+            redirectTarget.startsWith("/") &&
+            !redirectTarget.startsWith("//") &&
+            !redirectTarget.includes("\\")
+          ) {
+            return NextResponse.redirect(new URL(redirectTarget, request.url));
+          }
+          const fallback = subdomainPrefix === "/app" ? "/app/dashboard" : subdomainPrefix;
+          return NextResponse.redirect(new URL(fallback, request.url));
+        }
+      }
+      return NextResponse.next();
+    }
+
+    // Require auth for protected subdomains (app/admin/etc. are all protected)
+    if (!hasSessionSecret) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", `${pathname}${search}`);
+      return NextResponse.redirect(loginUrl);
+    }
+    {
+      const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
+      if (!isValidSession) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("redirect", `${pathname}${search}`);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete(sessionCookieName);
+        return response;
+      }
+    }
+
+    // Rewrite: app.amarbhaiya.in/ → /app, /courses → /app/courses, etc.
+    // Root "/" maps to the subdomain's dashboard/index
+    if (pathname === "/") {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = subdomainPrefix === "/app" ? "/app/dashboard" : subdomainPrefix;
+      return NextResponse.rewrite(rewriteUrl);
+    }
+
+    // If path already starts with the prefix, don't double-prefix
+    if (pathname.startsWith(subdomainPrefix + "/") || pathname === subdomainPrefix) {
+      return NextResponse.next();
+    }
+
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = `${subdomainPrefix}${pathname}`;
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   // ── Community subdomain → rewrite to /app/community ─────────────────
   if (hostname === COMMUNITY_HOST || hostname.startsWith("community.")) {
     // Let static assets pass through
@@ -167,10 +268,8 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const isLoggedIn = hasSessionSecret;
-
-    const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
-    if (isAuthRoute) {
+    const isCommunityAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
+    if (isCommunityAuthRoute) {
       if (hasSessionSecret) {
         const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
         if (!isValidSession) {
@@ -181,7 +280,8 @@ export default async function proxy(request: NextRequest) {
         if (
           typeof redirectTarget === "string" &&
           redirectTarget.startsWith("/") &&
-          !redirectTarget.startsWith("//")
+          !redirectTarget.startsWith("//") &&
+          !redirectTarget.includes("\\")
         ) {
           return NextResponse.redirect(new URL(redirectTarget, request.url));
         }
@@ -192,11 +292,21 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Check auth — community requires login
-    if (!isLoggedIn) {
+    // Check auth — community requires login (validate session, not just cookie presence)
+    if (!hasSessionSecret) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", `${pathname}${search}`);
       return NextResponse.redirect(loginUrl);
+    }
+    {
+      const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
+      if (!isValidSession) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("redirect", `${pathname}${search}`);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete(sessionCookieName);
+        return response;
+      }
     }
 
     // Rewrite root → /app/community
@@ -246,7 +356,8 @@ export default async function proxy(request: NextRequest) {
     if (
       typeof redirectTarget === "string" &&
       redirectTarget.startsWith("/") &&
-      !redirectTarget.startsWith("//")
+      !redirectTarget.startsWith("//") &&
+      !redirectTarget.includes("\\")
     ) {
       return NextResponse.redirect(new URL(redirectTarget, request.url));
     }

@@ -66,15 +66,16 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
       </div>
 
       {error && (
-        <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
+        <div role="alert" aria-live="polite" className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-foreground/70">Full Name</label>
+          <label htmlFor="register-name" className="text-sm font-semibold text-foreground/70">Full Name</label>
           <Input
+            id="register-name"
             required
             placeholder="Your full name"
             type="text"
@@ -86,8 +87,9 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-foreground/70">Email address</label>
+          <label htmlFor="register-email" className="text-sm font-semibold text-foreground/70">Email address</label>
           <Input
+            id="register-email"
             required
             placeholder="you@example.com"
             type="email"
@@ -99,8 +101,9 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-foreground/70">Password</label>
+          <label htmlFor="register-password" className="text-sm font-semibold text-foreground/70">Password</label>
           <Input
+            id="register-password"
             required
             placeholder="Min 8 chars, letter, number, symbol"
             type="password"
@@ -160,6 +163,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
           type="submit"
           size="lg"
           disabled={loading}
+          aria-busy={loading}
           className="mt-2 w-full font-bold text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
           {loading ? "Creating account..." : "Create account"}

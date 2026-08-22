@@ -16,19 +16,12 @@ import {
   getFileExtension,
   isAllowedLessonVideoExtension,
 } from "@/server/uploads/lesson-video";
+import { formatBytes } from "@/lib/utils/format";
 
 type LessonVideoUploadFormProps = {
   courseId: string;
   lessonId: string;
 };
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1_000_000_000) {
-    return `${(bytes / 1_000_000_000).toFixed(1)} GB`;
-  }
-
-  return `${(bytes / 1_000_000).toFixed(0)} MB`;
-}
 
 export function LessonVideoUploadForm({
   courseId,

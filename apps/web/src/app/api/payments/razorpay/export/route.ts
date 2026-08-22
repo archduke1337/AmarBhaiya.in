@@ -1,17 +1,40 @@
 import { NextResponse } from "next/server";
 import { Query } from "node-appwrite";
 
-import { requireRole } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
+import { getApiUserContext } from "@/server/appwrite/api-auth";
+import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 import {
   safeListAllRows,
   listRowsByFieldValues,
   type AnyRow,
 } from "@/server/appwrite/dashboard-data/internal";
 
-export async function GET() {
-  await requireRole(["admin"]);
+export const runtime = "nodejs";
+
+function escapeCsvCell(cell: unknown): string {
+  let str = String(cell ?? "");
+  // Prevent CSV formula injection (=, +, -, @, tab, carriage return)
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+export async function GET(request: Request) {
+  const auth = await getApiUserContext();
+  if (!auth || auth.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const rlKey = `${getRateLimitKey(request)}:export:${auth.userId}`;
+  const rl = await checkRateLimit(rlKey, 5);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } });
+  }
 
   try {
     const { tablesDB, users } = await createAdminClient();
@@ -74,19 +97,8 @@ export async function GET() {
     ]);
 
     const csvContent = [
-      headers.join(","),
-      ...rows.map((row) =>
-        row
-          .map((cell) => {
-            // Escape commas and quotes
-            const str = String(cell);
-            if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-              return `"${str.replace(/"/g, '""')}"`;
-            }
-            return str;
-          })
-          .join(",")
-      ),
+      headers.map(escapeCsvCell).join(","),
+      ...rows.map((row) => row.map(escapeCsvCell).join(",")),
     ].join("\n");
 
     return new NextResponse(csvContent, {
@@ -97,8 +109,9 @@ export async function GET() {
       },
     });
   } catch (error) {
+    console.error("[Payments Export] failed", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to export payments" },
+      { error: "Failed to export payments" },
       { status: 500 }
     );
   }

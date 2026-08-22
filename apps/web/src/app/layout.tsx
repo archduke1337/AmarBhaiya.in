@@ -3,6 +3,7 @@ import { DM_Serif_Display, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { SkipLink } from "@/components/layout/skip-link";
+import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 
 // ── Fonts ─────────────────────────────────────────────────────
@@ -46,7 +47,6 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Amarnath Pandey" }],
   creator: "Amarnath Pandey",
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -92,9 +92,11 @@ export default function RootLayout({
       lang="en-IN"
       className={`${bodyFont.variable} ${headingFont.variable} h-full`}
       suppressHydrationWarning
-      // HeroUI v3 theme switching is done via data-theme + class
     >
       <body className="min-h-dvh flex flex-col bg-background text-foreground antialiased grain-overlay">
+        <noscript>
+          <style>{`.reveal{opacity:1!important;transform:none!important}.reveal.in-view{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
         <SkipLink />
         <ThemeProvider
           attribute="class"
@@ -103,6 +105,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Toaster />
         </ThemeProvider>
         <Analytics />
         <script
@@ -128,14 +131,14 @@ export default function RootLayout({
                   logo: "https://amarbhaiya.in/opengraph-image.png",
                   founder: { "@type": "Person", name: "Amarnath Pandey" },
                   sameAs: [
-                    "https://youtube.com/@amarbhaiya",
-                    "https://instagram.com/amarbhaiya",
-                    "https://twitter.com/amarbhaiya",
-                    "https://linkedin.com/in/amarnathpandey",
+                    "https://www.youtube.com/@amarxbhaiya",
+                    "https://www.instagram.com/amarxbhaiya/",
+                    "https://www.whatsapp.com/channel/0029VbCE7cbDDmFVAQzuXI3n",
+                    "https://www.linkedin.com/in/amarnath-pandey-3aab561b7/",
                   ],
                 },
               ],
-            }),
+            }).replace(/</g, "\\u003c"),
           }}
         />
       </body>

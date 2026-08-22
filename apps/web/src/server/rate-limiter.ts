@@ -105,7 +105,27 @@ export async function checkRateLimit(
 }
 
 export function getRateLimitKey(request: Request): string {
+  // Forwarding headers are only trustworthy when the app runs behind a
+  // proxy that strips or overwrites client-supplied values. On Vercel the
+  // platform rewrites x-forwarded-for itself; self-hosted deployments must
+  // opt in with TRUST_PROXY=1. For correctness we now key per-IP even when
+  // untrusted (prefixed), trading spoofability (attacker can rotate IP to
+  // bypass limit) for avoiding global DoS where 5 failed logins lock out
+  // *all* users on self-hosted.
+  const behindTrustedProxy =
+    process.env.VERCEL === "1" || process.env.TRUST_PROXY === "1";
+
   const forwarded = request.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() ?? "unknown";
-  return ip;
+  const ip = forwarded?.split(",")[0]?.trim();
+  const realIp = request.headers.get("x-real-ip");
+
+  if (behindTrustedProxy) {
+    if (ip) return ip;
+    if (realIp) return realIp;
+  }
+
+  // Untrusted: still per-IP but namespaced to make bypass explicit
+  if (ip) return `untrusted:${ip}`;
+  if (realIp) return `untrusted:${realIp}`;
+  return "untrusted:unknown";
 }

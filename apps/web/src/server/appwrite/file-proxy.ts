@@ -42,6 +42,8 @@ export async function proxyAppwriteBucketFile({
   const rangeHeader = request.headers.get("range");
   const sanitizedRange = sanitizeRangeHeader(rangeHeader);
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
   const upstreamResponse = await fetch(
     `${APPWRITE_CONFIG.endpoint}/storage/buckets/${bucketId}/files/${fileId}/${mode}`,
     {
@@ -52,16 +54,17 @@ export async function proxyAppwriteBucketFile({
         ...(sanitizedRange ? { Range: sanitizedRange } : {}),
       },
       cache: "no-store",
+      signal: controller.signal,
     }
-  ).catch(() => null);
+  ).catch(() => null).finally(() => clearTimeout(timeout));
 
   if (!upstreamResponse) {
     return jsonError("Failed to stream file from Appwrite.", 502);
   }
 
   if (!upstreamResponse.ok && upstreamResponse.status !== 206) {
-    const errorText = await upstreamResponse.text().catch(() => "");
-    return jsonError(errorText || "Failed to fetch file from Appwrite.", upstreamResponse.status);
+    await upstreamResponse.text().catch(() => "");
+    return jsonError("Failed to fetch file from Appwrite.", upstreamResponse.status);
   }
 
   const headers = new Headers();

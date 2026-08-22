@@ -24,7 +24,7 @@ const applyModerationSchema = z.object({
   ]),
   scope: z.enum(["course", "platform"]),
   reason: z.string().trim().min(3),
-  duration: z.string().trim().optional(),
+  duration: z.string().trim().regex(/^(\d+[smhd]|\d+\s*(seconds?|minutes?|hours?|days?))$/i, "Duration must be like '48h', '30m', '7d'").optional(),
   entityType: z.string().trim().optional(),
   entityId: z.string().trim().optional(),
 });

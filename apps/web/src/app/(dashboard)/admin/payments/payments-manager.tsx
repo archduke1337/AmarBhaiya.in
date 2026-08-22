@@ -215,7 +215,7 @@ function PaymentRow({
   const allowedTransitions: Record<string, string[]> = {
     pending: ["completed", "failed"],
     completed: ["refunded"],
-    failed: ["pending"],
+    failed: [],
     refunded: [],
   };
 
@@ -309,8 +309,10 @@ function PaymentRow({
             onClick={async () => {
               const fd = new FormData();
               fd.set("paymentId", payment.id);
-              await sendPaymentReminderAction(fd);
-              setReminderSent(true);
+              const res = await sendPaymentReminderAction(fd);
+              if (res && (res as { success?: boolean }).success !== false) {
+                setReminderSent(true);
+              }
             }}
             disabled={reminderSent}
             className="text-[10px] font-semibold text-amber-500 hover:underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
@@ -337,10 +339,15 @@ function PaymentRow({
                   const fd = new FormData();
                   fd.set("paymentId", payment.id);
                   fd.set("status", status);
-                  await updatePaymentStatusAction(fd);
-                  onStatusUpdate(payment.id, status);
+                  const result = await updatePaymentStatusAction(fd);
+                  // Only optimistically update if server accepted; otherwise show error via toast if available
+                  if (result && (result as { success?: boolean }).success === false) {
+                    // keep UI unchanged, server rejected transition
+                  } else {
+                    onStatusUpdate(payment.id, status);
+                    setShowControls(false);
+                  }
                   setUpdating(false);
-                  setShowControls(false);
                 }}
                 disabled={updating}
                 className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold transition-colors disabled:opacity-50 ${statusColors[status] || "border-border text-muted-foreground"} hover:opacity-80`}

@@ -3,8 +3,10 @@ import { ID, Query } from "node-appwrite";
 import { z } from "zod";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
-import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { createAdminClient } from "@/server/appwrite/server";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
+
+import { getApiUser } from "@/server/appwrite/api-auth";
 
 export const runtime = "nodejs";
 
@@ -22,21 +24,12 @@ const billingInfoSchema = z.object({
   zipcode: z.string().trim().min(1).max(20),
 });
 
-async function getAuthenticatedUser() {
-  try {
-    const { account } = await createSessionClient();
-    return await account.get();
-  } catch {
-    return null;
-  }
-}
-
 // ── GET: Check if user has billing info ────────────────────────────────────
 
 export async function GET() {
-  const user = await getAuthenticatedUser();
+  const user = await getApiUser();
   if (!user) {
-    return NextResponse.json({ hasBillingInfo: false, billing: null });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -77,12 +70,12 @@ export async function GET() {
 // ── POST: Save billing info ────────────────────────────────────────────────
 
 export async function POST(request: Request) {
-  const user = await getAuthenticatedUser();
+  const user = await getApiUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rlKey = `${getRateLimitKey(request)}:billing-info`;
+  const rlKey = `${getRateLimitKey(request)}:billing-info:${user.$id}`;
   const rateLimit = await checkRateLimit(rlKey, 10);
   if (!rateLimit.allowed) {
     return NextResponse.json(
@@ -148,8 +141,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("[Billing Info] save failed", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to save billing info" },
+      { error: "Failed to save billing info" },
       { status: 500 }
     );
   }

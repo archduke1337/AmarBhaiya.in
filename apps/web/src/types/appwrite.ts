@@ -23,7 +23,7 @@ export interface Course extends AppwriteRow {
   title: string;
   slug: string;
   description: string;
-  shortDescription: string;
+  shortDescription?: string;
   instructorId: string;
   instructorName: string;
   categoryId: string;
@@ -31,7 +31,7 @@ export interface Course extends AppwriteRow {
   accessModel: "free" | "paid" | "subscription";
   isPublished: boolean;
   isFeatured: boolean;
-  thumbnailId: string;
+  thumbnailId?: string;
   thumbnailFileId?: string;
   totalDuration: number;
   totalLessons: number;
@@ -76,12 +76,12 @@ export interface Enrollment extends AppwriteRow {
   userId: string;
   courseId: string;
   enrolledAt: string;
-  paymentId: string;
+  paymentId?: string;
   accessModel: "free" | "paid" | "subscription";
   isActive: boolean;
   completedLessons: number;
   progress: number;
-  completedAt: string;
+  completedAt?: string;
   status: "active" | "completed";
 }
 
@@ -117,8 +117,8 @@ export interface QuizAttempt extends AppwriteRow {
   quizId: string;
   score: number;
   answers: string[];
-  completedAt: string;
-  passed: boolean;
+  completedAt?: string;
+  passed?: boolean;
 }
 
 export interface Assignment extends AppwriteRow {
@@ -132,22 +132,22 @@ export interface Assignment extends AppwriteRow {
 export interface Submission extends AppwriteRow {
   assignmentId: string;
   userId: string;
-  fileId: string;
+  fileId?: string;
   submittedAt: string;
   gradedAt?: string;
-  grade: number;
-  feedback: string;
+  grade?: number;
+  feedback?: string;
 }
 
 export interface Certificate extends AppwriteRow {
   userId: string;
   courseId: string;
-  courseTitle: string;
-  userName: string;
+  courseTitle?: string;
+  userName?: string;
   issuedAt: string;
-  fileId: string;
-  shareUrl: string;
-  verificationToken: string;
+  fileId?: string;
+  shareUrl?: string;
+  verificationToken?: string;
   isPublished: boolean;
 }
 
@@ -161,8 +161,8 @@ export interface LiveSession extends AppwriteRow {
   scheduledAt: string;
   streamId: string;
   status: "scheduled" | "live" | "ended";
-  recordingUrl: string;
-  duration: number;
+  recordingUrl?: string;
+  duration?: number;
 }
 
 export interface SessionRsvp extends AppwriteRow {
@@ -175,8 +175,8 @@ export interface CourseComment extends AppwriteRow {
   lessonId: string;
   courseId: string;
   userId: string;
-  userName: string;
-  userRole: string;
+  userName?: string;
+  userRole?: string;
   text: string;
   parentId: string;
   createdAt: string;
@@ -197,22 +197,22 @@ export interface ForumCategory extends AppwriteRow {
 export interface ForumThread extends AppwriteRow {
   forumCatId: string;
   userId: string;
-  userName: string;
-  userRole: string;
+  userName?: string;
+  userRole?: string;
   title: string;
   body: string;
   createdAt: string;
   isPinned: boolean;
   isLocked: boolean;
   replyCount: number;
-  lastReplyAt: string;
+  lastReplyAt?: string;
 }
 
 export interface ForumReply extends AppwriteRow {
   threadId: string;
   userId: string;
-  userName: string;
-  userRole: string;
+  userName?: string;
+  userRole?: string;
   body: string;
   createdAt: string;
   isDeleted: boolean;
@@ -224,20 +224,26 @@ export interface Payment extends AppwriteRow {
   userId: string;
   courseId: string;
   amount: number;
+  originalAmount?: number;
+  couponCode?: string;
   currency: string;
-  method: "razorpay";
+  method: "razorpay" | "phonepe";
   status: "pending" | "completed" | "failed" | "refunded";
   providerRef: string;
+  refundId?: string;
+  refundAmount?: number;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Subscription extends AppwriteRow {
   userId: string;
   planId: string;
+  planName?: string;
   startDate: string;
   endDate: string;
   status: "active" | "expired" | "cancelled";
-  paymentId: string;
+  paymentId?: string;
 }
 
 export interface ModerationAction extends AppwriteRow {
@@ -248,12 +254,12 @@ export interface ModerationAction extends AppwriteRow {
   action: "warn" | "mute" | "timeout" | "delete_post" | "pin" | "unpin" | "remove_from_chat" | "flag";
   scope: "course" | "platform";
   reason: string;
-  duration: string;
+  duration?: string;
   entityType: string;
   entityId: string;
   createdAt: string;
-  revertedBy: string;
-  revertedAt: string;
+  revertedBy?: string;
+  revertedAt?: string;
 }
 
 export interface AuditLog extends AppwriteRow {
@@ -262,7 +268,7 @@ export interface AuditLog extends AppwriteRow {
   action: string;
   entity: string;
   entityId: string;
-  metadata: string;
+  metadata?: string;
   createdAt: string;
 }
 
@@ -272,7 +278,7 @@ export interface Notification extends AppwriteRow {
   title: string;
   message: string;
   isRead: boolean;
-  actionUrl: string;
+  actionUrl?: string;
   createdAt: string;
 }
 
@@ -283,7 +289,7 @@ export interface BlogPostRecord extends AppwriteRow {
   title: string;
   excerpt: string;
   category: string;
-  authorName: string;
+  authorName?: string;
   publishedAt: string;
   readMinutes: number;
   content: string;
@@ -294,16 +300,35 @@ export interface BlogPostRecord extends AppwriteRow {
 
 export interface Coupon extends AppwriteRow {
   code: string;
-  courseId: string;
-  instructorId: string;
+  courseId?: string;
+  resourceId?: string;
+  instructorId?: string;
   type: "percent" | "fixed";
   value: number;
   maxUses: number;
   usedCount: number;
-  expiresAt: string;
+  expiresAt?: string;
   isActive: boolean;
   createdBy: string;
   createdAt: string;
+}
+
+// ── Standalone Resources ──────────────────────────────────────────────────
+
+export interface StandaloneResource extends AppwriteRow {
+  instructorId: string;
+  instructorName?: string;
+  title: string;
+  description?: string;
+  type: "notes" | "worksheet" | "test_paper" | "video" | "other";
+  accessModel: "free" | "paid";
+  price: number;
+  fileId?: string;
+  thumbnailId?: string;
+  downloadCount: number;
+  isPublished: boolean;
+  tags: string[];
+  createdAt?: string;
 }
 
 // ── Marketing & Editorial ─────────────────────────────────────────────────

@@ -162,6 +162,31 @@ export async function userHasCourseAccess({
     return true;
   }
 
+  // Subscription-gated courses: check active subscription
+  if (String(course.accessModel ?? "") === "subscription") {
+    try {
+      const subs = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.subscriptions,
+        queries: [
+          Query.equal("userId", [userId]),
+          Query.equal("status", ["active"]),
+          Query.limit(10),
+        ],
+      });
+      const hasActiveSub = subs.rows.some((row) => {
+        const r = row as AnyRow;
+        if (String(r.status ?? "") !== "active") return false;
+        if (!r.endDate) return true;
+        const end = new Date(String(r.endDate));
+        return !Number.isNaN(end.getTime()) && end > new Date();
+      });
+      if (hasActiveSub) return true;
+    } catch {
+      // fall through to lesson preview check
+    }
+  }
+
   if (lesson) {
     if (Boolean(lesson.isFree) || Boolean(lesson.isFreePreview)) {
       return true;

@@ -44,11 +44,12 @@ export async function updatePaymentStatusAction(formData: FormData): Promise<Act
 
     const currentStatus = String(existing.status ?? "");
 
-    // Validate transitions
+    // Validate transitions — mirrors the canonical state machine in
+    // server/payments/course-payment.ts (canTransitionPaymentStatus)
     const validTransitions: Record<string, string[]> = {
       pending: ["completed", "failed"],
       completed: ["refunded"],
-      failed: ["pending"],
+      failed: [],
       refunded: [],
     };
 

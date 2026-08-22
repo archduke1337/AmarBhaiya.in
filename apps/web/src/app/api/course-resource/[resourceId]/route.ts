@@ -1,35 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { getUserRole } from "@/server/appwrite/auth-utils";
+import { getApiUserContext } from "@/server/appwrite/api-auth";
 import { userCanManageLesson, userHasCourseAccess } from "@/server/appwrite/access";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
-import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { createAdminClient } from "@/server/appwrite/server";
 import type { AnyRow } from "@/types/rows";
 
 export const runtime = "nodejs";
-
-async function getAuthenticatedUserContext() {
-  try {
-    const { account } = await createSessionClient();
-    const sessionUser = await account.get();
-    const { users } = await createAdminClient();
-    const adminUser = await users.get({ userId: sessionUser.$id });
-
-    return {
-      userId: sessionUser.$id,
-      role: getUserRole(adminUser),
-    };
-  } catch {
-    return null;
-  }
-}
 
 export async function GET(
   request: Request,
   context: { params: Promise<{ resourceId: string }> }
 ) {
-  const authenticated = await getAuthenticatedUserContext();
+  const authenticated = await getApiUserContext();
   if (!authenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

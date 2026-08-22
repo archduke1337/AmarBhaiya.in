@@ -257,15 +257,15 @@ export async function deleteStandaloneResourceAction(
 
 // ── List (for instructor dashboard) ─────────────────────────────────────────
 
-export async function getInstructorResources(
-  scope: { userId: string; role: string }
-): Promise<StandaloneResource[]> {
+export async function getInstructorResources(): Promise<StandaloneResource[]> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
   try {
     const queries =
-      scope.role === "admin"
+      role === "admin"
         ? [Query.orderDesc("$createdAt")]
         : [
-            Query.equal("instructorId", [scope.userId]),
+            Query.equal("instructorId", [user.$id]),
             Query.orderDesc("$createdAt"),
           ];
 

@@ -1,5 +1,4 @@
 import { FileText, Upload, Clock, Download } from "lucide-react";
-import type { Models } from "node-appwrite";
 
 import { requireAuth } from "@/server/appwrite/auth";
 import { PageHeader, EmptyState } from "@/components/dashboard";
@@ -17,8 +16,7 @@ import {
   listRowsByFieldValues,
 } from "@/server/appwrite/row-pagination";
 import { Query } from "node-appwrite";
-
-type AnyRow = Models.Row & Record<string, unknown>;
+import type { AnyRow } from "@/types/rows";
 
 function isActiveEnrollment(row: AnyRow): boolean {
   return row.isActive !== false

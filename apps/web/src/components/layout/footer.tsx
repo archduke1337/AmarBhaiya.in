@@ -46,8 +46,8 @@ const footerLinkGroups: Array<{ title: string; links: FooterLinkItem[] }> = [
 const socialLinks: FooterLinkItem[] = [
   { label: "YouTube", href: OWNER.social.youtube },
   { label: "Instagram", href: OWNER.social.instagram },
+  { label: "WhatsApp", href: OWNER.social.whatsapp },
   { label: "LinkedIn", href: OWNER.social.linkedin },
-  { label: "Twitter", href: OWNER.social.twitter },
 ];
 
 const mobileQuickLinks: FooterLinkItem[] = [
@@ -91,6 +91,25 @@ export function Footer() {
   return (
     <footer className="mt-auto border-t border-border/40 pb-safe" aria-label="Site footer">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+        {/* Trust strip */}
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">
+            <p className="text-sm font-black tracking-[-0.02em]">10k+</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/50">Students</p>
+          </div>
+          <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">
+            <p className="text-sm font-black tracking-[-0.02em]">500+</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/50">Hours</p>
+          </div>
+          <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">
+            <p className="text-sm font-black tracking-[-0.02em]">4.8★</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/50">Rating</p>
+          </div>
+          <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">
+            <p className="text-sm font-black tracking-[-0.02em]">Free</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/50">Notes</p>
+          </div>
+        </div>
         <section className="relative overflow-hidden rounded-[calc(var(--radius)+10px)] border border-border/50 bg-surface/70 p-5 shadow-surface sm:p-8">
           <div
             className="pointer-events-none absolute -right-20 -top-16 h-64 w-64 rounded-full opacity-[0.13] blur-3xl"

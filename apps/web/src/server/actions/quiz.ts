@@ -4,6 +4,7 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth, requireRole } from "@/server/appwrite/auth";
+import { getUserRole } from "@/server/appwrite/auth-utils";
 import {
   getCourseRow,
   userCanManageCourse,
@@ -193,6 +194,7 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
   questions: QuizQuestionItem[];
 }> {
   const user = await requireAuth();
+  const role = getUserRole(user);
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -207,6 +209,10 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
     }
 
     const questionRows = await getQuizQuestionRows(tablesDB, quizId);
+    const canReviewAnswers =
+      role === "admin" ||
+      (role === "instructor" &&
+        (await userCanManageCourse(String(quiz.courseId ?? ""), role, user.$id)));
 
     return {
       quiz: {
@@ -224,7 +230,7 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
           text: String(q.text ?? ""),
           type: String(q.type ?? "mcq"),
           options: Array.isArray(q.options) ? (q.options as string[]) : [],
-          correctAnswer: String(q.correctAnswer ?? ""),
+          correctAnswer: canReviewAnswers ? String(q.correctAnswer ?? "") : "",
           order: Number(q.order ?? 0),
         };
       }),
@@ -239,9 +245,14 @@ export async function getQuizWithQuestions(quizId: string): Promise<{
 export async function getCourseQuizzes(
   courseId: string
 ): Promise<QuizSummary[]> {
+  const user = await requireAuth();
   const { tablesDB } = await createAdminClient();
 
   try {
+    if (!(await userHasCourseAccess({ courseId, userId: user.$id }))) {
+      return [];
+    }
+
     const rows = await listAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.quizzes, [
       Query.equal("courseId", [courseId]),
     ]);

@@ -3,6 +3,7 @@
 import { Query } from "node-appwrite";
 
 import { requireAuth } from "@/server/appwrite/auth";
+import { getUserRole } from "@/server/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import {
   listAllRows,
@@ -25,7 +26,7 @@ export async function getStudentEnrollments(
   userId: string
 ): Promise<EnrolledCourse[]> {
   const caller = await requireAuth();
-  if (caller.$id !== userId && !caller.labels?.includes("admin")) {
+  if (caller.$id !== userId && getUserRole(caller) !== "admin") {
     return [];
   }
 

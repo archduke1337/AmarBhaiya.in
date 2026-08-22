@@ -7,18 +7,18 @@ import {
   updateLiveSessionAction,
 } from "../dashboard";
 
-export async function createForumThreadFormAction(formData: FormData): Promise<void> {
-  await createForumThreadAction(formData);
+export async function createForumThreadFormAction(formData: FormData): Promise<any> {
+  return await createForumThreadAction(formData);
 }
 
-export async function createCourseDraftFormAction(formData: FormData): Promise<void> {
-  await createCourseDraftAction(formData);
+export async function createCourseDraftFormAction(formData: FormData): Promise<any> {
+  return await createCourseDraftAction(formData);
 }
 
-export async function createLiveSessionFormAction(formData: FormData): Promise<void> {
-  await createLiveSessionAction(formData);
+export async function createLiveSessionFormAction(formData: FormData): Promise<any> {
+  return await createLiveSessionAction(formData);
 }
 
-export async function updateLiveSessionFormAction(formData: FormData): Promise<void> {
-  await updateLiveSessionAction(formData);
+export async function updateLiveSessionFormAction(formData: FormData): Promise<any> {
+  return await updateLiveSessionAction(formData);
 }

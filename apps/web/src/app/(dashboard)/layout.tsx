@@ -3,6 +3,12 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { BottomTabBar } from "@/components/layout/bottom-tab-bar";
 import { requireAuth } from "@/server/appwrite/auth";
 import { getUserRole } from "@/server/appwrite/auth-utils";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardLayout({
   children,

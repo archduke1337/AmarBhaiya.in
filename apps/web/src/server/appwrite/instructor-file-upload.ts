@@ -13,6 +13,7 @@ import {
   STANDALONE_RESOURCE_ALLOWED_MIMES,
   type InstructorUploadKind,
   INSTRUCTOR_UPLOAD_BUCKETS,
+  getInstructorUploadMaxBytes,
   getUploadFileExtension,
   isAllowedInstructorUploadExtension,
 } from "@/server/uploads/instructor-file";
@@ -131,6 +132,13 @@ export async function finalizeInstructorUpload(
     };
   }
 
+  const maxBytes = getInstructorUploadMaxBytes(kind);
+  const fileSize = Number((uploadedFile as { sizeOriginal?: number }).sizeOriginal ?? (uploadedFile as { size?: number }).size ?? 0);
+  if (fileSize > maxBytes) {
+    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
+    return { success: false, status: 400, error: `File too large. Max ${Math.round(maxBytes / (1024 * 1024))}MB.` };
+  }
+
   if (kind === "course-thumbnail") {
     if (!courseId) {
       return { success: false, status: 400, error: "Missing courseId." };
@@ -226,42 +234,49 @@ export async function finalizeInstructorUpload(
     return { success: true };
   }
 
-  if (!resourceId) {
-    return { success: false, status: 400, error: "Missing resourceId." };
-  }
+  if (kind === "course-resource") {
+    if (!resourceId) {
+      return { success: false, status: 400, error: "Missing resourceId." };
+    }
 
-  const resourceContext = await userCanManageCourseResource(resourceId, role, userId);
-  if (!resourceContext) {      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
+    const resourceContext = await userCanManageCourseResource(resourceId, role, userId);
+    if (!resourceContext) {
+      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
       return { success: false, status: 403, error: "Forbidden" };
     }
 
     const previousFileId = String(resourceContext.resource.fileId ?? "");
 
-  try {
-    await tablesDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.resources,
-      rowId: resourceId,
-      data: { fileId: uploadedFileId },
-    });
-  } catch (error) {
-    console.error(
-      "[InstructorUpload] Failed to attach uploaded course resource file:",
-      error
-    );
-    await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
-    return {
-      success: false,
-      status: 500,
-      error: "Failed to attach uploaded course resource file.",
-    };
-  }    if (previousFileId && previousFileId !== uploadedFileId) {
-    await deleteUploadedFileIfPresent(storage, bucketId, previousFileId, "InstructorUpload");
+    try {
+      await tablesDB.updateRow({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.resources,
+        rowId: resourceId,
+        data: { fileId: uploadedFileId },
+      });
+    } catch (error) {
+      console.error(
+        "[InstructorUpload] Failed to attach uploaded course resource file:",
+        error
+      );
+      await deleteUploadedFileIfPresent(storage, bucketId, uploadedFileId, "InstructorUpload");
+      return {
+        success: false,
+        status: 500,
+        error: "Failed to attach uploaded course resource file.",
+      };
+    }
+
+    if (previousFileId && previousFileId !== uploadedFileId) {
+      await deleteUploadedFileIfPresent(storage, bucketId, previousFileId, "InstructorUpload");
+    }
+
+    revalidatePath("/instructor/resources");
+    revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
+    revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
+
+    return { success: true };
   }
 
-  revalidatePath("/instructor/resources");
-  revalidatePath(`/instructor/courses/${resourceContext.course.$id}/curriculum`);
-  revalidatePath(`/app/learn/${resourceContext.course.$id}/${resourceContext.lesson.$id}`);
-
-  return { success: true };
+  return { success: false, status: 400, error: "Unsupported upload kind." };
 }

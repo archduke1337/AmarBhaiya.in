@@ -13,21 +13,56 @@ export type AnnouncementData = {
   backgroundColor?: string;
 };
 
-const DISMISSED_KEY = "ab-announcement-dismissed";
-const subscribeToDismissal = () => () => {};
-const getDismissedSnapshot = () =>
-  typeof window !== "undefined" && window.localStorage.getItem(DISMISSED_KEY) === "true";
-const getServerDismissedSnapshot = () => true;
+function isSafeHttpHref(href: string): boolean {
+  const t = href.trim();
+  if (!t) return false;
+  if (t.startsWith("/") || t.startsWith("#")) {
+    return !t.startsWith("//");
+  }
+  try {
+    const u = new URL(t, "https://amarbhaiya.in");
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function getAnnouncementDismissedKey(announcement: Pick<AnnouncementData, "text" | "link"> | null): string {
+  if (!announcement) return "ab-announcement-dismissed";
+  // Version the key by content hash so new announcements are not permanently hidden
+  let hash = 0;
+  const str = `${announcement.text}::${announcement.link ?? ""}`;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return `ab-announcement-dismissed:${hash.toString(16)}`;
+}
+
+function safeGetDismissed(key: string): boolean {
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+}
+function safeSetDismissed(key: string): void {
+  try {
+    window.localStorage.setItem(key, "true");
+  } catch {
+    // ignore quota / privacy mode
+  }
+}
 
 type Props = {
   announcement: AnnouncementData | null;
 };
 
 export function AnnouncementBanner({ announcement }: Props) {
+  const dismissKey = getAnnouncementDismissedKey(announcement);
   const storedDismissed = useSyncExternalStore(
-    subscribeToDismissal,
-    getDismissedSnapshot,
-    getServerDismissedSnapshot,
+    () => () => {},
+    () => safeGetDismissed(dismissKey),
+    () => true,
   );
   const [dismissedForSession, setDismissedForSession] = useState(false);
   const dismissed = storedDismissed || dismissedForSession;
@@ -38,7 +73,7 @@ export function AnnouncementBanner({ announcement }: Props) {
 
   const handleDismiss = () => {
     setDismissedForSession(true);
-    localStorage.setItem(DISMISSED_KEY, "true");
+    safeSetDismissed(dismissKey);
   };
 
   const bgColor = announcement.backgroundColor || "var(--accent)";
@@ -52,7 +87,7 @@ export function AnnouncementBanner({ announcement }: Props) {
         {announcement.text}
       </span>
 
-      {announcement.link && (
+      {announcement.link && isSafeHttpHref(announcement.link) && (
         <Link
           href={announcement.link}
           className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-[0.1em] transition-all hover:opacity-80"

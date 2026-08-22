@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createPublicClient, createSessionClient } from "@/server/appwrite/server";
 import { requireAuth } from "@/server/appwrite/auth";
-import { passwordSchema } from "@/server/validators/auth";
+import { passwordSchema, forgotPasswordSchema } from "@/server/validators/auth";
 import { checkRateLimit } from "@/server/rate-limiter";
 import { actionSuccess, actionError } from "@/lib/errors/action-result";
 import type { ActionResult } from "@/lib/errors/action-result";
@@ -89,7 +89,10 @@ export async function sendPasswordRecoveryAction(
   formData: FormData
 ): Promise<ActionResult> {
   const email = String(formData.get("email") ?? "").trim();
-  if (!email) return actionError("Email is required.");
+  const parsedEmail = forgotPasswordSchema.safeParse({ email });
+  if (!parsedEmail.success) {
+    return actionError(parsedEmail.error.issues[0].message);
+  }
 
   const rateLimit = await checkRateLimit(
     `${await getClientIpKey()}:password-recovery`,
@@ -102,7 +105,7 @@ export async function sendPasswordRecoveryAction(
   try {
     const { account } = await createPublicClient();
     const recoveryUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://amarbhaiya.in"}/reset-password`;
-    await account.createRecovery({ email, url: recoveryUrl });
+    await account.createRecovery({ email: parsedEmail.data.email, url: recoveryUrl });
   } catch {
     // Don't reveal whether the email exists — silently log
     console.error("Failed to send recovery email.");

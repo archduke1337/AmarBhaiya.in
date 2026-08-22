@@ -80,12 +80,14 @@ export async function POST(request: Request) {
 
     const { tablesDB } = await createAdminClient();
 
-    // Idempotency: skip if this payment.id has already been processed
+    // Idempotency: skip if this providerRef (the Razorpay order id stored on
+    // the payment row at creation time) has already reached a terminal state.
     const existingPayments = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.payments,
       queries: [
-        Query.equal("providerRef", [payment.id]),
+        Query.equal("providerRef", [providerRef]),
+        Query.orderDesc("$createdAt"),
         Query.limit(1),
       ],
     });
@@ -107,6 +109,31 @@ export async function POST(request: Request) {
       amount: payment.amount,
       currency: payment.currency,
     });
+
+    // Critical: if payment was captured but no local row exists, return 500 so Razorpay retries
+    // instead of silently dropping the paid enrollment.
+    if (!result.paymentFound && status === "completed") {
+      console.error(`[Razorpay Webhook] No local payment row for providerRef ${providerRef} — returning 500 for retry`);
+      return NextResponse.json(
+        { error: "Payment row not found, retry later" },
+        { status: 500 }
+      );
+    }
+
+    // Coupon usage: webhook is authoritative — increment here if completed and not idempotent
+    // (verify route also increments, but only when transitioning from pending → completed, so at most one will succeed)
+    if (result.paymentFound && result.finalStatus === "completed" && status === "completed") {
+      try {
+        const paymentRow = existingPayments.rows[0] as { couponCode?: string } | undefined;
+        const couponCode = typeof paymentRow?.couponCode === "string" ? paymentRow.couponCode : "";
+        if (couponCode) {
+          const { incrementCouponUsageAction } = await import("@/server/actions/coupons");
+          await incrementCouponUsageAction(couponCode).catch(() => {});
+        }
+      } catch {
+        // non-critical
+      }
+    }
 
     revalidatePath("/app/courses");
     revalidatePath("/app/dashboard");

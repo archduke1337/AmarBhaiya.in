@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 const SCRIPT_OR_STYLE_BLOCK_PATTERN =
   /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi;
 const HTML_TAG_PATTERN = /<\/?[^>]+>/g;
@@ -143,11 +145,7 @@ export function generateIdempotencyKey(
   eventId: string,
   timestamp: string
 ): string {
-  // Use dynamic import workaround for server-side crypto
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const nodeCrypto = require("crypto") as typeof import("crypto");
-  return nodeCrypto
-    .createHash("sha256")
+  return createHash("sha256")
     .update(`${eventId}:${timestamp}`)
     .digest("hex");
 }

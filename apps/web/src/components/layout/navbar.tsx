@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSyncExternalStore } from "react";
 import { useTheme } from "@/components/theme/theme-provider";
@@ -77,6 +78,7 @@ export function Navbar() {
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const menuRef                   = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   // Detect scroll to add / remove background on island
   useEffect(() => {
@@ -169,20 +171,37 @@ export function Navbar() {
 
             {/* Desktop links */}
             <ul className="hidden md:flex items-center gap-1" role="list">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="px-3 py-2 rounded-lg text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-surface transition-all duration-200 min-h-[44px] flex items-center"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {NAV_LINKS.map((link) => {
+                const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] flex items-center ${
+                        isActive
+                          ? "bg-surface text-foreground shadow-sm"
+                          : "text-foreground/70 hover:text-foreground hover:bg-surface"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
 
             {/* Right actions */}
             <div className="flex items-center gap-2">
+              {/* Search */}
+              <Button asChild variant="ghost" size="icon-sm" aria-label="Search courses" className="hidden sm:flex text-foreground/60 hover:text-foreground">
+                <Link href="/courses">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M20 20L16.5 16.5" />
+                  </svg>
+                </Link>
+              </Button>
               {/* Theme toggle */}
               <Button
                 variant="ghost"
@@ -260,17 +279,34 @@ export function Navbar() {
         }}
       >
         <nav className="px-6 flex flex-col gap-1" aria-label="Mobile navigation links">
-          {NAV_LINKS.map((link, i) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className="reveal in-view flex items-center px-4 py-4 rounded-2xl text-xl font-bold text-foreground/80 hover:text-foreground hover:bg-surface transition-all duration-300 min-h-[60px]"
-              style={{ transitionDelay: `${i * 60}ms` }}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link, i) => {
+            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                aria-current={isActive ? "page" : undefined}
+                className={`reveal in-view flex items-center px-4 py-4 rounded-2xl text-xl font-bold transition-all duration-300 min-h-[60px] ${
+                  isActive ? "bg-surface text-foreground shadow-sm" : "text-foreground/80 hover:text-foreground hover:bg-surface"
+                }`}
+                style={{ transitionDelay: `${i * 60}ms` }}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+          <Link
+            href="/courses"
+            onClick={() => setMenuOpen(false)}
+            className="reveal in-view flex items-center gap-2 px-4 py-4 rounded-2xl text-xl font-bold text-foreground/70 hover:text-foreground hover:bg-surface transition-all duration-300 min-h-[60px]"
+            style={{ transitionDelay: `${NAV_LINKS.length * 60}ms` }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+              <circle cx="11" cy="11" r="7" /><path d="M20 20L16.5 16.5" />
+            </svg>
+            Search
+          </Link>
         </nav>
 
         {/* Mobile CTA */}

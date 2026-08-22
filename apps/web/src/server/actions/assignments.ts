@@ -2,8 +2,12 @@
 
 import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@/server/appwrite/auth";
-import { getCourseRow, userCanManageCourse } from "@/server/appwrite/access";
+import { requireAuth, requireRole } from "@/server/appwrite/auth";
+import {
+  getCourseRow,
+  userCanManageCourse,
+  userHasCourseAccess,
+} from "@/server/appwrite/access";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { executeDeletePlan } from "@/server/appwrite/delete-plan";
 import { listAllRows } from "@/server/appwrite/row-pagination";
@@ -100,9 +104,14 @@ export async function createAssignmentAction(
 export async function getCourseAssignments(
   courseId: string
 ): Promise<AssignmentItem[]> {
+  const user = await requireAuth();
   const { tablesDB } = await createAdminClient();
 
   try {
+    if (!(await userHasCourseAccess({ courseId, userId: user.$id }))) {
+      return [];
+    }
+
     const rows = await listAllRows<AnyRow>(
       tablesDB,
       APPWRITE_CONFIG.tables.assignments,

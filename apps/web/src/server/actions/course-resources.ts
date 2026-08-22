@@ -238,15 +238,15 @@ export async function deleteCourseResourceAction(
   }
 }
 
-export async function getInstructorCourseResourceOptions(
-  scope: { userId: string; role: string }
-): Promise<CourseResourceOption[]> {
+export async function getInstructorCourseResourceOptions(): Promise<CourseResourceOption[]> {
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
   try {
     const courseQueries =
-      scope.role === "admin"
+      role === "admin"
         ? [Query.orderDesc("$updatedAt")]
         : [
-            Query.equal("instructorId", [scope.userId]),
+            Query.equal("instructorId", [user.$id]),
             Query.orderDesc("$updatedAt"),
           ];
 
@@ -294,10 +294,8 @@ export async function getInstructorCourseResourceOptions(
   }
 }
 
-export async function getInstructorCourseResources(
-  scope: { userId: string; role: string }
-): Promise<InstructorCourseResource[]> {
-  const lessonOptions = await getInstructorCourseResourceOptions(scope);
+export async function getInstructorCourseResources(): Promise<InstructorCourseResource[]> {
+  const lessonOptions = await getInstructorCourseResourceOptions();
   const lessonIds = lessonOptions.map((lesson) => lesson.lessonId);
 
   if (lessonIds.length === 0) {

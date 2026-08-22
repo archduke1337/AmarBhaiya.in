@@ -580,7 +580,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                         className={`flex min-h-14 items-center gap-3 px-5 py-3 text-sm transition-colors ${
                           isActive
                             ? "bg-[color:var(--surface-accent)] font-semibold"
-                            : "hover:bg-[color:var(--surface-ink)]"
+                            : "hover:bg-[color:var(--surface-hover)]"
                         }`}
                       >
                         <span className="flex w-7 justify-center text-xs text-muted-foreground">

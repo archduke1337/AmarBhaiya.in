@@ -17,10 +17,10 @@ export const OWNER = {
     { title: "Life Mentor", icon: "heart" },
   ],
   social: {
-    youtube: "https://youtube.com/@amarbhaiya",
-    instagram: "https://instagram.com/amarbhaiya",
-    linkedin: "https://linkedin.com/in/amarnathpandey",
-    twitter: "https://twitter.com/amarbhaiya",
+    youtube: "https://www.youtube.com/@amarxbhaiya",
+    instagram: "https://www.instagram.com/amarxbhaiya/",
+    whatsapp: "https://www.whatsapp.com/channel/0029VbCE7cbDDmFVAQzuXI3n",
+    linkedin: "https://www.linkedin.com/in/amarnath-pandey-3aab561b7/",
   },
 } as const;
 

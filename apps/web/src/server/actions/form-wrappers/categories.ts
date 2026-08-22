@@ -8,14 +8,14 @@ import {
   deleteCategoryAction,
 } from "../delete";
 
-export async function createCategoryFormAction(formData: FormData): Promise<void> {
-  await createCategoryAction(formData);
+export async function createCategoryFormAction(formData: FormData): Promise<any> {
+  return await createCategoryAction(formData);
 }
 
-export async function updateCategoryFormAction(formData: FormData): Promise<void> {
-  await updateCategoryAction(formData);
+export async function updateCategoryFormAction(formData: FormData): Promise<any> {
+  return await updateCategoryAction(formData);
 }
 
-export async function deleteCategoryFormAction(formData: FormData): Promise<void> {
-  await deleteCategoryAction(formData);
+export async function deleteCategoryFormAction(formData: FormData): Promise<any> {
+  return await deleteCategoryAction(formData);
 }

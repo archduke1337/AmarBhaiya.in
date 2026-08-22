@@ -23,7 +23,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
 
   return (
     <div className="w-full max-w-md text-center">
-      <div className="retro-surface bg-card p-8">
+      <div className="bg-card p-8 shadow-retro">
         {result.success ? (
           <>
             <h1 className="text-4xl">Email Verified</h1>

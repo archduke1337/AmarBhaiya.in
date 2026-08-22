@@ -126,6 +126,7 @@ export async function createNotificationEntry(
     return;
   }
 
+  await requireAuth();
   const adminClient = await createAdminClient();
   await writeNotificationEntry(adminClient.tablesDB, input);
 }

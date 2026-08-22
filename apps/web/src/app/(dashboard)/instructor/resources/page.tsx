@@ -27,11 +27,11 @@ const selectClassName =
   "h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none transition-all focus-visible:-translate-y-px focus-visible:translate-x-px focus-visible:shadow-none focus-visible:ring-[3px] focus-visible:ring-ring/40";
 
 export default async function InstructorResourcesPage() {
-  const { user, role } = await requireRole(["admin", "instructor"]);
+  await requireRole(["admin", "instructor"]);
   const [resources, courseResources, lessonOptions] = await Promise.all([
-    getInstructorResources({ userId: user.$id, role }),
-    getInstructorCourseResources({ userId: user.$id, role }),
-    getInstructorCourseResourceOptions({ userId: user.$id, role }),
+    getInstructorResources(),
+    getInstructorCourseResources(),
+    getInstructorCourseResourceOptions(),
   ]);
 
   const published = resources.filter((r) => r.isPublished).length;
