@@ -115,12 +115,20 @@ const CSRF_ALLOWED_ORIGINS = [
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
+// Server-to-server endpoints authenticated by their own signatures (HMAC
+// webhooks, etc.) receive no Origin/Referer header and must bypass the
+// browser CSRF origin gate.
+const CSRF_BYPASS_PREFIXES = ["/api/payments/razorpay/webhook"];
+
 export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hostname = request.headers.get("host") ?? "";
 
   // ── CSRF origin validation for state-changing requests ─────────────────
-  if (MUTATING_METHODS.has(request.method)) {
+  const isServerToServerEndpoint = CSRF_BYPASS_PREFIXES.some((p) =>
+    pathname.startsWith(p)
+  );
+  if (MUTATING_METHODS.has(request.method) && !isServerToServerEndpoint) {
     const origin = request.headers.get("origin");
     const referer = request.headers.get("referer");
     const source = origin ?? referer;
@@ -167,10 +175,8 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const isLoggedIn = hasSessionSecret;
-
-    const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
-    if (isAuthRoute) {
+    const isCommunityAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
+    if (isCommunityAuthRoute) {
       if (hasSessionSecret) {
         const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
         if (!isValidSession) {
@@ -181,7 +187,8 @@ export default async function proxy(request: NextRequest) {
         if (
           typeof redirectTarget === "string" &&
           redirectTarget.startsWith("/") &&
-          !redirectTarget.startsWith("//")
+          !redirectTarget.startsWith("//") &&
+          !redirectTarget.includes("\\")
         ) {
           return NextResponse.redirect(new URL(redirectTarget, request.url));
         }
@@ -192,11 +199,21 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Check auth — community requires login
-    if (!isLoggedIn) {
+    // Check auth — community requires login (validate session, not just cookie presence)
+    if (!hasSessionSecret) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", `${pathname}${search}`);
       return NextResponse.redirect(loginUrl);
+    }
+    {
+      const isValidSession = await validateAppwriteSessionSecret(sessionSecret);
+      if (!isValidSession) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("redirect", `${pathname}${search}`);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete(sessionCookieName);
+        return response;
+      }
     }
 
     // Rewrite root → /app/community
@@ -246,7 +263,8 @@ export default async function proxy(request: NextRequest) {
     if (
       typeof redirectTarget === "string" &&
       redirectTarget.startsWith("/") &&
-      !redirectTarget.startsWith("//")
+      !redirectTarget.startsWith("//") &&
+      !redirectTarget.includes("\\")
     ) {
       return NextResponse.redirect(new URL(redirectTarget, request.url));
     }

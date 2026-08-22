@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Layers, Plus } from "lucide-react";
 
-import { deleteCourseFormAction } from "@/server/actions/form-wrappers";
+import { ConfirmDeleteButton } from "@/components/instructor/confirm-delete-button";
 import {
   ActivityFeed,
   EmptyState,
@@ -209,17 +209,7 @@ function CourseCard({ course }: { course: InstructorCourseListItem }) {
                 <ArrowRight className="size-3" />
               </Link>
             </Button>
-            <form action={deleteCourseFormAction}>
-              <input type="hidden" name="courseId" value={course.id} />
-              <Button
-                type="submit"
-                variant="destructive"
-                size="xs"
-                className="w-full sm:w-auto"
-              >
-                Delete
-              </Button>
-            </form>
+            <ConfirmDeleteButton courseId={course.id} />
           </div>
         </div>
 

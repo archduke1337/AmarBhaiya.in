@@ -4,13 +4,15 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
-import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { createAdminClient } from "@/server/appwrite/server";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/server/payments/course-payment";
 import { verifyRazorpayPaymentSignature } from "@/server/payments/razorpay";
 import { revalidateEach } from "@/lib/utils/revalidate";
 import { incrementCouponUsageAction } from "@/server/actions/coupons";
+
+import { getApiUser } from "@/server/appwrite/api-auth";
 
 export const runtime = "nodejs";
 
@@ -28,19 +30,11 @@ type PaymentRow = {
   amount?: number;
   currency?: string;
   status?: string;
+  couponCode?: string | null;
 };
 
-async function getAuthenticatedUser() {
-  try {
-    const { account } = await createSessionClient();
-    return await account.get();
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: Request) {
-  const user = await getAuthenticatedUser();
+  const user = await getApiUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -127,10 +121,18 @@ export async function POST(request: Request) {
           : "INR",
     });
 
-    // Increment coupon usage if a coupon was applied
-    const couponCode = json?.couponCode as string | undefined;
-    if (couponCode) {
-      await incrementCouponUsageAction(couponCode).catch(() => {
+    // Increment coupon usage from the coupon recorded on the stored payment
+    // row at order-creation time. Never trust a client-supplied coupon code
+    // here — otherwise anyone could exhaust arbitrary coupon usage limits.
+    // Idempotent: only increment when transitioning from non-completed → completed
+    const shouldIncrementCoupon = existingStatus !== "completed" && existingStatus !== "refunded";
+    const storedCouponCode =
+      typeof existingPayment?.couponCode === "string" &&
+      existingPayment.couponCode.length > 0
+        ? existingPayment.couponCode
+        : "";
+    if (shouldIncrementCoupon && storedCouponCode) {
+      await incrementCouponUsageAction(storedCouponCode).catch(() => {
         // Non-critical
       });
     }

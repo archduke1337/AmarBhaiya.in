@@ -3,6 +3,7 @@ import { DM_Serif_Display, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { SkipLink } from "@/components/layout/skip-link";
+import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 
 // ── Fonts ─────────────────────────────────────────────────────
@@ -46,7 +47,6 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Amarnath Pandey" }],
   creator: "Amarnath Pandey",
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -103,6 +103,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Toaster />
         </ThemeProvider>
         <Analytics />
         <script
@@ -135,7 +136,7 @@ export default function RootLayout({
                   ],
                 },
               ],
-            }),
+            }).replace(/</g, "\\u003c"),
           }}
         />
       </body>

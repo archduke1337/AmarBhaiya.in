@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Lock } from "lucide-react";
 
 import { NoteDownloadButton } from "@/components/notes/note-download-button";
 
@@ -180,14 +181,22 @@ export default async function StudentNotesPage({
                   <p className="text-sm font-medium text-foreground/60">{selectedNote.description || "Yeh note live library se selected hai."}</p>
                 </div>
 
-                {selectedNote.downloadUrl ? (
+                {selectedNote.accessModel === "paid" ? (
+                  <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-3">
+                    <Lock className="size-5 text-accent" aria-hidden />
+                    <p className="text-sm font-bold">Premium note</p>
+                    <p className="text-sm font-medium text-foreground/50">
+                      Yeh note paid hai (₹{selectedNote.priceInr.toLocaleString("en-IN")}) aur abhi
+                      direct download ke liye available nahi hai.
+                    </p>
+                  </div>
+                ) : selectedNote.downloadUrl ? (
                   <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-4">
                     <p className="text-sm font-medium text-foreground/50">
                       Browser preview available nahi hai. File download karo aur apne device mein open karo.
                     </p>
                     <NoteDownloadButton
                       resourceId={selectedNote.id}
-                      downloadUrl={selectedNote.downloadUrl}
                       className="font-bold"
                     />
                   </div>

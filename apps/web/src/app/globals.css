@@ -7,6 +7,7 @@
 
 /* Tailwind first, then custom theme layers */
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* ── Custom amarbhaiya theme ────────────────────────────────── */
 @layer base {
@@ -80,6 +81,17 @@
     --popover:            var(--surface);
     --popover-foreground: var(--surface-foreground);
 
+    /* Extended surfaces (fix for 216 missing token usages: card/accent/secondary/muted/primary/ink/hover + shadows) */
+    --surface-card:       var(--surface);
+    --surface-accent:     color-mix(in oklab, var(--accent) 10%, var(--surface) 90%);
+    --surface-secondary:  var(--default);
+    --surface-muted:      color-mix(in oklab, var(--surface) 88%, var(--muted) 12%);
+    --surface-primary:    var(--accent);
+    --surface-ink:        color-mix(in oklab, var(--foreground) 6%, var(--surface));
+    --surface-hover:      color-mix(in oklab, var(--surface) 88%, var(--accent) 12%);
+    --shadow-retro:       4px 4px 0 0 var(--border);
+    --shadow-retro-sm:    2px 2px 0 0 var(--border);
+
     /* Shadows — soft ambient, iOS-style */
     --surface-shadow:
       0 1px 3px 0 oklch(0 0 0 / 0.06),
@@ -133,6 +145,16 @@
     --popover:            var(--surface);
     --popover-foreground: var(--surface-foreground);
 
+    --surface-card:       oklch(0.18 0.01 262);
+    --surface-accent:     color-mix(in oklab, var(--accent) 14%, var(--surface) 86%);
+    --surface-secondary:  var(--default);
+    --surface-muted:      oklch(0.20 0.008 262);
+    --surface-primary:    var(--accent);
+    --surface-ink:        oklch(0.22 0.008 262);
+    --surface-hover:      color-mix(in oklab, var(--surface) 90%, var(--accent) 10%);
+    --shadow-retro:       4px 4px 0 0 var(--border);
+    --shadow-retro-sm:    2px 2px 0 0 var(--border);
+
     --surface-shadow: 0 0 0 0 transparent;
     --overlay-shadow:
       0 10px 38px oklch(0 0 0 / 0.40),
@@ -147,6 +169,15 @@
   --color-foreground:    var(--foreground);
   --color-surface:       var(--surface);
   --color-surface-foreground: var(--surface-foreground);
+  --color-surface-card:  var(--surface-card);
+  --color-surface-accent: var(--surface-accent);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-ink: var(--surface-ink);
+  --shadow-retro: var(--shadow-retro);
+  --shadow-retro-sm: var(--shadow-retro-sm);
   --color-overlay:       var(--overlay);
   --color-muted:         var(--muted);
   --color-accent:        var(--accent);
@@ -396,6 +427,13 @@
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Retro surface alias (used via retro-surface class in some panels) */
+  .retro-surface {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-retro);
   }
 }
 

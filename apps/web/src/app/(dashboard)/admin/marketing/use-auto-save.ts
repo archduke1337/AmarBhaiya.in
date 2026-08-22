@@ -93,9 +93,18 @@ export function useAutoSave({ key, delay = 1500, fields }: UseAutoSaveOptions) {
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        // Flush pending save on unmount / field change to avoid losing last edits
+        const hasContent = Object.values(fields).some((v) => v.trim().length > 0);
+        if (hasContent) {
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(fields));
+          } catch {
+            // ignore
+          }
+        }
       }
     };
-  }, [fields, delay, save]);
+  }, [fields, delay, save, storageKey]);
 
   return { saved, lastSaved, restore, clear, hasDraft };
 }

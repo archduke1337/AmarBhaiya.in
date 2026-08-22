@@ -286,7 +286,7 @@ async function main() {
   await int(T6, "completedLessons", false, 0);
   await int(T6, "progress", false, 0);
   await dt(T6, "completedAt");
-  await enumCol(T6, "status", ["active", "completed"], false, "active");
+  await enumCol(T6, "status", ["active", "completed", "cancelled"], false, "active");
   await idx(T6, "idx_userId", ["userId"]);
   await idx(T6, "idx_courseId", ["courseId"]);
   await idx(T6, "idx_isActive", ["isActive"]);
@@ -650,6 +650,8 @@ async function main() {
   await enumCol(T20, "method", ["razorpay", "phonepe"], true);
   await enumCol(T20, "status", ["pending", "completed", "failed", "refunded"], true, "pending");
   await varchar(T20, "providerRef", 200);
+  await varchar(T20, "couponCode", 50);
+  await int(T20, "originalAmount", false, 0);
   await dt(T20, "createdAt", true);
   await idx(T20, "idx_userId", ["userId"]);
   await idx(T20, "idx_courseId", ["courseId"]);
@@ -862,6 +864,8 @@ async function main() {
   await varchar(T28, "firstName", 100, true);
   await varchar(T28, "lastName", 100, true);
   await varchar(T28, "phone", 20, true);
+  await varchar(T28, "parentName", 200);
+  await varchar(T28, "parentPhone", 20);
   await varchar(T28, "addressLine1", 300, true);
   await varchar(T28, "addressLine2", 300);
   await varchar(T28, "city", 100, true);
@@ -906,6 +910,38 @@ async function main() {
   await idx(T29, "idx_accessModel", ["accessModel"]);
   await idx(T29, "idx_isPublished", ["isPublished"]);
   await idx(T29, "idx_title_ft", ["title"], "fulltext");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 30. coupons
+  // ═══════════════════════════════════════════════════════════════════════════
+  const T30 = "coupons";
+  console.log(`\n30. ${T30}`);
+  await safe("table", () => db.createTable({
+    databaseId: DB, tableId: T30, name: T30,
+    permissions: [
+      Permission.read(Role.users()),
+      Permission.create(Role.label("admin")),
+      Permission.create(Role.label("instructor")),
+      Permission.update(Role.label("admin")),
+      Permission.update(Role.label("instructor")),
+      Permission.delete(Role.label("admin")),
+    ],
+  }));
+  await varchar(T30, "code", 50, true);
+  await varchar(T30, "courseId", 50);
+  await varchar(T30, "resourceId", 50);
+  await varchar(T30, "instructorId", 50, true);
+  await enumCol(T30, "type", ["percent", "fixed"], true, "percent");
+  await int(T30, "value", false, 0);
+  await int(T30, "maxUses", false, 100);
+  await int(T30, "usedCount", false, 0);
+  await varchar(T30, "expiresAt", 50);
+  await bool(T30, "isActive", false, true);
+  await varchar(T30, "createdBy", 50);
+  await dt(T30, "createdAt");
+  await idx(T30, "idx_code", ["code"], "unique");
+  await idx(T30, "idx_courseId", ["courseId"]);
+  await idx(T30, "idx_instructorId", ["instructorId"]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Storage Buckets
@@ -1025,7 +1061,7 @@ async function main() {
       bucketId: "resource_files",
       name: "Resource Files",
       permissions: [
-        Permission.read(Role.any()),
+        Permission.read(Role.users()),
         Permission.create(Role.label("admin")),
         Permission.create(Role.label("instructor")),
         Permission.delete(Role.label("admin")),

@@ -4,7 +4,8 @@ import { z } from "zod";
 import { completeLessonForUser } from "@/server/actions/progress";
 import { userHasCourseAccess } from "@/server/appwrite/access";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
-import { createSessionClient } from "@/server/appwrite/server";
+
+import { getApiUser } from "@/server/appwrite/api-auth";
 
 export const runtime = "nodejs";
 
@@ -13,17 +14,8 @@ const lessonCompleteSchema = z.object({
   lessonId: z.string().trim().min(1),
 });
 
-async function getAuthenticatedUser() {
-  try {
-    const { account } = await createSessionClient();
-    return await account.get();
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: Request) {
-  const user = await getAuthenticatedUser();
+  const user = await getApiUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -61,8 +53,13 @@ export async function POST(request: Request) {
   });
 
   if (!result.success) {
+    // PAID_COURSE code is legacy dead branch — completeLessonForUser never sets it, but keep 403 mapping for future
     const status = result.code === "PAID_COURSE" ? 403 : 400;
-    return NextResponse.json({ error: result.error }, { status });
+    // Don't leak raw DB errors
+    const safeError = result.error?.toLowerCase().includes("appwrite") || result.error?.toLowerCase().includes("document")
+      ? "Failed to complete lesson"
+      : result.error;
+    return NextResponse.json({ error: safeError }, { status });
   }
 
   return NextResponse.json({ success: true });

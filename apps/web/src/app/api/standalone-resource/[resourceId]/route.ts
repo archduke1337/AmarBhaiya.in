@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getApiUserContext } from "@/server/appwrite/api-auth";
-import { userCanManageLesson, userHasCourseAccess } from "@/server/appwrite/access";
+import { getApiUser } from "@/server/appwrite/api-auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
 import { createAdminClient } from "@/server/appwrite/server";
@@ -13,8 +12,8 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ resourceId: string }> }
 ) {
-  const authenticated = await getApiUserContext();
-  if (!authenticated) {
+  const user = await getApiUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -24,48 +23,23 @@ export async function GET(
   const resource = (await tablesDB
     .getRow({
       databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.resources,
+      tableId: APPWRITE_CONFIG.tables.standaloneResources,
       rowId: resourceId,
     })
     .catch(() => null)) as AnyRow | null;
 
-  if (!resource) {
+  if (!resource || resource.isPublished === false) {
     return NextResponse.json({ error: "Resource not found" }, { status: 404 });
   }
 
-  const lessonId = String(resource.lessonId ?? "");
   const fileId = String(resource.fileId ?? "");
-  if (!lessonId || !fileId) {
+  if (!fileId) {
     return NextResponse.json({ error: "Resource file not found" }, { status: 404 });
   }
 
-  const lesson = (await tablesDB
-    .getRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.lessons,
-      rowId: lessonId,
-    })
-    .catch(() => null)) as AnyRow | null;
-
-  if (!lesson) {
-    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
-  }
-
-  const courseId = String(lesson.courseId ?? "");
-  const hasCourseAccess = await userHasCourseAccess({
-    courseId,
-    userId: authenticated.userId,
-    lessonId,
-  });
-
-  let canManageLesson = false;
-  if (!hasCourseAccess && authenticated.role !== "student") {
-    canManageLesson = Boolean(
-      await userCanManageLesson(lessonId, authenticated.role, authenticated.userId)
-    );
-  }
-
-  if (!hasCourseAccess && !canManageLesson) {
+  // Paid resources have no purchase/entitlement flow yet — refuse direct
+  // downloads so the file URLs never leak for revenue-protected content.
+  if (String(resource.accessModel ?? "free") === "paid") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -73,7 +47,7 @@ export async function GET(
 
   return proxyAppwriteBucketFile({
     request,
-    bucketId: APPWRITE_CONFIG.buckets.courseResources,
+    bucketId: APPWRITE_CONFIG.buckets.resourceFiles,
     fileId,
     mode: shouldDownload ? "download" : "view",
   });

@@ -4,7 +4,9 @@ import { z } from "zod";
 import { userHasCourseAccess } from "@/server/appwrite/access";
 import { upsertLessonProgressRow } from "@/server/appwrite/progress";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
-import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { createAdminClient } from "@/server/appwrite/server";
+
+import { getApiUser } from "@/server/appwrite/api-auth";
 
 export const runtime = "nodejs";
 
@@ -14,17 +16,8 @@ const updateLessonProgressSchema = z.object({
   percentComplete: z.number().min(0).max(100),
 });
 
-async function getAuthenticatedUser() {
-  try {
-    const { account } = await createSessionClient();
-    return await account.get();
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: Request) {
-  const user = await getAuthenticatedUser();
+  const user = await getApiUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

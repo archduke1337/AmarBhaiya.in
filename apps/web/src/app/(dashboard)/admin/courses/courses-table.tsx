@@ -195,6 +195,7 @@ function AdminCourseRow({ course }: { course: CourseItem }) {
             name="isPublished"
             value={course.isPublished ? "false" : "true"}
           />
+          <input type="hidden" name="isFeatured" value={course.isFeatured ? "true" : "false"} />
           <Button type="submit" variant="secondary" size="xs">
             {course.isPublished ? "Unpublish" : "Publish"}
           </Button>

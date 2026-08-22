@@ -6,14 +6,14 @@ import {
   adminUpdateSubscriptionAction,
 } from "../subscriptions";
 
-export async function cancelSubscriptionFormAction(formData: FormData): Promise<void> {
-  await cancelSubscriptionAction(formData);
+export async function cancelSubscriptionFormAction(formData: FormData): Promise<any> {
+  return await cancelSubscriptionAction(formData);
 }
 
-export async function adminCreateSubscriptionFormAction(formData: FormData): Promise<void> {
-  await adminCreateSubscriptionAction(formData);
+export async function adminCreateSubscriptionFormAction(formData: FormData): Promise<any> {
+  return await adminCreateSubscriptionAction(formData);
 }
 
-export async function adminUpdateSubscriptionFormAction(formData: FormData): Promise<void> {
-  await adminUpdateSubscriptionAction(formData);
+export async function adminUpdateSubscriptionFormAction(formData: FormData): Promise<any> {
+  return await adminUpdateSubscriptionAction(formData);
 }

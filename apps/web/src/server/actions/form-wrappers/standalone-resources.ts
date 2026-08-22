@@ -6,14 +6,14 @@ import {
   deleteStandaloneResourceAction,
 } from "../standalone-resources";
 
-export async function createStandaloneResourceFormAction(formData: FormData): Promise<void> {
-  await createStandaloneResourceAction(formData);
+export async function createStandaloneResourceFormAction(formData: FormData): Promise<any> {
+  return await createStandaloneResourceAction(formData);
 }
 
-export async function updateStandaloneResourceFormAction(formData: FormData): Promise<void> {
-  await updateStandaloneResourceAction(formData);
+export async function updateStandaloneResourceFormAction(formData: FormData): Promise<any> {
+  return await updateStandaloneResourceAction(formData);
 }
 
-export async function deleteStandaloneResourceFormAction(formData: FormData): Promise<void> {
-  await deleteStandaloneResourceAction(formData);
+export async function deleteStandaloneResourceFormAction(formData: FormData): Promise<any> {
+  return await deleteStandaloneResourceAction(formData);
 }

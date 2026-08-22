@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
-import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { createAdminClient } from "@/server/appwrite/server";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 import {
   createRazorpayOrder,
@@ -14,23 +14,16 @@ export const runtime = "nodejs";
 
 import { validateCouponAction } from "@/server/actions/coupons";
 
+import { getApiUser } from "@/server/appwrite/api-auth";
+
 const createOrderSchema = z.object({
   courseId: z.string().min(1),
-  currency: z.string().length(3).default("INR"),
+  currency: z.string().length(3).default("INR").transform((v) => v.toUpperCase()).refine((v) => v === "INR", { message: "Only INR is supported" }),
   couponCode: z.string().optional(),
 });
 
-async function getAuthenticatedUser() {
-  try {
-    const { account } = await createSessionClient();
-    return await account.get();
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: Request) {
-  const user = await getAuthenticatedUser();
+  const user = await getApiUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

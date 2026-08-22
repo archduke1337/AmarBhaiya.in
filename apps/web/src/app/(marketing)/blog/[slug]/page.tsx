@@ -63,7 +63,7 @@ return (
               url: "https://amarbhaiya.in",
             },
             mainEntityOfPage: `https://amarbhaiya.in/blog/${slug}`,
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
       <div className="mx-auto max-w-5xl space-y-8">

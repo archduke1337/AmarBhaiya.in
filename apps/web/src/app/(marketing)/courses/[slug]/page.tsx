@@ -100,7 +100,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
                     category: "Paid",
                   },
                 }),
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">

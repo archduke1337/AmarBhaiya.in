@@ -238,7 +238,16 @@ export default async function PublicNotesPage({
                     <p className="text-sm font-medium text-foreground/60">{selectedNote.description || "Selected from the live notes library."}</p>
                   </div>
 
-                  {selectedNote.downloadUrl ? (
+                  {selectedNote.accessModel === "paid" ? (
+                    <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-3">
+                      <Lock className="size-5 text-accent" aria-hidden />
+                      <p className="text-sm font-bold">Premium note</p>
+                      <p className="text-sm font-medium text-foreground/50">
+                        This note is paid (₹{selectedNote.priceInr.toLocaleString("en-IN")}) and is not
+                        available for direct download yet.
+                      </p>
+                    </div>
+                  ) : selectedNote.downloadUrl ? (
                     <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-4">
                       <p className="text-sm font-medium text-foreground/50">
                         Browser preview is not available — download the file and open it on your device.
@@ -246,7 +255,6 @@ export default async function PublicNotesPage({
                       {user ? (
                         <NoteDownloadButton
                           resourceId={selectedNote.id}
-                          downloadUrl={selectedNote.downloadUrl}
                           className="w-full rounded-full bg-accent px-4 text-sm font-bold text-accent-foreground hover:bg-accent"
                         />
                       ) : (

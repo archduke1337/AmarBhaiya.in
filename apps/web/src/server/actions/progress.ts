@@ -145,9 +145,12 @@ export async function completeLessonForUser({
     );
     return actionSuccess();
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to mark complete";
-    console.error(message);
-    return actionError(message);
+    console.error("[CompleteLesson] failed", error);
+    const raw = error instanceof Error ? error.message : "Failed to mark complete";
+    const safe = raw.toLowerCase().includes("appwrite") || raw.toLowerCase().includes("document")
+      ? "Failed to mark complete"
+      : raw;
+    return actionError(safe);
   }
 }
 

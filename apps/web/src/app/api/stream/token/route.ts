@@ -1,21 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { createSessionClient } from "@/server/appwrite/server";
 import { createStreamUserToken, ensureStreamUser } from "@/server/stream/client";
+
+import { getApiUser } from "@/server/appwrite/api-auth";
 
 export const runtime = "nodejs";
 
-async function getAuthenticatedUser() {
-  try {
-    const { account } = await createSessionClient();
-    return await account.get();
-  } catch {
-    return null;
-  }
-}
-
 export async function GET() {
-  const user = await getAuthenticatedUser();
+  const user = await getApiUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

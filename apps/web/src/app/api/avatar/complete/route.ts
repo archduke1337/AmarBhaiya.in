@@ -70,6 +70,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Uploaded avatar not found." }, { status: 404 });
     }
 
+    // Size check (2MB) — JWT pipeline has no server-side limit, enforce here
+    const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+    const fileSize = Number((uploadedFile as { sizeOriginal?: number }).sizeOriginal ?? (uploadedFile as { size?: number }).size ?? 0);
+    if (fileSize > AVATAR_MAX_BYTES) {
+      await deleteUploadedFileIfPresent(storage, parsed.data.fileId);
+      return NextResponse.json({ error: "Avatar too large. Max 2MB." }, { status: 400 });
+    }
+
+    // Ownership check: file must be readable/created by the caller.
+    // With fileSecurity=true, per-file permissions should include the uploader.
+    // If permissions are available, verify caller is in them; otherwise fall back to recency check.
+    const perms = (uploadedFile as { $permissions?: string[] }).$permissions ?? [];
+    if (perms.length > 0) {
+      const callerPerm = `user:${sessionUser.$id}`;
+      const hasCallerPerm = perms.some((p) => p.includes(callerPerm) || p.includes("role:all") || p.includes("users"));
+      // If permissions are explicit and caller not in them, reject (prevents cross-user file reuse)
+      if (!hasCallerPerm && perms.some((p) => p.includes("user:"))) {
+        return NextResponse.json({ error: "You can only use files you uploaded." }, { status: 403 });
+      }
+    }
+
     const extension = getFileExtension(String(uploadedFile.name ?? ""));
     if (!["jpg", "jpeg", "png", "webp"].includes(extension)) {
       await deleteUploadedFileIfPresent(storage, parsed.data.fileId);
@@ -116,7 +137,13 @@ export async function POST(request: Request) {
     revalidatePath(`/app/profile/${sessionUser.$id}`);
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    // Distinguish auth failures (401) from server errors (500)
+    const msg = error instanceof Error ? error.message : "";
+    if (msg.toLowerCase().includes("unauthorized") || msg.toLowerCase().includes("session")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("[Avatar Complete] unexpected error", error);
+    return NextResponse.json({ error: "Failed to complete avatar upload." }, { status: 500 });
   }
 }

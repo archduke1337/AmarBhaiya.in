@@ -226,6 +226,10 @@ function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
     typeof row.description === "string" ? row.description : "",
   ];
 
+  // Paid resources must never expose direct storage URLs in public data —
+  // access to the underlying file must go through an entitlement check.
+  const isFree = accessModel === "free";
+
   return {
     id: row.$id,
     resourceType: typeof row.type === "string" ? row.type : "other",
@@ -245,11 +249,11 @@ function toPublicNote(row: StandaloneResourceRow): PublicNoteItem {
         : "Amar Bhaiya",
     createdAt: typeof row.$createdAt === "string" ? row.$createdAt : new Date().toISOString(),
     downloadUrl:
-      fileId
+      isFree && fileId
         ? getFileDownloadUrl(APPWRITE_CONFIG.buckets.resourceFiles, fileId)
         : "",
     viewUrl:
-      fileId
+      isFree && fileId
         ? `${APPWRITE_CONFIG.endpoint}/storage/buckets/${APPWRITE_CONFIG.buckets.resourceFiles}/files/${fileId}/view?project=${APPWRITE_CONFIG.projectId}`
         : "",
     classTag: extractClassTag(metadataSources),

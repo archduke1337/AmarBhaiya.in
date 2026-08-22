@@ -151,9 +151,10 @@ export async function reconcileCoursePayment({
     );
   }
 
-  const existingPayment = paymentRows[0];
-  const paymentId = existingPayment?.$id ?? null;
-  const currentStatus = normalizePaymentStatus(existingPayment?.status);
+  let existingPayment: PaymentRow | undefined = paymentRows[0];
+  let paymentId: string | null = existingPayment?.$id ?? null;
+  let currentStatus = normalizePaymentStatus(existingPayment?.status);
+  let paymentFound = Boolean(existingPayment);
   const resolvedUserId =
     typeof existingPayment?.userId === "string" && existingPayment.userId.length > 0
       ? existingPayment.userId
@@ -194,19 +195,65 @@ export async function reconcileCoursePayment({
     }
   }
 
-  const transitionAccepted = existingPayment
+  let transitionAccepted = existingPayment
     ? canTransitionPaymentStatus(currentStatus, status)
     : false;
-  const finalStatus = existingPayment
+  let finalStatus: PaymentStatus | null = existingPayment
     ? transitionAccepted
       ? status
       : currentStatus
     : null;
+  let createdMissingPayment = false;
 
   if (!existingPayment) {
-    console.warn(
-      `[Payments] Ignoring reconciliation for providerRef ${providerRef} because no local payment row exists.`
-    );
+    // No local payment row (e.g., webhook arrived before create-order, or client never created one).
+    // For completed payments with valid user/course, create the missing row so enrollment can follow.
+    if (status === "completed" && resolvedUserId && resolvedCourseId) {
+      try {
+        const newId = ID.unique();
+        await tablesDB.createRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.payments,
+          rowId: newId,
+          data: {
+            userId: resolvedUserId,
+            courseId: resolvedCourseId,
+            amount: resolvedAmount ?? 0,
+            currency: resolvedCurrency,
+            method: "razorpay",
+            status: "completed",
+            providerRef,
+            createdAt: new Date().toISOString(),
+          },
+        });
+        paymentId = newId;
+        paymentFound = true;
+        finalStatus = "completed";
+        transitionAccepted = true;
+        createdMissingPayment = true;
+        // fabricate an existingPayment for downstream logic
+        existingPayment = { $id: newId, userId: resolvedUserId, courseId: resolvedCourseId, status: "completed" } as PaymentRow;
+        currentStatus = "completed";
+      } catch (e) {
+        console.warn(
+          `[Payments] Failed to create missing payment row for providerRef ${providerRef}:`,
+          e
+        );
+      }
+      if (!createdMissingPayment) {
+        console.warn(
+          `[Payments] No local payment row existed for providerRef ${providerRef}; failed to create one.`
+        );
+      } else {
+        console.warn(
+          `[Payments] No local payment row existed for providerRef ${providerRef}; created one for enrollment.`
+        );
+      }
+    } else {
+      console.warn(
+        `[Payments] Ignoring reconciliation for providerRef ${providerRef} because no local payment row exists.`
+      );
+    }
   } else if (!transitionAccepted) {
     console.warn(
       `[Payments] Ignoring disallowed payment transition ${currentStatus ?? "unknown"} -> ${status} for providerRef ${providerRef}.`
@@ -353,6 +400,6 @@ export async function reconcileCoursePayment({
     enrollmentCreated,
     enrollmentUpdated,
     finalStatus,
-    paymentFound: Boolean(existingPayment),
+    paymentFound,
   };
 }

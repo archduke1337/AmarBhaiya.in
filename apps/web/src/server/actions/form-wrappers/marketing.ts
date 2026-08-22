@@ -9,20 +9,20 @@ import {
   checkSlugUniquenessAction,
 } from "../marketing";
 
-export async function upsertSiteCopyFormAction(formData: FormData): Promise<void> {
-  await upsertSiteCopyAction(formData);
+export async function upsertSiteCopyFormAction(formData: FormData): Promise<any> {
+  return await upsertSiteCopyAction(formData);
 }
 
-export async function createBlogPostFormAction(formData: FormData): Promise<void> {
-  await createBlogPostAction(formData);
+export async function createBlogPostFormAction(formData: FormData): Promise<any> {
+  return await createBlogPostAction(formData);
 }
 
-export async function updateBlogPostFormAction(formData: FormData): Promise<void> {
-  await updateBlogPostAction(formData);
+export async function updateBlogPostFormAction(formData: FormData): Promise<any> {
+  return await updateBlogPostAction(formData);
 }
 
-export async function deleteBlogPostFormAction(formData: FormData): Promise<void> {
-  await deleteBlogPostAction(formData);
+export async function deleteBlogPostFormAction(formData: FormData): Promise<any> {
+  return await deleteBlogPostAction(formData);
 }
 
 export async function checkSlugUniquenessFormAction(formData: FormData): Promise<ActionResult<{ available: boolean }>> {

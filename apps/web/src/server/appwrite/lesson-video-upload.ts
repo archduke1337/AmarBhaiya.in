@@ -7,6 +7,7 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import {
   LESSON_VIDEO_ALLOWED_MIMES,
+  LESSON_VIDEO_MAX_BYTES,
   getFileExtension,
   isAllowedLessonVideoExtension,
 } from "@/server/uploads/lesson-video";
@@ -116,6 +117,17 @@ export async function finalizeLessonVideoUpload(
       status: 400,
       error: "Uploaded video content does not match the allowed file type.",
     };
+  }
+
+  const fileSize = Number((uploadedFile as { sizeOriginal?: number }).sizeOriginal ?? (uploadedFile as { size?: number }).size ?? 0);
+  if (fileSize > LESSON_VIDEO_MAX_BYTES) {
+    await deleteUploadedFileIfPresent(
+      storage,
+      APPWRITE_CONFIG.buckets.courseVideos,
+      uploadedFileId,
+      "LessonVideoUpload"
+    );
+    return { success: false, status: 400, error: "Video too large. Max 5GB." };
   }
 
   const previousVideoId = getLessonVideoFileId(target.lesson);

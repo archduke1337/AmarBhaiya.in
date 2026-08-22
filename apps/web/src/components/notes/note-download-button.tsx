@@ -8,14 +8,12 @@ import { incrementResourceDownloadAction } from "@/server/actions/standalone-res
 
 type NoteDownloadButtonProps = {
   resourceId: string;
-  downloadUrl: string;
   label?: string;
   className?: string;
 };
 
 export function NoteDownloadButton({
   resourceId,
-  downloadUrl,
   label = "Download",
   className,
 }: NoteDownloadButtonProps) {
@@ -26,7 +24,7 @@ export function NoteDownloadButton({
     const fd = new FormData();
     fd.set("resourceId", resourceId);
     incrementResourceDownloadAction(fd).finally(() => setStarting(false));
-    window.open(downloadUrl, "_blank", "noreferrer");
+    window.open(`/api/standalone-resource/${resourceId}?download=1`, "_blank", "noreferrer");
   };
 
   return (
