@@ -206,7 +206,7 @@ export default async function PublicNotesPage({
                     subject: subjectFilter || undefined,
                     note: note.id,
                   })}
-                  className={`block bg-surface border transition-all rounded-2xl p-5 ${selectedNote?.id === note.id ? "border-accent/50 bg-accent/[0.02]" : "border-border/40 hover:bg-surface-hover hover:border-border/60"}`}
+                  className={`group block bg-surface border transition-all rounded-2xl p-5 ${selectedNote?.id === note.id ? "border-accent/50 bg-accent/[0.02]" : "border-border/40 hover:bg-surface-hover hover:border-border/60"}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-2 min-w-0">

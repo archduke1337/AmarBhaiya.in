@@ -92,9 +92,11 @@ export default function RootLayout({
       lang="en-IN"
       className={`${bodyFont.variable} ${headingFont.variable} h-full`}
       suppressHydrationWarning
-      // HeroUI v3 theme switching is done via data-theme + class
     >
       <body className="min-h-dvh flex flex-col bg-background text-foreground antialiased grain-overlay">
+        <noscript>
+          <style>{`.reveal{opacity:1!important;transform:none!important}.reveal.in-view{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
         <SkipLink />
         <ThemeProvider
           attribute="class"

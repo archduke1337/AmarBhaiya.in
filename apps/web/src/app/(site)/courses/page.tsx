@@ -362,6 +362,7 @@ export default async function CoursesPage({
                 alt={course.title}
                 width={1280}
                 height={720}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="aspect-video w-full rounded-[calc(var(--radius)+4px)] border-2 border-border object-cover shadow-retro-sm"
                 loading="lazy"
               />

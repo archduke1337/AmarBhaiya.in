@@ -15,18 +15,11 @@ import {
   getUploadFileExtension,
   isAllowedInstructorUploadExtension,
 } from "@/server/uploads/instructor-file";
+import { formatBytes } from "@/lib/utils/format";
 
 type CourseThumbnailUploadFormProps = {
   courseId: string;
 };
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1_000_000) {
-    return `${(bytes / 1_000_000).toFixed(0)} MB`;
-  }
-
-  return `${bytes} bytes`;
-}
 
 async function uploadThumbnailDirectly(courseId: string, file: File) {
   const tokenResponse = await fetch("/api/instructor/uploads/token", {

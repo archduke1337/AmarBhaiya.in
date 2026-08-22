@@ -169,6 +169,8 @@ export function ContactForm() {
 
         {feedback && (
           <p
+            role="status"
+            aria-live="polite"
             className={
               status === "success"
                 ? "rounded-[calc(var(--radius)+4px)] border-2 border-border bg-secondary px-4 py-3 text-sm font-semibold text-foreground"

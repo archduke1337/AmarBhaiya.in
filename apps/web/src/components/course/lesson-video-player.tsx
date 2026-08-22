@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useRef } from "react";
+import { startTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -38,6 +38,14 @@ export function LessonVideoPlayer({
   const lastSentTimeRef = useRef(Math.max(0, Math.floor(initialResumeSeconds)));
   const completedRef = useRef(isCompleted);
   const completionRequestedRef = useRef(false);
+  const abortControllersRef = useRef<Set<AbortController>>(new Set());
+
+  useEffect(() => {
+    return () => {
+      abortControllersRef.current.forEach((c) => c.abort());
+      abortControllersRef.current.clear();
+    };
+  }, []);
 
   function persistSnapshot(snapshot: VideoProgressSnapshot) {
     if (completedRef.current) {
@@ -68,6 +76,8 @@ export function LessonVideoPlayer({
 
     if (snapshot.ended && canAutoComplete && !completionRequestedRef.current) {
       completionRequestedRef.current = true;
+      const controller = new AbortController();
+      abortControllersRef.current.add(controller);
 
       startTransition(() => {
         void fetch("/api/lesson-complete", {
@@ -79,6 +89,7 @@ export function LessonVideoPlayer({
             courseId,
             lessonId,
           }),
+          signal: controller.signal,
         })
           .then((response) => {
             if (!response.ok) {
@@ -90,25 +101,37 @@ export function LessonVideoPlayer({
           })
           .catch(() => {
             completionRequestedRef.current = false;
+          })
+          .finally(() => {
+            abortControllersRef.current.delete(controller);
           });
       });
 
       return;
     }
 
-    startTransition(() => {
-      void fetch("/api/lesson-progress", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          courseId,
-          lessonId,
-          percentComplete: nextPercent,
-        }),
-      }).catch(() => undefined);
-    });
+    {
+      const controller = new AbortController();
+      abortControllersRef.current.add(controller);
+      startTransition(() => {
+        void fetch("/api/lesson-progress", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            courseId,
+            lessonId,
+            percentComplete: nextPercent,
+          }),
+          signal: controller.signal,
+        })
+          .catch(() => undefined)
+          .finally(() => {
+            abortControllersRef.current.delete(controller);
+          });
+      });
+    }
   }
 
   return (

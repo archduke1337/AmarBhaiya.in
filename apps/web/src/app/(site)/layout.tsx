@@ -9,8 +9,8 @@ export default function MarketingLayout({
   return (
     <div className="flex flex-col min-h-dvh bg-background">
       <Navbar />
-      {/* Spacer for fixed navbar */}
-      <div className="h-20" aria-hidden />
+      {/* Spacer for fixed island navbar (4.5rem nav + safe area) */}
+      <div className="h-[calc(4.5rem+var(--safe-top)+0.75rem)] sm:h-[calc(5rem+var(--safe-top))]" aria-hidden />
       
       <main id="main" className="flex-1">
         {children}

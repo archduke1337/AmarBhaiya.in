@@ -58,15 +58,16 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
       </div>
 
       {error && (
-        <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
+        <div role="alert" aria-live="polite" className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-foreground/70">Email address</label>
+          <label htmlFor="login-email" className="text-sm font-semibold text-foreground/70">Email address</label>
           <Input
+            id="login-email"
             required
             placeholder="you@example.com"
             type="email"
@@ -79,7 +80,7 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-semibold text-foreground/70">Password</label>
+            <label htmlFor="login-password" className="text-sm font-semibold text-foreground/70">Password</label>
             <Link
               href={forgotPasswordHref}
               className="text-xs font-bold uppercase tracking-[0.1em] text-accent hover:text-accent-foreground transition-colors"
@@ -88,6 +89,7 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
             </Link>
           </div>
           <Input
+            id="login-password"
             required
             placeholder="••••••••"
             type="password"
@@ -102,6 +104,7 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
           type="submit"
           size="lg"
           disabled={loading}
+          aria-busy={loading}
           className="mt-2 w-full font-bold text-base shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_30%,transparent)]"
         >
           {loading ? "Signing in..." : "Sign in"}

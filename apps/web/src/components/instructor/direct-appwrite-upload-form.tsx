@@ -16,6 +16,7 @@ import {
   getUploadFileExtension,
   isAllowedInstructorUploadExtension,
 } from "@/server/uploads/instructor-file";
+import { formatBytes } from "@/lib/utils/format";
 
 type DirectAppwriteUploadFormProps = {
   kind: InstructorUploadKind;
@@ -27,14 +28,6 @@ type DirectAppwriteUploadFormProps = {
   helperText?: string;
   statusLabel?: string;
 };
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1_000_000_000) {
-    return `${(bytes / 1_000_000_000).toFixed(1)} GB`;
-  }
-
-  return `${(bytes / 1_000_000).toFixed(0)} MB`;
-}
 
 export function DirectAppwriteUploadForm({
   kind,

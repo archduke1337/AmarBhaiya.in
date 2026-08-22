@@ -211,6 +211,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               alt={course.title}
               width={1280}
               height={720}
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="aspect-video w-full rounded-[calc(var(--radius)+4px)] border-2 border-border object-cover shadow-retro-sm"
               priority
             />

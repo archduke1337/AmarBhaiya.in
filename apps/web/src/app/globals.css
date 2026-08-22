@@ -5,8 +5,9 @@
    Optimized: iOS/Android safe areas + fluid touch targets
    ============================================================ */
 
-/* Tailwind first, then custom theme layers */
+/* Tailwind + HeroUI (coexist with custom Amarnath theme) */
 @import "tailwindcss";
+@import "@heroui/styles";
 @import "tw-animate-css";
 
 /* ── Custom amarbhaiya theme ────────────────────────────────── */
