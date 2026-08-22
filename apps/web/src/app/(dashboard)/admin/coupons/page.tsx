@@ -310,9 +310,9 @@ function CouponRow({ coupon }: { coupon: CouponItem }) {
       </div>
 
       <div className="min-w-0">
-        {coupon.courseId ? (
+        {coupon.courseId && coupon.courseSlug ? (
           <Link
-            href={`/courses/${coupon.courseId}`}
+            href={`/courses/${coupon.courseSlug}`}
             target="_blank"
             className="line-clamp-1 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >

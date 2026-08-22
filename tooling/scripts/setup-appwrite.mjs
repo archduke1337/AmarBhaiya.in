@@ -647,7 +647,7 @@ async function main() {
   await varchar(T20, "courseId", 50, true);
   await int(T20, "amount", true);
   await varchar(T20, "currency", 10);
-  await enumCol(T20, "method", ["razorpay", "phonepe"], true);
+  await enumCol(T20, "method", ["razorpay"], true);
   await enumCol(T20, "status", ["pending", "completed", "failed", "refunded"], true, "pending");
   await varchar(T20, "providerRef", 200);
   await varchar(T20, "couponCode", 50);

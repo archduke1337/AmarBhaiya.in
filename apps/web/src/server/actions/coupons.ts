@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ID, Query } from "node-appwrite";
 import { z } from "zod";
 
-import { requireRole } from "@/server/appwrite/auth";
+import { requireAuth, requireRole } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
@@ -323,6 +323,7 @@ export async function validateCouponAction(
 
 export async function incrementCouponUsageAction(couponCode: string): Promise<void> {
   try {
+    await requireAuth();
     const { tablesDB } = await createAdminClient();
     const result = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -385,6 +386,7 @@ export type CouponItem = {
   code: string;
   courseId: string;
   courseTitle: string;
+  courseSlug: string;
   resourceId: string;
   resourceTitle: string;
   type: string;
@@ -516,7 +518,15 @@ export type CouponPaymentStat = {
 export async function getCouponPaymentStats(courseIds: string[]): Promise<CouponPaymentStat[]> {
   if (courseIds.length === 0) return [];
 
+  const { user, role } = await requireRole(["admin", "instructor"]);
+
   try {
+    if (role === "instructor") {
+      const owned = await getUserInstructorCourses(user.$id);
+      courseIds = courseIds.filter((id) => owned.has(id));
+      if (courseIds.length === 0) return [];
+    }
+
     const { tablesDB } = await createAdminClient();
     const result = await tablesDB.listRows({
       databaseId: APPWRITE_CONFIG.databaseId,
@@ -583,7 +593,7 @@ export async function getCoupons(): Promise<CouponItem[]> {
     // Enrich with course and resource titles
     const courseIds = [...new Set(rows.map((r) => String(r.courseId ?? "")).filter(Boolean))];
     const resourceIds = [...new Set(rows.map((r) => String((r as Record<string, unknown>).resourceId ?? "")).filter(Boolean))];
-    const courseMap = new Map<string, string>();
+    const courseMap = new Map<string, { title: string; slug: string }>();
     const resourceMap = new Map<string, string>();
 
     if (courseIds.length > 0) {
@@ -593,7 +603,10 @@ export async function getCoupons(): Promise<CouponItem[]> {
         queries: [Query.equal("$id", courseIds), Query.limit(100)],
       });
       for (const c of courses.rows) {
-        courseMap.set(c.$id, String(c.title ?? c.$id));
+        courseMap.set(c.$id, {
+          title: String(c.title ?? c.$id),
+          slug: String(c.slug ?? ""),
+        });
       }
     }
     if (resourceIds.length > 0) {
@@ -607,11 +620,14 @@ export async function getCoupons(): Promise<CouponItem[]> {
       }
     }
 
-    return rows.map((r) => ({
+    return rows.map((r) => {
+      const courseMeta = courseMap.get(String(r.courseId ?? ""));
+      return {
       id: String(r.$id ?? ""),
       code: String(r.code ?? ""),
       courseId: String(r.courseId ?? ""),
-      courseTitle: courseMap.get(String(r.courseId ?? "")) || "",
+      courseTitle: courseMeta?.title || "",
+      courseSlug: courseMeta?.slug || "",
       resourceId: String((r as Record<string, unknown>).resourceId ?? ""),
       resourceTitle: resourceMap.get(String((r as Record<string, unknown>).resourceId ?? "")) || "",
       type: String(r.type ?? "percent"),
@@ -623,7 +639,8 @@ export async function getCoupons(): Promise<CouponItem[]> {
       createdBy: String(r.createdBy ?? ""),
       instructorId: String(r.instructorId ?? ""),
       createdAt: String(r.createdAt ?? ""),
-    }));
+      };
+    });
   } catch {
     return [];
   }

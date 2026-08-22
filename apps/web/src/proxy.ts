@@ -323,7 +323,9 @@ export default async function proxy(request: NextRequest) {
   }
 
   // ── Protected routes → validate session, not just cookie presence ─────
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isProtected = PROTECTED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
 
   if (isProtected) {

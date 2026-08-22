@@ -227,7 +227,7 @@ export interface Payment extends AppwriteRow {
   originalAmount?: number;
   couponCode?: string;
   currency: string;
-  method: "razorpay" | "phonepe";
+  method: "razorpay";
   status: "pending" | "completed" | "failed" | "refunded";
   providerRef: string;
   refundId?: string;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OAuthProvider } from "node-appwrite";
 import { createPublicClient } from "@/server/appwrite/server";
+import { checkRateLimit } from "@/server/rate-limiter";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,17 @@ const OAUTH_MAP: Record<string, OAuthProvider> = {
 export async function GET(request: NextRequest) {
   const provider = request.nextUrl.searchParams.get("provider");
   const redirect = request.nextUrl.searchParams.get("redirect") ?? "/app/dashboard";
+
+  const rateLimit = await checkRateLimit(
+    `${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"}:oauth-initiate`,
+    10
+  );
+  if (!rateLimit.allowed) {
+    const url = new URL("/login", request.url);
+    url.searchParams.set("error", "too_many_requests");
+    return NextResponse.redirect(url);
+  }
+
   // sanitize redirect now (defense in depth) - block // and \, must start with /
   const sanitizedRedirect = redirect.startsWith("/") && !redirect.startsWith("//") && !redirect.includes("\\") ? redirect : "/app/dashboard";
 

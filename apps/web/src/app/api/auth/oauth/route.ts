@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { buildSessionCookieOptions } from "@/server/appwrite/session-cookie";
 import { createPublicClient } from "@/server/appwrite/server";
+import { checkRateLimit } from "@/server/rate-limiter";
 
 export const runtime = "nodejs";
 
@@ -20,6 +21,14 @@ function createLoginRedirect(request: NextRequest, errorCode: string): NextRespo
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimit = await checkRateLimit(
+    `${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"}:oauth-callback`,
+    20
+  );
+  if (!rateLimit.allowed) {
+    return createLoginRedirect(request, "too_many_requests");
+  }
+
   const userId = request.nextUrl.searchParams.get("userId");
   const secret = request.nextUrl.searchParams.get("secret");
   // Verify OAuth state if present (CSRF protection)
