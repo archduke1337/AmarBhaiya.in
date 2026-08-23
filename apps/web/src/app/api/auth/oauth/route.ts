@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { createAdminClient } from "@/server/appwrite/server";
 import { setSessionCookie } from "@/server/appwrite/session-cookie";
-import { createPublicClient } from "@/server/appwrite/server";
 import { checkRateLimit } from "@/server/rate-limiter";
 
 export const runtime = "nodejs";
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { account } = await createPublicClient();
+    const { account } = await createAdminClient();
     const session = await account.createSession({ userId, secret });
 
     if (!session.secret) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { setSessionCookie } from "@/server/appwrite/session-cookie";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
-import { createPublicClient } from "@/server/appwrite/server";
+import { createAdminClient } from "@/server/appwrite/server";
 import { validateOrigin } from "@/server/csrf";
 import { loginSchema } from "@/server/validators/auth";
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { account } = await createPublicClient();
+    const { account } = await createAdminClient();
     const session = await account.createEmailPasswordSession({
       email: parsed.data.email,
       password: parsed.data.password,
@@ -59,9 +59,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Temporary detailed error for Vercel debugging — remove after fix
     return NextResponse.json(
-      { error: `Login failed: ${message}` },
+      { error: "Login failed. Please try again." },
       { status: 500 }
     );
   }
