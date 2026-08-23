@@ -1,0 +1,221 @@
+import Link from "next/link";
+import { Lock } from "lucide-react";
+
+import { NoteDownloadButton } from "@/components/notes/note-download-button";
+
+import { getPublicNotesPageData, formatResourceType } from "@/server/appwrite/marketing-content";
+import { requireAuth } from "@/server/appwrite/auth";
+
+export const dynamic = "force-dynamic";
+
+type SearchParams = Promise<{
+  class?: string;
+  subject?: string;
+  type?: string;
+  note?: string;
+}>;
+
+export default async function StudentNotesPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  await requireAuth();
+  const params = await searchParams;
+  const classFilter = typeof params.class === "string" ? params.class : "";
+  const subjectFilter = typeof params.subject === "string" ? params.subject : "";
+  const typeFilter = typeof params.type === "string" ? params.type : "";
+  const selectedNoteId = typeof params.note === "string" ? params.note : "";
+
+  const { notes } = await getPublicNotesPageData();
+
+  const availableResourceTypes = Array.from(
+    new Set(notes.map((note) => note.resourceType).filter(Boolean))
+  ).sort();
+
+  const availableClasses = Array.from(
+    new Set(notes.map((note) => note.classTag).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b, "en-IN", { numeric: true }));
+
+  const availableSubjects = Array.from(
+    new Set(
+      notes
+        .filter((note) => !classFilter || note.classTag === classFilter)
+        .map((note) => note.subjectTag)
+        .filter(Boolean)
+    )
+  ).sort();
+
+  const filteredNotes = notes.filter((note) => {
+    const classMatch = !classFilter || note.classTag === classFilter;
+    const subjectMatch = !subjectFilter || note.subjectTag === subjectFilter;
+    const typeMatch = !typeFilter || note.resourceType === typeFilter;
+    return classMatch && subjectMatch && typeMatch;
+  });
+
+  const selectedNote =
+    selectedNoteId ? filteredNotes.find((note) => note.id === selectedNoteId) ?? null : null;
+
+  return (
+    <div className="flex flex-col gap-8 pb-[10vh]">
+      <div className="flex flex-col gap-2">
+        <p className="eyebrow self-start">Study Notes</p>
+        <h1 className="text-[clamp(1.75rem,3vw,2.5rem)] font-black tracking-[-0.03em] leading-none">
+          Notes jo actually revision ke time kaam aayein.
+        </h1>
+        <p className="max-w-2xl text-sm font-medium text-foreground/60 leading-relaxed mt-2">
+          Yahan sirf wahi notes dikhte hain jo publish ho chuke hain. Class aur subject ke hisaab se filter karo.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="bg-surface border border-border/40 rounded-2xl p-5 flex flex-col gap-5">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Category</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={{ pathname: "/app/notes", query: { ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
+                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!typeFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                >
+                  All
+                </Link>
+                {availableResourceTypes.map((item) => (
+                  <Link
+                    key={item}
+                    href={{ pathname: "/app/notes", query: { type: item, ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
+                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${typeFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                  >
+                    {formatResourceType(item)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Classes</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={{ pathname: "/app/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
+                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!classFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                >
+                  All
+                </Link>
+                {availableClasses.map((item) => (
+                  <Link
+                    key={item}
+                    href={{ pathname: "/app/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), class: item, ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
+                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${classFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                  >
+                    {item}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Subjects</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={{ pathname: "/app/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(classFilter ? { class: classFilter } : {}) } }}
+                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!subjectFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                >
+                  All
+                </Link>
+                {availableSubjects.map((item) => (
+                  <Link
+                    key={item}
+                    href={{ pathname: "/app/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(classFilter ? { class: classFilter } : {}), subject: item } }}
+                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${subjectFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                  >
+                    {item}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {filteredNotes.length === 0 ? (
+        <div className="bg-surface border border-dashed border-border/60 rounded-2xl p-8 text-center">
+          <h2 className="text-xl font-bold tracking-tight">Is filter combo ke liye abhi notes live nahi hain.</h2>
+          <p className="text-sm font-medium text-foreground/60 mt-2">Jaise hi publish honge, yahin aa jayenge.</p>
+        </div>
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+          <div className="flex flex-col gap-4">
+            {filteredNotes.map((note) => (
+              <Link
+                key={note.id}
+                href={{ pathname: "/app/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}), note: note.id } }}
+                className={`block bg-surface border transition-all rounded-2xl p-5 ${selectedNote?.id === note.id ? "border-accent/50 bg-accent/[0.02]" : "border-border/40 hover:bg-surface-hover hover:border-border/60"}`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-2 min-w-0">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-accent/10 text-accent">{formatResourceType(note.resourceType)}</span>
+                        {note.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.classTag}</span>}
+                        {note.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.subjectTag}</span>}
+                      </div>
+                    <h2 className="text-lg font-black tracking-[-0.02em] group-hover:text-accent transition-colors">{note.title}</h2>
+                    <p className="text-xs font-medium text-foreground/50">{note.description || "Clean study material ready for revision."}</p>
+                  </div>
+                  <span className="shrink-0 text-[10px] font-bold text-foreground/40">{note.downloadCount.toLocaleString("en-IN")} downloads</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="bg-surface border border-border/40 rounded-2xl p-5 xl:sticky xl:top-24 flex flex-col gap-5">
+            {selectedNote ? (
+              <>
+                <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-accent/10 text-accent">{formatResourceType(selectedNote.resourceType)}</span>
+                      {selectedNote.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.classTag}</span>}
+                      {selectedNote.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.subjectTag}</span>}
+                      {selectedNote.chapterTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.chapterTag}</span>}
+                    </div>
+                  <h2 className="text-xl font-black tracking-[-0.03em]">{selectedNote.title}</h2>
+                  <p className="text-sm font-medium text-foreground/60">{selectedNote.description || "Yeh note live library se selected hai."}</p>
+                </div>
+
+                {selectedNote.accessModel === "paid" ? (
+                  <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-3">
+                    <Lock className="size-5 text-accent" aria-hidden />
+                    <p className="text-sm font-bold">Premium note</p>
+                    <p className="text-sm font-medium text-foreground/50">
+                      Yeh note paid hai (₹{selectedNote.priceInr.toLocaleString("en-IN")}) aur abhi
+                      direct download ke liye available nahi hai.
+                    </p>
+                  </div>
+                ) : selectedNote.downloadUrl ? (
+                  <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-4">
+                    <p className="text-sm font-medium text-foreground/50">
+                      Browser preview available nahi hai. File download karo aur apne device mein open karo.
+                    </p>
+                    <NoteDownloadButton
+                      resourceId={selectedNote.id}
+                      className="font-bold"
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center">
+                    <p className="text-sm font-bold">Is resource mein abhi file attach nahi hui hai.</p>
+                    <p className="text-xs font-medium text-foreground/50 mt-1">Jaise hi file upload hogi, yahin aa jayegi.</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-sm font-bold">Preview karne ke liye note select karo.</p>
+                <p className="text-xs font-medium text-foreground/50 mt-1">Jab real notes available hote hain, unka browser preview yahin dikhaya jata hai.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

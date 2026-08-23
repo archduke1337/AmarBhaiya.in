@@ -1,0 +1,65 @@
+import { NextResponse } from "next/server";
+
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { userHasCourseAccess } from "@/server/appwrite/access";
+import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
+import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import type { AnyRow } from "@/types/rows";
+
+export const runtime = "nodejs";
+
+function getLessonVideoFileId(lesson: Record<string, unknown>): string {
+  return String(lesson.videoFileId ?? lesson.videoId ?? lesson.fileId ?? "");
+}
+
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ courseId: string; lessonId: string }> }
+) {
+  const { courseId, lessonId } = await context.params;
+
+  let sessionUserId = "";
+
+  try {
+    const { account } = await createSessionClient();
+    const sessionUser = await account.get();
+    sessionUserId = sessionUser.$id;
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const hasAccess = await userHasCourseAccess({
+    courseId,
+    userId: sessionUserId,
+    lessonId,
+  });
+
+  if (!hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { tablesDB } = await createAdminClient();
+  const lesson = (await tablesDB
+    .getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      rowId: lessonId,
+    })
+    .catch(() => null)) as AnyRow | null;
+
+  if (!lesson || String(lesson.courseId ?? "") !== courseId) {
+    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  }
+
+  const fileId = getLessonVideoFileId(lesson);
+  if (!fileId) {
+    return NextResponse.json({ error: "No video attached to this lesson" }, { status: 404 });
+  }
+
+  return proxyAppwriteBucketFile({
+    request,
+    bucketId: APPWRITE_CONFIG.buckets.courseVideos,
+    fileId,
+    mode: "view",
+  });
+}

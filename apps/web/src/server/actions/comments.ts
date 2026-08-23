@@ -1,0 +1,193 @@
+"use server";
+
+import { ID, Query } from "node-appwrite";
+import { revalidatePath } from "next/cache";
+
+import { requireAuth } from "@/server/appwrite/auth";
+import { getCourseRow, userHasCourseAccess } from "@/server/appwrite/access";
+import { getUserRole } from "@/server/appwrite/auth-utils";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { createAdminClient } from "@/server/appwrite/server";
+import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
+import { sanitizeHtml } from "@/lib/utils/sanitize";
+import { revalidateEach } from "@/lib/utils/revalidate";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
+import type { AnyRow } from "@/types/rows";
+
+export type DiscussionComment = {
+  id: string;
+  userName: string;
+  userRole: string;
+  text: string;
+  createdAt: string;
+  isPinned: boolean;
+};
+
+export type LessonComment = DiscussionComment;
+export type CourseComment = DiscussionComment;
+
+function mapCommentRow(row: AnyRow): DiscussionComment {
+  return {
+    id: row.$id,
+    userName: String(row.userName ?? "Anonymous"),
+    userRole: String(row.userRole ?? "student"),
+    text: String(row.text ?? ""),
+    createdAt: String(row.createdAt ?? row.$createdAt ?? ""),
+    isPinned: Boolean(row.isPinned),
+  };
+}
+
+async function createComment({
+  userId,
+  userName,
+  userRole,
+  courseId,
+  lessonId,
+  text,
+}: {
+  userId: string;
+  userName: string;
+  userRole: string;
+  courseId: string;
+  lessonId: string;
+  text: string;
+}) {
+  const { tablesDB } = await createAdminClient();
+
+  await tablesDB.createRow({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.courseComments,
+    rowId: ID.unique(),
+    data: {
+      lessonId,
+      courseId,
+      userId,
+      userName,
+      userRole,
+      text,
+      parentId: "",
+      createdAt: new Date().toISOString(),
+      isPinned: false,
+      isDeleted: false,
+      likes: 0,
+    },
+  });
+}
+
+async function listComments(queries: string[]): Promise<DiscussionComment[]> {
+  const { tablesDB } = await createAdminClient();
+
+  try {
+    const rows: AnyRow[] = [];
+    let offset = 0;
+
+    while (true) {
+      const result = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.courseComments,
+        queries: [...queries, Query.limit(500), Query.offset(offset)],
+      });
+
+      rows.push(...(result.rows as AnyRow[]));
+
+      if (result.rows.length < 500) {
+        break;
+      }
+
+      offset += result.rows.length;
+    }
+
+    return rows.map(mapCommentRow);
+  } catch {
+    return [];
+  }
+}
+
+// ── Post Comment ────────────────────────────────────────────────────────────
+
+export async function postLessonCommentAction(
+  formData: FormData
+): Promise<ActionResult> {
+  const user = await requireAuth();
+  const lessonId = String(formData.get("lessonId") ?? "");
+  const courseId = String(formData.get("courseId") ?? "");
+  let text = String(formData.get("text") ?? "").trim();
+
+  if (!lessonId || !courseId || !text) return actionError("Missing required fields.");
+  if (!(await userHasCourseAccess({ courseId, userId: user.$id, lessonId })))
+    return actionError("You do not have access to this course.");
+
+  text = sanitizeHtml(text);
+
+  try {
+    await createComment({
+      userId: user.$id,
+      userName: user.name || "Anonymous",
+      userRole: getUserRole(user),
+      courseId,
+      lessonId,
+      text,
+    });
+
+    revalidatePath(`/app/learn/${courseId}/${lessonId}`);
+    return actionSuccess();
+  } catch (error) {
+    return actionError(error instanceof Error ? error.message : "Failed to post comment.");
+  }
+}
+
+// ── Get Lesson Comments ─────────────────────────────────────────────────────
+
+export async function getLessonComments(
+  lessonId: string
+): Promise<LessonComment[]> {
+  return listComments([
+    Query.equal("lessonId", [lessonId]),
+    Query.equal("isDeleted", [false]),
+    Query.orderDesc("$createdAt"),
+  ]);
+}
+
+export async function postCourseCommentAction(
+  formData: FormData
+): Promise<ActionResult> {
+  const user = await requireAuth();
+  const courseId = String(formData.get("courseId") ?? "");
+  let text = String(formData.get("text") ?? "").trim();
+
+  if (!courseId || !text) return actionError("Missing required fields.");
+  if (!(await userHasCourseAccess({ courseId, userId: user.$id })))
+    return actionError("You do not have access to this course.");
+
+  text = sanitizeHtml(text);
+
+  try {
+    await createComment({
+      userId: user.$id,
+      userName: user.name || "Anonymous",
+      userRole: getUserRole(user),
+      courseId,
+      lessonId: "",
+      text,
+    });
+
+    const course = await getCourseRow(courseId);
+    revalidateEach(
+      getCourseDetailPaths(courseId, typeof course?.slug === "string" ? course.slug : "")
+    );
+    return actionSuccess();
+  } catch (error) {
+    return actionError(error instanceof Error ? error.message : "Failed to post course comment.");
+  }
+}
+
+export async function getCourseComments(
+  courseId: string
+): Promise<CourseComment[]> {
+  return listComments([
+    Query.equal("courseId", [courseId]),
+    Query.equal("lessonId", [""]),
+    Query.equal("isDeleted", [false]),
+    Query.orderDesc("$createdAt"),
+  ]);
+}

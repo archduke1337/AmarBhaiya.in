@@ -1,0 +1,80 @@
+import { NextResponse } from "next/server";
+
+import { getApiUserContext } from "@/server/appwrite/api-auth";
+import { userCanManageLesson, userHasCourseAccess } from "@/server/appwrite/access";
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { proxyAppwriteBucketFile } from "@/server/appwrite/file-proxy";
+import { createAdminClient } from "@/server/appwrite/server";
+import type { AnyRow } from "@/types/rows";
+
+export const runtime = "nodejs";
+
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ resourceId: string }> }
+) {
+  const authenticated = await getApiUserContext();
+  if (!authenticated) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { resourceId } = await context.params;
+  const { tablesDB } = await createAdminClient();
+
+  const resource = (await tablesDB
+    .getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.resources,
+      rowId: resourceId,
+    })
+    .catch(() => null)) as AnyRow | null;
+
+  if (!resource) {
+    return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+  }
+
+  const lessonId = String(resource.lessonId ?? "");
+  const fileId = String(resource.fileId ?? "");
+  if (!lessonId || !fileId) {
+    return NextResponse.json({ error: "Resource file not found" }, { status: 404 });
+  }
+
+  const lesson = (await tablesDB
+    .getRow({
+      databaseId: APPWRITE_CONFIG.databaseId,
+      tableId: APPWRITE_CONFIG.tables.lessons,
+      rowId: lessonId,
+    })
+    .catch(() => null)) as AnyRow | null;
+
+  if (!lesson) {
+    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  }
+
+  const courseId = String(lesson.courseId ?? "");
+  const hasCourseAccess = await userHasCourseAccess({
+    courseId,
+    userId: authenticated.userId,
+    lessonId,
+  });
+
+  let canManageLesson = false;
+  if (!hasCourseAccess && authenticated.role !== "student") {
+    canManageLesson = Boolean(
+      await userCanManageLesson(lessonId, authenticated.role, authenticated.userId)
+    );
+  }
+
+  if (!hasCourseAccess && !canManageLesson) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const shouldDownload = new URL(request.url).searchParams.get("download") === "1";
+
+  return proxyAppwriteBucketFile({
+    request,
+    bucketId: APPWRITE_CONFIG.buckets.courseResources,
+    fileId,
+    mode: shouldDownload ? "download" : "view",
+  });
+}
