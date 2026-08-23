@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       error instanceof Error
         ? error.message
         : "Login failed. Please try again.";
+    console.error("[Login] failure:", message, error instanceof Error ? error.stack : error);
 
     if (message.toLowerCase().includes("invalid credentials")) {
       return NextResponse.json(
@@ -58,8 +59,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // Temporary detailed error for Vercel debugging — remove after fix
     return NextResponse.json(
-      { error: "Login failed. Please try again." },
+      { error: `Login failed: ${message}` },
       { status: 500 }
     );
   }
