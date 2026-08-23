@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ALLOWED_ORIGINS } from "@/lib/utils/allowed-origins";
 
 export function validateOrigin(request: Request): NextResponse | null {
   const origin = request.headers.get("origin");
@@ -12,12 +13,7 @@ export function validateOrigin(request: Request): NextResponse | null {
     );
   }
 
-  const allowedOrigins: string[] = [
-    process.env.NEXT_PUBLIC_APP_URL ?? "",
-    "https://amarbhaiya.in",
-    "https://www.amarbhaiya.in",
-    "https://community.amarbhaiya.in",
-  ].filter(Boolean);
+  const allowedOrigins: string[] = ALLOWED_ORIGINS;
 
   try {
     const sourceUrl = new URL(source);

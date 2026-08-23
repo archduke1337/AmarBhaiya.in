@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { isActiveEnrollmentRow } from "@/server/appwrite/dashboard-data/internal";
 import { createAdminClient } from "@/server/appwrite/server";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 import {
@@ -81,11 +82,7 @@ export async function POST(request: Request) {
       ],
     });
 
-    const hasActiveEnrollment = enrollments.rows.some((row) => {
-      const enrollment = row as { isActive?: boolean; status?: string };
-      return enrollment.isActive !== false
-        && String(enrollment.status ?? "active") !== "cancelled";
-    });
+    const hasActiveEnrollment = enrollments.rows.some((row) => isActiveEnrollmentRow(row as unknown as Parameters<typeof isActiveEnrollmentRow>[0]));
 
     if (hasActiveEnrollment) {
       return NextResponse.json(

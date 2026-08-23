@@ -1,4 +1,7 @@
 import { headers } from "next/headers";
+import type { NextResponse } from "next/server";
+
+import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 
 const DEFAULT_ROOT_COOKIE_DOMAIN = "amarbhaiya.in";
 
@@ -84,5 +87,20 @@ export async function getServerActionExpiredSessionCookieOptions() {
   const headerStore = await headers();
   return buildExpiredSessionCookieOptions({
     host: headerStore.get("host"),
+  });
+}
+
+export function getSessionCookieName(): string {
+  return APPWRITE_CONFIG.sessionCookieName;
+}
+
+export function setSessionCookie(
+  request: Request,
+  response: NextResponse,
+  secret: string,
+  expire: string
+): void {
+  response.cookies.set(getSessionCookieName(), secret, {
+    ...buildSessionCookieOptions({ expire, host: request.headers.get("host") }),
   });
 }

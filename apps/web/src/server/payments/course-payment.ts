@@ -1,6 +1,7 @@
 import { ID, Query } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { isActiveEnrollmentRow } from "@/server/appwrite/dashboard-data/internal";
 import type { createAdminClient } from "@/server/appwrite/server";
 import type { AnyRow } from "@/types/rows";
 
@@ -64,7 +65,7 @@ function canTransitionPaymentStatus(
 }
 
 function isEnrollmentActive(enrollment: EnrollmentRow): boolean {
-  return enrollment.isActive !== false;
+  return isActiveEnrollmentRow(enrollment as unknown as Parameters<typeof isActiveEnrollmentRow>[0]);
 }
 
 async function findPaymentsByProviderRef(

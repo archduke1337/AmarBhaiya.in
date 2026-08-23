@@ -10,17 +10,12 @@ import {
   getMissingPublicAppwriteEnvKeys,
   hasPublicAppwriteConfig,
 } from "@/server/appwrite/public-config";
-
-const AVATAR_ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"] as const;
-const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
-
-function getFileExtension(fileName: string): string {
-  return fileName.split(".").pop()?.toLowerCase() ?? "";
-}
-
-function formatBytes(bytes: number): string {
-  return `${(bytes / 1_000_000).toFixed(0)} MB`;
-}
+import { formatBytes } from "@/lib/utils/format";
+import {
+  AVATAR_ALLOWED_EXTENSIONS,
+  AVATAR_MAX_BYTES,
+  getAvatarFileExtension,
+} from "@/server/uploads/avatar";
 
 export function AvatarUploadForm() {
   const missingEnvKeys = getMissingPublicAppwriteEnvKeys();
@@ -46,7 +41,7 @@ export function AvatarUploadForm() {
       return;
     }
 
-    const extension = getFileExtension(file.name);
+    const extension = getAvatarFileExtension(file.name);
     if (!AVATAR_ALLOWED_EXTENSIONS.includes(extension as (typeof AVATAR_ALLOWED_EXTENSIONS)[number])) {
       toast.error("Unsupported image format. Use JPG, PNG, or WEBP.");
       return;

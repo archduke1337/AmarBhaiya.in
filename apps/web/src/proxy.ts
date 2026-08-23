@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { ALLOWED_ORIGINS } from "@/lib/utils/allowed-origins";
 
 // Routes that require authentication
 const PROTECTED_PREFIXES = ["/app", "/instructor", "/moderator", "/admin"];
@@ -117,16 +118,7 @@ async function validateAppwriteSessionSecret(sessionSecret: string): Promise<boo
   }
 }
 
-const CSRF_ALLOWED_ORIGINS = [
-  process.env.NEXT_PUBLIC_APP_URL ?? "",
-  "https://amarbhaiya.in",
-  "https://www.amarbhaiya.in",
-  "https://community.amarbhaiya.in",
-  "https://app.amarbhaiya.in",
-  "https://admin.amarbhaiya.in",
-  "https://instructor.amarbhaiya.in",
-  "https://moderator.amarbhaiya.in",
-].filter(Boolean);
+const CSRF_ALLOWED_ORIGINS = ALLOWED_ORIGINS;
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 

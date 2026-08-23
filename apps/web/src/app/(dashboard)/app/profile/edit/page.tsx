@@ -1,17 +1,27 @@
 import { requireAuth } from "@/server/appwrite/auth";
-import { upsertStudentProfileFormAction } from "@/server/actions/form-wrappers";
+import {
+  upsertStudentProfileFormAction,
+  upsertBillingInfoFormAction,
+  updateDisplayNameFormAction,
+  changePasswordFormAction,
+} from "@/server/actions/form-wrappers";
 import {
   getStudentProfile,
+  getBillingInfo,
+  getBillingPaymentHistory,
 } from "@/server/actions/profile";
-import { updateDisplayNameFormAction, changePasswordFormAction } from "@/server/actions/form-wrappers";
+import { getUserSubscription } from "@/server/actions/subscriptions";
 import { sendVerificationEmailAction } from "@/server/actions/verification";
+import Link from "next/link";
 import { AvatarUploadForm } from "@/components/profile/avatar-upload-form";
 import { PageHeader } from "@/components/dashboard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 
 function getInitials(value: string): string {
   const parts = value
@@ -29,7 +39,12 @@ function getInitials(value: string): string {
 
 export default async function StudentProfileEditPage() {
   const user = await requireAuth();
-  const profile = await getStudentProfile();
+  const [profile, billing, payments, subscription] = await Promise.all([
+    getStudentProfile(),
+    getBillingInfo(),
+    getBillingPaymentHistory().catch(() => []),
+    getUserSubscription().catch(() => null),
+  ]);
   const avatarFileId = String(user.prefs?.avatarFileId ?? "");
   const avatarAlt = user.name || user.email || "Avatar";
   const avatarFallback = getInitials(user.name || user.email || "User");
@@ -224,6 +239,67 @@ export default async function StudentProfileEditPage() {
             size="lg"
           >
             Save profile
+          </Button>
+        </div>
+      </form>
+
+      {/* Billing info — used at checkout, same table as /app/billing */}
+      <form id="billing" action={upsertBillingInfoFormAction} className="flex flex-col gap-6">
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
+          <div className="border-b-2 border-border px-5 py-3 flex items-center justify-between">
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Billing information</h2>
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Used at checkout · invoices</span>
+          </div>
+          <div className="grid gap-4 p-5 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="bf-firstName">First name</Label>
+              <Input id="bf-firstName" name="firstName" required placeholder="Gaurav" defaultValue={billing?.firstName ?? user.name?.split(" ")[0] ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bf-lastName">Last name</Label>
+              <Input id="bf-lastName" name="lastName" required placeholder="Sharma" defaultValue={billing?.lastName ?? user.name?.split(" ").slice(1).join(" ") ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bf-phone">Phone</Label>
+              <Input id="bf-phone" name="phone" type="tel" required placeholder="+91 98765 43210" defaultValue={billing?.phone ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bf-parentName">Parent / guardian name <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input id="bf-parentName" name="parentName" placeholder="Parent name" defaultValue={billing?.parentName ?? profile?.guardianName ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bf-parentPhone">Parent phone <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input id="bf-parentPhone" name="parentPhone" type="tel" placeholder="+91 98765 43210" defaultValue={billing?.parentPhone ?? profile?.guardianPhone ?? ""} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="bf-addressLine1">Address line 1</Label>
+              <Input id="bf-addressLine1" name="addressLine1" required placeholder="House/Flat No., Street" defaultValue={billing?.addressLine1 ?? ""} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="bf-addressLine2">Address line 2 <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input id="bf-addressLine2" name="addressLine2" placeholder="Apartment, landmark" defaultValue={billing?.addressLine2 ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bf-city">City</Label>
+              <Input id="bf-city" name="city" required placeholder="Mumbai" defaultValue={billing?.city ?? profile?.city ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bf-state">State</Label>
+              <Input id="bf-state" name="state" required placeholder="Maharashtra" defaultValue={billing?.state ?? profile?.state ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bf-country">Country</Label>
+              <Input id="bf-country" name="country" required placeholder="India" defaultValue={billing?.country ?? "India"} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bf-zipcode">PIN code</Label>
+              <Input id="bf-zipcode" name="zipcode" required placeholder="400001" pattern="\d{6}" defaultValue={billing?.zipcode ?? ""} />
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button type="submit" variant="secondary" size="lg">
+            Save billing info
           </Button>
         </div>
       </form>

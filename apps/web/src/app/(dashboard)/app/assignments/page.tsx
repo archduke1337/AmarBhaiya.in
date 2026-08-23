@@ -16,12 +16,8 @@ import {
   listRowsByFieldValues,
 } from "@/server/appwrite/row-pagination";
 import { Query } from "node-appwrite";
+import { isActiveEnrollmentRow } from "@/server/appwrite/dashboard-data/internal";
 import type { AnyRow } from "@/types/rows";
-
-function isActiveEnrollment(row: AnyRow): boolean {
-  return row.isActive !== false
-    && String(row.status ?? "active") !== "cancelled";
-}
 
 type StudentAssignment = {
   id: string;
@@ -52,7 +48,7 @@ async function getStudentAssignments(
   const courseIds = Array.from(
     new Set(
       enrollments
-        .filter(isActiveEnrollment)
+        .filter((r) => isActiveEnrollmentRow(r as AnyRow))
         .map((r) => String((r as AnyRow).courseId ?? ""))
         .filter((id) => id.length > 0)
     )

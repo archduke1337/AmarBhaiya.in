@@ -1,27 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/server/appwrite/config";
-import { buildSessionCookieOptions } from "@/server/appwrite/session-cookie";
+import { setSessionCookie } from "@/server/appwrite/session-cookie";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 import { createPublicClient } from "@/server/appwrite/server";
 import { validateOrigin } from "@/server/csrf";
 import { loginSchema } from "@/server/validators/auth";
 
 export const runtime = "nodejs";
-
-function setSessionCookie(
-  request: Request,
-  response: NextResponse,
-  secret: string,
-  expire: string
-) {
-  response.cookies.set(APPWRITE_CONFIG.sessionCookieName, secret, {
-    ...buildSessionCookieOptions({
-      expire,
-      host: request.headers.get("host"),
-    }),
-  });
-}
 
 export async function POST(request: Request) {
   const originCheck = validateOrigin(request);

@@ -1,6 +1,7 @@
 import { Query } from "node-appwrite";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
+import { isActiveEnrollmentRow } from "@/server/appwrite/dashboard-data/internal";
 import { createAdminClient } from "@/server/appwrite/server";
 import type { Role } from "@/lib/utils/constants";
 import type { AnyRow } from "@/types/rows";
@@ -141,11 +142,7 @@ export async function userHasCourseAccess({
       ],
     });
 
-    const hasActiveEnrollment = enrollments.rows.some((row) => {
-      const enrollment = row as AnyRow;
-      return enrollment.isActive !== false
-        && String(enrollment.status ?? "active") !== "cancelled";
-    });
+    const hasActiveEnrollment = enrollments.rows.some((row) => isActiveEnrollmentRow(row as AnyRow));
 
     if (hasActiveEnrollment) {
       return true;

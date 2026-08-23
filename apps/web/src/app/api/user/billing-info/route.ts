@@ -1,28 +1,14 @@
 import { NextResponse } from "next/server";
 import { ID, Query } from "node-appwrite";
-import { z } from "zod";
 
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
+import { billingInfoSchema } from "@/server/validators/billing";
 
 import { getApiUser } from "@/server/appwrite/api-auth";
 
 export const runtime = "nodejs";
-
-const billingInfoSchema = z.object({
-  firstName: z.string().trim().min(1).max(100),
-  lastName: z.string().trim().min(1).max(100),
-  phone: z.string().max(20).optional().default(""),
-  parentName: z.string().trim().min(1).max(200),
-  parentPhone: z.string().trim().min(1).max(20),
-  addressLine1: z.string().trim().min(1).max(300),
-  addressLine2: z.string().max(300).optional().default(""),
-  city: z.string().trim().min(1).max(100),
-  state: z.string().trim().min(1).max(100),
-  country: z.string().trim().min(1).max(100),
-  zipcode: z.string().trim().min(1).max(20),
-});
 
 // ── GET: Check if user has billing info ────────────────────────────────────
 
@@ -93,14 +79,6 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Invalid billing data" },
-      { status: 400 }
-    );
-  }
-
-  // Validate phone !== parentPhone
-  if (parsed.data.phone && parsed.data.parentPhone && parsed.data.phone === parsed.data.parentPhone) {
-    return NextResponse.json(
-      { error: "Student phone and parent phone cannot be the same." },
       { status: 400 }
     );
   }

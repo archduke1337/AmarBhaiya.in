@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getUserRole } from "@/server/appwrite/auth-utils";
 import { finalizeInstructorUpload } from "@/server/appwrite/instructor-file-upload";
-import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
+import { getAuthenticatedManager } from "@/server/appwrite/api-auth";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
 
 export const runtime = "nodejs";
@@ -25,22 +24,6 @@ const completeUploadSchema = z.discriminatedUnion("kind", [
     fileId: z.string().trim().min(1),
   }),
 ]);
-
-async function getAuthenticatedManager() {
-  try {
-    const { account } = await createSessionClient();
-    const sessionUser = await account.get();
-    const { users } = await createAdminClient();
-    const adminUser = await users.get({ userId: sessionUser.$id });
-
-    return {
-      user: sessionUser,
-      role: getUserRole(adminUser),
-    };
-  } catch {
-    return null;
-  }
-}
 
 export async function POST(request: Request) {
   const rlKey = `${getRateLimitKey(request)}:instructor-upload-complete`;

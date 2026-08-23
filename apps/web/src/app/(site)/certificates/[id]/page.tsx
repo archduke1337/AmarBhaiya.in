@@ -32,6 +32,9 @@ export default async function CertificatePage({ params }: PageProps) {
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] px-6 py-20">
+      <h1 className="sr-only">
+        Certificate Verification — {cert.userName} — {cert.courseTitle}
+      </h1>
       <div className="w-full max-w-2xl border-2 border-foreground/10 p-12 text-center space-y-8">
         {/* Header ornament */}
         <div className="flex justify-center">

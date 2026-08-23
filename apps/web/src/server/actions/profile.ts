@@ -24,25 +24,7 @@ const studentProfileSchema = z.object({
   state: z.string().max(100).optional(),
 });
 
-const billingInfoSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required.").max(100),
-  lastName: z.string().trim().min(1, "Last name is required.").max(100),
-  phone: z.string().trim().max(20).optional().or(z.literal("")),
-  parentName: z.string().trim().min(1, "Father/Mother name is required.").max(200),
-  parentPhone: z.string().trim().min(1, "Parent phone is required.").max(20),
-  addressLine1: z.string().trim().min(1, "Address is required.").max(300),
-  addressLine2: z.string().max(300).optional(),
-  city: z.string().trim().min(1, "City is required.").max(100),
-  state: z.string().trim().min(1, "State is required.").max(100),
-  country: z.string().trim().min(1, "Country is required.").max(100),
-  zipcode: z.string().trim().min(1, "Zipcode is required.").max(20),
-}).refine((data) => {
-  // Phone and parent phone cannot be the same
-  if (data.phone && data.parentPhone && data.phone === data.parentPhone) {
-    return false;
-  }
-  return true;
-}, { message: "Student phone and parent phone cannot be the same.", path: ["parentPhone"] });
+import { billingInfoSchema } from "@/server/validators/billing";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -146,7 +128,7 @@ export async function upsertBillingInfoAction(
   const parsed = billingInfoSchema.safeParse({
     firstName: String(formData.get("firstName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
-    phone: String(formData.get("phone") ?? "").trim() || undefined,
+    phone: String(formData.get("phone") ?? ""),
     parentName: String(formData.get("parentName") ?? ""),
     parentPhone: String(formData.get("parentPhone") ?? ""),
     addressLine1: String(formData.get("addressLine1") ?? ""),

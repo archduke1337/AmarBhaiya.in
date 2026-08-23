@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { APPWRITE_CONFIG } from "@/server/appwrite/config";
-import { buildSessionCookieOptions } from "@/server/appwrite/session-cookie";
+import { setSessionCookie } from "@/server/appwrite/session-cookie";
 import { createPublicClient } from "@/server/appwrite/server";
 import { checkRateLimit } from "@/server/rate-limiter";
 
@@ -57,12 +56,7 @@ export async function GET(request: NextRequest) {
       new URL(redirectPath, request.url)
     );
 
-    response.cookies.set(APPWRITE_CONFIG.sessionCookieName, session.secret, {
-      ...buildSessionCookieOptions({
-        expire: session.expire,
-        host: request.headers.get("host"),
-      }),
-    });
+    setSessionCookie(request, response, session.secret, session.expire);
     // clear state cookie
     response.cookies.delete("oauth_state");
 

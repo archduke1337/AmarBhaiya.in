@@ -73,7 +73,7 @@ export async function getInstructorCourseList(scope: InstructorScope): Promise<I
     const activeEnrollmentsByCourseId = new Map<string, number>();
     for (const e of enrollmentRows) {
       const cid = typeof e.courseId === "string" ? e.courseId : "";
-      if (!cid || e.isActive === false) continue;
+      if (!cid || !isActiveEnrollmentRow(e)) continue;
       activeEnrollmentsByCourseId.set(cid, (activeEnrollmentsByCourseId.get(cid) ?? 0) + 1);
     }
     return courseRows.sort((a, b) => (toDate(b.$updatedAt ?? b.$createdAt)?.getTime() ?? 0) - (toDate(a.$updatedAt ?? a.$createdAt)?.getTime() ?? 0)).map((course) => {
@@ -109,7 +109,7 @@ export async function getInstructorStudents(scope: InstructorScope) {
     const courseIds = [...courseById.keys()];
     if (courseIds.length === 0) return [];
     const enrollmentRows = await listRowsByFieldValues<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, "courseId", courseIds);
-    const activeEnrollmentRows = enrollmentRows.filter((r) => r.isActive !== false && typeof r.userId === "string")
+    const activeEnrollmentRows = enrollmentRows.filter((r) => isActiveEnrollmentRow(r) && typeof r.userId === "string")
       .sort((a, b) => (toDate(b.enrolledAt)?.getTime() ?? 0) - (toDate(a.enrolledAt)?.getTime() ?? 0));
     if (activeEnrollmentRows.length === 0) return [];
     const uniqueUserIds = [...new Set(activeEnrollmentRows.map((r) => String(r.userId)))];
@@ -266,7 +266,7 @@ export async function getInstructorCourseSummary(scope: InstructorScope, identif
       safeListAllRows<LessonRow>(tablesDB, APPWRITE_CONFIG.tables.lessons, [Query.equal("courseId", [course.$id])]),
       safeListAllRows<EnrollmentRow>(tablesDB, APPWRITE_CONFIG.tables.enrollments, [Query.equal("courseId", [course.$id])]),
     ]);
-    const health = buildInstructorCourseHealth({ course, modules: moduleRows, lessons: lessonRows, activeEnrollments: enrollmentRows.filter((e) => e.isActive !== false).length });
+    const health = buildInstructorCourseHealth({ course, modules: moduleRows, lessons: lessonRows, activeEnrollments: enrollmentRows.filter(isActiveEnrollmentRow).length });
     return {
       id: course.$id, title: typeof course.title === "string" ? course.title : "Untitled course",
       slug: typeof course.slug === "string" ? course.slug : course.$id,

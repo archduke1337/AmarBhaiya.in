@@ -12,11 +12,8 @@ import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { revalidateEach } from "@/lib/utils/revalidate";
+import { isActiveEnrollmentRow } from "@/server/appwrite/dashboard-data/internal";
 import type { AnyRow } from "@/types/rows";
-
-function isActiveEnrollmentRow(row: Record<string, unknown>): boolean {
-  return row.isActive !== false && String(row.status ?? "active") !== "cancelled";
-}
 
 // ── Shared Enrollment Data ───────────────────────────────────────────────────
 

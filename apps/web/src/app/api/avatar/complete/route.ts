@@ -6,6 +6,13 @@ import { validateStoredAppwriteFileSignature } from "@/server/appwrite/file-sign
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient, createSessionClient } from "@/server/appwrite/server";
 import { checkRateLimit, getRateLimitKey } from "@/server/rate-limiter";
+import {
+  AVATAR_ALLOWED_EXTENSIONS,
+  AVATAR_ALLOWED_MIMES,
+  AVATAR_MAX_BYTES,
+  getAvatarFileExtension,
+} from "@/server/uploads/avatar";
+import { deleteUploadedFileIfPresent } from "@/server/uploads/shared";
 
 export const runtime = "nodejs";
 
@@ -13,30 +20,7 @@ const completeAvatarSchema = z.object({
   fileId: z.string().trim().min(1),
 });
 
-function getFileExtension(fileName: string): string {
-  return fileName.split(".").pop()?.toLowerCase() ?? "";
-}
 
-async function deleteUploadedFileIfPresent(
-  storage: Awaited<ReturnType<typeof createAdminClient>>["storage"],
-  fileId: string
-): Promise<void> {
-  if (!fileId) {
-    return;
-  }
-
-  try {
-    await storage.deleteFile({
-      bucketId: APPWRITE_CONFIG.buckets.userAvatars,
-      fileId,
-    });
-  } catch (error) {
-    console.error(
-      `[AvatarUpload] Failed to clean up ${fileId}:`,
-      error instanceof Error ? error.message : error
-    );
-  }
-}
 
 export async function POST(request: Request) {
   const rlKey = `${getRateLimitKey(request)}:avatar-complete`;
@@ -71,10 +55,9 @@ export async function POST(request: Request) {
     }
 
     // Size check (2MB) — JWT pipeline has no server-side limit, enforce here
-    const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
     const fileSize = Number((uploadedFile as { sizeOriginal?: number }).sizeOriginal ?? (uploadedFile as { size?: number }).size ?? 0);
     if (fileSize > AVATAR_MAX_BYTES) {
-      await deleteUploadedFileIfPresent(storage, parsed.data.fileId);
+      await deleteUploadedFileIfPresent(storage, APPWRITE_CONFIG.buckets.userAvatars, parsed.data.fileId, "AvatarUpload");
       return NextResponse.json({ error: "Avatar too large. Max 2MB." }, { status: 400 });
     }
 
@@ -91,9 +74,9 @@ export async function POST(request: Request) {
       }
     }
 
-    const extension = getFileExtension(String(uploadedFile.name ?? ""));
-    if (!["jpg", "jpeg", "png", "webp"].includes(extension)) {
-      await deleteUploadedFileIfPresent(storage, parsed.data.fileId);
+    const extension = getAvatarFileExtension(String(uploadedFile.name ?? ""));
+    if (!AVATAR_ALLOWED_EXTENSIONS.includes(extension as (typeof AVATAR_ALLOWED_EXTENSIONS)[number])) {
+      await deleteUploadedFileIfPresent(storage, APPWRITE_CONFIG.buckets.userAvatars, parsed.data.fileId, "AvatarUpload");
       return NextResponse.json({ error: "Unsupported avatar format." }, { status: 400 });
     }
 
@@ -101,10 +84,10 @@ export async function POST(request: Request) {
       bucketId: APPWRITE_CONFIG.buckets.userAvatars,
       fileId: parsed.data.fileId,
       fileName: String(uploadedFile.name ?? ""),
-      allowedMimes: ["image/jpeg", "image/png", "image/webp"],
+      allowedMimes: [...AVATAR_ALLOWED_MIMES],
     });
     if (!validSignature) {
-      await deleteUploadedFileIfPresent(storage, parsed.data.fileId);
+      await deleteUploadedFileIfPresent(storage, APPWRITE_CONFIG.buckets.userAvatars, parsed.data.fileId, "AvatarUpload");
       return NextResponse.json(
         { error: "Uploaded avatar content does not match the allowed file type." },
         { status: 400 }
@@ -121,7 +104,7 @@ export async function POST(request: Request) {
         },
       });
     } catch {
-      await deleteUploadedFileIfPresent(storage, parsed.data.fileId);
+      await deleteUploadedFileIfPresent(storage, APPWRITE_CONFIG.buckets.userAvatars, parsed.data.fileId, "AvatarUpload");
       return NextResponse.json(
         { error: "Failed to attach uploaded avatar." },
         { status: 500 }
@@ -129,7 +112,7 @@ export async function POST(request: Request) {
     }
 
     if (previousAvatarFileId && previousAvatarFileId !== parsed.data.fileId) {
-      await deleteUploadedFileIfPresent(storage, previousAvatarFileId);
+      await deleteUploadedFileIfPresent(storage, APPWRITE_CONFIG.buckets.userAvatars, previousAvatarFileId, "AvatarUpload");
     }
 
     revalidatePath("/app/dashboard");

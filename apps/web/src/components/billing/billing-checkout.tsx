@@ -5,7 +5,6 @@ import { Loader2, Tag, CheckCircle2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { RazorpayCheckout } from "@/components/billing/razorpay-checkout";
 import { validateCouponAction } from "@/server/actions/coupons";
 
@@ -40,7 +39,6 @@ export function BillingCheckout({
 }: BillingCheckoutProps) {
   const [step, setStep] = useState<"loading" | "billing" | "payment">("loading");
   const [billing, setBilling] = useState<BillingInfo | null>(null);
-  const [formError, setFormError] = useState("");
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -95,84 +93,6 @@ export function BillingCheckout({
     setCouponMessage("");
   }
 
-  // ── Billing form submit ────────────────────────────────────────────────
-
-  async function handleBillingSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setFormError("");
-
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
-    const phone = String(formData.get("phone") ?? "").trim();
-    const parentPhone = String(formData.get("parentPhone") ?? "").trim();
-    const parentName = String(formData.get("parentName") ?? "").trim();
-    const firstName = String(formData.get("firstName") ?? "").trim();
-    const lastName = String(formData.get("lastName") ?? "").trim();
-    const addressLine1 = String(formData.get("addressLine1") ?? "").trim();
-    const city = String(formData.get("city") ?? "").trim();
-    const state = String(formData.get("state") ?? "").trim();
-    const country = String(formData.get("country") ?? "").trim();
-    const zipcode = String(formData.get("zipcode") ?? "").trim();
-
-    if (!firstName || !lastName || !parentName || !parentPhone) {
-      setFormError("Please fill in all required fields.");
-      return;
-    }
-
-    if (phone && parentPhone && phone === parentPhone) {
-      setFormError("Student phone and parent phone cannot be the same.");
-      return;
-    }
-
-    if (!addressLine1 || !city || !state || !country || !zipcode) {
-      setFormError("Please fill in your billing address.");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/user/billing-info", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          phone: phone || "",
-          parentName,
-          parentPhone,
-          addressLine1,
-          addressLine2: String(formData.get("addressLine2") ?? "").trim(),
-          city,
-          state,
-          country,
-          zipcode,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to save billing info");
-      }
-
-      setBilling({
-        firstName,
-        lastName,
-        phone,
-        parentName,
-        parentPhone,
-        addressLine1,
-        addressLine2: String(formData.get("addressLine2") ?? "").trim(),
-        city,
-        state,
-        country,
-        zipcode,
-      });
-      setStep("payment");
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Failed to save billing info");
-    }
-  }
-
   // ── Loading state ─────────────────────────────────────────────────────
 
   if (step === "loading") {
@@ -183,88 +103,27 @@ export function BillingCheckout({
     );
   }
 
-  // ── Billing form ──────────────────────────────────────────────────────
-
+  // ── Billing required — use profile, no inline form
   if (step === "billing") {
     return (
-      <div className="rounded-2xl border border-border/40 bg-surface p-5 space-y-4">
-        <div>
-          <h3 className="font-heading text-sm font-black uppercase tracking-[0.12em]">
-            Billing information required
-          </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Please fill in your billing details before proceeding to payment.
-          </p>
-        </div>
-
-        <form onSubmit={handleBillingSubmit} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="bf-firstName">First name</Label>
-              <Input id="bf-firstName" name="firstName" required placeholder="Gaurav" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="bf-lastName">Last name</Label>
-              <Input id="bf-lastName" name="lastName" required placeholder="Sharma" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="bf-phone">
-                Phone <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
-              <Input id="bf-phone" name="phone" type="tel" placeholder="+91 98765 43210" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="bf-parentName">Father / Mother name</Label>
-              <Input id="bf-parentName" name="parentName" required placeholder="Parent's full name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="bf-parentPhone">Parent phone number</Label>
-              <Input id="bf-parentPhone" name="parentPhone" type="tel" required placeholder="+91 98765 43210" />
-            </div>
-          </div>
-
-          <div className="border-t border-border/40 pt-4">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              Billing address
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="bf-addr1">Address line 1</Label>
-                <Input id="bf-addr1" name="addressLine1" required placeholder="House/Flat No., Street" />
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="bf-addr2">Address line 2 <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                <Input id="bf-addr2" name="addressLine2" placeholder="Apartment, landmark" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="bf-city">City</Label>
-                <Input id="bf-city" name="city" required placeholder="Mumbai" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="bf-state">State</Label>
-                <Input id="bf-state" name="state" required placeholder="Maharashtra" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="bf-country">Country</Label>
-                <Input id="bf-country" name="country" required placeholder="India" defaultValue="India" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="bf-zipcode">PIN code</Label>
-                <Input id="bf-zipcode" name="zipcode" required placeholder="400001" />
-              </div>
-            </div>
-          </div>
-
-          {formError && (
-            <p className="rounded-lg border-2 border-destructive bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
-              {formError}
-            </p>
-          )}
-
-          <Button type="submit" variant="secondary" size="lg" className="w-full sm:w-auto">
-            Save & Continue to Payment
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 space-y-4 text-center">
+        <h3 className="font-heading text-sm font-black uppercase tracking-[0.12em] text-amber-700 dark:text-amber-400">
+          Billing address needed
+        </h3>
+        <p className="text-sm font-medium leading-6 text-foreground/70 max-w-md mx-auto">
+          We reuse the billing address saved in your <span className="font-bold text-foreground">profile</span>. Add it once there — checkout will automatically use it.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Button asChild size="lg" className="font-bold">
+            <a href="/app/profile/edit#billing">Complete in profile</a>
           </Button>
-        </form>
+          <Button asChild variant="outline" size="lg">
+            <a href="/app/profile/edit#billing">Go to profile</a>
+          </Button>
+        </div>
+        <p className="text-[11px] font-medium text-muted-foreground">
+          Already filled in profile? <button type="button" onClick={() => window.location.reload()} className="font-bold text-accent hover:underline">Refresh</button> to continue.
+        </p>
       </div>
     );
   }
@@ -276,10 +135,18 @@ export function BillingCheckout({
   return (
     <div className="space-y-4">
       {billing && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
-          <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            Billing info saved — {billing.firstName} {billing.lastName}, {billing.city}
-          </p>
+        <div className="rounded-xl border border-border/40 bg-surface p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Deliver to & bill to — from profile</p>
+            <p className="text-sm font-semibold mt-1">
+              {billing.firstName} {billing.lastName}
+              {billing.addressLine1 ? `, ${billing.addressLine1}` : ""}, {billing.city}, {billing.state} {billing.zipcode}
+            </p>
+            <p className="text-xs text-muted-foreground">{billing.phone ? `${billing.phone} · ` : ""}{billing.country}</p>
+          </div>
+          <a href="/app/profile/edit#billing" className="text-xs font-bold text-accent hover:underline shrink-0">
+            Change in profile
+          </a>
         </div>
       )}
 

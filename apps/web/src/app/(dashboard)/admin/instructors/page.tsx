@@ -6,6 +6,7 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { PageHeader, EmptyState } from "@/components/dashboard";
 import { formatCurrency } from "@/lib/utils/format";
+import { isActiveEnrollmentRow } from "@/server/appwrite/dashboard-data/internal";
 import {
   listAllRows,
   listRowsByFieldValues,
@@ -20,11 +21,6 @@ type InstructorInfo = {
   totalEnrollments: number;
   totalRevenue: number;
 };
-
-function isActiveEnrollment(row: Record<string, unknown> & { $id: string }): boolean {
-  return row.isActive !== false
-    && String(row.status ?? "active") !== "cancelled";
-}
 
 async function getInstructorActivity(): Promise<InstructorInfo[]> {
   const { tablesDB, users: usersClient } = await createAdminClient();
@@ -61,7 +57,7 @@ async function getInstructorActivity(): Promise<InstructorInfo[]> {
   ]);
 
   for (const row of enrollmentRows) {
-    if (!isActiveEnrollment(row)) {
+    if (!isActiveEnrollmentRow(row as unknown as Parameters<typeof isActiveEnrollmentRow>[0])) {
       continue;
     }
 
