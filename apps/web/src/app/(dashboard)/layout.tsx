@@ -5,6 +5,8 @@ import { requireAuth } from "@/server/appwrite/auth";
 import { getUserRole } from "@/server/appwrite/auth-utils";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Dashboard",
   robots: { index: false, follow: false },
