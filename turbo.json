@@ -1,5 +1,16 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalEnv": [
+    "NEXT_PUBLIC_APPWRITE_ENDPOINT",
+    "NEXT_PUBLIC_APPWRITE_PROJECT_ID",
+    "NEXT_PUBLIC_APPWRITE_DATABASE_ID",
+    "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_STREAM_API_KEY",
+    "NEXT_PUBLIC_RAZORPAY_KEY_ID",
+    "NEXT_PUBLIC_EMAILJS_SERVICE_ID",
+    "NEXT_PUBLIC_EMAILJS_TEMPLATE_ID",
+    "NEXT_PUBLIC_EMAILJS_PUBLIC_KEY"
+  ],
   "tasks": {
     "dev": {
       "cache": false,
@@ -7,7 +18,26 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "APPWRITE_API_KEY",
+        "STREAM_SECRET",
+        "RAZORPAY_KEY_SECRET",
+        "RAZORPAY_WEBHOOK_SECRET",
+        "RAZORPAY_KEY_ID",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "SESSION_COOKIE_BASE_DOMAIN",
+        "NEXT_PUBLIC_APPWRITE_ENDPOINT",
+        "NEXT_PUBLIC_APPWRITE_PROJECT_ID",
+        "NEXT_PUBLIC_APPWRITE_DATABASE_ID",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_STREAM_API_KEY",
+        "NEXT_PUBLIC_RAZORPAY_KEY_ID",
+        "NEXT_PUBLIC_EMAILJS_SERVICE_ID",
+        "NEXT_PUBLIC_EMAILJS_TEMPLATE_ID",
+        "NEXT_PUBLIC_EMAILJS_PUBLIC_KEY"
+      ]
     },
     "start": {
       "dependsOn": ["build"],

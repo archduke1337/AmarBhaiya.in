@@ -58,6 +58,18 @@ function getAdminClient(): Client {
   if (!_adminClient) {
     const apiKey = process.env.APPWRITE_API_KEY;
     if (!apiKey) {
+      // During `next build` (prerender phase) Vercel/Turbo may not have passed
+      // the server-only env yet, or local dummy builds. Don't crash the
+      // build — return a client with a placeholder key; downstream
+      // `safeList*` helpers will catch fetch failures and return empty data.
+      if (process.env.NEXT_PHASE === "phase-production-build") {
+        console.warn("[Appwrite] APPWRITE_API_KEY missing during build — using placeholder client");
+        _adminClient = new Client()
+          .setEndpoint(APPWRITE_CONFIG.endpoint)
+          .setProject(APPWRITE_CONFIG.projectId)
+          .setKey("build-placeholder-key");
+        return _adminClient;
+      }
       throw new Error(
         "Missing APPWRITE_API_KEY environment variable. " +
         "Server-side operations require an Appwrite API key."
