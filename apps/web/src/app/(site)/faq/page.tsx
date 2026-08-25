@@ -99,7 +99,7 @@ export default function FaqPage() {
                     {item.q}
                     <span
                       className="mt-0.5 text-xs font-black text-muted-foreground transition-transform duration-200 group-open:rotate-45"
-                      aria-hidden
+                      aria-hidden="true"
                     >
                       +
                     </span>

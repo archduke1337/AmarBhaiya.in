@@ -129,19 +129,39 @@ export function VideoPlayer({
     setDuration(video.duration);
   }
 
-  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
+  function seekToPercent(percent: number) {
     const video = videoRef.current;
     if (!video || !video.duration) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percent = x / rect.width;
-    const targetTime = percent * video.duration;
-
+    const clamped = Math.min(1, Math.max(0, percent));
+    const targetTime = clamped * video.duration;
     video.currentTime = targetTime;
     lastUiSyncRef.current = targetTime;
     setCurrentTime(targetTime);
-    setProgress(percent * 100);
+    setProgress(clamped * 100);
+  }
+
+  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = x / rect.width;
+    seekToPercent(percent);
+  }
+
+  function handleSliderKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const step = 5;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      seekBy(-step);
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      seekBy(step);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      seekToPercent(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      seekToPercent(1);
+    }
   }
 
   function seekBy(seconds: number) {
@@ -335,9 +355,16 @@ export function VideoPlayer({
         </div>
 
         <div
-          className="h-4 cursor-pointer rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-ink)] p-[3px]"
-          onClick={handleSeek}
+          role="slider"
+          tabIndex={0}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress)}
+          aria-valuetext={`${Math.round(progress)}% • ${formatTime(currentTime)} of ${formatTime(duration)}`}
           aria-label="Seek through lesson video"
+          className="h-4 cursor-pointer rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-ink)] p-[3px] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2"
+          onClick={handleSeek}
+          onKeyDown={handleSliderKeyDown}
         >
           <div className="h-full rounded-full bg-background/70">
             <div

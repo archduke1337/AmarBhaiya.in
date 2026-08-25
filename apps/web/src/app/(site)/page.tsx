@@ -81,7 +81,7 @@ export default async function MarketingPage() {
           className="section-pad relative overflow-hidden"
         >
           {/* Ambient glow orbs — GPU-safe, fixed pseudo-elements */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
             <div
               className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full opacity-[0.12] blur-[120px]"
               style={{ background: "var(--accent)" }}
@@ -133,7 +133,7 @@ export default async function MarketingPage() {
                     >
                       <Link href="/courses">
                         Courses dekho
-                        <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                           <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </Link>
@@ -173,7 +173,7 @@ export default async function MarketingPage() {
                     {featuredCourse ? (
                       <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3 mb-1">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black text-accent" style={{ background: "color-mix(in oklab, var(--accent) 12%, transparent)" }} aria-hidden>*</div>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black text-accent" style={{ background: "color-mix(in oklab, var(--accent) 12%, transparent)" }} aria-hidden="true">*</div>
                           <div>
                             <p className="font-bold text-sm text-foreground">{featuredCourse.title}</p>
                             <p className="text-xs text-foreground/50">
@@ -270,7 +270,7 @@ export default async function MarketingPage() {
                         }}
                       >
                         <div className="card-bezel-inner p-5 flex flex-col gap-3 min-h-[120px] group-hover:bg-surface/80 transition-colors duration-300">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black" style={{ background: `color-mix(in oklab, ${DOMAIN_COLORS[i % DOMAIN_COLORS.length]} 15%, transparent)`, color: DOMAIN_COLORS[i % DOMAIN_COLORS.length] }} aria-hidden>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black" style={{ background: `color-mix(in oklab, ${DOMAIN_COLORS[i % DOMAIN_COLORS.length]} 15%, transparent)`, color: DOMAIN_COLORS[i % DOMAIN_COLORS.length] }} aria-hidden="true">
                             {domain.title.charAt(0)}
                           </div>
                           <div>
@@ -334,7 +334,7 @@ export default async function MarketingPage() {
                           <div
                             className="absolute inset-0 opacity-10 bg-cover bg-center"
                             style={{ backgroundImage: `url(${collection.imageUrl})` }}
-                            aria-hidden
+                            aria-hidden="true"
                           />
                         )}
 
@@ -347,7 +347,7 @@ export default async function MarketingPage() {
                                 : "color-mix(in oklab, var(--accent) 12%, transparent)",
                               color: collection.bgColor || "var(--accent)",
                             }}
-                            aria-hidden
+                            aria-hidden="true"
                           >
                             {i + 1}
                           </div>
@@ -411,7 +411,7 @@ export default async function MarketingPage() {
                       <div className="card-bezel-inner p-6 flex flex-col gap-4">
                         <span className="w-12 h-12 rounded-xl flex items-center justify-center text-base font-black text-accent"
                           style={{ background: "color-mix(in oklab, var(--accent) 10%, transparent)" }}
-                          aria-hidden
+                          aria-hidden="true"
                         >
                           {String(i + 1).padStart(2, "0")}
                         </span>
@@ -456,7 +456,7 @@ export default async function MarketingPage() {
                   <div
                     className="absolute inset-0 rounded-[calc(2rem-6px)] opacity-30 blur-3xl pointer-events-none"
                     style={{ background: "radial-gradient(ellipse at center, var(--accent), transparent 70%)" }}
-                    aria-hidden
+                    aria-hidden="true"
                   />
 
                   <span className="eyebrow relative z-10">Start today</span>

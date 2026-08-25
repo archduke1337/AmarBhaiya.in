@@ -1,23 +1,21 @@
-const PUBLIC_APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT ?? "";
-const PUBLIC_APPWRITE_PROJECT_ID =
-  process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? "";
+import { APPWRITE_CONFIG } from "./config";
 
 export const PUBLIC_APPWRITE_CONFIG = {
-  endpoint: PUBLIC_APPWRITE_ENDPOINT,
-  projectId: PUBLIC_APPWRITE_PROJECT_ID,
+  endpoint: APPWRITE_CONFIG.endpoint,
+  projectId: APPWRITE_CONFIG.projectId,
   buckets: {
-    courseVideos: "course_videos",
+    courseVideos: APPWRITE_CONFIG.buckets.courseVideos,
   },
 } as const;
 
 export function getMissingPublicAppwriteEnvKeys(): string[] {
   const missing: string[] = [];
 
-  if (!PUBLIC_APPWRITE_ENDPOINT) {
+  if (!PUBLIC_APPWRITE_CONFIG.endpoint) {
     missing.push("NEXT_PUBLIC_APPWRITE_ENDPOINT");
   }
 
-  if (!PUBLIC_APPWRITE_PROJECT_ID) {
+  if (!PUBLIC_APPWRITE_CONFIG.projectId) {
     missing.push("NEXT_PUBLIC_APPWRITE_PROJECT_ID");
   }
 

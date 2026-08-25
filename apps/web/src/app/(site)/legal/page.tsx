@@ -53,7 +53,7 @@ export default function LegalPage() {
               <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">{item.title}</h2>
               <ArrowUpRight
                 className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent"
-                aria-hidden
+                aria-hidden="true"
               />
             </div>
             <p className="text-sm font-medium leading-7 text-foreground/80">{item.body}</p>

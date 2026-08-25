@@ -26,6 +26,8 @@ type SearchParams = Promise<{
 
 const COURSES_PER_PAGE = 6;
 
+export const revalidate = 600;
+
 export const metadata: Metadata = {
   title: "Courses",
   description:

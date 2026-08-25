@@ -18,7 +18,7 @@ const buttonVariants = cva(
         ghost:
           "bg-[color:var(--surface-accent)] text-accent-foreground shadow-retro-sm hover:bg-[color:var(--surface-muted)] aria-expanded:bg-[color:var(--surface-muted)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-retro hover:bg-[color:var(--primary-hover)] focus-visible:ring-destructive/40",
+          "bg-destructive text-destructive-foreground shadow-retro hover:bg-[color-mix(in_oklab,var(--destructive)_92%,black_8%)] focus-visible:ring-destructive/40",
         link:
           "h-auto rounded-none border-0 bg-transparent px-0 font-sans text-sm font-semibold text-foreground underline decoration-2 underline-offset-4 shadow-none hover:translate-x-0 hover:translate-y-0 hover:text-primary hover:shadow-none active:translate-x-0 active:translate-y-0",
       },

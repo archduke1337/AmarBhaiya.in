@@ -88,7 +88,7 @@ export function CollectionPreview({ jsonValue }: CollectionPreviewProps) {
                     <div
                       className="absolute inset-0 opacity-15 bg-cover bg-center"
                       style={{ backgroundImage: `url(${collection.imageUrl})` }}
-                      aria-hidden
+                      aria-hidden="true"
                     />
                   )}
 

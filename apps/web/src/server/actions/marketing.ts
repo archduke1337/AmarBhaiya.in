@@ -66,8 +66,8 @@ function revalidateHomeContentPaths(): void {
   revalidatePath("/courses");
   revalidatePath("/api/content/home");
   // Bust unstable_cache for homepage (cachedHomePage uses tag "public-home")
-  revalidateTag("public-home", { expire: 0 });
-  revalidateTag("public-courses", { expire: 0 });
+  revalidateTag("public-home", "max");
+  revalidateTag("public-courses", "max");
 }
 
 export async function upsertSiteCopyAction(formData: FormData): Promise<ActionResult> {

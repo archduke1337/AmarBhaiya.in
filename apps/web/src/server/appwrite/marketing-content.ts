@@ -12,7 +12,7 @@ import {
 } from "@/server/appwrite/dashboard-data/internal";
 import {
   cachedAboutPage, cachedBlogPost, cachedContactPage,
-  cachedCourseDetail, cachedHomePage, cachedNotesPage,
+  cachedCourseDetail, cachedCoursesPage, cachedHomePage, cachedNotesPage,
 } from "@/server/cache/public-data";
 import type {
   BlogPostRecord,
@@ -387,18 +387,19 @@ export async function getPublicCoursesPageData(options: {
   category?: string;
   sort?: CourseSort;
 }): Promise<CoursesPageData> {
-  const { tablesDB } = await createAdminClient();
-  const query = (options.query ?? "").trim().toLowerCase();
-  const activeCategory = options.category ?? "all";
-  const sort = options.sort ?? "popular";
+  return cachedCoursesPage(async () => {
+    const { tablesDB } = await createAdminClient();
+    const query = (options.query ?? "").trim().toLowerCase();
+    const activeCategory = options.category ?? "all";
+    const sort = options.sort ?? "popular";
 
-  const [courseRows, categoryById] = await Promise.all([
-    safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
-      Query.equal("isPublished", [true]),
-      Query.orderDesc("$updatedAt"),
-    ]),
-    getCategoryMaps(tablesDB),
-  ]);
+    const [courseRows, categoryById] = await Promise.all([
+      safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
+        Query.equal("isPublished", [true]),
+        Query.orderDesc("$updatedAt"),
+      ]),
+      getCategoryMaps(tablesDB),
+    ]);
 
   const courseIds = courseRows.map((row) => row.$id);
   const enrollmentCounts = await getEnrollmentCountsByCourseId(tablesDB, courseIds);
@@ -431,10 +432,11 @@ export async function getPublicCoursesPageData(options: {
 
   const categories = Array.from(new Set(normalized.map((course) => course.category))).sort();
 
-  return {
-    courses: sorted,
-    categories,
-  };
+    return {
+      courses: sorted,
+      categories,
+    };
+  });
 }
 
 async function getPublicCourseBySlugImpl(

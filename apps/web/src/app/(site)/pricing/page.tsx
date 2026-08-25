@@ -78,7 +78,7 @@ export default function PricingPage() {
                   <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
                     {tier.name}
                   </h2>
-                  {tier.featured && <Sparkles className="size-4 text-accent" aria-hidden />}
+                  {tier.featured && <Sparkles className="size-4 text-accent" aria-hidden="true" />}
                 </div>
                 <p className="text-sm font-semibold text-muted-foreground">{tier.tagline}</p>
               </div>
@@ -98,7 +98,7 @@ export default function PricingPage() {
                     key={feature}
                     className="flex items-start gap-2.5 text-sm font-medium leading-6 text-foreground/80"
                   >
-                    <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+                    <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
                     {feature}
                   </li>
                 ))}

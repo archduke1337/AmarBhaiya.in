@@ -350,13 +350,15 @@ async function main() {
   await safe("table", () => db.createTable({
     databaseId: DB, tableId: T9, name: T9,
     permissions: [
-      Permission.read(Role.users()),
+      Permission.read(Role.label("admin")),
+      Permission.read(Role.label("instructor")),
       Permission.create(Role.label("admin")),
       Permission.create(Role.label("instructor")),
       Permission.update(Role.label("admin")),
       Permission.update(Role.label("instructor")),
       Permission.delete(Role.label("admin")),
     ],
+    rowSecurity: true,
   }));
   await varchar(T9, "quizId", 50, true);
   await text(T9, "text", true);
@@ -447,11 +449,12 @@ async function main() {
   await safe("table", () => db.createTable({
     databaseId: DB, tableId: T13, name: T13,
     permissions: [
-      Permission.read(Role.any()),
+      Permission.read(Role.users()),
       Permission.create(Role.label("admin")),
       Permission.update(Role.label("admin")),
       Permission.delete(Role.label("admin")),
     ],
+    rowSecurity: true,
   }));
   await varchar(T13, "userId", 50, true);
   await varchar(T13, "courseId", 50, true);

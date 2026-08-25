@@ -10,11 +10,11 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[color:var(--surface-primary)] text-foreground [a]:hover:bg-primary [a]:hover:text-primary-foreground",
+          "bg-[color:var(--surface-primary)] text-accent-foreground [a]:hover:bg-primary [a]:hover:text-primary-foreground",
         secondary:
           "bg-[color:var(--surface-secondary)] text-secondary-foreground [a]:hover:bg-secondary",
         destructive:
-          "bg-destructive text-destructive-foreground focus-visible:ring-destructive/20 [a]:hover:bg-[color:var(--primary-hover)]",
+          "bg-destructive text-destructive-foreground focus-visible:ring-destructive/20 [a]:hover:bg-[color-mix(in_oklab,var(--destructive)_92%,black_8%)]",
         outline:
           "bg-[color:var(--surface-card)] text-foreground [a]:hover:bg-[color:var(--surface-accent)] [a]:hover:text-foreground",
         ghost:

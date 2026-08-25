@@ -36,7 +36,7 @@ export function DashboardHeader({
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-2xl font-black tracking-[-0.03em] leading-none" aria-label={`Welcome, ${firstName}`}>{firstName}</p>
-              <div aria-hidden className="hidden sm:flex items-center px-2 py-0.5 rounded-md bg-surface border border-border/60 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-foreground/70">
+              <div aria-hidden="true" className="hidden sm:flex items-center px-2 py-0.5 rounded-md bg-surface border border-border/60 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-foreground/70">
                 {role}
               </div>
             </div>

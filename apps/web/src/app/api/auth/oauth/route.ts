@@ -30,10 +30,10 @@ export async function GET(request: NextRequest) {
 
   const userId = request.nextUrl.searchParams.get("userId");
   const secret = request.nextUrl.searchParams.get("secret");
-  // Verify OAuth state if present (CSRF protection)
+  // Verify OAuth state (CSRF protection) — must be present and match
   const state = request.nextUrl.searchParams.get("state");
   const cookieState = request.cookies.get("oauth_state")?.value;
-  if (state && cookieState && state !== cookieState) {
+  if (!state || !cookieState || state !== cookieState) {
     return createLoginRedirect(request, "oauth_state_mismatch");
   }
   const redirectPath = sanitizeRedirectPath(

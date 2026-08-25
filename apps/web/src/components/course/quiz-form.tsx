@@ -62,10 +62,10 @@ export function QuizForm({
             disabled={submitted}
             className="border border-border p-5 space-y-3"
           >
-            <legend className="text-xs uppercase tracking-widest text-muted-foreground px-2">
-              Question {i + 1}
+            <legend id={`question-${q.id}`} className="text-xs uppercase tracking-widest text-muted-foreground px-2">
+              Question {i + 1} — {q.text}
             </legend>
-            <p className="text-sm font-medium">{q.text}</p>
+            <p className="text-sm font-medium" aria-hidden="true">{q.text}</p>
 
             {q.type === "true_false" ? (
               <div className="flex gap-4" role="group" aria-labelledby={`question-${q.id}`}>
@@ -96,7 +96,7 @@ export function QuizForm({
                 className="input-field h-10 w-full text-sm"
               />
             ) : (
-              <div className="flex flex-col gap-2" role="group" aria-labelledby={`question-${q.id}`}>
+              <div className="flex flex-col gap-2" role="group" aria-labelledby={`question-${q.id}`} aria-describedby={`question-${q.id}`}>
                 {q.options.map((opt) => (
                   <label
                     key={opt}

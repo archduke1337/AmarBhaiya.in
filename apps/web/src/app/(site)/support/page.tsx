@@ -54,7 +54,7 @@ export default function SupportPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {channels.map((channel, index) => (
             <RetroPanel key={channel.title} tone={index % 2 === 0 ? "card" : "muted"} className="flex flex-col gap-3 p-6">
-              <channel.icon className="size-5 text-accent" aria-hidden />
+              <channel.icon className="size-5 text-accent" aria-hidden="true" />
               <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
                 {channel.title}
               </h2>

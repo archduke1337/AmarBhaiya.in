@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/notes" },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 type SearchParams = Promise<{
   class?: string;
@@ -104,7 +104,7 @@ export default async function PublicNotesPage({
         {!user && (
           <RetroPanel tone="secondary" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <Lock className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+              <Lock className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
               <p className="text-sm font-medium leading-7 text-foreground/80">
                 Browsing is free for everyone. A free account is all you need to download notes.
               </p>
@@ -240,7 +240,7 @@ export default async function PublicNotesPage({
 
                   {selectedNote.accessModel === "paid" ? (
                     <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-3">
-                      <Lock className="size-5 text-accent" aria-hidden />
+                      <Lock className="size-5 text-accent" aria-hidden="true" />
                       <p className="text-sm font-bold">Premium note</p>
                       <p className="text-sm font-medium text-foreground/50">
                         This note is paid (₹{selectedNote.priceInr.toLocaleString("en-IN")}) and is not
@@ -271,7 +271,7 @@ export default async function PublicNotesPage({
                             }))}`}
                             className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-bold text-accent-foreground"
                           >
-                            <Lock className="size-4" aria-hidden />
+                            <Lock className="size-4" aria-hidden="true" />
                             Sign in to download
                           </Link>
                         </>

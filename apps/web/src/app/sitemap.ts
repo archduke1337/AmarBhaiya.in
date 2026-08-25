@@ -3,6 +3,8 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { safeListAllRows, type AnyRow } from "@/server/appwrite/dashboard-data/internal";
 
+export const revalidate = 3600;
+
 const STATIC_ROUTES = [
   { path: "/", priority: 1.0, changeFreq: "weekly" as const },
   { path: "/courses", priority: 0.9, changeFreq: "daily" as const },

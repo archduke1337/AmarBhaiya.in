@@ -114,7 +114,7 @@ export function Footer() {
           <div
             className="pointer-events-none absolute -right-20 -top-16 h-64 w-64 rounded-full opacity-[0.13] blur-3xl"
             style={{ background: "var(--accent)" }}
-            aria-hidden
+            aria-hidden="true"
           />
 
           <div className="relative space-y-4 sm:hidden">
@@ -122,7 +122,7 @@ export function Footer() {
               <span
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-black"
                 style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
-                aria-hidden
+                aria-hidden="true"
               >
                 A
               </span>
@@ -169,7 +169,7 @@ export function Footer() {
                 <span
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-black"
                   style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
-                  aria-hidden
+                  aria-hidden="true"
                 >
                   A
                 </span>

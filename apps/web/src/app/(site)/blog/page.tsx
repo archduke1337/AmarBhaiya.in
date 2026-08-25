@@ -69,7 +69,7 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
             href="/rss.xml"
             className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-accent hover:underline"
           >
-            <RssIcon className="size-3.5" aria-hidden />
+            <RssIcon className="size-3.5" aria-hidden="true" />
             RSS feed
           </Link>
         </RetroPanel>

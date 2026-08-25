@@ -51,7 +51,7 @@ export function NoteDownloadButton({
         className={className}
         aria-live="polite"
       >
-        <Download className="size-4" aria-hidden />
+        <Download className="size-4" aria-hidden="true" />
         {starting ? "Starting…" : label}
       </Button>
       {error && (

@@ -30,14 +30,16 @@ function memCleanup(): void {
 // Uses Upstash Redis REST API via fetch — no native dependencies required.
 // Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to enable.
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-const useRedis = Boolean(REDIS_URL && REDIS_TOKEN);
+function isRedisConfigured(): boolean {
+  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
 
 async function redisIncrement(
   key: string,
   windowMs: number
 ): Promise<{ count: number; ttlMs: number }> {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL!;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN!;
   const pipeline = [
     // INCR the key
     { cmd: "INCR", args: [key] },
@@ -47,10 +49,10 @@ async function redisIncrement(
     { cmd: "PTTL", args: [key] },
   ];
 
-  const response = await fetch(`${REDIS_URL}/pipeline`, {
+  const response = await fetch(`${redisUrl}/pipeline`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${REDIS_TOKEN}`,
+      Authorization: `Bearer ${redisToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(pipeline),
@@ -75,7 +77,7 @@ export async function checkRateLimit(
 ): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
   const now = Date.now();
 
-  if (useRedis) {
+  if (isRedisConfigured()) {
     try {
       const { count, ttlMs } = await redisIncrement(`rl:${key}`, WINDOW_MS);
       const resetAt = now + ttlMs;

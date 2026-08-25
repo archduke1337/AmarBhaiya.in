@@ -20,11 +20,11 @@ export default function AuthLayout({
       ═══════════════════════════════════════════════════ */}
       <section className="hidden md:flex flex-col justify-between p-12 bg-surface border-r border-border/50 relative overflow-hidden">
         {/* Ambient glow in bg */}
-        <div aria-hidden className="absolute -left-32 -bottom-32 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-[100px]" style={{ background: "var(--accent)" }} />
+        <div aria-hidden="true" className="absolute -left-32 -bottom-32 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-[100px]" style={{ background: "var(--accent)" }} />
 
         {/* Brand */}
         <div className="relative z-10 flex items-center gap-2">
-           <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden>A</span>
+           <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden="true">A</span>
            <span className="font-bold text-sm text-foreground/80">amarbhaiya<span style={{ color: "var(--accent)" }}>.in</span></span>
         </div>
 
@@ -51,7 +51,7 @@ export default function AuthLayout({
       <main className="flex-1 flex flex-col justify-center px-4 py-8 sm:px-12 md:max-w-xl mx-auto w-full relative z-10 pt-safe pb-safe">
         {/* Mobile brand header (hidden on md) */}
         <div className="md:hidden flex items-center gap-2 self-center mb-12">
-           <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden>A</span>
+           <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden="true">A</span>
            <span className="font-bold text-sm text-foreground/90">amarbhaiya<span style={{ color: "var(--accent)" }}>.in</span></span>
         </div>
 

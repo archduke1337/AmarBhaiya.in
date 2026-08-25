@@ -27,7 +27,7 @@ const NAV_LINKS = [
 // ── Icons (inline SVG — lightweight, no dep) ──────────────────
 function MenuIcon({ open }: { open: boolean }) {
   return (
-    <span className="relative flex w-5 h-5 items-center justify-center" aria-hidden>
+    <span className="relative flex w-5 h-5 items-center justify-center" aria-hidden="true">
       {/* Top bar */}
       <span
         className="absolute h-[1.5px] w-5 bg-current transition-all duration-300"
@@ -56,7 +56,7 @@ function MenuIcon({ open }: { open: boolean }) {
 
 function SunIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" stroke="currentColor" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
       <circle cx="12" cy="12" r="4.5"/>
       <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
     </svg>
@@ -65,14 +65,14 @@ function SunIcon() {
 
 function MoonIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" stroke="currentColor" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
     </svg>
   );
 }
 
 // ── Navbar component ──────────────────────────────────────────
-export function Navbar() {
+export function Navbar({ initialAuthenticated = false }: { initialAuthenticated?: boolean }) {
   const [menuOpen, setMenuOpen]   = useState(false);
   const [scrolled, setScrolled]  = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
@@ -94,41 +94,66 @@ export function Navbar() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Trap body scroll when menu is open
+  // Trap body scroll when menu is open — preserve scroll offset for iOS
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (!menuOpen) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    return () => {
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
   }, [menuOpen]);
 
-  // Focus management: move focus into the menu when opened,
-  // close on Escape and restore focus to the toggle
+  // Focus management: move focus into menu, trap Tab, close on Escape
   const menuToggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
-    const firstFocusable = menuRef.current?.querySelector<HTMLElement>(
-      "a[href], button:not([disabled])"
-    );
-    firstFocusable?.focus();
+    const menu = menuRef.current;
+    if (!menu) return;
+    const focusable = Array.from(menu.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setMenuOpen(false);
         menuToggleRef.current?.focus();
+      } else if (e.key === "Tab" && focusable.length > 0) {
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [menuOpen]);
 
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authenticated, setAuthenticated] = useState(initialAuthenticated);
 
   useEffect(() => {
+    // Only fetch if initial server value was false (avoid waterfall for logged-in)
+    if (initialAuthenticated) return;
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => setAuthenticated(data.authenticated))
       .catch(() => setAuthenticated(false));
-  }, []);
+  }, [initialAuthenticated]);
 
   const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
   const isDark = mounted ? resolvedTheme === "dark" : false;
@@ -160,7 +185,7 @@ export function Navbar() {
               <span
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
                 style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
-                aria-hidden
+                aria-hidden="true"
               >
                 A
               </span>
@@ -194,9 +219,9 @@ export function Navbar() {
             {/* Right actions */}
             <div className="flex items-center gap-2">
               {/* Search */}
-              <Button asChild variant="ghost" size="icon-sm" aria-label="Search courses" className="hidden sm:flex text-foreground/60 hover:text-foreground">
+                <Button asChild variant="ghost" size="icon-sm" aria-label="Search courses" className="hidden sm:flex text-foreground/60 hover:text-foreground">
                 <Link href="/courses">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="7" />
                     <path d="M20 20L16.5 16.5" />
                   </svg>
@@ -268,6 +293,7 @@ export function Navbar() {
         id="mobile-menu"
         ref={menuRef}
         role="dialog"
+        aria-modal="true"
         aria-label="Mobile navigation"
         className="fixed inset-x-0 top-0 z-35 md:hidden flex flex-col transition-all duration-500"
         style={{
@@ -302,7 +328,7 @@ export function Navbar() {
             className="reveal in-view flex items-center gap-2 px-4 py-4 rounded-2xl text-xl font-bold text-foreground/70 hover:text-foreground hover:bg-surface transition-all duration-300 min-h-[60px]"
             style={{ transitionDelay: `${NAV_LINKS.length * 60}ms` }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
               <circle cx="11" cy="11" r="7" /><path d="M20 20L16.5 16.5" />
             </svg>
             Search

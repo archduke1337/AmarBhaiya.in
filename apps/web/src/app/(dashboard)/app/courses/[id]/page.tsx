@@ -87,7 +87,7 @@ export default async function CoursePlayerPage({ params, searchParams }: PagePro
         <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/[0.06] p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-emerald-500" aria-hidden />
+              <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-emerald-500" aria-hidden="true" />
               <div className="space-y-1">
                 <p className="font-heading text-lg font-black tracking-[-0.03em]">
                   Payment successful — you&apos;re enrolled in {course.title}

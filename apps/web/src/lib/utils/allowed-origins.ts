@@ -7,4 +7,11 @@ export const ALLOWED_ORIGINS = [
   "https://admin.amarbhaiya.in",
   "https://instructor.amarbhaiya.in",
   "https://moderator.amarbhaiya.in",
+  // Local dev and Vercel previews — only in non-production
+  ...(process.env.NODE_ENV !== "production"
+    ? ["http://localhost:3000", "http://127.0.0.1:3000"]
+    : []),
+  ...(process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL
+    ? [`https://${process.env.VERCEL_URL}`]
+    : []),
 ].filter(Boolean);

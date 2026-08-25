@@ -27,7 +27,7 @@ export function Sidebar({ role, userId }: SidebarProps) {
     <aside className="hidden h-full border-r border-border/40 bg-surface md:sticky md:top-0 md:flex md:h-screen md:flex-col overflow-y-auto">
       <div className="flex flex-col gap-1 p-5 xl:px-6 xl:py-6 text-foreground border-b border-border/30">
         <div className="flex items-center gap-2">
-           <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden>
+           <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden="true">
              {role === "admin" ? "A" : role === "instructor" ? "I" : role === "moderator" ? "M" : "S"}
            </span>
            <span className="font-bold text-sm tracking-[-0.02em] hidden xl:block text-foreground/90">
@@ -68,7 +68,7 @@ export function Sidebar({ role, userId }: SidebarProps) {
 
       <div className="hidden px-4 pb-8 xl:block mt-auto">
         <div className="bg-surface border border-border/50 rounded-2xl p-4 flex flex-col gap-2 relative overflow-hidden">
-          <div aria-hidden className="absolute -right-4 -top-4 w-[60px] h-[60px] rounded-full opacity-[0.1] blur-[20px]" style={{ background: "var(--accent)" }} />
+          <div aria-hidden="true" className="absolute -right-4 -top-4 w-[60px] h-[60px] rounded-full opacity-[0.1] blur-[20px]" style={{ background: "var(--accent)" }} />
           <p className="eyebrow self-start">
             Workspace
           </p>
@@ -121,7 +121,7 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
             </div>
 
             <div className="border-b border-border/30 bg-surface px-6 pt-[calc(var(--safe-top)+1.5rem)] pb-6 text-foreground flex flex-col gap-2 relative overflow-hidden">
-               <div aria-hidden className="absolute -left-10 -bottom-10 w-[120px] h-[120px] rounded-full opacity-[0.06] blur-[40px]" style={{ background: "var(--accent)" }} />
+               <div aria-hidden="true" className="absolute -left-10 -bottom-10 w-[120px] h-[120px] rounded-full opacity-[0.06] blur-[40px]" style={{ background: "var(--accent)" }} />
                <p className="eyebrow self-start">{role}</p>
                <h2 className="mt-1 text-2xl font-black tracking-[-0.03em]">Learning<span className="text-accent underline decoration-2 underline-offset-4 decoration-accent">Hub</span></h2>
             </div>

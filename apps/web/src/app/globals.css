@@ -156,11 +156,11 @@
     --shadow-retro:       4px 4px 0 0 var(--border);
     --shadow-retro-sm:    2px 2px 0 0 var(--border);
 
-    --surface-shadow: 0 0 0 0 transparent;
+    --surface-shadow: 0 2px 8px oklch(0 0 0 / 0.35), 0 8px 24px oklch(0 0 0 / 0.25);
     --overlay-shadow:
       0 10px 38px oklch(0 0 0 / 0.40),
       0 4px 12px oklch(0 0 0 / 0.30);
-    --field-shadow: 0 0 0 0 transparent;
+    --field-shadow: 0 1px 3px oklch(0 0 0 / 0.25);
   }
 }
 
@@ -271,10 +271,15 @@
     border-radius: 4px;
   }
 
-  /* Touch targets — minimum 44×44pt (Apple HIG) */
-  button, a, [role="button"], [role="link"] {
+  /* Touch targets — minimum 44×44pt (Apple HIG) — scoped to controls, not inline prose */
+  button,
+  [role="button"],
+  a.button,
+  a.tap-target,
+  .interactive,
+  [data-tap] {
     min-height: 44px;
-    min-width:  44px;
+    min-width: 44px;
   }
 
   /* Smooth scrollbar */

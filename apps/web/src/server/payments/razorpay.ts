@@ -68,10 +68,12 @@ export function verifyRazorpayWebhookSignature(
   rawBody: string,
   signature: string
 ): boolean {
-  // Use dedicated webhook secret if available, fall back to API key secret
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-  const { keySecret } = requireRazorpayConfig();
-  const secret = webhookSecret || keySecret;
+  if (!webhookSecret) {
+    console.error("[Razorpay] RAZORPAY_WEBHOOK_SECRET not set — webhook verification will fail");
+    return false;
+  }
+  const secret = webhookSecret;
 
   const expected = crypto
     .createHmac("sha256", secret)

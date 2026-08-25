@@ -47,7 +47,7 @@ export default function GrievanceRedressalPage() {
 
         <RetroPanel tone="secondary" className="space-y-3 p-6">
           <div className="flex items-center gap-2">
-            <ShieldAlert className="size-5 text-accent" aria-hidden />
+            <ShieldAlert className="size-5 text-accent" aria-hidden="true" />
             <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">Grievance Officer (IT Rules 2021, Rule 3(2))</h2>
           </div>
           <dl className="space-y-2 text-sm font-medium leading-7 text-foreground/80">
@@ -70,7 +70,7 @@ export default function GrievanceRedressalPage() {
                   href={`mailto:${OWNER.email}`}
                   className="inline-flex items-center gap-1.5 font-bold text-accent hover:underline"
                 >
-                  <Mail className="size-3.5" aria-hidden />
+                  <Mail className="size-3.5" aria-hidden="true" />
                   {OWNER.email}
                 </a>
               </dd>

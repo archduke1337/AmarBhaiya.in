@@ -55,7 +55,7 @@ export default function ParentsPage() {
       <section className="mx-auto max-w-6xl grid gap-4">
         <RetroPanel tone="secondary" className="space-y-3">
           <div className="flex items-center gap-2.5">
-            <ShieldCheck className="size-5 text-accent" aria-hidden />
+            <ShieldCheck className="size-5 text-accent" aria-hidden="true" />
             <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
               Concerned about something?
             </h2>

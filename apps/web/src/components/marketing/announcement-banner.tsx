@@ -77,11 +77,19 @@ export function AnnouncementBanner({ announcement }: Props) {
   };
 
   const bgColor = announcement.backgroundColor || "var(--accent)";
+  // Compute contrast-safe text color: if bg is light oklch, use dark foreground
+  const isLightOklch = (() => {
+    if (!bgColor.startsWith("oklch")) return false;
+    const m = bgColor.match(/oklch\(\s*([\d.]+)/);
+    const l = m ? parseFloat(m[1]) : 0;
+    return l > 0.7;
+  })();
+  const textColor = isLightOklch ? "var(--foreground)" : "var(--accent-foreground)";
 
   return (
     <div
       className="relative flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-semibold transition-all"
-      style={{ background: bgColor, color: "var(--accent-foreground)" }}
+      style={{ background: bgColor, color: textColor }}
     >
       <span className="text-center text-xs leading-5 sm:text-sm">
         {announcement.text}
@@ -93,7 +101,7 @@ export function AnnouncementBanner({ announcement }: Props) {
           className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-[0.1em] transition-all hover:opacity-80"
           style={{
             background: "color-mix(in oklab, black 15%, transparent)",
-            color: "var(--accent-foreground)",
+            color: textColor,
           }}
         >
           {announcement.linkLabel || "Learn More"}

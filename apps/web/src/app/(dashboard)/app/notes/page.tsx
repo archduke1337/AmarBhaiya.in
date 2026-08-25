@@ -183,7 +183,7 @@ export default async function StudentNotesPage({
 
                 {selectedNote.accessModel === "paid" ? (
                   <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-3">
-                    <Lock className="size-5 text-accent" aria-hidden />
+                    <Lock className="size-5 text-accent" aria-hidden="true" />
                     <p className="text-sm font-bold">Premium note</p>
                     <p className="text-sm font-medium text-foreground/50">
                       Yeh note paid hai (₹{selectedNote.priceInr.toLocaleString("en-IN")}) aur abhi
