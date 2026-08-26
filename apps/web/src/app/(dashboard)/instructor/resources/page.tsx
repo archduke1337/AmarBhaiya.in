@@ -362,7 +362,7 @@ export default async function InstructorResourcesPage() {
             <input
               name="isPublished"
               type="checkbox"
-              className="size-4 accent-foreground"
+              className="size-4 accent-[var(--accent)]"
             />
             <span className="text-sm font-semibold text-muted-foreground">
               Publish immediately
@@ -516,7 +516,7 @@ export default async function InstructorResourcesPage() {
                         name="isPublished"
                         type="checkbox"
                         defaultChecked={resource.isPublished}
-                        className="size-4 accent-foreground"
+                        className="size-4 accent-[var(--accent)]"
                       />
                       <span className="text-xs font-semibold">Published</span>
                     </label>

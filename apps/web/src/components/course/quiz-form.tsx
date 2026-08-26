@@ -80,7 +80,7 @@ export function QuizForm({
                       value={opt}
                       required
                       aria-label={`Answer: ${opt}`}
-                      className="size-4 accent-foreground"
+                      className="size-4 accent-[var(--accent)]"
                     />
                     {opt}
                   </label>
@@ -108,7 +108,7 @@ export function QuizForm({
                       value={opt}
                       required
                       aria-label={`Option: ${opt}`}
-                      className="size-4 accent-foreground"
+                      className="size-4 accent-[var(--accent)]"
                     />
                     {opt}
                   </label>
