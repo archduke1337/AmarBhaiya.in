@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Menu,
@@ -25,7 +25,7 @@ export function Sidebar({ role, userId }: SidebarProps) {
 
   return (
     <aside className="hidden h-full border-r border-border/40 bg-surface md:sticky md:top-0 md:flex md:h-screen md:flex-col overflow-y-auto">
-      <div className="flex flex-col gap-1 p-5 xl:px-6 xl:py-6 text-foreground border-b border-border/30">
+      <div className="flex flex-col gap-1 border-b border-border/30 p-4 text-foreground xl:px-6 xl:py-6">
         <div className="flex items-center gap-2">
            <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden="true">
              {role === "admin" ? "A" : role === "instructor" ? "I" : role === "moderator" ? "M" : "S"}
@@ -46,7 +46,7 @@ export function Sidebar({ role, userId }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-3 xl:py-2.5 text-sm font-semibold transition-all duration-200 md:justify-center md:h-[44px] md:w-[44px] xl:h-auto xl:w-auto xl:justify-start",
+                "flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-200 md:justify-center md:w-11 xl:h-auto xl:w-auto xl:justify-start",
                 isActive
                   ? "bg-accent/10 text-accent"
                   : "text-foreground/60 hover:text-foreground/90 hover:bg-surface-hover hover:scale-[0.98]"
@@ -60,7 +60,7 @@ export function Sidebar({ role, userId }: SidebarProps) {
                 )}
                 strokeWidth={isActive ? 2.5 : 2}
               />
-              <span className="hidden xl:inline tracking-tight">{item.label}</span>
+              <span className="hidden min-w-0 truncate tracking-tight xl:inline">{item.label}</span>
             </Link>
           );
         })}
@@ -84,9 +84,34 @@ export function Sidebar({ role, userId }: SidebarProps) {
 export function MobileSidebar({ role, userId }: SidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const navItems = getNavItems(role, userId);
 
-  const closeDrawer = () => setOpen(false);
+  const closeDrawer = () => {
+    setOpen(false);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const firstFocusable = drawerRef.current?.querySelector<HTMLElement>("button, a[href]");
+    firstFocusable?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeDrawer();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
 
   return (
     <>
@@ -95,7 +120,10 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
         variant="ghost"
         onClick={() => setOpen(true)}
         className="md:hidden text-foreground/70"
-        aria-label="Open menu"
+        aria-label="Open dashboard menu"
+        aria-expanded={open}
+        aria-controls="dashboard-mobile-menu"
+        ref={triggerRef}
       >
         <Menu className="size-5" />
       </Button>
@@ -107,7 +135,7 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
             onClick={closeDrawer}
             aria-hidden="true"
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-[min(86vw,20rem)] overflow-y-auto overscroll-contain border-r border-border/40 bg-background shadow-2xl md:hidden flex flex-col animate-slide-in-left">
+          <div id="dashboard-mobile-menu" ref={drawerRef} className="fixed inset-y-0 left-0 z-50 w-[min(86vw,20rem)] overflow-y-auto overscroll-contain border-r border-border/40 bg-background shadow-2xl md:hidden flex flex-col animate-slide-in-left" role="dialog" aria-modal="true" aria-label="Dashboard navigation">
             <div className="absolute right-3 top-3 z-10 pt-safe">
               <Button
                 size="icon-sm"

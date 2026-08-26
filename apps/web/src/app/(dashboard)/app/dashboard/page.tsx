@@ -12,6 +12,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AnimatedProgressBar from "@/components/smoothui/animated-progress-bar";
 
 import { requireAuth } from "@/server/appwrite/auth";
 import { getUserRole } from "@/server/appwrite/auth-utils";
@@ -182,12 +183,13 @@ export default async function StudentDashboardPage() {
                             </span>
                             <span className="text-foreground">{course.progressPercent}%</span>
                          </div>
-                         <div className="h-2 rounded-full bg-surface-hover overflow-hidden">
-                           <div
-                             className="h-full bg-accent transition-all duration-700 w-0"
-                             style={{ width: `${Math.max(2, course.progressPercent)}%` }}
-                           />
-                         </div>
+                         <AnimatedProgressBar
+                           value={course.progressPercent}
+                           label={`${course.progressPercent}% complete`}
+                           className="space-y-1"
+                           labelClassName="sr-only"
+                           barClassName="bg-accent"
+                         />
                       </div>
                     </div>
                   </Link>

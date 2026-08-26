@@ -25,7 +25,7 @@ export default async function CertificatesPage({ searchParams }: CertificatesPag
   }
 
   return (
-    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:space-y-16 xl:py-24">
+    <div className="site-container space-y-12 py-12 sm:py-16 xl:space-y-16 xl:py-20">
       <section className="mx-auto max-w-5xl space-y-6">
         <SectionHeading
           eyebrow="Verification"
@@ -38,7 +38,7 @@ export default async function CertificatesPage({ searchParams }: CertificatesPag
         <RetroPanel tone="secondary" size="lg" className="space-y-5">
           <form method="get" className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
             <div className="space-y-2">
-              <label htmlFor="certificate-id" className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+              <label htmlFor="certificate-id" className="site-kicker font-sans">
                 Certificate ID
               </label>
               <input

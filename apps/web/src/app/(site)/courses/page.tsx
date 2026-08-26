@@ -125,7 +125,7 @@ export default async function CoursesPage({
   const query = typeof params.q === "string" ? params.q.trim().toLowerCase() : "";
   const category = typeof params.category === "string" ? params.category : "all";
   const sort = normalizeSort(params.sort);
-const track = normalizeTrack(params.track);
+  const track = normalizeTrack(params.track);
   const classFilter = typeof params.class === "string" ? params.class : "all";
   const rawPage = Number(params.page);
   const page = Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
@@ -180,7 +180,7 @@ const track = normalizeTrack(params.track);
   ].filter(Boolean) as string[];
 
   return (
-    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:space-y-16 xl:py-24">
+    <div className="site-container space-y-12 py-12 sm:py-16 xl:space-y-16 xl:py-20">
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
         <SectionHeading
           eyebrow="Course catalogue"
@@ -192,20 +192,20 @@ const track = normalizeTrack(params.track);
         <div className="grid gap-4 xl:translate-y-8">
           <div className="grid gap-4 sm:grid-cols-2">
             <RetroPanel tone="secondary" className="space-y-2">
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="site-kicker font-sans">
                 Courses live
               </p>
               <p className="font-heading text-4xl font-black tracking-[-0.08em]">{filteredCourses.length}</p>
             </RetroPanel>
             <RetroPanel tone="accent" className="space-y-2">
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="site-kicker font-sans">
                 Categories
               </p>
               <p className="font-heading text-4xl font-black tracking-[-0.08em]">{categories.length}</p>
             </RetroPanel>
           </div>
           <RetroPanel tone="card" className="space-y-3">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               How this catalogue is shaped
             </p>
             <p className="text-sm font-medium leading-7 text-foreground/80">
@@ -304,8 +304,8 @@ const track = normalizeTrack(params.track);
             </div>
 
             <div className="flex items-end">
-              <Button type="submit" size="lg">
-                Apply
+              <Button type="submit" size="lg" className="w-full md:w-auto">
+                Apply filters
               </Button>
             </div>
           </form>
@@ -326,7 +326,7 @@ const track = normalizeTrack(params.track);
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
           <RetroPanel tone="secondary" className="space-y-3">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               New here?
             </p>
             <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
@@ -344,7 +344,7 @@ const track = normalizeTrack(params.track);
           </RetroPanel>
 
           <RetroPanel tone="card" className="space-y-3">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               What you will find here
             </p>
             <div className="grid gap-2 text-sm font-medium text-foreground/80">
@@ -359,7 +359,7 @@ const track = normalizeTrack(params.track);
       <section className="mx-auto max-w-6xl space-y-5">
         <RetroPanel tone="card" className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               Results
             </p>
 <p className="text-sm font-medium leading-6 text-foreground/80">

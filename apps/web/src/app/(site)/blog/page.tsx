@@ -50,7 +50,7 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
   };
 
   return (
-    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:py-24">
+    <div className="site-container space-y-12 py-12 sm:py-16 xl:space-y-16 xl:py-20">
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
         <SectionHeading
           eyebrow="Blog"
@@ -59,7 +59,7 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
           titleAs="h1"
         />
 <RetroPanel tone="secondary" size="lg" className="space-y-4 xl:translate-y-8">
-          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="site-kicker font-sans">
             Editorial stance
           </p>
           <p className="text-lg font-bold leading-8 tracking-[-0.03em]">
@@ -95,8 +95,8 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
               </select>
             </div>
             <div className="flex items-end">
-              <Button type="submit" variant="default" size="lg">
-                Apply
+              <Button type="submit" variant="default" size="lg" className="w-full md:w-auto">
+                Apply filter
               </Button>
             </div>
           </form>

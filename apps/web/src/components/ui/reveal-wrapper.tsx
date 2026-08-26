@@ -6,7 +6,7 @@
  * IntersectionObserver-based scroll reveal.
  * Uses CSS classes (.reveal → .in-view) to animate.
  * GPU-safe: only animates transform + opacity.
- * No framer-motion, no window.scroll listeners.
+ * No animation library or window.scroll listeners.
  */
 
 import React, { useRef, useEffect } from "react";

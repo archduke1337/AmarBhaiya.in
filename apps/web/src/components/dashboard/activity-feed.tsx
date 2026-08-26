@@ -23,13 +23,13 @@ export function ActivityFeed({
   viewAllHref,
 }: ActivityFeedProps) {
   return (
-    <div className="flex flex-col rounded-3xl bg-surface border border-border/40 overflow-hidden relative">
+    <div className="relative flex flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface shadow-[var(--surface-shadow)]">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 bg-surface/50">
-        <h3 className="font-bold text-base tracking-tight">{title}</h3>
+        <h3 className="font-heading text-base font-black tracking-[-0.02em]">{title}</h3>
         {viewAllHref && (
           <Link
             href={viewAllHref}
-            className="text-xs font-bold uppercase tracking-[0.1em] text-accent hover:text-accent-foreground transition-colors"
+            className="inline-flex min-h-9 shrink-0 items-center text-xs font-bold uppercase tracking-[0.1em] text-accent hover:text-accent-foreground transition-colors"
           >
             View All
           </Link>
@@ -46,8 +46,8 @@ export function ActivityFeed({
             {items.map((item) => {
               const content = (
                 <div className="flex flex-col gap-2 relative z-10">
-                  <div className="flex justify-between items-start gap-2">
-                    <p className="font-bold text-sm leading-tight max-w-[85%] truncate">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 break-words font-bold text-sm leading-tight">
                       {item.label}
                     </p>
                     {item.badge && (
@@ -56,8 +56,8 @@ export function ActivityFeed({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-xs font-medium text-foreground/60 line-clamp-2 leading-relaxed">
+                  <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    <p className="min-w-0 text-xs font-medium text-foreground/60 line-clamp-3 leading-relaxed">
                       {item.description}
                     </p>
                     {item.timestamp && (
@@ -74,7 +74,7 @@ export function ActivityFeed({
                   <Link
                     key={item.id}
                     href={item.href}
-                    className="block px-5 py-4 transition-colors hover:bg-surface-hover group"
+                    className="group block min-h-20 px-5 py-4 transition-colors hover:bg-surface-hover"
                   >
                     {content}
                   </Link>

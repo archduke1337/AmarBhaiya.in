@@ -25,7 +25,7 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit items-center justify-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border p-2 text-muted-foreground shadow-retro group-data-horizontal/tabs:min-h-12 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none",
+  "group/tabs-list inline-flex max-w-full items-center justify-center gap-2 overflow-x-auto rounded-[calc(var(--radius)+2px)] border-2 border-border p-2 text-muted-foreground shadow-retro group-data-horizontal/tabs:min-h-12 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none",
   {
     variants: {
       variant: {
@@ -63,7 +63,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[calc(var(--radius)+1px)] border-2 border-transparent px-3 py-2 text-sm font-heading font-black whitespace-nowrap tracking-[0.05em] text-foreground/70 transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start hover:bg-accent hover:text-foreground hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[calc(var(--radius)+1px)] border-2 border-transparent px-3 py-2 text-sm font-sans font-semibold whitespace-nowrap tracking-[0.01em] text-foreground/70 transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start hover:bg-accent hover:text-foreground hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "group-data-[variant=default]/tabs-list:data-[state=active]:border-border group-data-[variant=default]/tabs-list:data-[state=active]:bg-card group-data-[variant=default]/tabs-list:data-[state=active]:text-foreground group-data-[variant=default]/tabs-list:data-[state=active]:shadow-retro-sm group-data-[variant=default]/tabs-list:data-[state=active]:-translate-x-[1px] group-data-[variant=default]/tabs-list:data-[state=active]:-translate-y-[1px]",
         "group-data-[variant=line]/tabs-list:data-[state=active]:border-border group-data-[variant=line]/tabs-list:data-[state=active]:bg-accent group-data-[variant=line]/tabs-list:data-[state=active]:text-foreground group-data-[variant=line]/tabs-list:data-[state=active]:shadow-retro-sm",
         className

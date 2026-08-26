@@ -19,7 +19,10 @@ export function ForgotPasswordForm() {
 
     const formData = new FormData();
     formData.set("email", email);
-    const result = await sendPasswordRecoveryAction(formData);
+    const result = await sendPasswordRecoveryAction(formData).catch(() => ({
+      success: false,
+      error: "Unable to contact the recovery service. Please try again.",
+    }));
 
     if (result.success) {
       setSent(true);
@@ -31,7 +34,7 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="w-full flex flex-col gap-6 animate-fade-in-up">
+      <div className="w-full flex flex-col gap-6 animate-fade-in-up" aria-live="polite">
         <div className="mb-2">
           <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
             Check your email
@@ -72,15 +75,16 @@ export function ForgotPasswordForm() {
       </div>
 
       {error && (
-        <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
+        <div role="alert" aria-live="polite" className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-foreground/70">Email address</label>
+          <label htmlFor="forgot-email" className="text-sm font-semibold text-foreground/70">Email address</label>
           <Input
+            id="forgot-email"
             required
             placeholder="you@example.com"
             type="email"

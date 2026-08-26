@@ -9,6 +9,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@custom-variant dark (&:is(.dark *));
+
 /* ── Custom amarbhaiya theme ────────────────────────────────── */
 @layer base {
   [data-theme="amarbhaiya"],
@@ -207,15 +209,60 @@
   --color-destructive-foreground: var(--danger-foreground);
 
   /* ── Typography ─────────────────────────────────────────── */
-  /* Geist Mono for hero numbers / code; Plus Jakarta Sans for body */
-  --font-sans:    var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-heading: var(--font-display), "Clash Display", "DM Serif Display", Georgia, serif;
-  --font-mono:    "Geist Mono", "JetBrains Mono", monospace;
+  /* Plus Jakarta Sans keeps dense learning UI clear; DM Serif adds editorial emphasis. */
+  --font-sans: var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-heading: var(--font-display), "DM Serif Display", Georgia, serif;
+  --font-mono:    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* ── Easing presets ─────────────────────────────────────── */
   --ease-out-fluid: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-in-out-smooth: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-brand: var(--brand, oklch(0.72 0.2 352.53));
+  --color-brand-light: var(--brand-light, oklch(0.78 0.15 352.53));
+  --color-brand-lighter: var(--brand-lighter, oklch(0.85 0.1 352.53));
+  --color-brand-secondary: var(--brand-secondary, oklch(0.66 0.21 354.31));
+  --color-amber: var(--amber);
+  --color-amber-fg: var(--amber-fg);
+  --color-amber-hover: var(--amber-hover);
+  --color-blue: var(--blue);
+  --color-blue-fg: var(--blue-fg);
+  --color-blue-hover: var(--blue-hover);
+  --color-green: var(--green);
+  --color-green-fg: var(--green-fg);
+  --color-green-hover: var(--green-hover);
+  --color-smooth-50: var(--smooth-50);
+  --color-smooth-100: var(--smooth-100);
+  --color-smooth-200: var(--smooth-200);
+  --color-smooth-300: var(--smooth-300);
+  --color-smooth-400: var(--smooth-400);
+  --color-smooth-500: var(--smooth-500);
+  --color-smooth-600: var(--smooth-600);
+  --color-smooth-700: var(--smooth-700);
+  --color-smooth-800: var(--smooth-800);
+  --color-smooth-900: var(--smooth-900);
+  --color-smooth-950: var(--smooth-950);
+  --color-smooth-1000: var(--smooth-1000);
 }
 
 /* ── Base resets → iOS/Android safe ─────────────────────── */
@@ -254,13 +301,22 @@
     font-family: var(--font-heading);
     font-weight: 700;
     letter-spacing: -0.03em;
-    line-height: 1.05;
+    line-height: 1.08;
     text-wrap: balance;
   }
 
+  h1 { font-size: clamp(2.25rem, 6vw, 4.75rem); }
+  h2 { font-size: clamp(1.75rem, 4vw, 3rem); }
+  h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
+
   p {
+    max-width: 70ch;
     line-height: 1.65;
     text-wrap: pretty;
+  }
+
+  button, input, textarea, select {
+    font: inherit;
   }
 
   /* Accessible focus ring */
@@ -345,9 +401,31 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
   }
 
-  /* Section spacing — breathes heavily per high-end-visual-design */
-  .section-pad { padding-block: clamp(5rem, 12vw, 8rem); }
-  .section-pad-sm { padding-block: clamp(3rem, 8vw, 5rem); }
+  /* Shared public-page rhythm */
+  .section-pad { padding-block: clamp(4rem, 9vw, 7rem); }
+  .section-pad-sm { padding-block: clamp(2.75rem, 6vw, 4.5rem); }
+  .site-container { width: min(100% - 2rem, 72rem); margin-inline: auto; }
+  .site-prose { max-width: 68ch; }
+  .site-kicker {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+  .site-page-header {
+    padding-block: clamp(3.5rem, 8vw, 6.5rem) clamp(2.5rem, 6vw, 4rem);
+  }
+  .site-page-header h1 { max-width: 14ch; }
+  .site-page-header p { max-width: 62ch; }
+
+  @media (min-width: 640px) {
+    .site-container { width: min(100% - 3rem, 72rem); }
+  }
 
   /* Fluid island nav — floating pill */
   .nav-island {
@@ -369,7 +447,7 @@
     padding: 0.25rem 0.75rem;
     border-radius: 999px;
     font-size: 0.6875rem;
-    font-weight: 600;
+    font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     background: color-mix(in oklab, var(--accent) 12%, transparent);
@@ -471,4 +549,66 @@
   .stagger-5 {
     transition-delay: 0ms !important;
   }
+}
+
+/* Orange theme aliases generated by smoothui; the semantic application tokens above remain authoritative. */
+:root {
+  --chart-1: var(--accent);
+  --chart-2: color-mix(in oklab, var(--accent) 82%, var(--foreground));
+  --chart-3: var(--muted);
+  --chart-4: var(--border);
+  --chart-5: var(--surface-hover);
+  --sidebar: var(--surface);
+  --sidebar-accent: var(--surface-hover);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--accent);
+  --sidebar-primary-foreground: var(--accent-foreground);
+  --sidebar-ring: var(--accent);
+  --amber: oklch(0.77 0.16 75);
+  --amber-fg: oklch(0.22 0 0);
+  --amber-hover: oklch(0.71 0.17 70);
+  --blue: oklch(0.62 0.19 256);
+  --blue-fg: #fff;
+  --blue-hover: oklch(0.56 0.2 256);
+  --green: oklch(0.7 0.17 152);
+  --green-fg: #fff;
+  --green-hover: oklch(0.64 0.18 152);
+  --smooth-50: oklch(0.99 0 0);
+  --smooth-100: oklch(0.972 0 0);
+  --smooth-200: oklch(0.945 0 0);
+  --smooth-300: oklch(0.91 0 0);
+  --smooth-400: oklch(0.865 0 0);
+  --smooth-500: oklch(0.81 0 0);
+  --smooth-600: oklch(0.74 0 0);
+  --smooth-700: oklch(0.66 0 0);
+  --smooth-800: oklch(0.56 0 0);
+  --smooth-900: oklch(0.47 0 0);
+  --smooth-950: oklch(0.36 0 0);
+  --smooth-1000: oklch(0.22 0 0);
+}
+
+.dark {
+  --amber: oklch(0.8 0.15 75);
+  --amber-fg: oklch(0.2 0 0);
+  --amber-hover: oklch(0.85 0.14 72);
+  --blue: oklch(0.66 0.18 256);
+  --blue-fg: #fff;
+  --blue-hover: oklch(0.72 0.16 256);
+  --green: oklch(0.73 0.16 152);
+  --green-fg: oklch(0.2 0 0);
+  --green-hover: oklch(0.79 0.15 152);
+  --smooth-50: oklch(0.2 0 0);
+  --smooth-100: oklch(0.235 0 0);
+  --smooth-200: oklch(0.275 0 0);
+  --smooth-300: oklch(0.315 0 0);
+  --smooth-400: oklch(0.36 0 0);
+  --smooth-500: oklch(0.41 0 0);
+  --smooth-600: oklch(0.47 0 0);
+  --smooth-700: oklch(0.55 0 0);
+  --smooth-800: oklch(0.66 0 0);
+  --smooth-900: oklch(0.74 0 0);
+  --smooth-950: oklch(0.85 0 0);
+  --smooth-1000: oklch(0.96 0 0);
 }

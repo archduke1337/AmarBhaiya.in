@@ -35,7 +35,10 @@ export function ResetPasswordForm({
     formData.set("userId", userId);
     formData.set("secret", secret);
 
-    const result = await confirmPasswordRecoveryAction(formData);
+    const result = await confirmPasswordRecoveryAction(formData).catch(() => ({
+      success: false,
+      error: "Unable to reset the password right now. Please request a new link.",
+    }));
 
     if (!result.success) {
       setError(result.error || "Failed to reset password. Please try again.");
@@ -56,7 +59,7 @@ export function ResetPasswordForm({
       </div>
 
       {error && (
-        <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
+        <div role="alert" aria-live="polite" className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm font-semibold">
           {error}
         </div>
       )}
@@ -64,10 +67,11 @@ export function ResetPasswordForm({
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-foreground/70">
+            <label htmlFor="reset-password" className="text-sm font-semibold text-foreground/70">
               New password
             </label>
             <Input
+              id="reset-password"
               required
               name="password"
               placeholder="Min 8 chars, letter, number, symbol"
@@ -103,10 +107,11 @@ export function ResetPasswordForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-foreground/70">
+          <label htmlFor="reset-password-confirm" className="text-sm font-semibold text-foreground/70">
             Confirm password
           </label>
           <Input
+            id="reset-password-confirm"
             required
             placeholder="Re-enter your new password"
             type="password"

@@ -42,12 +42,12 @@ const channels = [
 
 export default function SupportPage() {
   return (
-    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:space-y-16 xl:py-24">
+    <div className="site-container space-y-12 py-12 sm:py-16 xl:space-y-16 xl:py-20">
       <section className="mx-auto max-w-6xl space-y-6">
         <SectionHeading
           eyebrow="Support"
-          title="We reply, and we reply fast"
-          description="Choose the channel that fits. Billing and technical issues are prioritised, and every message gets a human response."
+          title="Clear help when you need it"
+          description="Choose the channel that fits. Billing and technical issues are prioritised, and every message is routed to the right place."
           titleAs="h1"
         />
 
@@ -55,7 +55,7 @@ export default function SupportPage() {
           {channels.map((channel, index) => (
             <RetroPanel key={channel.title} tone={index % 2 === 0 ? "card" : "muted"} className="flex flex-col gap-3 p-6">
               <channel.icon className="size-5 text-accent" aria-hidden="true" />
-              <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+              <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">
                 {channel.title}
               </h2>
               <p className="text-sm font-medium leading-7 text-foreground/80">{channel.body}</p>
@@ -72,7 +72,7 @@ export default function SupportPage() {
 
       <section className="mx-auto max-w-6xl grid gap-4">
         <RetroPanel tone="secondary" className="space-y-3">
-          <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">
             Before you write
           </h2>
           <p className="text-sm font-medium leading-7 text-foreground/80">

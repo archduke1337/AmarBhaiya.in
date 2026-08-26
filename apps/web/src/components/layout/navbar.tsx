@@ -165,10 +165,10 @@ export function Navbar({ initialAuthenticated = false }: { initialAuthenticated?
         className="fixed top-0 inset-x-0 z-40 pt-safe"
         style={{ paddingTop: `max(0.75rem, var(--safe-top))` }}
       >
-        <div className="mx-auto px-4 sm:px-6 max-w-5xl">
+        <div className="mx-auto w-full max-w-6xl px-3 sm:px-6">
           {/* Island pill */}
           <nav
-            className="nav-island flex items-center justify-between px-4 py-2 transition-all duration-500"
+            className="nav-island flex min-h-12 items-center justify-between gap-2 px-3 py-1.5 transition-all duration-300 sm:px-4"
             style={{
               boxShadow: scrolled
                 ? "0 8px 32px oklch(0 0 0 / 0.20)"
@@ -239,7 +239,7 @@ export function Navbar({ initialAuthenticated = false }: { initialAuthenticated?
               </Button>
 
               {authenticated ? (
-                <Button asChild size="sm" className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]">
+                <Button asChild size="sm" className="font-bold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]">
                   <Link href="/app/dashboard">Dashboard</Link>
                 </Button>
               ) : (
@@ -247,7 +247,7 @@ export function Navbar({ initialAuthenticated = false }: { initialAuthenticated?
                   <Button asChild variant="ghost" size="sm" className="hidden sm:flex font-semibold">
                     <Link href="/login">Login</Link>
                   </Button>
-                  <Button asChild size="sm" className="font-semibold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]">
+                  <Button asChild size="sm" className="font-bold bg-accent text-accent-foreground hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--accent)_35%,transparent)]">
                     <Link href="/register">Start free</Link>
                   </Button>
                 </>
@@ -262,7 +262,7 @@ export function Navbar({ initialAuthenticated = false }: { initialAuthenticated?
                 aria-label={menuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={menuOpen}
                 aria-controls="mobile-menu"
-                className="md:hidden text-foreground/70 hover:text-foreground"
+                className="md:hidden min-h-11 min-w-11 text-foreground/70 hover:text-foreground"
               >
                 <MenuIcon open={menuOpen} />
               </Button>

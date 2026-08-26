@@ -5,7 +5,7 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border font-heading text-[0.8rem] font-black whitespace-nowrap tracking-[0.03em] text-center cursor-pointer transition-all duration-150 select-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/30 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border font-sans text-[0.8rem] font-bold whitespace-nowrap tracking-[0.02em] text-center cursor-pointer transition-all duration-150 select-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/30 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
   {
     variants: {
       variant: {
@@ -24,10 +24,10 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-11 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+          "min-h-11 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         xs: "h-8 px-3 text-[0.68rem] [&_svg:not([class*='size-'])]:size-3",
         sm: "h-9 px-3.5 text-[0.72rem] [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-12 px-5 text-[0.88rem]",
+        lg: "min-h-12 px-5 text-[0.88rem]",
         icon: "size-11",
         "icon-xs":
           "size-8 [&_svg:not([class*='size-'])]:size-3",

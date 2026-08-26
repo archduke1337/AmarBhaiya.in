@@ -37,6 +37,7 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
 
     if (response?.ok) {
       router.push(redirectPath);
+      return;
     } else {
       const body = await response?.json().catch(() => null);
       setError(

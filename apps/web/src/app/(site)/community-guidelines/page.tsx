@@ -50,7 +50,7 @@ const rules = [
 
 export default function CommunityGuidelinesPage() {
   return (
-    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:space-y-16 xl:py-24">
+    <div className="site-container space-y-12 py-12 sm:py-16 xl:space-y-16 xl:py-20">
       <section className="mx-auto max-w-6xl space-y-6">
         <SectionHeading
           eyebrow="Community"
@@ -70,7 +70,7 @@ export default function CommunityGuidelinesPage() {
       <section className="mx-auto max-w-6xl grid gap-4 md:grid-cols-2">
         {rules.map((item, index) => (
           <RetroPanel key={item.title} tone={index % 2 === 0 ? "card" : "muted"} className="space-y-3">
-            <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">{item.title}</h2>
+            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">{item.title}</h2>
             <p className="text-sm font-medium leading-7 text-foreground/80">{item.body}</p>
           </RetroPanel>
         ))}
@@ -78,7 +78,7 @@ export default function CommunityGuidelinesPage() {
 
       <section className="mx-auto max-w-6xl grid gap-4">
         <RetroPanel tone="secondary" className="space-y-3">
-          <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">Reporting a violation</h2>
+          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">Reporting a violation</h2>
           <p className="text-sm font-medium leading-7 text-foreground/80">
             Use <Link href="/contact" className="font-bold text-accent hover:underline">contact</Link> or the Report button on any thread/reply. Parents see{" "}
             <Link href="/parents" className="font-bold text-accent hover:underline">parents</Link> and escalate via{" "}

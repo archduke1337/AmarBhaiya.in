@@ -26,7 +26,7 @@ const legalLinks = [
 
 export default function LegalPage() {
   return (
-    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:space-y-16 xl:py-24">
+    <div className="site-container space-y-12 py-12 sm:py-16 xl:space-y-16 xl:py-20">
       <section className="mx-auto max-w-6xl space-y-6">
         <SectionHeading
           eyebrow="Legal"
@@ -50,7 +50,7 @@ export default function LegalPage() {
             className="group flex flex-col gap-2 p-6"
           >
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">{item.title}</h2>
+              <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">{item.title}</h2>
               <ArrowUpRight
                 className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent"
                 aria-hidden="true"
@@ -69,7 +69,7 @@ export default function LegalPage() {
 
       <section className="mx-auto max-w-6xl grid gap-4">
         <RetroPanel tone="secondary" className="space-y-3">
-          <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">Questions? Escalation</h2>
+          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">Questions? Escalation</h2>
           <p className="text-sm font-medium leading-7 text-foreground/80">
             Start with <Link href="/contact" className="font-bold text-accent hover:underline">contact</Link> or{" "}
             <Link href="/support" className="font-bold text-accent hover:underline">support</Link>. For a time-bound grievance (including data/correction/deletion, payments, takedowns) use{" "}

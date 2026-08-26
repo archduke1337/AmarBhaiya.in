@@ -75,7 +75,7 @@ const faqGroups = [
 
 export default function FaqPage() {
   return (
-    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:space-y-16 xl:py-24">
+    <div className="site-container space-y-12 py-12 sm:py-16 xl:space-y-16 xl:py-20">
       <section className="mx-auto max-w-3xl space-y-6">
         <SectionHeading
           eyebrow="FAQ"
@@ -95,7 +95,7 @@ export default function FaqPage() {
                   key={item.q}
                   className="group overflow-hidden rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro"
                 >
-                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 bg-secondary/75 px-4 py-3 text-sm font-heading font-black tracking-[0.03em] outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex min-h-14 cursor-pointer list-none items-start justify-between gap-4 bg-secondary/75 px-4 py-4 text-sm font-sans font-bold leading-6 tracking-[0.01em] outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
                     {item.q}
                     <span
                       className="mt-0.5 text-xs font-black text-muted-foreground transition-transform duration-200 group-open:rotate-45"

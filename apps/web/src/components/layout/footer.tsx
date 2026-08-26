@@ -39,6 +39,7 @@ const footerLinkGroups: Array<{ title: string; links: FooterLinkItem[] }> = [
       { label: "Login", href: "/login" },
       { label: "Dashboard", href: "/app/dashboard" },
       { label: "Instructor", href: "/instructor" },
+      { label: "Careers & collaborations", href: "/careers" },
     ],
   },
 ];
@@ -54,6 +55,7 @@ const mobileQuickLinks: FooterLinkItem[] = [
   { label: "Courses", href: "/courses" },
   { label: "Notes", href: "/notes" },
   { label: "Contact", href: "/contact" },
+  { label: "Careers", href: "/careers" },
   { label: "Login", href: "/login" },
 ];
 
@@ -66,7 +68,7 @@ function FooterLinkColumn({
 }) {
   return (
     <div>
-      <p className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-foreground/40">
+      <p className="mb-3 font-sans text-[0.65rem] font-extrabold uppercase tracking-[0.16em] text-foreground/45">
         {title}
       </p>
       <ul className="space-y-1.5" role="list">
@@ -74,7 +76,7 @@ function FooterLinkColumn({
           <li key={`${title}-${link.href}`}>
             <Link
               href={link.href}
-              className="inline-flex min-h-10 items-center text-sm font-medium text-foreground/65 transition-colors duration-200 hover:text-foreground"
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-foreground/65 transition-colors duration-200 hover:text-foreground"
             >
               {link.label}
             </Link>
@@ -90,7 +92,7 @@ export function Footer() {
 
   return (
     <footer className="mt-auto border-t border-border/40 pb-safe" aria-label="Site footer">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         {/* Trust strip */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">

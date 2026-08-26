@@ -103,7 +103,7 @@ export default async function MarketingPage() {
                 </RevealWrapper>
 
                 <RevealWrapper className="stagger-1">
-                  <h1 className="text-[clamp(2.5rem,8vw,5rem)] font-black leading-[0.92] tracking-[-0.04em] text-foreground">
+                  <h1 className="max-w-[11ch] text-[clamp(2.5rem,8vw,5rem)] font-black leading-[0.96] tracking-[-0.045em] text-foreground">
                     Padhai simple,{" "}
                     <span
                       className="inline-block"
@@ -121,7 +121,7 @@ export default async function MarketingPage() {
                 </RevealWrapper>
 
                 <RevealWrapper className="stagger-2">
-                  <p className="text-base sm:text-lg text-foreground/60 font-medium leading-relaxed max-w-md">
+                  <p className="max-w-prose text-base font-medium leading-7 text-foreground/65 sm:text-lg sm:leading-8">
                     {heroDescription}
                   </p>
                 </RevealWrapper>
@@ -169,7 +169,7 @@ export default async function MarketingPage() {
                   className="card-bezel col-span-2"
                   style={{ background: "color-mix(in oklab, var(--surface) 85%, var(--accent) 8%)" }}
                 >
-                  <div className="card-bezel-inner p-5">
+                  <div className="card-bezel-inner p-4 sm:p-5">
                     {featuredCourse ? (
                       <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3 mb-1">
@@ -222,9 +222,9 @@ export default async function MarketingPage() {
         </section>
 
         {/* Trust strip — social proof */}
-        <section aria-label="Trust indicators" className="mx-auto max-w-5xl px-4 sm:px-6 -mt-4">
+        <section aria-label="Trust indicators" className="mx-auto -mt-4 max-w-5xl px-4 sm:px-6">
           <RevealWrapper>
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 rounded-full border border-border/40 bg-surface/80 px-4 py-3 backdrop-blur text-xs font-semibold text-foreground/60">
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl border border-border/40 bg-surface/80 px-4 py-3 text-center text-xs font-semibold leading-5 text-foreground/60 backdrop-blur sm:gap-x-6 sm:rounded-full">
               <span className="inline-flex items-center gap-1.5"><span className="text-accent">★</span> 4.8/5 from students</span>
               <span className="hidden sm:inline opacity-30">·</span>
               <span>10k+ learners</span>
@@ -246,7 +246,7 @@ export default async function MarketingPage() {
               <h2 id="subjects-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
                 Har subject covered.
               </h2>
-              <p className="mt-3 text-foreground/55 max-w-md mx-auto">
+              <p className="mx-auto mt-3 max-w-prose text-sm leading-6 text-foreground/60 sm:text-base">
                 Expert-crafted content for every NCERT chapter, every class.
               </p>
             </RevealWrapper>

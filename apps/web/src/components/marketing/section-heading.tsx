@@ -25,19 +25,19 @@ function SectionHeading({
   return (
     <div
       className={cn(
-        "space-y-4",
+        "space-y-3",
         centered ? "mx-auto max-w-3xl text-center" : "max-w-3xl",
         className
       )}
     >
       {eyebrow ? (
-        <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+        <p className="site-kicker font-sans">
           {eyebrow}
         </p>
       ) : null}
       <TitleTag
         className={cn(
-          "font-heading text-3xl leading-[0.96] font-black tracking-[-0.06em] text-balance sm:text-4xl md:text-5xl xl:text-6xl",
+          "max-w-[16ch] font-heading text-[clamp(2rem,5vw,4rem)] font-black leading-[1.02] tracking-[-0.05em] text-balance",
           centered ? "mx-auto" : ""
         )}
       >
@@ -46,7 +46,7 @@ function SectionHeading({
       {description ? (
         <p
           className={cn(
-            "max-w-[62ch] text-sm font-medium leading-7 text-muted-foreground sm:text-base md:text-lg",
+            "max-w-[62ch] text-sm font-medium leading-7 text-muted-foreground sm:text-base sm:leading-8",
             centered ? "mx-auto" : ""
           )}
         >

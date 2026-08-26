@@ -34,7 +34,7 @@ export default async function AboutPage() {
   const aboutContent = await getAboutPageContent();
 
   return (
-    <div className="space-y-16 px-4 py-14 md:px-6 md:py-20 xl:space-y-20 xl:py-24">
+    <div className="site-container space-y-16 py-12 sm:py-16 xl:space-y-20 xl:py-20">
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[1.08fr_0.92fr]">
         <SectionHeading
           eyebrow="About"
@@ -44,7 +44,7 @@ export default async function AboutPage() {
         />
         <div className="grid gap-4 xl:translate-y-8">
           <RetroPanel tone="accent" size="lg" className="space-y-4">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               Operating principle
             </p>
             <p className="text-lg font-bold leading-8 tracking-[-0.03em]">
@@ -52,7 +52,7 @@ export default async function AboutPage() {
             </p>
           </RetroPanel>
           <RetroPanel tone="card" className="space-y-3">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               What that means in practice
             </p>
             <p className="text-sm font-medium leading-7 text-foreground/80">
@@ -82,7 +82,7 @@ export default async function AboutPage() {
               tone={index % 3 === 0 ? "card" : index % 3 === 1 ? "secondary" : "accent"}
               className="space-y-3"
             >
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="site-kicker font-sans">
                 Layer {index + 1}
               </p>
               <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
@@ -110,7 +110,7 @@ export default async function AboutPage() {
               tone={index === 1 ? "muted" : "card"}
               className="space-y-3"
             >
-              <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="site-kicker font-sans">
                 Rule {index + 1}
               </p>
               <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
@@ -158,7 +158,7 @@ export default async function AboutPage() {
 
       <section className="mx-auto max-w-5xl">
         <RetroPanel tone="primary" size="lg" className="space-y-5">
-          <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+          <p className="site-kicker font-sans">
             Mission
           </p>
           <p className="text-2xl font-bold leading-9 tracking-[-0.04em] text-foreground md:text-3xl md:leading-10">

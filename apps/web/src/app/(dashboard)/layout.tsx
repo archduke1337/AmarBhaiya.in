@@ -21,7 +21,7 @@ export default async function DashboardLayout({
   const role = getUserRole(user);
 
   return (
-    <div className="min-h-dvh bg-background md:grid md:grid-cols-[88px_1fr] xl:grid-cols-[240px_1fr] antialiased">
+    <div className="min-h-dvh bg-background antialiased md:grid md:grid-cols-[88px_1fr] xl:grid-cols-[240px_1fr]">
       <Sidebar role={role} userId={user.$id} />
       
       <div className="flex flex-col min-h-dvh bg-background pb-tab">
@@ -29,7 +29,7 @@ export default async function DashboardLayout({
         
         <main
           id="main"
-          className="flex-1 px-4 py-5 md:px-6 md:py-8 lg:px-8 w-full max-w-[1400px] mx-auto"
+          className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 md:px-6 md:py-8 lg:px-8"
         >
           <div className="flex flex-col gap-6">
             {children}

@@ -28,7 +28,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-4 text-center p-8 sm:p-12 border border-dashed border-border/60 rounded-3xl bg-surface/30 backdrop-blur-sm",
+        "flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-border/60 bg-surface/30 p-8 text-center shadow-[var(--surface-shadow)] backdrop-blur-sm sm:p-12",
         className
       )}
     >
@@ -36,8 +36,8 @@ export function EmptyState({
         <Icon className="size-8" strokeWidth={1.5} />
       </div>
       <div>
-        <h3 className="text-xl font-bold tracking-tight mb-2">{title}</h3>
-        <p className="text-sm font-medium text-foreground/60 max-w-md mx-auto leading-relaxed">
+        <h3 className="mb-2 font-heading text-xl font-black tracking-[-0.03em]">{title}</h3>
+        <p className="mx-auto max-w-md text-sm font-medium leading-6 text-foreground/60">
           {description}
         </p>
       </div>

@@ -92,7 +92,7 @@ export default async function PublicNotesPage({
   });
 
   return (
-    <div className="space-y-12 px-4 py-14 md:px-6 md:py-20 xl:space-y-16 xl:py-24">
+    <div className="site-container space-y-12 py-12 sm:py-16 xl:space-y-16 xl:py-20">
       <section className="mx-auto max-w-6xl space-y-6">
         <SectionHeading
           eyebrow="Study Notes"
@@ -118,14 +118,14 @@ export default async function PublicNotesPage({
           </RetroPanel>
         )}
 
-        <div className="bg-surface border border-border/40 rounded-2xl p-5 flex flex-col gap-5">
+        <div className="flex flex-col gap-5 rounded-2xl border border-border/40 bg-surface p-4 sm:p-5">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Category</p>
+              <p className="site-kicker font-sans">Category</p>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={buildNotesHref("/notes", { type: undefined, classTag: classFilter || undefined, subject: subjectFilter || undefined })}
-                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!typeFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                  className={`inline-flex min-h-10 items-center rounded-xl px-3 py-1 text-xs font-bold transition-colors ${!typeFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                 >
                   All
                 </Link>
@@ -133,7 +133,7 @@ export default async function PublicNotesPage({
                   <Link
                     key={item}
                     href={buildNotesHref("/notes", { type: item, classTag: classFilter || undefined, subject: subjectFilter || undefined })}
-                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${typeFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                    className={`inline-flex min-h-10 items-center rounded-xl px-3 py-1 text-xs font-bold transition-colors ${typeFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                   >
                     {formatResourceType(item)}
                   </Link>
@@ -142,11 +142,11 @@ export default async function PublicNotesPage({
             </div>
 
             <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Classes</p>
+              <p className="site-kicker font-sans">Classes</p>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={buildNotesHref("/notes", { type: typeFilter || undefined, classTag: undefined, subject: subjectFilter || undefined })}
-                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!classFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                  className={`inline-flex min-h-10 items-center rounded-xl px-3 py-1 text-xs font-bold transition-colors ${!classFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                 >
                   All
                 </Link>
@@ -154,7 +154,7 @@ export default async function PublicNotesPage({
                   <Link
                     key={item}
                     href={buildNotesHref("/notes", { type: typeFilter || undefined, classTag: item, subject: subjectFilter || undefined })}
-                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${classFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                    className={`inline-flex min-h-10 items-center rounded-xl px-3 py-1 text-xs font-bold transition-colors ${classFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                   >
                     {item}
                   </Link>
@@ -163,11 +163,11 @@ export default async function PublicNotesPage({
             </div>
 
             <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Subjects</p>
+              <p className="site-kicker font-sans">Subjects</p>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={buildNotesHref("/notes", { type: typeFilter || undefined, classTag: classFilter || undefined, subject: undefined })}
-                  className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${!subjectFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                  className={`inline-flex min-h-10 items-center rounded-xl px-3 py-1 text-xs font-bold transition-colors ${!subjectFilter ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                 >
                   All
                 </Link>
@@ -175,7 +175,7 @@ export default async function PublicNotesPage({
                   <Link
                     key={item}
                     href={buildNotesHref("/notes", { type: typeFilter || undefined, classTag: classFilter || undefined, subject: item })}
-                    className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold transition-colors ${subjectFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
+                    className={`inline-flex min-h-10 items-center rounded-xl px-3 py-1 text-xs font-bold transition-colors ${subjectFilter === item ? "bg-accent/10 text-accent" : "bg-surface-hover text-foreground/60 hover:text-foreground"}`}
                   >
                     {item}
                   </Link>
@@ -206,7 +206,7 @@ export default async function PublicNotesPage({
                     subject: subjectFilter || undefined,
                     note: note.id,
                   })}
-                  className={`group block bg-surface border transition-all rounded-2xl p-5 ${selectedNote?.id === note.id ? "border-accent/50 bg-accent/[0.02]" : "border-border/40 hover:bg-surface-hover hover:border-border/60"}`}
+                  className={`group block rounded-2xl border bg-surface p-4 transition-all sm:p-5 ${selectedNote?.id === note.id ? "border-accent/50 bg-accent/[0.02]" : "border-border/40 hover:bg-surface-hover hover:border-border/60"}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-2 min-w-0">

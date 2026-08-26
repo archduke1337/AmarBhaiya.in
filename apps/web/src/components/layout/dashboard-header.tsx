@@ -25,22 +25,22 @@ export function DashboardHeader({
       : userEmail;
 
   return (
-    <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border/40 pt-safe">
-      <div className="flex flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6 md:py-4 max-w-[1400px] mx-auto w-full">
+    <header className="sticky top-0 z-20 border-b border-border/40 bg-background/85 pt-safe backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6 md:py-4">
         <div className="flex items-center gap-4">
           <MobileSidebar role={role} userId={userId} />
           
           <div className="flex min-w-0 flex-col">
-            <p className="eyebrow self-start mb-2">
+            <p className="eyebrow self-start">
               {eyebrow}
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-2xl font-black tracking-[-0.03em] leading-none" aria-label={`Welcome, ${firstName}`}>{firstName}</p>
+              <p className="font-heading text-[clamp(1.5rem,3vw,2rem)] font-black leading-tight tracking-[-0.04em]" aria-label={`Welcome, ${firstName}`}>{firstName}</p>
               <div aria-hidden="true" className="hidden sm:flex items-center px-2 py-0.5 rounded-md bg-surface border border-border/60 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-foreground/70">
                 {role}
               </div>
             </div>
-            <p className="max-w-[32rem] text-sm font-medium text-foreground/60 mt-1">
+            <p className="mt-1 max-w-[32rem] text-sm font-medium leading-6 text-foreground/60">
               <span className="md:hidden">{helperText}</span>
               <span className="hidden md:inline">{userEmail}</span>
             </p>
