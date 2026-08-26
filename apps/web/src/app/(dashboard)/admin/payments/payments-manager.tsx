@@ -132,7 +132,7 @@ function RefundDialog({
               min={0}
               max={payment.amount}
               step={1}
-              className="h-9 text-sm"
+              className="h-10 text-sm"
             />
             <div className="flex items-center gap-2">
               <button
@@ -153,7 +153,7 @@ function RefundDialog({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Customer request, duplicate charge..."
-              className="h-9 text-sm"
+              className="h-10 text-sm"
             />
           </label>
         </div>
@@ -441,7 +441,7 @@ export function PaymentsManager({
             placeholder="Search by student, course, or reference..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9 text-sm"
+            className="pl-8 h-10 text-sm"
           />
         </div>
 

@@ -105,8 +105,8 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
       </StatGrid>
 
       {(course.publishBlockers.length > 0 || course.attentionFlags.length > 0) && (
-        <section className="border border-border p-5 space-y-3">
-          <h2 className="text-lg font-medium">Curriculum Health</h2>
+        <section className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5 shadow-[var(--surface-shadow)]">
+          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Curriculum Health</h2>
           {course.publishBlockers.length > 0 ? (
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.15em] text-destructive">
@@ -138,8 +138,8 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
         </section>
       )}
 
-      <section className="border border-border p-6 space-y-4">
-        <h2 className="text-xl">Create module</h2>
+      <section className="space-y-4 rounded-2xl border border-border/40 bg-surface p-6 shadow-[var(--surface-shadow)]">
+        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Create module</h2>
         <form action={createCurriculumModuleFormAction} className="grid gap-3 md:grid-cols-2">
           <input type="hidden" name="courseId" value={course.id} />
 
@@ -178,7 +178,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
           <div className="md:col-span-2 flex justify-end">
             <button
               type="submit"
-              className="h-10 px-4 bg-foreground text-background text-sm"
+              className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none"
             >
               Add module
             </button>
@@ -188,14 +188,14 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
       <section className="grid lg:grid-cols-2 gap-4">
         {modules.length === 0 ? (
-          <article className="border border-border p-5 text-sm text-muted-foreground lg:col-span-2">
+          <article className="rounded-2xl border border-border/40 bg-surface p-5 text-sm font-medium text-muted-foreground lg:col-span-2">
             No modules found for this course yet.
           </article>
         ) : null}
 
         {modules.map((module) => (
-          <article key={module.id} className="border border-border p-5 space-y-4">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+          <article key={module.id} className="space-y-4 rounded-2xl border border-border/40 bg-surface p-5 shadow-[var(--surface-shadow)]">
+            <p className="font-heading text-xs font-black uppercase tracking-[0.14em] text-muted-foreground">
               Module {module.order}
             </p>
 
@@ -238,7 +238,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="h-9 px-3 border border-border text-sm hover:bg-muted"
+                  className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-border px-4 text-sm font-semibold transition-colors hover:bg-surface-hover"
                 >
                   Update module
                 </button>
@@ -250,18 +250,18 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 <input type="hidden" name="moduleId" value={module.id} />
                 <button
                   type="submit"
-                  className="h-9 px-3 border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                  className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-destructive/30 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                 >
                   Delete module
                 </button>
               </form>
             </div>
 
-            <form action={createCurriculumLessonFormAction} className="border border-border p-4 space-y-3">
+            <form action={createCurriculumLessonFormAction} className="space-y-3 rounded-xl border border-border/40 bg-background p-4">
               <input type="hidden" name="courseId" value={course.id} />
               <input type="hidden" name="moduleId" value={module.id} />
 
-              <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Add lesson</h3>
+              <h3 className="font-heading text-xs font-black uppercase tracking-[0.14em] text-muted-foreground">Add lesson</h3>
 
               <label className="space-y-1 text-sm block">
                 <span>Lesson title</span>
@@ -307,20 +307,20 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 </label>
               </div>
 
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" name="isFree" defaultChecked />
+              <label className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                <input type="checkbox" name="isFree" defaultChecked className="accent-[var(--accent)]" />
                 Free lesson
               </label>
 
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" name="isFreePreview" />
+              <label className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                <input type="checkbox" name="isFreePreview" className="accent-[var(--accent)]" />
                 Free preview (available for paid courses)
               </label>
 
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="h-9 px-3 bg-foreground text-background text-sm"
+                  className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none"
                 >
                   Add lesson
                 </button>
@@ -333,8 +333,8 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
             <ul className="space-y-3 text-sm text-muted-foreground">
               {module.lessons.map((lesson) => (
-                <li key={lesson.id} className="border border-border p-3 space-y-3">
-                  <p className="text-xs uppercase tracking-widest">
+                <li key={lesson.id} className="space-y-3 rounded-xl border border-border/40 bg-background p-4">
+                  <p className="font-heading text-xs font-black uppercase tracking-[0.14em]">
                     Lesson {lesson.order} · {formatDuration(lesson.duration)}
                     {lesson.isFree ? " · Free" : ""}
                     {lesson.isFreePreview ? " · Preview" : ""}
@@ -400,22 +400,22 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                     </div>
 
                     <label className="inline-flex items-center gap-2 text-sm text-foreground">
-                      <input type="checkbox" name="isFree" defaultChecked={lesson.isFree} />
+                      <input type="checkbox" name="isFree" defaultChecked={lesson.isFree} className="accent-[var(--accent)]" />
                       Free lesson
                     </label>
 
                     <label className="inline-flex items-center gap-2 text-sm text-foreground">
-                      <input type="checkbox" name="isFreePreview" defaultChecked={lesson.isFreePreview} />
+                      <input type="checkbox" name="isFreePreview" defaultChecked={lesson.isFreePreview} className="accent-[var(--accent)]" />
                       Free preview (available for paid courses)
                     </label>
 
                     <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        className="h-9 px-3 border border-border text-sm hover:bg-muted"
-                      >
-                        Save lesson
-                      </button>
+                <button
+                  type="submit"
+                  className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-border px-4 text-sm font-semibold transition-colors hover:bg-surface-hover"
+                >
+                  Save lesson
+                </button>
                     </div>
                   </form>
                   <div className="flex items-center pt-2">
@@ -424,7 +424,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                       <input type="hidden" name="lessonId" value={lesson.id} />
                       <button
                         type="submit"
-                        className="h-9 px-3 border border-destructive/30 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                        className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-destructive/30 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                       >
                         Delete lesson
                       </button>
@@ -438,11 +438,11 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
       </section>
 
       {/* Quiz Management */}
-      <section className="border border-border p-6 space-y-6">
-        <h2 className="text-xl">Course Quizzes ({quizzes.length})</h2>
+      <section className="space-y-6 rounded-2xl border border-border/40 bg-surface p-6 shadow-[var(--surface-shadow)]">
+        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Course Quizzes ({quizzes.length})</h2>
 
         {/* Create quiz form */}
-        <form action={createQuizFormAction} className="grid gap-3 md:grid-cols-4 border border-border p-4">
+        <form action={createQuizFormAction} className="grid gap-3 rounded-xl border border-border/40 bg-background p-4 md:grid-cols-4">
           <input type="hidden" name="courseId" value={course.id} />
 
           <label className="space-y-1 text-sm md:col-span-2">
@@ -452,7 +452,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               required
               minLength={3}
               placeholder="e.g. Module 1 Assessment"
-              className="h-10 w-full border border-border bg-background px-3 text-sm"
+              className="input-field h-11 w-full"
             />
           </label>
 
@@ -464,14 +464,14 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               min={0}
               max={100}
               defaultValue={60}
-              className="h-10 w-full border border-border bg-background px-3 text-sm"
+              className="input-field h-11 w-full"
             />
           </label>
 
           <div className="flex items-end">
             <button
               type="submit"
-              className="h-10 w-full bg-foreground text-background text-sm transition-opacity hover:opacity-90"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none"
             >
               Create Quiz
             </button>
@@ -480,8 +480,8 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
         {/* Existing quizzes */}
         {quizzes.map((quiz) => (
-          <article key={quiz.id} className="border border-border">
-            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+          <article key={quiz.id} className="rounded-2xl border border-border/40 bg-surface shadow-[var(--surface-shadow)]">
+            <div className="flex items-center justify-between gap-3 border-b border-border/40 px-5 py-3">
               <div>
                 <h3 className="text-sm font-medium">{quiz.title}</h3>
                 <p className="text-[10px] text-muted-foreground">
@@ -492,7 +492,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 <input type="hidden" name="quizId" value={quiz.id} />
                 <button
                   type="submit"
-                  className="text-xs text-destructive hover:underline"
+                  className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                 >
                   Delete
                 </button>
@@ -512,7 +512,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   name="text"
                   required
                   placeholder="What is...?"
-                  className="input-field h-9 w-full text-xs"
+                  className="input-field h-11 w-full text-sm"
                 />
               </label>
 
@@ -520,7 +520,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 <span className="text-muted-foreground">Type</span>
                 <select
                   name="type"
-                  className="input-field h-9 w-full text-xs"
+                  className="input-field h-11 w-full text-sm"
                 >
                   <option value="mcq">Multiple Choice</option>
                   <option value="true_false">True / False</option>
@@ -534,7 +534,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                   name="correctAnswer"
                   required
                   placeholder="The correct option text"
-                  className="input-field h-9 w-full text-xs"
+                  className="input-field h-11 w-full text-sm"
                 />
               </label>
 
@@ -543,14 +543,14 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 <input
                   name="options"
                   placeholder="Option A, Option B, Option C, Option D"
-                  className="input-field h-9 w-full text-xs"
+                  className="input-field h-11 w-full text-sm"
                 />
               </label>
 
               <div className="flex items-end md:col-span-2 justify-end">
                 <button
                   type="submit"
-                  className="h-9 border border-border px-4 text-xs hover:bg-muted transition-colors"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[calc(var(--radius)+2px)] border border-border px-5 text-sm font-semibold transition-colors hover:bg-surface-hover"
                 >
                   Add Question
                 </button>
@@ -561,10 +561,10 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
       </section>
 
       {/* Assignment Management */}
-      <section className="border border-border p-6 space-y-6">
-        <h2 className="text-xl">Assignments ({assignments.length})</h2>
+      <section className="space-y-6 rounded-2xl border border-border/40 bg-surface p-6 shadow-[var(--surface-shadow)]">
+        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Assignments ({assignments.length})</h2>
 
-        <form action={createAssignmentFormAction} className="grid gap-3 md:grid-cols-2 border border-border p-4">
+        <form action={createAssignmentFormAction} className="grid gap-3 rounded-xl border border-border/40 bg-background p-4 md:grid-cols-2">
           <input type="hidden" name="courseId" value={course.id} />
 
           <label className="space-y-1 text-sm">
@@ -574,7 +574,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               required
               minLength={3}
               placeholder="e.g. Build a REST API"
-              className="h-10 w-full border border-border bg-background px-3 text-sm"
+              className="input-field h-11 w-full"
             />
           </label>
 
@@ -583,7 +583,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
             <input
               name="dueDate"
               type="date"
-              className="h-10 w-full border border-border bg-background px-3 text-sm"
+              className="input-field h-11 w-full"
             />
           </label>
 
@@ -593,14 +593,14 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
               name="description"
               rows={3}
               placeholder="What should the student do? Include requirements and deliverables."
-              className="w-full border border-border bg-background px-3 py-2 text-sm"
+              className="input-field--textarea w-full"
             />
           </label>
 
           <div className="flex items-end md:col-span-2 justify-end">
             <button
               type="submit"
-              className="h-10 bg-foreground text-background px-6 text-sm transition-opacity hover:opacity-90"
+              className="inline-flex min-h-11 items-center justify-center rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none"
             >
               Create Assignment
             </button>
@@ -608,8 +608,8 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
         </form>
 
         {assignments.map((a) => (
-          <article key={a.id} className="border border-border">
-            <div className="flex items-center justify-between px-5 py-3">
+          <article key={a.id} className="rounded-2xl border border-border/40 bg-surface shadow-[var(--surface-shadow)]">
+            <div className="flex items-center justify-between gap-3 px-5 py-3">
               <div>
                 <h3 className="text-sm font-medium">{a.title}</h3>
                 <p className="text-[10px] text-muted-foreground">
@@ -620,7 +620,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
                 <input type="hidden" name="assignmentId" value={a.id} />
                 <button
                   type="submit"
-                  className="text-xs text-destructive hover:underline"
+                  className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                 >
                   Delete
                 </button>

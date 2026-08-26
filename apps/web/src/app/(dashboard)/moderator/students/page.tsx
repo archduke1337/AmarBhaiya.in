@@ -93,7 +93,7 @@ export default async function ModeratorStudentsPage() {
                     <input type="hidden" name="actionId" value={student.latestActionId} />
                     <button
                       type="submit"
-                      className="h-8 bg-foreground px-3 text-xs text-background transition-opacity hover:opacity-90"
+                      className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] bg-foreground px-4 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none"
                     >
                       Resolve
                     </button>
@@ -116,7 +116,7 @@ export default async function ModeratorStudentsPage() {
                     <select
                       name="action"
                       defaultValue="warn"
-                      className="input-field h-9"
+                      className="input-field h-11"
                     >
                       <option value="warn">Warn</option>
                       <option value="mute">Mute</option>
@@ -132,7 +132,7 @@ export default async function ModeratorStudentsPage() {
                     <input
                       name="duration"
                       placeholder="48h"
-                      className="input-field h-9"
+                      className="input-field h-11"
                     />
                   </label>
 
@@ -151,7 +151,7 @@ export default async function ModeratorStudentsPage() {
                   <div className="flex justify-end md:col-span-3">
                     <button
                       type="submit"
-                      className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
+                      className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-border px-4 text-sm font-semibold transition-colors hover:bg-surface-hover"
                     >
                       Apply action
                     </button>

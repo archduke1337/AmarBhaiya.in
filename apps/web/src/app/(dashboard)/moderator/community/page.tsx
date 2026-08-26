@@ -25,7 +25,7 @@ export default async function ModeratorCommunityPage() {
         {data.actionCounts.map((action) => (
           <div
             key={action.label}
-            className="flex items-center justify-between border border-border px-4 py-3"
+            className="flex items-center justify-between rounded-xl border border-border/40 bg-surface px-4 py-3"
           >
             <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
               {action.label}
@@ -42,7 +42,7 @@ export default async function ModeratorCommunityPage() {
         id="recent-threads"
         className="scroll-mt-24 flex flex-col gap-4"
       >
-        <h2 className="text-lg font-medium">
+        <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
           Community Threads ({data.recentThreads.length})
         </h2>
 
@@ -91,7 +91,7 @@ export default async function ModeratorCommunityPage() {
                       <input type="hidden" name="threadId" value={thread.id} />
                       <button
                         type="submit"
-                        className="text-[10px] border border-border px-2 py-0.5 hover:bg-muted transition-colors"
+                        className="inline-flex min-h-11 items-center rounded-lg border border-border/40 px-3 text-xs font-semibold transition-colors hover:bg-surface-hover"
                       >
                         {thread.locked ? "Unlock" : "Lock"}
                       </button>
@@ -117,7 +117,7 @@ export default async function ModeratorCommunityPage() {
                         <select
                           name="action"
                           defaultValue={thread.pinned ? "unpin" : "pin"}
-                          className="input-field h-9"
+                          className="input-field h-11"
                         >
                           <option value="pin">Pin thread</option>
                           <option value="unpin">Unpin thread</option>
@@ -136,7 +136,7 @@ export default async function ModeratorCommunityPage() {
                         <input
                           name="duration"
                           placeholder="24h"
-                          className="input-field h-9"
+                          className="input-field h-11"
                         />
                       </label>
 
@@ -155,7 +155,7 @@ export default async function ModeratorCommunityPage() {
                       <div className="flex justify-end md:col-span-3">
                         <button
                           type="submit"
-                          className="h-8 border border-border px-3 text-xs transition-colors hover:bg-muted"
+                          className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-border px-4 text-sm font-semibold transition-colors hover:bg-surface-hover"
                         >
                           Apply thread action
                         </button>

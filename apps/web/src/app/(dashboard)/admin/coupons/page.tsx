@@ -168,7 +168,7 @@ export default async function AdminCouponsPage() {
                 name="code"
                 required
                 placeholder="SUMMER25"
-                className="input-field w-full h-9 px-3 text-sm rounded-lg border border-border/40 bg-background"
+                className="input-field w-full h-10 px-3 text-sm rounded-lg border border-border/40 bg-background"
               />
             </div>
 
@@ -180,7 +180,7 @@ export default async function AdminCouponsPage() {
                 id="courseId"
                 name="courseId"
                 required
-                className="input-field--select w-full h-9 text-sm rounded-lg border border-border/40 bg-background"
+                className="input-field--select w-full h-10 text-sm rounded-lg border border-border/40 bg-background"
                 defaultValue=""
               >
                 <option value="" disabled>Select course</option>
@@ -200,7 +200,7 @@ export default async function AdminCouponsPage() {
                 id="type"
                 name="type"
                 required
-                className="input-field--select w-full h-9 text-sm rounded-lg border border-border/40 bg-background"
+                className="input-field--select w-full h-10 text-sm rounded-lg border border-border/40 bg-background"
               >
                 <option value="percent">Percent (%)</option>
                 <option value="fixed">Fixed Amount (₹)</option>
@@ -218,7 +218,7 @@ export default async function AdminCouponsPage() {
                 required
                 min="1"
                 placeholder="25"
-                className="input-field w-full h-9 px-3 text-sm rounded-lg border border-border/40 bg-background"
+                className="input-field w-full h-10 px-3 text-sm rounded-lg border border-border/40 bg-background"
               />
             </div>
 
@@ -233,7 +233,7 @@ export default async function AdminCouponsPage() {
                 required
                 min="1"
                 defaultValue="100"
-                className="input-field w-full h-9 px-3 text-sm rounded-lg border border-border/40 bg-background"
+                className="input-field w-full h-10 px-3 text-sm rounded-lg border border-border/40 bg-background"
               />
             </div>
 
@@ -245,7 +245,7 @@ export default async function AdminCouponsPage() {
                 id="expiresAt"
                 name="expiresAt"
                 type="date"
-                className="input-field w-full h-9 px-3 text-sm rounded-lg border border-border/40 bg-background"
+                className="input-field w-full h-10 px-3 text-sm rounded-lg border border-border/40 bg-background"
               />
             </div>
           </div>

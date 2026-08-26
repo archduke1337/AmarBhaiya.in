@@ -94,7 +94,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
         className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4 scroll-mt-24"
       >
         <div className="flex flex-col gap-2">
-          <h2 className="text-xl">Publish Readiness</h2>
+          <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Publish Readiness</h2>
           <p className="text-sm text-muted-foreground">
             Publishing works best once the thumbnail, curriculum, and initial lesson media are in place.
           </p>
@@ -222,11 +222,12 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
             </label>
 
             <label className="space-y-1 text-sm flex items-end">
-              <span className="inline-flex items-center gap-2 h-10 px-3 border border-border w-full">
+              <span className="inline-flex min-h-11 w-full items-center gap-2 rounded-lg border border-border/40 bg-input px-3 font-medium">
                 <input
                   type="checkbox"
                   name="isPublished"
                   defaultChecked={course.isPublished}
+                  className="accent-[var(--accent)]"
                 />
                 Published
               </span>
@@ -236,7 +237,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="h-10 px-4 bg-foreground text-background text-sm"
+              className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none"
             >
               Save course details
             </button>
@@ -254,7 +255,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
             : " No thumbnail uploaded yet."}
         </p>
         {thumbnailPreviewUrl ? (
-          <div className="overflow-hidden border border-border bg-muted/20">
+          <div className="overflow-hidden rounded-xl border border-border/40 bg-muted/20">
             <Image
               src={thumbnailPreviewUrl}
               alt={`${course.title} thumbnail`}

@@ -47,7 +47,7 @@ export default async function AdminModerationPage() {
         id="open-escalations"
         className="scroll-mt-24 flex flex-col gap-4"
       >
-        <h2 className="text-lg font-medium">Open Escalations</h2>
+        <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Open Escalations</h2>
 
         {data.escalationItems.length === 0 ? (
           <EmptyState
@@ -86,7 +86,7 @@ export default async function AdminModerationPage() {
                   <input type="hidden" name="actionId" value={item.id} />
                   <button
                     type="submit"
-                    className="h-9 border border-border px-4 text-sm transition-colors hover:bg-muted"
+                    className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-border px-4 text-sm font-semibold transition-colors hover:bg-surface-hover"
                   >
                     Resolve
                   </button>
@@ -99,7 +99,7 @@ export default async function AdminModerationPage() {
 
       {/* Guidance panel */}
       <section className="bg-surface border border-border/40 rounded-2xl p-6">
-        <h2 className="mb-3 text-sm font-medium">Moderation Policy Notes</h2>
+        <h2 className="mb-3 font-heading text-sm font-black uppercase tracking-[0.14em]">Moderation Policy Notes</h2>
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
           <p>
             • Moderators handle day-to-day content moderation: warnings, mutes, timeouts, and thread management.

@@ -67,7 +67,7 @@ export default async function InstructorCategoriesPage() {
           <div className="md:col-span-2 flex justify-end">
             <button
               type="submit"
-              className="h-10 px-4 bg-foreground text-background text-sm"
+              className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none"
             >
               Create category
             </button>
@@ -130,7 +130,7 @@ export default async function InstructorCategoriesPage() {
               <div className="md:col-span-2 flex justify-end">
                 <button
                   type="submit"
-                  className="h-10 px-4 border border-border text-sm hover:bg-muted"
+                  className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-border px-4 text-sm font-semibold transition-colors hover:bg-surface-hover"
                 >
                   Update category
                 </button>

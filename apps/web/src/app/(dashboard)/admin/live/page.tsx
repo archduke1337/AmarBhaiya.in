@@ -42,7 +42,7 @@ export default async function AdminLivePage() {
         id="upcoming-sessions"
         className="scroll-mt-24 flex flex-col gap-4"
       >
-        <h2 className="text-lg font-medium">Live & Scheduled Sessions</h2>
+        <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Live & Scheduled Sessions</h2>
 
         {data.upcoming.length === 0 ? (
           <EmptyState
@@ -103,7 +103,7 @@ export default async function AdminLivePage() {
                       <input type="hidden" name="sessionId" value={session.id} />
                       <button
                         type="submit"
-                        className="text-destructive hover:underline"
+                        className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                       >
                         Delete
                       </button>

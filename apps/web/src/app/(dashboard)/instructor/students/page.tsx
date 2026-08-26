@@ -69,7 +69,7 @@ export default async function InstructorStudentsPage() {
         actions={
           <Link
             href="/instructor"
-            className="inline-flex h-9 items-center px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex min-h-11 items-center px-4 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             Back to dashboard
           </Link>
@@ -153,7 +153,7 @@ export default async function InstructorStudentsPage() {
 
           <section id="recent-enrollments" className="bg-surface border border-border/40 rounded-2xl scroll-mt-24 overflow-hidden">
             <div className="border-b border-border/40 px-5 py-3">
-              <h2 className="text-sm font-medium">Recent Enrollments</h2>
+              <h2 className="font-heading text-xs font-black uppercase tracking-[0.15em]">Recent Enrollments</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 New learners who joined in the last two weeks.
               </p>
@@ -192,7 +192,7 @@ export default async function InstructorStudentsPage() {
 
           <section id="all-students" className="bg-surface border border-border/40 rounded-2xl scroll-mt-24 overflow-hidden">
             <div className="border-b border-border/40 px-5 py-3">
-              <h2 className="text-sm font-medium">All Learners</h2>
+              <h2 className="font-heading text-xs font-black uppercase tracking-[0.15em]">All Learners</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 Every active enrollment, ordered to surface students who likely need attention first.
               </p>
