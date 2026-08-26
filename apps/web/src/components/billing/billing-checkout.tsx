@@ -191,14 +191,14 @@ export function BillingCheckout({
                   setCouponMessage("");
                 }
               }}
-              className="h-9 text-sm uppercase"
+              className="h-11 min-h-[44px] text-sm uppercase"
               disabled={couponStatus === "validating"}
             />
             <button
               type="button"
               onClick={handleApplyCoupon}
               disabled={couponStatus === "validating" || !couponCode.trim()}
-              className="shrink-0 rounded-lg bg-foreground px-3.5 py-2 text-xs font-bold text-background hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="shrink-0 min-h-[44px] rounded-lg bg-foreground px-4 text-sm font-bold text-background hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {couponStatus === "validating" ? "..." : "Apply"}
             </button>

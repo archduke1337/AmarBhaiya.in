@@ -31,7 +31,7 @@ export function ThemeToggle() {
       size="icon-sm"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-      className="bg-surface border-border/40 text-foreground/70 hover:text-foreground"
+      className="relative bg-surface border-border/40 text-foreground/70 hover:text-foreground"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

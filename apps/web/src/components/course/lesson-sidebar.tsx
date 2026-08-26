@@ -29,8 +29,8 @@ export function LessonSidebar({
   onSelectLesson,
 }: LessonSidebarProps) {
   return (
-    <div className="border border-border p-4 md:p-5">
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">
+    <div className="rounded-2xl border border-border/40 bg-surface p-4 shadow-[var(--surface-shadow)] md:p-5">
+      <p className="mb-4 font-sans text-xs font-black uppercase tracking-[0.14em] text-muted-foreground">
         Curriculum
       </p>
 
@@ -50,10 +50,10 @@ export function LessonSidebar({
                         type="button"
                         onClick={() => onSelectLesson(lesson.id)}
                         className={cn(
-                          "w-full border px-3 py-2 text-left text-sm flex items-center justify-between gap-3 transition-colors",
+                          "flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors",
                           isActive
-                            ? "bg-foreground text-background border-foreground"
-                            : "border-border hover:border-foreground/30"
+                            ? "bg-accent text-accent-foreground border-accent font-bold shadow-retro-sm"
+                            : "border-border/60 bg-background hover:border-accent/40 hover:bg-surface-hover"
                         )}
                       >
                         <span className="truncate">{lesson.title}</span>

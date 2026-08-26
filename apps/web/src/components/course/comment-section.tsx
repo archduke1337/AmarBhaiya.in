@@ -47,7 +47,7 @@ export function CommentSection({ initialComments = [] }: CommentSectionProps) {
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handlePostComment} className="space-y-3">
+      <form onSubmit={handlePostComment} className="space-y-3 rounded-2xl border border-border/40 bg-surface p-4 shadow-[var(--surface-shadow)]">
         <label htmlFor="comment-input" className="sr-only">
           Post a comment
         </label>
@@ -62,7 +62,7 @@ export function CommentSection({ initialComments = [] }: CommentSectionProps) {
         <button
           type="submit"
           aria-label="Post comment"
-          className="h-9 px-4 bg-foreground text-background text-sm"
+          className="inline-flex min-h-11 w-fit items-center justify-center rounded-[calc(var(--radius)+2px)] bg-foreground px-5 text-sm font-bold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           Post comment
         </button>
@@ -70,18 +70,18 @@ export function CommentSection({ initialComments = [] }: CommentSectionProps) {
 
       <div className="space-y-3">
         {comments.length === 0 && (
-          <p className="text-sm text-muted-foreground">No comments yet for this lesson.</p>
+          <p className="text-sm font-medium text-muted-foreground">No comments yet for this lesson.</p>
         )}
 
         {comments.map((comment) => (
-          <article key={comment.id} className="border border-border p-3">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <p className="text-sm font-medium">{comment.author}</p>
-              <p className="text-xs text-muted-foreground">
+          <article key={comment.id} className="rounded-2xl border border-border/40 bg-surface p-4 shadow-[var(--surface-shadow)]">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-sm font-bold">{comment.author}</p>
+              <p className="text-xs font-medium text-muted-foreground">
                 {new Date(comment.postedAt).toLocaleString("en-IN")}
               </p>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">{comment.text}</p>
+            <p className="text-sm leading-relaxed text-foreground/75">{comment.text}</p>
           </article>
         ))}
       </div>
