@@ -161,7 +161,7 @@ export default async function InstructorCouponsPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-xs font-bold text-background hover:opacity-90 transition-opacity"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none"
             >
               <Plus className="size-3.5" />
               Create Coupon
@@ -263,7 +263,7 @@ export default async function InstructorCouponsPage() {
                     <input type="hidden" name="isActive" value={coupon.isActive ? "false" : "true"} />
                     <button
                       type="submit"
-                      className="text-[10px] font-semibold text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                      className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground"
                     >
                       {coupon.isActive ? "Deactivate" : "Activate"}
                     </button>
@@ -272,7 +272,7 @@ export default async function InstructorCouponsPage() {
                     <input type="hidden" name="couponId" value={coupon.id} />
                     <button
                       type="submit"
-                      className="text-[10px] font-semibold text-destructive hover:underline underline-offset-2"
+                      className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                     >
                       Delete
                     </button>

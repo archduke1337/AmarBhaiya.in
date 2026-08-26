@@ -229,7 +229,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
       {data.profile && (
         <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
           <div className="border-b border-border/40 px-5 py-3">
-            <h2 className="text-sm font-medium">Profile</h2>
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Profile</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-5">
             {["grade", "school", "city", "dateOfBirth", "guardianName", "phone"].map(
@@ -252,7 +252,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
       {data.billing && (
         <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
           <div className="border-b border-border/40 px-5 py-3">
-            <h2 className="text-sm font-medium">Billing Info</h2>
+            <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Billing Info</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-5">
             {[
@@ -279,7 +279,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
 
       <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
         <div className="border-b border-border/40 px-5 py-3">
-          <h2 className="text-sm font-medium">
+          <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
             Enrollments ({data.enrollments.length})
           </h2>
         </div>
@@ -288,7 +288,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
             No enrollments.
           </p>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/40">
             {data.enrollments.map((enrollment) => (
               <div
                 key={enrollment.id}
@@ -322,7 +322,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
                     <input type="hidden" name="enrollmentId" value={enrollment.id} />
                     <button
                       type="submit"
-                      className="text-xs text-destructive hover:underline"
+                      className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                     >
                       Remove
                     </button>
@@ -336,7 +336,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
 
       <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
         <div className="border-b border-border/40 px-5 py-3">
-          <h2 className="text-sm font-medium">
+          <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">
             Payments ({data.payments.length})
           </h2>
         </div>
@@ -345,7 +345,7 @@ export default async function AdminStudentDetailPage({ params }: PageProps) {
             No payment records.
           </p>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/40">
             {data.payments.map((payment) => (
               <div
                 key={payment.id}

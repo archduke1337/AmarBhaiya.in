@@ -30,7 +30,7 @@ export default async function ModeratorCommunityPage() {
             <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
               {action.label}
             </span>
-            <span className="text-lg font-medium tabular-nums">
+            <span className="font-heading text-xl font-black tabular-nums tracking-[-0.03em]">
               {action.value}
             </span>
           </div>
@@ -61,7 +61,7 @@ export default async function ModeratorCommunityPage() {
                 className="scroll-mt-24 bg-surface border border-border/40 rounded-2xl overflow-hidden"
               >
                 {/* Thread header */}
-                <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-2 border-b border-border/40 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-medium">{thread.title}</h3>

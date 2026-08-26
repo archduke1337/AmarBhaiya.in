@@ -36,7 +36,7 @@ export default async function ModeratorReportsPage() {
                 className="bg-surface border border-border/40 rounded-2xl overflow-hidden"
             >
               {/* Report header */}
-              <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 border-b border-border/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">

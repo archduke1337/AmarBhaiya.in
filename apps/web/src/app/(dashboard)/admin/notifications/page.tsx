@@ -26,7 +26,7 @@ export default async function AdminNotificationsPage() {
       <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
         <div className="flex items-center gap-2 border-b border-border/40 px-5 py-3">
           <Send className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-medium">Send to User</h2>
+          <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Send to User</h2>
         </div>
 
         <form
@@ -101,7 +101,7 @@ export default async function AdminNotificationsPage() {
             <button
               type="submit"
               disabled={directMessageUsers.length === 0}
-              className="h-10 bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90"
+              className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none disabled:opacity-50"
             >
               Send Notification
             </button>
@@ -118,7 +118,7 @@ export default async function AdminNotificationsPage() {
       <section className="bg-surface border border-border/40 rounded-2xl overflow-hidden">
         <div className="flex items-center gap-2 border-b border-border/40 px-5 py-3">
           <Megaphone className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-medium">Broadcast to All Users</h2>
+          <h2 className="font-heading text-sm font-black uppercase tracking-[0.14em]">Broadcast to All Users</h2>
         </div>
 
         <form
@@ -170,7 +170,7 @@ export default async function AdminNotificationsPage() {
           <div className="flex items-end md:col-span-2 justify-end">
             <button
               type="submit"
-              className="h-10 bg-foreground px-6 text-sm text-background transition-opacity hover:opacity-90"
+              className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] bg-foreground px-6 text-sm font-bold text-background shadow-retro-sm transition-all hover:-translate-y-px hover:translate-x-px hover:shadow-none disabled:opacity-50"
             >
               Broadcast to All Users
             </button>

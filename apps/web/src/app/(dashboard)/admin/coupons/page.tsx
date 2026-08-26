@@ -377,7 +377,7 @@ function CouponRow({ coupon }: { coupon: CouponItem }) {
           <input type="hidden" name="isActive" value={coupon.isActive ? "false" : "true"} />
           <button
             type="submit"
-            className="text-[10px] font-semibold text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+            className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground"
           >
             {coupon.isActive ? "Deactivate" : "Activate"}
           </button>
@@ -391,7 +391,7 @@ function CouponRow({ coupon }: { coupon: CouponItem }) {
           <input type="hidden" name="couponId" value={coupon.id} />
           <button
             type="submit"
-            className="text-[10px] font-semibold text-destructive hover:underline underline-offset-2"
+            className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
           >
             Delete
           </button>
