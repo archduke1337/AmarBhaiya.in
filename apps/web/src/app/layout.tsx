@@ -107,7 +107,8 @@ export default function RootLayout({
           {children}
           <Toaster />
         </ThemeProvider>
-        <Analytics />
+        {/* Vercel Analytics only on Vercel — its script route does not exist elsewhere and would 404 on every page. */}
+        {process.env.NEXT_PUBLIC_VERCEL_ENV ? <Analytics /> : null}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
