@@ -44,8 +44,8 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
-return (
-    <article className="px-6 py-20 md:px-12 md:py-28">
+  return (
+    <article className="site-container py-12 sm:py-20 md:py-24">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -107,7 +107,7 @@ return (
           </div>
 
           <div className="space-y-4">
-            <h1 className="font-heading text-4xl font-black leading-[0.94] tracking-[-0.06em] md:text-6xl">
+            <h1 className="max-w-[16ch] font-heading text-[clamp(2.25rem,6vw,4.5rem)] font-black leading-[0.98] tracking-[-0.055em]">
               {post.title}
             </h1>
             <p className="max-w-3xl text-lg font-medium leading-8 text-muted-foreground">
@@ -116,7 +116,7 @@ return (
           </div>
 
           <RetroPanel tone="accent" className="space-y-2">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               Why this matters
             </p>
             <p className="text-base font-semibold leading-7 text-foreground/85">
@@ -125,7 +125,7 @@ return (
           </RetroPanel>
         </RetroPanel>
 
-<RetroPanel tone="muted" size="lg">
+        <RetroPanel tone="muted" size="lg">
           <div className="mx-auto max-w-3xl space-y-6">
             <MarkdownRenderer content={post.content.join("\n\n")} />
           </div>

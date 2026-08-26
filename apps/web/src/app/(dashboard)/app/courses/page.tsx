@@ -6,6 +6,7 @@ import { requireAuth } from "@/server/appwrite/auth";
 import { getStudentEnrolledCourses } from "@/server/appwrite/dashboard-data";
 import { getUserCertificates, issueCertificateAction } from "@/server/actions/certificate";
 import { PageHeader, EmptyState } from "@/components/dashboard";
+import AnimatedProgressBar from "@/components/smoothui/animated-progress-bar";
 
 export default async function StudentCoursesPage() {
   const user = await requireAuth();
@@ -170,15 +171,14 @@ function CourseCard({
         )}
 
         <div className="flex items-center gap-3">
-          <div className="h-2 flex-1 overflow-hidden rounded-full border border-border/20 bg-surface-hover">
-            <div
-              className={`h-full transition-all duration-700 w-0 ${
-                isComplete ? "bg-success" : "bg-accent"
-              }`}
-              style={{ width: `${Math.max(2, course.progressPercent)}%` }}
-            />
-          </div>
-          <span className="text-[10px] tabular-nums font-black text-foreground/60 w-8 text-right">
+          <AnimatedProgressBar
+            value={course.progressPercent}
+            label={`${course.progressPercent}% complete`}
+            labelClassName="sr-only"
+            className="min-w-0 flex-1"
+            barClassName={isComplete ? "bg-success" : "bg-accent"}
+          />
+          <span className="w-9 text-right text-[10px] font-black tabular-nums text-foreground/60">
             {course.progressPercent}%
           </span>
         </div>

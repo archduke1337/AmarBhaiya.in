@@ -75,7 +75,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
   ];
 
   return (
-    <div className="space-y-14 px-4 py-10 md:px-6 md:py-16 xl:space-y-18 xl:py-20">
+    <div className="site-container space-y-14 py-10 sm:py-16 xl:space-y-20">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -142,10 +142,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-4">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               Course detail
             </p>
-            <h1 className="font-heading text-4xl font-black leading-[0.94] tracking-[-0.06em] md:text-6xl">
+            <h1 className="max-w-[15ch] font-heading text-[clamp(2.25rem,6vw,4.5rem)] font-black leading-[0.98] tracking-[-0.055em]">
               {course.title}
             </h1>
             <p className="max-w-3xl text-lg font-medium leading-8 text-muted-foreground">
@@ -249,7 +249,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             </div>
           )}
           <div className="space-y-2">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               Who this is for
             </p>
             <p className="text-base font-semibold leading-7 text-foreground/85">
@@ -279,7 +279,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
       <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
         <RetroPanel tone="accent" size="lg" className="space-y-4">
-          <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">What you will learn</h2>
+          <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-[-0.04em]">What you will learn</h2>
           {course.whatYouLearn.length === 0 ? (
             <p className="text-sm font-medium text-muted-foreground">No learning outcomes configured yet.</p>
           ) : null}
@@ -296,7 +296,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
         </RetroPanel>
 
         <RetroPanel tone="muted" size="lg" className="space-y-4">
-          <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">Requirements</h2>
+          <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-[-0.04em]">Requirements</h2>
           {course.requirements.length === 0 ? (
             <p className="text-sm font-medium text-muted-foreground">No specific requirements listed.</p>
           ) : null}
@@ -316,10 +316,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
       <section className="mx-auto max-w-6xl">
         <RetroPanel tone="card" size="lg" className="space-y-6">
           <div className="space-y-2">
-            <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="site-kicker font-sans">
               Curriculum
             </p>
-            <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">
+            <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-[-0.04em]">
               See the path before you commit to it.
             </h2>
             <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
@@ -339,7 +339,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <p className="font-heading text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
                 Module {index + 1}
               </p>
-              <h3 className="font-heading text-2xl font-black tracking-[-0.04em]">{module.title}</h3>
+              <h3 className="font-heading text-[clamp(1.25rem,3vw,1.75rem)] font-black tracking-[-0.035em]">{module.title}</h3>
               <ul className="space-y-2">
                 {module.lessons.map((lesson) => {
                   const isAccessible =

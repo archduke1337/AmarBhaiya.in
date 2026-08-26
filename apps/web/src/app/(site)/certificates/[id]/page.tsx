@@ -31,11 +31,11 @@ export default async function CertificatePage({ params }: PageProps) {
   });
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh] px-6 py-20">
+    <div className="flex min-h-[80vh] items-center justify-center px-4 py-12 sm:px-6 sm:py-20">
       <h1 className="sr-only">
         Certificate Verification — {cert.userName} — {cert.courseTitle}
       </h1>
-      <div className="w-full max-w-2xl border-2 border-foreground/10 p-12 text-center space-y-8">
+      <div className="w-full max-w-2xl space-y-8 rounded-3xl border-2 border-foreground/10 bg-surface/60 p-6 text-center shadow-[var(--surface-shadow)] sm:p-10 md:p-12">
         {/* Header ornament */}
         <div className="flex justify-center">
           <Award className="size-12 text-foreground/20" />
@@ -60,7 +60,7 @@ export default async function CertificatePage({ params }: PageProps) {
         {/* Recipient */}
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">This certifies that</p>
-          <p className="text-3xl font-medium">{cert.userName}</p>
+          <p className="break-words font-heading text-[clamp(1.75rem,5vw,2.5rem)] font-bold tracking-[-0.04em]">{cert.userName}</p>
         </div>
 
         {/* Course */}
@@ -68,7 +68,7 @@ export default async function CertificatePage({ params }: PageProps) {
           <p className="text-sm text-muted-foreground">
             has successfully completed
           </p>
-          <p className="text-xl font-medium">{cert.courseTitle}</p>
+          <p className="break-words text-lg font-semibold leading-7">{cert.courseTitle}</p>
         </div>
 
         {/* Divider */}

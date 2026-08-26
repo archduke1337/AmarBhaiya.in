@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, Filter } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import AnimatedProgressBar from "@/components/smoothui/animated-progress-bar";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { InstructorStudentItem } from "@/server/appwrite/dashboard-data";
 
@@ -144,19 +145,14 @@ export function InstructorStudentsTable({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="h-1.5 flex-1 overflow-hidden bg-muted">
-                    <div
-                      className={`h-full transition-all ${
-                        student.progressPercent >= 100
-                          ? "bg-emerald-500 dark:bg-emerald-400"
-                          : student.needsAttention
-                            ? "bg-amber-500 dark:bg-amber-400"
-                            : "bg-foreground"
-                      }`}
-                      style={{ width: `${Math.max(2, student.progressPercent)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs tabular-nums text-muted-foreground">
+                  <AnimatedProgressBar
+                    value={student.progressPercent}
+                    label={`${student.progressPercent}% complete`}
+                    labelClassName="sr-only"
+                    className="min-w-0 flex-1"
+                    barClassName={student.progressPercent >= 100 ? "bg-success" : student.needsAttention ? "bg-warning" : "bg-foreground"}
+                  />
+                  <span className="w-9 text-right text-xs tabular-nums text-muted-foreground">
                     {student.progressPercent}%
                   </span>
                 </div>

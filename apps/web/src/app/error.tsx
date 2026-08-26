@@ -15,8 +15,8 @@ export default function AppError({ error, reset }: AppErrorProps) {
   }, [error]);
 
   return (
-    <main className="min-h-[70vh] px-6 py-16 md:py-24 flex items-center justify-center">
-      <section className="w-full max-w-3xl bg-surface border border-border/40 rounded-2xl p-8 md:p-10 space-y-8" aria-live="polite">
+    <main className="flex min-h-[70vh] items-center justify-center px-4 py-12 sm:px-6 sm:py-20">
+      <section className="w-full max-w-3xl space-y-8 rounded-3xl border border-border/40 bg-surface p-6 shadow-[var(--surface-shadow)] sm:p-8 md:p-10" aria-live="polite">
         <div className="w-12 h-12 rounded-xl bg-surface-hover flex items-center justify-center text-muted-foreground">
           <AlertTriangle className="size-6" />
         </div>
@@ -24,7 +24,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
         <p className="eyebrow self-start">Route Error</p>
 
         <div className="space-y-3">
-          <h1 className="font-heading text-3xl md:text-5xl font-black tracking-[-0.05em]">Something went wrong on this page.</h1>
+          <h1 className="max-w-[16ch] font-heading text-[clamp(2rem,5vw,3.5rem)] font-black leading-tight tracking-[-0.05em]">Something went wrong on this page.</h1>
           <p className="text-sm md:text-base text-muted-foreground max-w-2xl leading-relaxed">
             This can happen because of a temporary network or server issue. You can safely retry,
             or move to a stable route and continue learning.
