@@ -287,7 +287,7 @@ export default async function AdminMarketingPage() {
                     type="checkbox"
                     name="isPublished"
                     defaultChecked={course.state === "published"}
-                    className="size-3.5 accent-foreground"
+                    className="size-4 accent-[var(--accent)]"
                   />
                   <span className="text-[11px] font-semibold text-muted-foreground">
                     {course.state === "published" ? "Published" : "Draft"}
@@ -300,7 +300,7 @@ export default async function AdminMarketingPage() {
                       type="checkbox"
                       name="isFeatured"
                       defaultChecked={course.featured === "yes"}
-                      className="size-4 accent-foreground"
+                      className="size-4 accent-[var(--accent)]"
                     />
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
                       {course.featured === "yes" ? "Featured" : "Set featured"}
