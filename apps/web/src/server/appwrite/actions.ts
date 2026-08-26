@@ -1,7 +1,7 @@
 "use server";
 
 import { ID } from "node-appwrite";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   createAdminClient,
@@ -20,6 +20,7 @@ import {
 } from "../validators/auth";
 import type { LoginInput, RegisterInput, ForgotPasswordInput } from "../validators/auth";
 import { getAppOrigin } from "@/lib/utils/url";
+import { checkRateLimit } from "@/server/rate-limiter";
 import type { ActionResult } from "@/lib/errors/action-result";
 
 function getSessionCookieOptions(expire: string) {
@@ -125,6 +126,14 @@ export async function forgotPasswordAction(
   const parsed = forgotPasswordSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const headerStore = await headers();
+  const forwardedFor = headerStore.get("x-forwarded-for");
+  const clientKey = forwardedFor?.split(",")[0]?.trim() || "unknown";
+  const rateLimit = await checkRateLimit(`password-recovery:${clientKey}`, 3);
+  if (!rateLimit.allowed) {
+    return { success: false, error: "Too many requests. Please try again later." };
   }
 
   try {

@@ -372,6 +372,14 @@ export async function getUserBestAttempt(
   quizId: string
 ): Promise<QuizAttemptResult | null> {
   const user = await requireAuth();
+  const quiz = await getQuizRow(quizId);
+  if (!quiz || !(await userHasCourseAccess({
+    courseId: String(quiz.courseId ?? ""),
+    userId: user.$id,
+  }))) {
+    return null;
+  }
+
   const { tablesDB } = await createAdminClient();
 
   try {

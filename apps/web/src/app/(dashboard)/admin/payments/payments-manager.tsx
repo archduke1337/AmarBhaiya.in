@@ -96,7 +96,7 @@ function RefundDialog({
     }
   };
 
-  const isFullRefund = Number(amount) >= payment.amount;
+  const isFullRefund = Number(amount) === payment.amount;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -142,15 +142,7 @@ function RefundDialog({
               >
                 Full refund ({formatCurrency(payment.amount)})
               </button>
-              {payment.amount > 100 && (
-                <button
-                  type="button"
-                  onClick={() => setAmount(String(Math.round(payment.amount / 2)))}
-                  className="text-[10px] font-semibold text-accent hover:underline"
-                >
-                  50% refund
-                </button>
-              )}
+
             </div>
           </label>
 
@@ -187,9 +179,9 @@ function RefundDialog({
             variant="destructive"
             size="sm"
             onClick={handleRefund}
-            disabled={processing || !amount || Number(amount) <= 0}
+            disabled={processing || !amount || !isFullRefund}
           >
-            {processing ? "Processing..." : isFullRefund ? "Refund Full Amount" : `Refund ₹${amount}`}
+            {processing ? "Processing..." : isFullRefund ? "Refund Full Amount" : "Enter the full amount"}
           </Button>
         </div>
       </div>

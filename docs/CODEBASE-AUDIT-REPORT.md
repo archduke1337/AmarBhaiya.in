@@ -9,13 +9,15 @@
 
 ## Executive Summary
 
+This report contains the original audit findings plus the remediation status below. Sections that describe resolved defects are retained as historical context and should be read together with the current-state notes.
+
 AmarBhaiya.in is a **Next.js 16 + Appwrite** edtech platform serving Class 6-12 students. It has 4 user roles (admin, instructor, moderator, student), ~90 server actions, 25+ API routes, and a well-structured route group architecture. The codebase is **notably clean** — zero console.log artifacts, genuine Hinglish copywriting (not AI slop), and solid security foundations. However, it has **significant structural issues** that need addressing before scaling.
 
 **Overall Health: 6.5/10**
 
 | Category | Score | Key Issue |
 |----------|-------|-----------|
-| Architecture | 7/10 | Dual UI libraries, proxy.ts location |
+| Architecture | 7/10 | Historical baseline; UI library and Next proxy findings resolved |
 | Security | 7/10 | Missing rate limits, email enumeration |
 | UI/UX | 5/10 | Two competing design systems |
 | Code Quality | 6/10 | AnyRow redefined 36x, duplicated helpers |
@@ -84,11 +86,11 @@ src/app/
 
 ### Critical Issues
 
-1. **`proxy.ts` is NOT `middleware.ts`** — The file at `src/proxy.ts` exports a middleware function with `config.matcher`, but Next.js requires the file to be named `middleware.ts` at `src/middleware.ts`. If this file is not being recognized as middleware, **all CSRF protection, session validation, and route guards are bypassed**. This is the #1 priority fix.
+1. **`proxy.ts` naming** — This was a historical concern during the initial audit. Next.js 16 recognizes `src/proxy.ts`, and the repository now uses that supported convention.
 
 2. **Empty directories** — `admin/operations/`, `instructor/operations/`, `moderator/actions/` are empty placeholders creating dead route segments.
 
-3. **Dual UI libraries** — HeroUI v3 and shadcn/ui are used inconsistently (detailed in Section 3).
+3. **Dual UI libraries** — Resolved during remediation; shadcn/ui and radix-ui are now the active UI system.
 
 4. **Large page files** — Instructor dashboard is 796 lines, admin dashboard 416 lines. Inline helper functions should be extracted.
 
@@ -140,14 +142,13 @@ src/app/
 
 ## 3. UI/UX & Components
 
-### Two Competing UI Systems
+### UI System
 
 | System | Used In | API Style |
 |--------|---------|-----------|
-| **HeroUI v3** (`@heroui/react`) | Auth forms, layout navbar/sidebar/header, theme-toggle, homepage | `onPress`, `isPending`, `isIconOnly`, `variant="primary"` |
 | **shadcn/ui v4** (`radix-ui`) | All `ui/` primitives, dashboard pages, marketing pages, course components | `onClick`, `asChild`, `variant="default"` |
 
-**This creates visual and API inconsistency across the entire application.** Two Button components, two Input components, two Checkbox components, two Label components — all with different prop APIs and visual styles.
+The active application UI uses shadcn/ui primitives backed by radix-ui. The earlier HeroUI implementation was removed during remediation, so the original dual-library inconsistency no longer applies.
 
 ### Theme System
 - Custom `ThemeProvider` (NOT next-themes) with class-based dark/light toggling
@@ -170,7 +171,7 @@ src/app/
 |----------|-----------|-------|
 | `ui/` (shadcn) | button, card, input, badge, textarea, checkbox, accordion, separator, tabs, sheet, tooltip, navigation-menu, avatar, sonner, label, reveal-wrapper | 16 components |
 | `auth/` | login-form, register-form, forgot-password-form, reset-password-form | 4 components |
-| `layout/` | navbar (HeroUI), sidebar, dashboard-header, bottom-tab-bar, footer | 5 components |
+| `layout/` | navbar, sidebar, dashboard-header, bottom-tab-bar, footer | 5 components |
 | `dashboard/` | stat-card, empty-state, activity-feed, page-header | 4 components |
 | `marketing/` | announcement-banner, section-heading, retro-panel | 3 components |
 | `course/` | course-player, lesson-sidebar, video-player, comment-section, progress-bar | 5 components |
@@ -191,7 +192,7 @@ src/app/
 | `timeline-animation.tsx` | Never imported |
 
 ### Duplicate Components
-- **2 Navbar implementations** (HeroUI glass pill vs shadcn retro border)
+- Historical duplicate navbar implementations were reviewed; the active layout uses the shadcn-based implementation.
 - **2 Footer implementations** (editorial utility vs RetroPanel)
 - **2 VideoPlayer implementations** (simple native vs full-featured custom)
 - **2 SkipLink implementations** (components/skip-link.tsx vs lib/utils/accessibility.tsx)
@@ -199,12 +200,12 @@ src/app/
 
 ### Accessibility
 - **Good**: SkipLink, focus rings, aria-labels, aria-live regions, semantic HTML, 44px touch targets
-- **Missing**: `prefers-reduced-motion` support, color contrast issues on footer text
+- Reduced-motion support is now present; remaining accessibility risk is footer color contrast and should be checked against rendered themes.
 
 ### Animations
 - CSS-based reveal with IntersectionObserver (GPU-composited, fire-once)
-- Framer Motion (motion/react) in 2 components (drawer, timeline)
-- `blur(20px)` animation in timeline — NOT GPU-composited, causes jank on mobile
+- Motion-based drawer/timeline components were removed during remediation.
+- CSS reveal animations honor `prefers-reduced-motion`; backdrop blur remains a low-end-device performance consideration.
 - `backdrop-filter: blur(20px)` on nav-island — expensive on older Android
 
 ---
@@ -371,15 +372,15 @@ The well-designed `handleActionError` with Sentry integration exists but is bare
 
 | Package | Issue |
 |---------|-------|
-| `next-themes` | **Dead dependency** — installed but never imported (custom ThemeProvider used) |
+| `next-themes` | Not present; the application uses its custom class-based ThemeProvider |
 | `shadcn` | **Should be devDependency** — CLI tool, not runtime |
 | `@emailjs/browser` | Not lazy-loaded — included in all marketing pages |
-| `motion` (Framer Motion) | Only 2 components use it — check tree-shaking |
+| `motion` / `framer-motion` | Removed; no runtime imports remain |
 | `stream-chat` | Large package, server-only but may leak to client bundle |
 
 ### Code Splitting
-- **No `next/dynamic` usage anywhere** — heavy components statically imported
-- `MotionDrawer`, `@emailjs/browser`, `timeline-animation` should be lazy-loaded
+- EmailJS is dynamically imported only when the contact form submits.
+- Removed MotionDrawer and timeline-animation components no longer contribute to the bundle.
 
 ### CSS Architecture
 - Mature OKLCH custom property system
@@ -391,7 +392,7 @@ The well-designed `handleActionError` with Sentry integration exists but is bare
 ### Performance Issues
 | Issue | Severity |
 |-------|----------|
-| No `prefers-reduced-motion` support | **HIGH** |
+| `prefers-reduced-motion` support | Resolved; CSS and reveal behavior now respect the preference |
 | `--popover`/`--popover-foreground` undefined (sonner toast styling) | **HIGH** |
 | No `next/dynamic` for heavy components | **MEDIUM** |
 | `transition-all` instead of specific properties | **LOW** |
@@ -399,7 +400,7 @@ The well-designed `handleActionError` with Sentry integration exists but is bare
 | Grain overlay always composited | **LOW** |
 
 ### Third-Party Scripts
-- Sentry: Replay integration adds ~20-30KB gzipped, double server init (sentry.server.config.ts + instrumentation.ts)
+- Sentry was removed during remediation; operational errors currently use server-side logging.
 - Vercel Analytics: Minimal (~2KB), loaded on every page
 - Razorpay: Server-only, good
 
@@ -486,7 +487,7 @@ The codebase is remarkably clean:
 
 ### Priority 3 — Fix Before Scale
 - [x] **Extract duplicated helpers** (parseBoolean, revalidatePaths, getCourseRow, etc.) to shared utilities
-- [x] **Consolidate error handling** — Sentry removed entirely; errors log via console.error — use `handleActionError` with Sentry everywhere
+- [x] **Consolidate error handling** — Sentry was removed; handled failures use the repository's action error helpers and server-side logging
 - [x] **Remove dead dependencies** (next-themes, move shadcn to devDependencies)
 - [x] **Remove dead components** — verified none remain (hero-digital-success, unused nav/footer implementations)
 - [x] **Add `next build` to CI pipeline**

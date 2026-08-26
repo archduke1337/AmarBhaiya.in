@@ -180,11 +180,17 @@ export async function incrementResourceDownloadAction(
 
   try {
     const { tablesDB } = await createAdminClient();
-    const current = await tablesDB.getRow({
+    const resource = await tablesDB.getRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.standaloneResources,
       rowId: resourceId,
     });
+
+    if (resource.isPublished === false || String(resource.accessModel ?? "free") === "paid") {
+      return actionError("You do not have access to this resource.");
+    }
+
+    const current = resource;
 
     await tablesDB.updateRow({
       databaseId: APPWRITE_CONFIG.databaseId,

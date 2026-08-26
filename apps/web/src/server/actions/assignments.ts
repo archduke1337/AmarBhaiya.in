@@ -3,6 +3,7 @@
 import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/server/appwrite/auth";
+import { getUserRole } from "@/server/appwrite/auth-utils";
 import {
   getCourseRow,
   userCanManageCourse,
@@ -17,14 +18,29 @@ import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/acti
 import type { AnyRow } from "@/types/rows";
 
 export async function getAssignmentRow(assignmentId: string): Promise<AnyRow | null> {
+  const user = await requireAuth();
+  const role = getUserRole(user);
   const { tablesDB } = await createAdminClient();
 
   try {
-    return (await tablesDB.getRow({
+    const assignment = (await tablesDB.getRow({
       databaseId: APPWRITE_CONFIG.databaseId,
       tableId: APPWRITE_CONFIG.tables.assignments,
       rowId: assignmentId,
     })) as AnyRow;
+    const courseId = String(assignment.courseId ?? "");
+
+    if (role === "admin") {
+      return assignment;
+    }
+
+    if (role === "instructor" && await userCanManageCourse(courseId, role, user.$id)) {
+      return assignment;
+    }
+
+    return await userHasCourseAccess({ courseId, userId: user.$id })
+      ? assignment
+      : null;
   } catch {
     return null;
   }

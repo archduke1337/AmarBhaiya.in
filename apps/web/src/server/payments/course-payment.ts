@@ -15,6 +15,8 @@ type PaymentRow = AnyRow & {
   amount?: number;
   currency?: string;
   status?: string;
+  providerPaymentId?: string;
+  couponCode?: string;
 };
 type EnrollmentRow = AnyRow & {
   paymentId?: string;
@@ -70,9 +72,24 @@ function isEnrollmentActive(enrollment: EnrollmentRow): boolean {
 
 async function findPaymentsByProviderRef(
   tablesDB: TablesDbClient,
-  providerRef: string
+  providerRef: string,
+  providerPaymentId?: string | null
 ): Promise<PaymentRow[]> {
+  const queries = providerPaymentId
+    ? [Query.equal("providerPaymentId", [providerPaymentId]), Query.limit(2)]
+    : [Query.equal("providerRef", [providerRef]), Query.orderDesc("$createdAt"), Query.limit(2)];
+
   const result = await tablesDB.listRows({
+    databaseId: APPWRITE_CONFIG.databaseId,
+    tableId: APPWRITE_CONFIG.tables.payments,
+    queries,
+  });
+
+  if (result.rows.length > 0 || !providerPaymentId) {
+    return result.rows as PaymentRow[];
+  }
+
+  const legacyResult = await tablesDB.listRows({
     databaseId: APPWRITE_CONFIG.databaseId,
     tableId: APPWRITE_CONFIG.tables.payments,
     queries: [
@@ -82,7 +99,7 @@ async function findPaymentsByProviderRef(
     ],
   });
 
-  return result.rows as PaymentRow[];
+  return legacyResult.rows as PaymentRow[];
 }
 
 function normalizeAccessModel(
@@ -121,6 +138,7 @@ async function findEnrollmentByUserAndCourse(
 export async function reconcileCoursePayment({
   tablesDB,
   providerRef,
+  providerPaymentId,
   status,
   userId,
   courseId,
@@ -130,6 +148,7 @@ export async function reconcileCoursePayment({
 }: {
   tablesDB: TablesDbClient;
   providerRef: string;
+  providerPaymentId?: string | null;
   status: PaymentStatus;
   userId?: string | null;
   courseId?: string | null;
@@ -145,7 +164,11 @@ export async function reconcileCoursePayment({
     finalStatus: PaymentStatus | null;
     paymentFound: boolean;
 }> {
-  const paymentRows = await findPaymentsByProviderRef(tablesDB, providerRef);
+  const paymentRows = await findPaymentsByProviderRef(
+    tablesDB,
+    providerRef,
+    providerPaymentId
+  );
   if (paymentRows.length > 1) {
     console.warn(
       `[Payments] Multiple payment rows found for providerRef ${providerRef}. Using the newest row.`
@@ -224,6 +247,7 @@ export async function reconcileCoursePayment({
             method: "razorpay",
             status: "completed",
             providerRef,
+            providerPaymentId: providerPaymentId ?? null,
             createdAt: new Date().toISOString(),
           },
         });
@@ -263,6 +287,14 @@ export async function reconcileCoursePayment({
     const paymentData: Record<string, unknown> = {
       currency: resolvedCurrency,
     };
+
+    if (
+      typeof providerPaymentId === "string" &&
+      providerPaymentId.length > 0 &&
+      String(existingPayment.providerPaymentId ?? "") !== providerPaymentId
+    ) {
+      paymentData.providerPaymentId = providerPaymentId;
+    }
 
     if (status !== currentStatus) {
       paymentData.status = status;
@@ -387,6 +419,7 @@ export async function reconcileCoursePayment({
             paymentId: nextPaymentId,
             accessModel: resolvedAccessModel,
             isActive: false,
+            status: "cancelled",
           },
         });
         enrollmentUpdated = true;

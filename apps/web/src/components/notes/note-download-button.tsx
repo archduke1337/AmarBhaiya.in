@@ -29,15 +29,17 @@ export function NoteDownloadButton({
       const res = await incrementResourceDownloadAction(fd) as { success?: boolean; error?: string };
       if (res && res.success === false) {
         setError(res.error || "Download failed");
+        return;
+      }
+
+      const win = window.open(`/api/standalone-resource/${resourceId}?download=1`, "_blank", "noreferrer");
+      if (!win) {
+        setError("Popup blocked — please allow popups to download.");
       }
     } catch {
       setError("Download failed");
     } finally {
       setStarting(false);
-    }
-    const win = window.open(`/api/standalone-resource/${resourceId}?download=1`, "_blank", "noreferrer");
-    if (!win) {
-      setError("Popup blocked — please allow popups to download.");
     }
   };
 

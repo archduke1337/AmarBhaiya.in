@@ -8,20 +8,15 @@ import {
 import {
   getStudentProfile,
   getBillingInfo,
-  getBillingPaymentHistory,
 } from "@/server/actions/profile";
-import { getUserSubscription } from "@/server/actions/subscriptions";
 import { sendVerificationEmailAction } from "@/server/actions/verification";
-import Link from "next/link";
 import { AvatarUploadForm } from "@/components/profile/avatar-upload-form";
 import { PageHeader } from "@/components/dashboard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 
 function getInitials(value: string): string {
   const parts = value
@@ -39,11 +34,9 @@ function getInitials(value: string): string {
 
 export default async function StudentProfileEditPage() {
   const user = await requireAuth();
-  const [profile, billing, payments, subscription] = await Promise.all([
+  const [profile, billing] = await Promise.all([
     getStudentProfile(),
     getBillingInfo(),
-    getBillingPaymentHistory().catch(() => []),
-    getUserSubscription().catch(() => null),
   ]);
   const avatarFileId = String(user.prefs?.avatarFileId ?? "");
   const avatarAlt = user.name || user.email || "Avatar";

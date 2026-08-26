@@ -82,7 +82,7 @@ export interface Enrollment extends AppwriteRow {
   completedLessons: number;
   progress: number;
   completedAt?: string;
-  status: "active" | "completed";
+  status: "active" | "completed" | "cancelled";
 }
 
 export interface Progress extends AppwriteRow {
@@ -230,6 +230,8 @@ export interface Payment extends AppwriteRow {
   method: "razorpay";
   status: "pending" | "completed" | "failed" | "refunded";
   providerRef: string;
+  providerPaymentId?: string;
+  couponUsageRecorded?: boolean;
   refundId?: string;
   refundAmount?: number;
   createdAt: string;

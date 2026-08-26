@@ -9,6 +9,7 @@ import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
 import { getRazorpayClient } from "@/server/payments/razorpay";
 import { createNotificationEntry } from "@/server/actions/notifications";
+import { reconcileCoursePayment } from "@/server/payments/course-payment";
 
 /**
  * Update a payment's status manually from the admin panel.
@@ -58,15 +59,20 @@ export async function updatePaymentStatusAction(formData: FormData): Promise<Act
       return actionError(`Cannot transition from "${currentStatus}" to "${newStatus}". Allowed: ${allowed.join(", ") || "none"}.`);
     }
 
-    await tablesDB.updateRow({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.payments,
-      rowId: paymentId,
-      data: {
-        status: newStatus,
-        updatedAt: new Date().toISOString(),
-      },
+    const reconciliation = await reconcileCoursePayment({
+      tablesDB,
+      providerRef: String(existing.providerRef ?? paymentId),
+      providerPaymentId: String(existing.providerPaymentId ?? "") || null,
+      status: newStatus as "pending" | "completed" | "failed" | "refunded",
+      userId: String(existing.userId ?? "") || null,
+      courseId: String(existing.courseId ?? "") || null,
+      amount: Number(existing.amount ?? 0),
+      currency: String(existing.currency ?? "INR"),
     });
+
+    if (!reconciliation.paymentFound) {
+      return actionError("Payment record could not be reconciled.");
+    }
 
     // If refunding a completed payment, also deactivate the enrollment
     if (newStatus === "refunded" && currentStatus === "completed") {
@@ -171,16 +177,21 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
       return actionError(`Cannot refund a payment with status "${currentStatus}". Only completed payments can be refunded.`);
     }
 
-    const providerRef = String(existing.providerRef ?? "");
-    if (!providerRef) {
-      return actionError("No Razorpay payment reference found. Cannot process refund via Razorpay.");
+    const providerPaymentId = String(existing.providerPaymentId ?? "");
+    if (!providerPaymentId) {
+      return actionError("No Razorpay payment ID found. This payment must be reconciled before it can be refunded.");
+    }
+
+    const originalAmount = Number(existing.amount ?? 0);
+    const requestedAmount = amountStr ? Number(amountStr) * 100 : originalAmount;
+    if (!Number.isFinite(requestedAmount) || requestedAmount !== originalAmount) {
+      return actionError("Only full refunds are supported. Enter the exact original payment amount.");
     }
 
     // Process refund via Razorpay
     let refundResult: Record<string, unknown> | null = null;
     try {
       const razorpay = getRazorpayClient();
-      const originalAmount = Number(existing.amount ?? 0);
       const refundOptions: Record<string, unknown> = {
         notes: {
           reason: reason || "Admin-initiated refund",
@@ -188,17 +199,9 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
         },
       };
 
-      // If a partial amount is specified (in rupees), convert to paise
-      if (amountStr && !isNaN(Number(amountStr)) && Number(amountStr) > 0) {
-        const refundAmountPaise = Math.round(Number(amountStr) * 100);
-        if (refundAmountPaise > originalAmount) {
-          return actionError(`Refund amount (₹${amountStr}) exceeds original payment amount (₹${originalAmount / 100}).`);
-        }
-        refundOptions.amount = refundAmountPaise;
-      }
-      // If no amount specified, Razorpay processes a full refund
+      // Omitting amount requests a full refund from Razorpay.
 
-      refundResult = await razorpay.payments.refund(providerRef, refundOptions) as unknown as Record<string, unknown>;
+      refundResult = await razorpay.payments.refund(providerPaymentId, refundOptions) as unknown as Record<string, unknown>;
     } catch (razorpayError) {
       const message = razorpayError instanceof Error ? razorpayError.message : "Razorpay refund failed";
       return actionError(`Razorpay refund failed: ${message}`);
@@ -213,7 +216,7 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
         status: "refunded",
         updatedAt: new Date().toISOString(),
         refundId: String((refundResult as Record<string, unknown>)?.id ?? ""),
-        refundAmount: Number((refundResult as Record<string, unknown>)?.amount ?? existing.amount),
+        refundAmount: Number((refundResult as Record<string, unknown>)?.amount ?? originalAmount),
       },
     });
 
@@ -254,7 +257,7 @@ export async function processRefundAction(formData: FormData): Promise<ActionRes
         userId,
         type: "payment.refunded",
         title: "Payment Refunded",
-        body: `Your payment of ₹${Number(existing.amount ?? 0) / 100} has been refunded. Refund ID: ${String((refundResult as Record<string, unknown>)?.id ?? "N/A")}. The amount will be credited to your original payment method within 5-10 business days.`,
+        body: `Your payment of ₹${originalAmount / 100} has been refunded. Refund ID: ${String((refundResult as Record<string, unknown>)?.id ?? "N/A")}. The amount will be credited to your original payment method within 5-10 business days.`,
         link: "/app/billing",
       });
     } catch {

@@ -4,7 +4,7 @@ import { ID, Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 
 import { requireAuth } from "@/server/appwrite/auth";
-import { getCourseRow, userHasCourseAccess } from "@/server/appwrite/access";
+import { getCourseRow, getLessonRow, userHasCourseAccess } from "@/server/appwrite/access";
 import { getUserRole } from "@/server/appwrite/auth-utils";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
@@ -141,6 +141,13 @@ export async function postLessonCommentAction(
 export async function getLessonComments(
   lessonId: string
 ): Promise<LessonComment[]> {
+  const user = await requireAuth();
+  const lesson = await getLessonRow(lessonId);
+  const courseId = String(lesson?.courseId ?? "");
+  if (!courseId || !(await userHasCourseAccess({ courseId, userId: user.$id, lessonId }))) {
+    return [];
+  }
+
   return listComments([
     Query.equal("lessonId", [lessonId]),
     Query.equal("isDeleted", [false]),
@@ -184,6 +191,11 @@ export async function postCourseCommentAction(
 export async function getCourseComments(
   courseId: string
 ): Promise<CourseComment[]> {
+  const user = await requireAuth();
+  if (!(await userHasCourseAccess({ courseId, userId: user.$id }))) {
+    return [];
+  }
+
   return listComments([
     Query.equal("courseId", [courseId]),
     Query.equal("lessonId", [""]),

@@ -114,13 +114,15 @@ export async function POST(request: Request) {
         discountAmount = couponResult.discountAmount ?? 0;
         appliedCouponCode = parsed.data.couponCode.toUpperCase();
       } else {
-        // Invalid coupon — still proceed but without discount
-        console.warn("Invalid coupon:", couponResult.message);
+        return NextResponse.json(
+          { error: couponResult.message || "Invalid coupon code." },
+          { status: 400 }
+        );
       }
     }
 
     // Amount in paise (smallest currency unit)
-    const amountInPaise = finalPrice * 100;
+    const amountInPaise = Math.round(finalPrice * 100);
     const receipt = `r_${Date.now()}_${user.$id.slice(0, 8)}`;
 
     const order = await createRazorpayOrder({
@@ -148,8 +150,10 @@ export async function POST(request: Request) {
         method: "razorpay",
         status: "pending",
         providerRef: order.id,
+        providerPaymentId: null,
+        couponUsageRecorded: false,
         couponCode: appliedCouponCode || null,
-        originalAmount: price * 100,
+        originalAmount: Math.round(price * 100),
         createdAt: new Date().toISOString(),
       },
     });

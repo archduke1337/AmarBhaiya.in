@@ -74,9 +74,12 @@ export async function _issueCertificate(
         ],
       });
 
-      enrollmentRow = enrollment.rows[0] as AnyRow | undefined;
+      enrollmentRow = enrollment.rows.find((row) => {
+        const candidate = row as AnyRow;
+        return candidate.isActive !== false && String(candidate.status ?? "active") !== "cancelled";
+      }) as AnyRow | undefined;
       if (!enrollmentRow) {
-        return actionError("No enrollment found");
+        return actionError("No active enrollment found");
       }
 
       const progress = Number(enrollmentRow.progress ?? 0);
@@ -180,6 +183,10 @@ export async function getCertificateById(certId: string): Promise<{
       tableId: APPWRITE_CONFIG.tables.certificates,
       rowId: certId,
     })) as AnyRow;
+
+    if (cert.isPublished === false) {
+      return null;
+    }
 
     return {
       userName: String(cert.userName ?? "Student"),

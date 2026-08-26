@@ -5,9 +5,8 @@
    Optimized: iOS/Android safe areas + fluid touch targets
    ============================================================ */
 
-/* Tailwind + HeroUI (coexist with custom Amarnath theme) */
+/* Tailwind + custom AmarBhaiya theme */
 @import "tailwindcss";
-@import "@heroui/styles";
 @import "tw-animate-css";
 
 /* ── Custom amarbhaiya theme ────────────────────────────────── */
@@ -213,7 +212,7 @@
   --font-heading: var(--font-display), "Clash Display", "DM Serif Display", Georgia, serif;
   --font-mono:    "Geist Mono", "JetBrains Mono", monospace;
 
-  /* ── Easing presets (from HeroUI theme) ─────────────────── */
+  /* ── Easing presets ─────────────────────────────────────── */
   --ease-out-fluid: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-in-out-smooth: cubic-bezier(0.645, 0.045, 0.355, 1);

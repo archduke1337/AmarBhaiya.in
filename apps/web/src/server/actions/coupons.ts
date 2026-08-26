@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ID, Query } from "node-appwrite";
 import { z } from "zod";
 
-import { requireAuth, requireRole } from "@/server/appwrite/auth";
+import { requireRole } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
@@ -219,6 +219,8 @@ export async function validateCouponAction(
   courseId: string,
   resourceId?: string
 ): Promise<CouponResult> {
+  await requireRole(["admin", "instructor", "moderator", "student"]);
+
   if (!code || (!courseId && !resourceId)) {
     return { valid: false, message: "Coupon code and target (course or resource) are required." };
   }
@@ -316,66 +318,6 @@ export async function validateCouponAction(
     };
   } catch {
     return { valid: false, message: "Failed to validate coupon." };
-  }
-}
-
-// ── Increment coupon usage (called after successful payment) ────────────────
-
-export async function incrementCouponUsageAction(couponCode: string): Promise<void> {
-  try {
-    await requireAuth();
-    const { tablesDB } = await createAdminClient();
-    const result = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.coupons,
-      queries: [Query.equal("code", [couponCode.toUpperCase()]), Query.limit(1)],
-    });
-
-    const coupon = result.rows[0];
-    if (!coupon) {
-      return;
-    }
-
-    // Atomic read-modify-write via a transaction: stage the increment and
-    // commit only if the coupon still has capacity, so concurrent payments
-    // cannot overshoot maxUses.
-    const usedCount = Number(coupon.usedCount ?? 0);
-    const maxUses = Number(coupon.maxUses ?? 1);
-    if (usedCount >= maxUses) {
-      return;
-    }
-
-    const transaction = await tablesDB
-      .createTransaction({ ttl: 30 })
-      .catch(() => null);
-    if (!transaction?.$id) {
-      return;
-    }
-
-    try {
-      await tablesDB.updateRow({
-        databaseId: APPWRITE_CONFIG.databaseId,
-        tableId: APPWRITE_CONFIG.tables.coupons,
-        rowId: coupon.$id,
-        transactionId: transaction.$id,
-        data: {
-          usedCount: usedCount + 1,
-        },
-      });
-      await tablesDB.updateTransaction({
-        transactionId: transaction.$id,
-        commit: true,
-      });
-    } catch {
-      await tablesDB
-        .updateTransaction({
-          transactionId: transaction.$id,
-          rollback: true,
-        })
-        .catch(() => null);
-    }
-  } catch {
-    // Non-critical
   }
 }
 

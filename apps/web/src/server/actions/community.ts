@@ -159,6 +159,7 @@ export async function createForumReplyAction(
 export async function getForumThreadDetail(
   threadId: string
 ): Promise<ForumThreadDetail | null> {
+  await requireAuth();
   const { tablesDB } = await createAdminClient();
 
   try {
@@ -205,6 +206,7 @@ export async function getForumThreadDetail(
 export async function getForumThreadReplies(
   threadId: string
 ): Promise<ForumReply[]> {
+  await requireAuth();
   const { tablesDB } = await createAdminClient();
 
   try {

@@ -1,7 +1,4 @@
 import type { MetadataRoute } from "next";
-import { APPWRITE_CONFIG } from "@/server/appwrite/config";
-import { createAdminClient } from "@/server/appwrite/server";
-import { safeListAllRows, type AnyRow } from "@/server/appwrite/dashboard-data/internal";
 
 export const revalidate = 3600;
 
@@ -37,11 +34,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   try {
+    const [{ APPWRITE_CONFIG }, { createAdminClient }, { safeListAllRows }] = await Promise.all([
+      import("@/server/appwrite/config"),
+      import("@/server/appwrite/server"),
+      import("@/server/appwrite/dashboard-data/internal"),
+    ]);
     const { tablesDB } = await createAdminClient();
 
     const [courseRows, blogRows] = await Promise.all([
-      safeListAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.courses),
-      safeListAllRows<AnyRow>(tablesDB, APPWRITE_CONFIG.tables.blogPosts),
+      safeListAllRows(tablesDB, APPWRITE_CONFIG.tables.courses),
+      safeListAllRows(tablesDB, APPWRITE_CONFIG.tables.blogPosts),
     ]);
 
     const courseEntries = courseRows.map((course) => ({

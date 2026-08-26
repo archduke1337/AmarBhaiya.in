@@ -81,7 +81,6 @@ export async function updateUserRoleAction(formData: FormData): Promise<ActionRe
       const target = await users.get({ userId: parsed.data.userId }).catch(() => null);
       if (target?.labels?.includes("admin")) {
         // Count remaining admins
-        const { tablesDB } = await createAdminClient();
         // Fallback: list users with admin label via users.list is not directly filterable,
         // so we approximate by checking if this is the only admin via a safe count.
         // If count fails, allow but log warning — better than lockout.

@@ -10,7 +10,7 @@ import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/server/payments/course-payment";
 import { verifyRazorpayPaymentSignature } from "@/server/payments/razorpay";
 import { revalidateEach } from "@/lib/utils/revalidate";
-import { incrementCouponUsageAction } from "@/server/actions/coupons";
+import { recordCouponUsageForPayment } from "@/server/payments/coupon-usage";
 
 import { getApiUser } from "@/server/appwrite/api-auth";
 
@@ -31,6 +31,7 @@ type PaymentRow = {
   currency?: string;
   status?: string;
   couponCode?: string | null;
+  providerPaymentId?: string | null;
 };
 
 export async function POST(request: Request) {
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
     const result = await reconcileCoursePayment({
       tablesDB,
       providerRef: parsed.data.orderId,
+      providerPaymentId: parsed.data.paymentId,
       status: "completed",
       userId: user.$id,
       courseId:
@@ -121,19 +123,19 @@ export async function POST(request: Request) {
           : "INR",
     });
 
-    // Increment coupon usage from the coupon recorded on the stored payment
-    // row at order-creation time. Never trust a client-supplied coupon code
-    // here — otherwise anyone could exhaust arbitrary coupon usage limits.
-    // Idempotent: only increment when transitioning from non-completed → completed
-    const shouldIncrementCoupon = existingStatus !== "completed" && existingStatus !== "refunded";
+    // Coupon redemption is tied to this local payment row and committed
+    // atomically with its idempotency marker.
     const storedCouponCode =
       typeof existingPayment?.couponCode === "string" &&
       existingPayment.couponCode.length > 0
         ? existingPayment.couponCode
         : "";
-    if (shouldIncrementCoupon && storedCouponCode) {
-      await incrementCouponUsageAction(storedCouponCode).catch(() => {
-        // Non-critical
+    if (result.paymentId && storedCouponCode && result.finalStatus === "completed") {
+      await recordCouponUsageForPayment(tablesDB, {
+        paymentId: result.paymentId,
+        couponCode: storedCouponCode,
+      }).catch(() => {
+        // Payment completion remains authoritative if coupon accounting is retried.
       });
     }
 

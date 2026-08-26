@@ -96,8 +96,7 @@ export default async function getConfig(): Promise<NextConfig> {
       serverActions: {
         bodySizeLimit: "8mb",
       },
-      viewTransition: true,
-      optimizePackageImports: ["lucide-react", "radix-ui", "@heroui/react", "motion"],
+      optimizePackageImports: ["lucide-react", "radix-ui"],
     },
 
     // ── Server Packages ───────────────────────────────────────────────────────

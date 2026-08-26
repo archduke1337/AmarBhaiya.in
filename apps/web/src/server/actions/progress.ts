@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/server/appwrite/auth";
 import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { upsertLessonProgressRow } from "@/server/appwrite/progress";
+import { isActiveEnrollmentRow } from "@/server/appwrite/dashboard-data/internal";
 import { listAllRows } from "@/server/appwrite/row-pagination";
 import { createAdminClient } from "@/server/appwrite/server";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors/action-result";
@@ -28,6 +29,11 @@ export async function completeLessonForUser({
 }): Promise<ActionResult> {
   if (!courseId || !lessonId || !userId) {
     return actionError("Missing course or lesson ID");
+  }
+
+  const caller = await requireAuth();
+  if (caller.$id !== userId && !caller.labels?.includes("admin")) {
+    return actionError("Forbidden");
   }
 
   try {
@@ -55,6 +61,10 @@ export async function completeLessonForUser({
     }
 
     const course = courseRow as AnyRow;
+    if (course.isPublished === false) {
+      return actionError("Course is not available");
+    }
+
     const courseIsFree = String(course.accessModel ?? "free") === "free";
     const completionTimestamp = new Date().toISOString();
 
@@ -68,7 +78,9 @@ export async function completeLessonForUser({
       ],
     });
 
-    const enrollmentRow = enrollments.rows[0] as AnyRow | undefined;
+    const enrollmentRow = enrollments.rows.find((row) =>
+      isActiveEnrollmentRow(row as AnyRow)
+    ) as AnyRow | undefined;
     if (!enrollmentRow && !courseIsFree) {
       return actionError("Enrollment required");
     }

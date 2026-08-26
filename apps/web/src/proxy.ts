@@ -15,13 +15,6 @@ const ADMIN_HOST = "admin.amarbhaiya.in";
 const INSTRUCTOR_HOST = "instructor.amarbhaiya.in";
 const MODERATOR_HOST = "moderator.amarbhaiya.in";
 
-const SUBDOMAIN_MAP: Record<string, string> = {
-  [APP_HOST]: "/app",
-  [ADMIN_HOST]: "/admin",
-  [INSTRUCTOR_HOST]: "/instructor",
-  [MODERATOR_HOST]: "/moderator",
-};
-
 // ── Session Validation Cache ─────────────────────────────────────────────────
 // This is an in-process Map — it resets on cold starts / serverless spin-ups.
 // That is intentional: a cold start always validates freshly against Appwrite.

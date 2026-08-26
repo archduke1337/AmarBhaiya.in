@@ -41,9 +41,10 @@ export function LessonVideoPlayer({
   const abortControllersRef = useRef<Set<AbortController>>(new Set());
 
   useEffect(() => {
+    const abortControllers = abortControllersRef.current;
     return () => {
-      abortControllersRef.current.forEach((c) => c.abort());
-      abortControllersRef.current.clear();
+      abortControllers.forEach((c) => c.abort());
+      abortControllers.clear();
     };
   }, []);
 

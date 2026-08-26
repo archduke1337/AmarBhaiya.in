@@ -1,4 +1,3 @@
-import { Query } from "node-appwrite";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
@@ -6,7 +5,11 @@ import { APPWRITE_CONFIG } from "@/server/appwrite/config";
 import { createAdminClient } from "@/server/appwrite/server";
 import { getCourseDetailPaths } from "@/lib/utils/cache-paths";
 import { reconcileCoursePayment } from "@/server/payments/course-payment";
-import { verifyRazorpayWebhookSignature } from "@/server/payments/razorpay";
+import { recordCouponUsageForPayment } from "@/server/payments/coupon-usage";
+import {
+  getRazorpayClient,
+  verifyRazorpayWebhookSignature,
+} from "@/server/payments/razorpay";
 import { revalidateEach } from "@/lib/utils/revalidate";
 
 export const runtime = "nodejs";
@@ -19,10 +22,30 @@ type RazorpayPaymentEntity = {
   amount?: number;
   currency?: string;
   status?: string;
+  refund_status?: "null" | "partial" | "full";
+  amount_refunded?: number;
   notes?: Record<string, string>;
 };
 
+type RazorpayRefundEntity = {
+  id?: string;
+  payment_id?: string;
+  order_id?: string;
+  amount?: number;
+  currency?: string;
+};
+
 function mapRazorpayStatus(event: string, paymentStatus?: string): PaymentStatus {
+  // Event names are authoritative. A fetched payment can still be reported
+  // as captured while its refund webhook is being delivered.
+  if (
+    event === "payment.refunded" ||
+    event === "refund.created" ||
+    event === "refund.processed"
+  ) {
+    return "refunded";
+  }
+
   if (event === "payment.captured" || paymentStatus === "captured") {
     return "completed";
   }
@@ -31,29 +54,26 @@ function mapRazorpayStatus(event: string, paymentStatus?: string): PaymentStatus
     return "failed";
   }
 
-  if (event === "payment.refunded") {
-    return "refunded";
-  }
-
   return "pending";
 }
 
 function parseWebhookPayment(rawBody: string): {
   event: string;
   payment: RazorpayPaymentEntity | null;
+  refund: RazorpayRefundEntity | null;
 } {
   const parsed = JSON.parse(rawBody) as {
     event?: string;
     payload?: {
-      payment?: {
-        entity?: RazorpayPaymentEntity;
-      };
+      payment?: { entity?: RazorpayPaymentEntity };
+      refund?: { entity?: RazorpayRefundEntity };
     };
   };
 
   return {
     event: parsed.event ?? "",
     payment: parsed.payload?.payment?.entity ?? null,
+    refund: parsed.payload?.refund?.entity ?? null,
   };
 }
 
@@ -66,48 +86,68 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { event, payment } = parseWebhookPayment(rawBody);
+    const { event, payment: payloadPayment, refund } = parseWebhookPayment(rawBody);
+    const providerPaymentId = payloadPayment?.id ?? refund?.payment_id ?? null;
+    let payment = payloadPayment;
 
-    if (!payment) {
+    // Refund payloads commonly contain only payment_id. Fetch the provider
+    // payment so legacy local rows can still be resolved by their order ID.
+    if (providerPaymentId && (!payment?.order_id || event.startsWith("refund."))) {
+      try {
+        const providerPayment = await getRazorpayClient().payments.fetch(providerPaymentId);
+        payment = {
+          ...payment,
+          id: providerPayment.id,
+          order_id: providerPayment.order_id,
+          amount: Number(providerPayment.amount),
+          currency: providerPayment.currency,
+          status: providerPayment.status,
+          refund_status: providerPayment.refund_status,
+          amount_refunded: providerPayment.amount_refunded,
+          notes: providerPayment.notes as Record<string, string> | undefined,
+        };
+      } catch (error) {
+        if (!payment?.order_id) {
+          console.warn(
+            `[Razorpay Webhook] Could not fetch payment ${providerPaymentId}:`,
+            error instanceof Error ? error.message : error
+          );
+        }
+      }
+    }
+
+    const providerRef = payment?.order_id ?? refund?.order_id ?? providerPaymentId;
+    if (!providerRef) {
       return NextResponse.json({ received: true });
     }
 
-    const providerRef = payment.order_id ?? payment.id;
-    const status = mapRazorpayStatus(event, payment.status);
-    const notes = payment.notes ?? {};
+    const status = mapRazorpayStatus(event, payment?.status);
+    if (
+      status === "refunded" &&
+      payment?.refund_status !== "full" &&
+      !(typeof refund?.amount === "number" && typeof payment?.amount === "number" && refund.amount >= payment.amount) &&
+      !(typeof payment?.amount_refunded === "number" && typeof payment?.amount === "number" && payment.amount_refunded >= payment.amount)
+    ) {
+      // A partial refund must not revoke course access in a full-refund-only model.
+      return NextResponse.json({ received: true, status: "partial_refund_ignored" });
+    }
+
+    const notes = payment?.notes ?? {};
     const userId = notes.userId;
     const courseId = notes.courseId;
 
     const { tablesDB } = await createAdminClient();
 
-    // Idempotency: skip if this providerRef (the Razorpay order id stored on
-    // the payment row at creation time) has already reached a terminal state.
-    const existingPayments = await tablesDB.listRows({
-      databaseId: APPWRITE_CONFIG.databaseId,
-      tableId: APPWRITE_CONFIG.tables.payments,
-      queries: [
-        Query.equal("providerRef", [providerRef]),
-        Query.orderDesc("$createdAt"),
-        Query.limit(1),
-      ],
-    });
-    const alreadyProcessed = existingPayments.rows.some((row) => {
-      const r = row as { status?: string };
-      return r.status === "completed" || r.status === "refunded";
-    });
-    if (alreadyProcessed) {
-      return NextResponse.json({ received: true, status, idempotent: true });
-    }
-
     const result = await reconcileCoursePayment({
       tablesDB,
       providerRef,
+      providerPaymentId,
       status,
       userId,
       courseId,
       accessModel: notes.accessModel,
-      amount: payment.amount,
-      currency: payment.currency,
+      amount: payment?.amount ?? refund?.amount,
+      currency: payment?.currency ?? refund?.currency,
     });
 
     // Critical: if payment was captured but no local row exists, return 500 so Razorpay retries
@@ -120,18 +160,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Coupon usage: webhook is authoritative — increment here if completed and not idempotent
-    // (verify route also increments, but only when transitioning from pending → completed, so at most one will succeed)
-    if (result.paymentFound && result.finalStatus === "completed" && status === "completed") {
-      try {
-        const paymentRow = existingPayments.rows[0] as { couponCode?: string } | undefined;
-        const couponCode = typeof paymentRow?.couponCode === "string" ? paymentRow.couponCode : "";
-        if (couponCode) {
-          const { incrementCouponUsageAction } = await import("@/server/actions/coupons");
-          await incrementCouponUsageAction(couponCode).catch(() => {});
-        }
-      } catch {
-        // non-critical
+    // Coupon redemption is payment-scoped and safe to retry.
+    if (result.paymentId && result.finalStatus === "completed" && status === "completed") {
+      const paymentRow = (await tablesDB
+        .getRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.payments,
+          rowId: result.paymentId,
+        })
+        .catch(() => null)) as { couponCode?: string } | null;
+      const couponCode = typeof paymentRow?.couponCode === "string" ? paymentRow.couponCode : "";
+      if (couponCode) {
+        await recordCouponUsageForPayment(tablesDB, {
+          paymentId: result.paymentId,
+          couponCode,
+        }).catch(() => undefined);
       }
     }
 

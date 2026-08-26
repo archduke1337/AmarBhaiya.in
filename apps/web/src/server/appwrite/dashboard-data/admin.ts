@@ -111,7 +111,7 @@ export async function getAdminCourses(): Promise<AdminCourseItem[]> {
       state: course.isPublished ? "published" : "draft",
       featured: course.isFeatured ? "yes" : "no",
       category: (typeof course.categoryId === "string" && categoryNameById.get(course.categoryId)) || "Uncategorized",
-      price: Number(row.price ?? 0) / 100,
+      price: Number(row.price ?? 0),
       instructorName: instructorNameMap.get(instructorId) || "Unknown",
       instructorId,
       enrollmentCount: enrollmentCountByCourse.get(course.$id) ?? Number(row.enrollmentCount ?? row.enrolledCount ?? 0),

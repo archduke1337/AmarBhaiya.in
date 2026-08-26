@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Loader2, Tag, CheckCircle2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -115,10 +116,10 @@ export function BillingCheckout({
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <Button asChild size="lg" className="font-bold">
-            <a href="/app/profile/edit#billing">Complete in profile</a>
+            <Link href="/app/profile/edit#billing">Complete in profile</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <a href="/app/profile/edit#billing">Go to profile</a>
+            <Link href="/app/profile/edit#billing">Go to profile</Link>
           </Button>
         </div>
         <p className="text-[11px] font-medium text-muted-foreground">
@@ -144,9 +145,9 @@ export function BillingCheckout({
             </p>
             <p className="text-xs text-muted-foreground">{billing.phone ? `${billing.phone} · ` : ""}{billing.country}</p>
           </div>
-          <a href="/app/profile/edit#billing" className="text-xs font-bold text-accent hover:underline shrink-0">
+          <Link href="/app/profile/edit#billing" className="text-xs font-bold text-accent hover:underline shrink-0">
             Change in profile
-          </a>
+          </Link>
         </div>
       )}
 

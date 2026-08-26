@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { forgotPasswordAction } from "@/server/appwrite/actions";
+import { sendPasswordRecoveryAction } from "@/server/actions/verification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -17,7 +17,9 @@ export function ForgotPasswordForm() {
     setError("");
     setLoading(true);
 
-    const result = await forgotPasswordAction({ email });
+    const formData = new FormData();
+    formData.set("email", email);
+    const result = await sendPasswordRecoveryAction(formData);
 
     if (result.success) {
       setSent(true);

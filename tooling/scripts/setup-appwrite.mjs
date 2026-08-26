@@ -653,6 +653,8 @@ async function main() {
   await enumCol(T20, "method", ["razorpay"], true);
   await enumCol(T20, "status", ["pending", "completed", "failed", "refunded"], true, "pending");
   await varchar(T20, "providerRef", 200);
+  await varchar(T20, "providerPaymentId", 200);
+  await bool(T20, "couponUsageRecorded", false, false);
   await varchar(T20, "couponCode", 50);
   await int(T20, "originalAmount", false, 0);
   await dt(T20, "createdAt", true);

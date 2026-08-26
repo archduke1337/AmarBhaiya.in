@@ -6,7 +6,7 @@
  * Layout: Asymmetrical bento + editorial split hero
  * Mobile: min-h-dvh, pb-safe, 44px touch targets, iOS Safe Areas
  *
- * UI: shadcn/ui + radix-ui + HeroUI v3 (coexist) + Tailwind v4 — shadcn is primary, HeroUI available via @heroui/react / @heroui/styles without Provider
+ * UI: shadcn/ui + radix-ui + Tailwind v4
  */
 
 import Link from "next/link";

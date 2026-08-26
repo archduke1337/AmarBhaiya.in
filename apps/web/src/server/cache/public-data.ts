@@ -17,6 +17,7 @@ const tags = {
   courseDetail: (slug: string) => `course-${slug}`,
   blog: "public-blog",
   blogPost: (slug: string) => `blog-${slug}`,
+  notes: "public-notes",
 };
 
 export function cachedHomePage<T>(fn: () => Promise<T>): Promise<T> {
@@ -26,8 +27,11 @@ export function cachedHomePage<T>(fn: () => Promise<T>): Promise<T> {
   })();
 }
 
-export function cachedCoursesPage<T>(fn: () => Promise<T>): Promise<T> {
-  return unstable_cache(fn, ["public-courses"], {
+export function cachedCoursesPage<T>(
+  cacheKey: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  return unstable_cache(fn, ["public-courses", cacheKey], {
     revalidate: revalidationSeconds.courses,
     tags: [tags.courses],
   })();
@@ -68,8 +72,8 @@ export function cachedContactPage<T>(fn: () => Promise<T>): Promise<T> {
   })();
 }
 
-export function cachedNotesPage<T>(fn: () => Promise<T>): Promise<T> {
-  return unstable_cache(fn, ["public-notes"], {
+export function cachedNotesPage<T>(cacheKey: string, fn: () => Promise<T>): Promise<T> {
+  return unstable_cache(fn, ["public-notes", cacheKey], {
     revalidate: revalidationSeconds.notes,
     tags: ["public-notes"],
   })();

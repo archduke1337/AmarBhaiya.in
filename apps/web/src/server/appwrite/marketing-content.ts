@@ -387,11 +387,13 @@ export async function getPublicCoursesPageData(options: {
   category?: string;
   sort?: CourseSort;
 }): Promise<CoursesPageData> {
-  return cachedCoursesPage(async () => {
+  const query = (options.query ?? "").trim().toLowerCase().slice(0, 100);
+  const activeCategory = (options.category ?? "all").trim().slice(0, 100) || "all";
+  const sort = options.sort ?? "popular";
+  const cacheKey = JSON.stringify({ query, category: activeCategory, sort });
+
+  return cachedCoursesPage(cacheKey, async () => {
     const { tablesDB } = await createAdminClient();
-    const query = (options.query ?? "").trim().toLowerCase();
-    const activeCategory = options.category ?? "all";
-    const sort = options.sort ?? "popular";
 
     const [courseRows, categoryById] = await Promise.all([
       safeListAllRows<CourseRow>(tablesDB, APPWRITE_CONFIG.tables.courses, [
@@ -679,7 +681,10 @@ async function getPublicNotesPageDataImpl(options?: {
 export async function getPublicNotesPageData(options?: {
   limit?: number;
 }): Promise<NotesPageData> {
-  return cachedNotesPage(() => getPublicNotesPageDataImpl(options));
+  const limit = typeof options?.limit === "number" && options.limit > 0
+    ? Math.floor(options.limit)
+    : 0;
+  return cachedNotesPage(String(limit), () => getPublicNotesPageDataImpl(limit > 0 ? { limit } : undefined));
 }
 
 async function getHomePageContentImpl(): Promise<HomePageContent> {
