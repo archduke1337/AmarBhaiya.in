@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
+import { SearchableFaq } from "@/components/marketing/searchable-faq";
 import { SectionHeading } from "@/components/marketing/section-heading";
 
 export const metadata: Metadata = {
@@ -84,34 +85,7 @@ export default function FaqPage() {
           titleAs="h1"
         />
 
-        <div className="space-y-4">
-          {faqGroups.map((group) => (
-            <div key={group.title} className="space-y-3">
-              <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
-                {group.title}
-              </h2>
-              {group.items.map((item) => (
-                <details
-                  key={item.q}
-                  className="group overflow-hidden rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro"
-                >
-                  <summary className="flex min-h-14 cursor-pointer list-none items-start justify-between gap-4 bg-secondary/75 px-4 py-4 text-sm font-sans font-bold leading-6 tracking-[0.01em] outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
-                    {item.q}
-                    <span
-                      className="mt-0.5 text-xs font-black text-muted-foreground transition-transform duration-200 group-open:rotate-45"
-                      aria-hidden="true"
-                    >
-                      +
-                    </span>
-                  </summary>
-                  <div className="px-4 py-4">
-                    <p className="text-sm font-medium leading-7 text-foreground/80">{item.a}</p>
-                  </div>
-                </details>
-              ))}
-            </div>
-          ))}
-        </div>
+        <SearchableFaq groups={faqGroups} />
       </section>
 
       <section className="mx-auto max-w-3xl">
