@@ -125,7 +125,7 @@ export function ResetPasswordForm({
             </p>
           )}
           {confirmPassword.length > 0 && password === confirmPassword && (
-            <p className="text-xs font-semibold text-emerald-500 px-1 animate-fade-in-up">
+            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 px-1 animate-fade-in-up">
               Passwords match
             </p>
           )}
