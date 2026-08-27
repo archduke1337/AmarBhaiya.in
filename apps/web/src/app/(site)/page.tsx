@@ -107,12 +107,12 @@ export default async function MarketingPage() {
                 </RevealWrapper>
 
                 <RevealWrapper className="stagger-1">
-                  <h1 className="max-w-[11ch] text-[clamp(2.5rem,8vw,5rem)] font-black leading-[0.96] tracking-[-0.045em] text-foreground">
+                  <h1 className="max-w-[11ch] font-heading text-[clamp(2.5rem,8vw,5rem)] font-black leading-[0.96] tracking-[-0.055em] text-foreground">
                     Padhai simple,{" "}
                     <span
                       className="inline-block"
                       style={{
-                        background: "linear-gradient(135deg, var(--accent) 0%, oklch(0.85 0.15 72) 100%)",
+                        background: "var(--accent)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                         backgroundClip: "text",
@@ -620,9 +620,7 @@ export default async function MarketingPage() {
                 style={{
                   background: "linear-gradient(135deg, color-mix(in oklab, var(--accent) 30%, transparent), color-mix(in oklab, oklch(0.65 0.18 265) 30%, transparent))",
                 }}
-              >
-                <div
-                  className="rounded-[calc(2rem-6px)] px-8 py-12 sm:py-16 text-center flex flex-col items-center gap-6"
+              ><div className="rounded-[calc(2rem-6px)] px-6 py-10 text-center flex flex-col items-center gap-6 sm:px-8 sm:py-14"
                   style={{ background: "color-mix(in oklab, var(--surface) 92%, var(--accent) 8%)" }}
                 >
                   {/* Glow behind text */}

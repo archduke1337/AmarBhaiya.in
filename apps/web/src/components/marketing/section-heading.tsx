@@ -25,7 +25,7 @@ function SectionHeading({
   return (
     <div
       className={cn(
-        "space-y-3",
+        "space-y-4",
         centered ? "mx-auto max-w-3xl text-center" : "max-w-3xl",
         className
       )}

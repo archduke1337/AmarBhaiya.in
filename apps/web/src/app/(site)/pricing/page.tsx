@@ -108,8 +108,8 @@ export default function PricingPage() {
                 href={tier.cta.href}
                 className={
                   tier.featured
-                    ? "mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-4 text-sm font-bold text-accent-foreground"
-                    : "mt-auto inline-flex min-h-11 items-center justify-center rounded-full border border-border/70 bg-background px-4 text-sm font-semibold text-foreground/80 transition-colors hover:text-foreground"
+                    ? "mt-auto inline-flex min-h-11 items-center justify-center rounded-[calc(var(--radius)+2px)] bg-accent px-4 text-sm font-bold text-accent-foreground transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-retro-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    : "mt-auto inline-flex min-h-11 items-center justify-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-background px-4 text-sm font-semibold text-foreground/80 transition-[box-shadow,transform,color] duration-200 hover:-translate-y-0.5 hover:text-foreground hover:shadow-retro-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 }
               >
                 {tier.cta.label}
