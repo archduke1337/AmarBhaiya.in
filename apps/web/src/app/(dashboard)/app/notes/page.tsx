@@ -60,7 +60,7 @@ export default async function StudentNotesPage({
     <div className="flex flex-col gap-8 pb-[10vh]">
       <div className="flex flex-col gap-2">
         <p className="eyebrow self-start">Study Notes</p>
-        <h1 className="text-[clamp(1.75rem,3vw,2.5rem)] font-black tracking-[-0.03em] leading-none">
+        <h1 className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] font-black tracking-[-0.045em] leading-[1.04]">
           Notes jo actually revision ke time kaam aayein.
         </h1>
         <p className="max-w-2xl text-sm font-medium text-foreground/60 leading-relaxed mt-2">

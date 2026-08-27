@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/dashboard";
 import {
   createCategoryFormAction,
   updateCategoryFormAction,
@@ -11,10 +12,10 @@ export default async function InstructorCategoriesPage() {
 
   return (
     <div className="space-y-6 max-w-5xl">
-      <div>
-        <p className="eyebrow self-start">Instructor Categories</p>
-        <h1 className="font-heading text-3xl font-black tracking-[-0.05em] mt-2">Category Setup for Course Publishing</h1>
-      </div>
+      <PageHeader
+        eyebrow="Instructor Categories"
+        title="Category Setup for Course Publishing"
+      />
 
       <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
         <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Add a category</h2>

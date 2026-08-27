@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/dashboard";
 import { createCourseDraftFormAction } from "@/server/actions/form-wrappers";
 import { requireRole } from "@/server/appwrite/auth";
 import { getAdminCategories } from "@/server/appwrite/dashboard-data";
@@ -8,17 +9,11 @@ export default async function InstructorNewCoursePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          Instructor · Create Course
-        </p>
-        <h1 className="mt-2 font-heading text-3xl font-black tracking-[-0.05em]">
-          Course Creation Wizard
-        </h1>
-        <p className="mt-2 text-sm font-medium leading-7 text-muted-foreground">
-          Fill in the essentials below to create a draft. You can refine everything later in the course editor.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Instructor · Create Course"
+        title="Course Creation Wizard"
+        description="Fill in the essentials below to create a draft. You can refine everything later in the course editor."
+      />
 
       <form
         action={createCourseDraftFormAction}
