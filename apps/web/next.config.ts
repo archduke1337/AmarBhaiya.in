@@ -80,7 +80,7 @@ export default async function getConfig(): Promise<NextConfig> {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https://*.appwrite.io https://cloud.appwrite.io https://*.vercel.app https://vercel.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://vitals.vercel-insights.com https://va.vercel-scripts.com https://chat.stream.io https://*.stream.io wss://*.stream.io https://api.razorpay.com",
+              "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://vitals.vercel-insights.com https://va.vercel-scripts.com https://chat.stream.io https://*.stream.io wss://*.stream.io https://api.razorpay.com https://api.emailjs.com",
               "frame-src 'self' https://checkout.razorpay.com https://js.stripe.com https://www.youtube.com https://player.vimeo.com",
               "object-src 'none'",
               "base-uri 'self'",

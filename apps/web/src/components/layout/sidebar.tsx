@@ -95,10 +95,24 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
 
   useEffect(() => {
     if (!open) return;
-    const firstFocusable = drawerRef.current?.querySelector<HTMLElement>("button, a[href]");
+    const focusable = Array.from(
+      drawerRef.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? []
+    );
+    const firstFocusable = focusable[0];
+    const lastFocusable = focusable[focusable.length - 1];
     firstFocusable?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeDrawer();
+      if (event.key === "Escape") {
+        closeDrawer();
+      } else if (event.key === "Tab" && focusable.length > 0) {
+        if (event.shiftKey && document.activeElement === firstFocusable) {
+          event.preventDefault();
+          lastFocusable?.focus();
+        } else if (!event.shiftKey && document.activeElement === lastFocusable) {
+          event.preventDefault();
+          firstFocusable?.focus();
+        }
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);

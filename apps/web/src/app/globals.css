@@ -488,8 +488,8 @@
     opacity: 0;
     transform: translateY(20px);
     transition:
-      opacity 0.7s var(--ease-out-fluid),
-      transform 0.7s var(--ease-out-fluid);
+      opacity 0.28s var(--ease-out-fluid),
+      transform 0.28s var(--ease-out-fluid);
   }
   .reveal.in-view {
     opacity: 1;
@@ -497,11 +497,11 @@
   }
 
   /* Stagger helpers */
-  .stagger-1 { transition-delay: 0.08s; }
-  .stagger-2 { transition-delay: 0.16s; }
-  .stagger-3 { transition-delay: 0.24s; }
-  .stagger-4 { transition-delay: 0.32s; }
-  .stagger-5 { transition-delay: 0.40s; }
+  .stagger-1 { transition-delay: 0.04s; }
+  .stagger-2 { transition-delay: 0.08s; }
+  .stagger-3 { transition-delay: 0.12s; }
+  .stagger-4 { transition-delay: 0.16s; }
+  .stagger-5 { transition-delay: 0.20s; }
 
   /* Hide scrollbar but keep scroll functionality */
   .scrollbar-none {
