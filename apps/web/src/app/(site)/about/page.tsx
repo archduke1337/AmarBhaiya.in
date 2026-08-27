@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
+import { RevealWrapper } from "@/components/ui/reveal-wrapper";
 
 import { getAboutPageContent } from "@/server/appwrite/marketing-content";
 
@@ -59,6 +61,56 @@ export default async function AboutPage() {
               Stronger structure, direct language, and fewer decorative promises that collapse the moment a student gets stuck or loses momentum.
             </p>
           </RetroPanel>
+        </div>
+      </section>
+
+      {/* Photo proof — real teaching environment, no stock imagery */}
+      <section aria-label="Photos from our classroom" className="mx-auto max-w-6xl">
+        <div className="grid gap-3 lg:grid-cols-[1.35fr_0.65fr]">
+          <RevealWrapper>
+            <figure className="card-bezel group h-full overflow-hidden">
+              <div className="relative aspect-[16/10] w-full lg:aspect-auto lg:h-full lg:min-h-80">
+                <Image
+                  src="/images/IMG_9133.webp"
+                  alt="Amar Bhaiya teaching in a live session"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 680px"
+                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                />
+                <figcaption className="absolute bottom-3 left-3 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/70 backdrop-blur">
+                  Live teaching sessions
+                </figcaption>
+              </div>
+            </figure>
+          </RevealWrapper>
+          <div className="grid gap-3">
+            <RevealWrapper className="stagger-1">
+              <figure className="card-bezel overflow-hidden">
+                <div className="relative aspect-[16/10] w-full">
+                  <Image
+                    src="/images/IMG_2175.webp"
+                    alt="Students working through practice problems"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 320px"
+                    className="object-cover"
+                  />
+                </div>
+              </figure>
+            </RevealWrapper>
+            <RevealWrapper className="stagger-2">
+              <figure className="card-bezel overflow-hidden">
+                <div className="relative aspect-[16/10] w-full">
+                  <Image
+                    src="/images/IMG_1548.webp"
+                    alt="Study material and notes used in class"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 320px"
+                    className="object-cover"
+                  />
+                </div>
+              </figure>
+            </RevealWrapper>
+          </div>
         </div>
       </section>
 

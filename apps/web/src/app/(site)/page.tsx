@@ -10,11 +10,13 @@
  */
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { RevealWrapper } from "@/components/ui/reveal-wrapper";
 import { getHomePageContent } from "@/server/appwrite/marketing-content";
 import { AnnouncementBanner } from "@/components/marketing/announcement-banner";
+import { SectionHeading } from "@/components/marketing/section-heading";
 import { MagneticCta } from "@/components/marketing/magnetic-cta";
 import { GlowFeatureCards } from "@/components/marketing/glow-features";
 
@@ -541,6 +543,75 @@ export default async function MarketingPage() {
         {/* ═══════════════════════════════════════════════════
             SECTION 7 — CTA Banner
         ═══════════════════════════════════════════════════ */}
+        <section aria-labelledby="classroom-heading" className="section-pad-sm">
+          <div className="mx-auto max-w-5xl space-y-7 px-4 sm:px-6">
+            <RevealWrapper>
+              <SectionHeading
+                eyebrow="Inside the classroom"
+                title="Real rooms. Real sessions. No stock photos."
+                description="Yeh wahi classes hain jahan notes se lekar doubts tak sab hota hai — the same teaching you get here runs offline too."
+                titleAs="h2"
+              />
+            </RevealWrapper>
+
+            {/* Wide panorama band */}
+            <RevealWrapper className="stagger-1">
+              <figure className="card-bezel overflow-hidden">
+                <div className="relative aspect-[21/9] w-full sm:aspect-[32/9]">
+                  <Image
+                    src="/images/IMG_1324.webp"
+                    alt="Amar Bhaiya taking a classroom session"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 1024px"
+                    className="object-cover"
+                  />
+                </div>
+              </figure>
+            </RevealWrapper>
+
+            {/* Mosaic grid */}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  src: "/images/IMG_9130.webp",
+                  alt: "Students during a study session",
+                  label: "Classroom sessions",
+                  ratio: "aspect-[4/5]",
+                },
+                {
+                  src: "/images/IMG_8616.webp",
+                  alt: "Teaching in progress at the whiteboard",
+                  label: "Board-level explanations",
+                  ratio: "aspect-[4/5]",
+                },
+                {
+                  src: "/images/IMG_2118.webp",
+                  alt: "Study material being walked through",
+                  label: "Notes-first approach",
+                  ratio: "aspect-[4/5] lg:aspect-[3/4]",
+                },
+              ].map((photo, index) => (
+                <RevealWrapper key={photo.src} className={`stagger-${index + 2}`}>
+                  <figure className="card-bezel group overflow-hidden">
+                    <div className={`relative ${photo.ratio} w-full`}>
+                      <Image
+                        src={photo.src}
+                        alt={photo.alt}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 340px"
+                        className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                      />
+                      <figcaption className="absolute bottom-3 left-3 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/70 backdrop-blur">
+                        {photo.label}
+                      </figcaption>
+                    </div>
+                  </figure>
+                </RevealWrapper>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section aria-labelledby="cta-heading" className="section-pad-sm pb-safe">
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <RevealWrapper>

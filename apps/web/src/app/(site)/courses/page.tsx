@@ -5,6 +5,7 @@ import { ArrowRight, Download } from "lucide-react";
 
 import { RetroPanel } from "@/components/marketing/retro-panel";
 import { SectionHeading } from "@/components/marketing/section-heading";
+import { CourseCategoryTabs } from "@/components/marketing/course-category-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -218,7 +219,10 @@ export default async function CoursesPage({
 
       <section className="mx-auto max-w-6xl">
         <RetroPanel tone="accent" className="space-y-5">
-          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]" method="GET">
+          <CourseCategoryTabs categories={categories} activeCategory={category} />
+
+          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_auto]" method="GET">
+            <input type="hidden" name="category" value={category} />
             <div className="space-y-2">
               <Label htmlFor="course-search">Search</Label>
               <Input
@@ -263,24 +267,6 @@ export default async function CoursesPage({
               >
                 <option value="all">All classes</option>
                 {classOptions.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="course-category">Category</Label>
-              <select
-                id="course-category"
-                name="category"
-                aria-label="Filter by category"
-                defaultValue={category}
-                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
-              >
-                <option value="all">All categories</option>
-                {categories.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>

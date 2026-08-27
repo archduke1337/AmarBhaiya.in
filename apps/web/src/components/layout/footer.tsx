@@ -2,8 +2,8 @@
  * Footer — amarbhaiya.in
  * ──────────────────────
  * Editorial utility footer.
- * iOS safe-area aware (pb-safe).
- * Uses existing Tailwind v4 + theme tokens.
+ * Calm typographic hierarchy: hairline dividers, no nested panels,
+ * no decorative blobs. iOS safe-area aware (pb-safe).
  */
 
 import Link from "next/link";
@@ -51,39 +51,29 @@ const socialLinks: FooterLinkItem[] = [
   { label: "LinkedIn", href: OWNER.social.linkedin },
 ];
 
-const mobileQuickLinks: FooterLinkItem[] = [
-  { label: "Courses", href: "/courses" },
-  { label: "Notes", href: "/notes" },
-  { label: "Contact", href: "/contact" },
-  { label: "Careers", href: "/careers" },
-  { label: "Login", href: "/login" },
+const legalLinks: FooterLinkItem[] = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+  { label: "Refunds", href: "/refund-policy" },
+  { label: "Cookies", href: "/cookie-policy" },
+  { label: "Grievance", href: "/grievance-redressal" },
+  { label: "Legal", href: "/legal" },
 ];
 
-function FooterLinkColumn({
-  title,
-  links,
-}: {
-  title: string;
-  links: FooterLinkItem[];
-}) {
+function BrandMark() {
   return (
-    <div>
-      <p className="mb-3 font-sans text-[0.65rem] font-extrabold uppercase tracking-[0.16em] text-foreground/45">
-        {title}
-      </p>
-      <ul className="space-y-1.5" role="list">
-        {links.map((link) => (
-          <li key={`${title}-${link.href}`}>
-            <Link
-              href={link.href}
-              className="inline-flex min-h-11 items-center text-sm font-semibold text-foreground/65 transition-colors duration-200 hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Link href="/" className="inline-flex items-center gap-2.5" aria-label="amarbhaiya.in home">
+      <span
+        className="flex size-9 shrink-0 items-center justify-center rounded-[10px] font-heading text-base font-black"
+        style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
+        aria-hidden="true"
+      >
+        A
+      </span>
+      <span className="font-heading text-lg font-black tracking-[-0.02em] text-foreground">
+        amarbhaiya<span style={{ color: "var(--accent)" }}>.in</span>
+      </span>
+    </Link>
   );
 }
 
@@ -92,191 +82,100 @@ export function Footer() {
 
   return (
     <footer className="mt-auto border-t border-border/40 pb-safe" aria-label="Site footer">
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-        {/* Trust strip */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">
-            <p className="text-sm font-black tracking-[-0.02em]">10k+</p>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/50">Students</p>
-          </div>
-          <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">
-            <p className="text-sm font-black tracking-[-0.02em]">500+</p>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/50">Hours</p>
-          </div>
-          <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">
-            <p className="text-sm font-black tracking-[-0.02em]">4.8★</p>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/50">Rating</p>
-          </div>
-          <div className="rounded-xl border border-border/40 bg-surface/50 px-3 py-3 text-center">
-            <p className="text-sm font-black tracking-[-0.02em]">Free</p>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/50">Notes</p>
-          </div>
-        </div>
-        <section className="relative overflow-hidden rounded-[calc(var(--radius)+10px)] border border-border/50 bg-surface/70 p-5 shadow-surface sm:p-8">
-          <div
-            className="pointer-events-none absolute -right-20 -top-16 h-64 w-64 rounded-full opacity-[0.13] blur-3xl"
-            style={{ background: "var(--accent)" }}
-            aria-hidden="true"
-          />
-
-          <div className="relative space-y-4 sm:hidden">
-            <Link href="/" className="inline-flex items-center gap-2" aria-label="amarbhaiya.in home">
-              <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-black"
-                style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
-                aria-hidden="true"
-              >
-                A
-              </span>
-              <span className="font-bold text-sm text-foreground/80">
-                amarbhaiya<span style={{ color: "var(--accent)" }}>.in</span>
-              </span>
-            </Link>
-
-            <p className="text-sm font-medium leading-6 text-foreground/65">
-              Notes first, courses next, progress that stays practical.
+      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+        {/* ── Top: statement + links ── */}
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-14">
+          {/* Statement block */}
+          <div className="space-y-5">
+            <BrandMark />
+            <p className="max-w-sm font-heading text-2xl font-black leading-snug tracking-[-0.03em] text-foreground">
+              Built for students who need clarity, not noise.
             </p>
-
-            <div className="grid gap-2">
+            <p className="max-w-md text-sm font-medium leading-6 text-foreground/60">
+              Start with notes, move into structured courses, and learn at a pace you can sustain.
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm font-semibold text-foreground/70">
               <Link
                 href="/register"
-                className="inline-flex min-h-10 w-full items-center justify-center rounded-full bg-accent px-4 py-2 text-sm font-bold text-accent-foreground"
+                className="inline-flex min-h-11 items-center underline-offset-4 transition-colors hover:text-accent hover:underline"
               >
-                Start free
+                Create free account
               </Link>
               <Link
                 href="/courses"
-                className="inline-flex min-h-10 w-full items-center justify-center rounded-full border border-border/70 bg-background px-4 py-2 text-sm font-semibold text-foreground/80 transition-colors duration-200 hover:text-foreground"
+                className="inline-flex min-h-11 items-center underline-offset-4 transition-colors hover:text-accent hover:underline"
               >
                 Browse courses
               </Link>
             </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {mobileQuickLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="inline-flex min-h-9 items-center justify-center rounded-xl border border-border/60 bg-background/80 px-3 text-xs font-semibold uppercase tracking-[0.12em] text-foreground/65"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
           </div>
 
-          <div className="relative hidden gap-8 sm:grid lg:grid-cols-[1.05fr_1fr] lg:gap-10">
-            <div className="space-y-4 sm:space-y-5">
-              <Link href="/" className="inline-flex items-center gap-2" aria-label="amarbhaiya.in home">
-                <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-black"
-                  style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
-                  aria-hidden="true"
-                >
-                  A
-                </span>
-                <span className="font-bold text-sm text-foreground/80">
-                  amarbhaiya<span style={{ color: "var(--accent)" }}>.in</span>
-                </span>
-              </Link>
-
-              <div className="space-y-3">
-                <h2 className="font-heading text-[clamp(1.4rem,2.8vw,2rem)] font-black tracking-[-0.03em] text-foreground">
-                  Built for students who need clarity, not noise.
-                </h2>
-                <p className="max-w-xl text-sm font-medium leading-6 text-foreground/65 sm:leading-7">
-                  Start with notes, move into structured courses, and learn at a pace you can sustain.
-                  Every section here is designed to help you choose the next useful step quickly.
+          {/* Link columns */}
+          <nav className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3" aria-label="Footer navigation">
+            {footerLinkGroups.map((group) => (
+              <div key={group.title}>
+                <p className="mb-3 font-sans text-[0.65rem] font-extrabold uppercase tracking-[0.16em] text-foreground/40">
+                  {group.title}
                 </p>
+                <ul className="space-y-0.5" role="list">
+                  {group.links.map((link) => (
+                    <li key={`${group.title}-${link.href}`}>
+                      <Link
+                        href={link.href}
+                        className="inline-flex min-h-9 items-center text-sm font-medium text-foreground/65 transition-colors duration-200 hover:text-foreground"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
+            ))}
+          </nav>
+        </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/register"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-4 py-2 text-sm font-bold text-accent-foreground transition-transform duration-200 hover:scale-[1.01]"
-                >
-                  Start free
-                </Link>
-                <Link
-                  href="/courses"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-border/70 bg-background px-4 py-2 text-sm font-semibold text-foreground/80 transition-colors duration-200 hover:text-foreground"
-                >
-                  Browse courses
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid gap-x-5 gap-y-6 min-[480px]:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-              {footerLinkGroups.map((group, index) => (
-                <div
-                  key={group.title}
-                  className={
-                    index === footerLinkGroups.length - 1
-                      ? "min-[480px]:col-span-2 lg:col-span-1"
-                      : ""
-                  }
-                >
-                  <FooterLinkColumn title={group.title} links={group.links} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <div className="mt-5 grid gap-4 rounded-[calc(var(--radius)+6px)] border border-border/40 bg-surface/50 p-4 sm:mt-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
-          <div className="space-y-2">
-            <a
-              href={`mailto:${OWNER.email}`}
-              className="inline-flex min-h-10 items-center gap-2 break-all text-sm font-semibold text-foreground/75 transition-colors hover:text-foreground sm:min-h-11 sm:break-normal"
-            >
-              <Mail className="size-4" />
-              {OWNER.email}
-            </a>
-            <div className="flex flex-wrap gap-2.5 text-[11px] font-semibold uppercase tracking-widest text-foreground/45 sm:gap-3.5 sm:text-xs sm:tracking-[0.12em]">
-              {socialLinks.map((item, index) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`inline-flex min-h-8 items-center gap-1 px-1 transition-colors hover:text-foreground/70 ${index > 1 ? "hidden sm:inline-flex" : ""}`}
-                >
-                  {item.label}
-                  <ArrowUpRight className="size-3" />
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] font-semibold uppercase tracking-widest text-foreground/40 min-[420px]:grid-cols-3 sm:flex sm:flex-wrap sm:justify-end sm:gap-4 sm:text-xs sm:tracking-[0.12em]">
-            <Link href="/privacy" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
-              Privacy
-            </Link>
-            <Link href="/terms" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
-              Terms
-            </Link>
-            <Link href="/refund-policy" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
-              Refunds
-            </Link>
-            <Link href="/cookie-policy" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
-              Cookies
-            </Link>
-            <Link href="/grievance-redressal" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
-              Grievance
-            </Link>
-            <Link href="/legal" className="inline-flex min-h-8 items-center transition-colors hover:text-foreground/70">
-              Legal
-            </Link>
-            <Link href="/certificates" className="hidden min-h-8 items-center transition-colors hover:text-foreground/70 min-[420px]:inline-flex">
-              Verify certificates
-            </Link>
+        {/* ── Middle divider row: contact + socials ── */}
+        <div className="mt-10 flex flex-col gap-4 border-t border-border/40 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <a
+            href={`mailto:${OWNER.email}`}
+            className="inline-flex min-h-9 items-center gap-2 break-all text-sm font-semibold text-foreground/70 transition-colors hover:text-foreground sm:break-normal"
+          >
+            <Mail className="size-4 shrink-0" aria-hidden="true" />
+            {OWNER.email}
+          </a>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {socialLinks.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-8 items-center gap-1 text-xs font-bold uppercase tracking-[0.1em] text-foreground/50 transition-colors hover:text-foreground/80"
+              >
+                {item.label}
+                <ArrowUpRight className="size-3" aria-hidden="true" />
+              </a>
+            ))}
           </div>
         </div>
 
-        <p className="mt-5 text-center text-xs font-semibold uppercase tracking-[0.12em] text-foreground/35 sm:text-left">
-          <span className="sm:hidden">© {currentYear} amarbhaiya.in</span>
-          <span className="hidden sm:inline">© {currentYear} amarbhaiya.in · {OWNER.name}</span>
-        </p>
+        {/* ── Bottom bar: legal + copyright ── */}
+        <div className="mt-5 flex flex-col gap-3 border-t border-border/30 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <nav className="flex flex-wrap gap-x-4 gap-y-1.5" aria-label="Legal">
+            {legalLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="inline-flex min-h-7 items-center text-xs font-semibold text-foreground/45 transition-colors hover:text-foreground/75"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <p className="text-xs font-medium text-foreground/40">
+            © {currentYear} amarbhaiya.in · {OWNER.name}
+          </p>
+        </div>
       </div>
     </footer>
   );
