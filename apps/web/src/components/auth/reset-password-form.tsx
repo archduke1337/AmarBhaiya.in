@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { confirmPasswordRecoveryAction } from "@/server/actions/verification";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { getPasswordStrength } from "@/lib/utils/password-strength";
 

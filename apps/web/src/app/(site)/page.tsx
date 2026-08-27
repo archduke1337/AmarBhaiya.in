@@ -15,6 +15,8 @@ import { ArrowRight } from "lucide-react";
 import { RevealWrapper } from "@/components/ui/reveal-wrapper";
 import { getHomePageContent } from "@/server/appwrite/marketing-content";
 import { AnnouncementBanner } from "@/components/marketing/announcement-banner";
+import { MagneticCta } from "@/components/marketing/magnetic-cta";
+import { GlowFeatureCards } from "@/components/marketing/glow-features";
 
 export const revalidate = 3600;
 
@@ -127,24 +129,22 @@ export default async function MarketingPage() {
                 </RevealWrapper>
 
                 <RevealWrapper className="stagger-3 flex flex-wrap gap-3 pt-2">
-                  <Button asChild
-                      size="lg"
-                      className="font-bold px-7 bg-accent text-accent-foreground glow-accent-sm active:scale-[0.97] transition-transform"
-                    >
-                      <Link href="/courses">
-                        Courses dekho
-                        <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </Link>
-                    </Button>
-                    <Button asChild
-                      size="lg"
-                      variant="outline"
-                      className="font-semibold px-7"
-                    >
-                      <Link href="/notes">Free notes</Link>
-                    </Button>
+                  <MagneticCta
+                    href="/courses"
+                    className="font-bold px-7 bg-accent text-accent-foreground glow-accent-sm active:scale-[0.97] transition-transform"
+                  >
+                    Courses dekho
+                    <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </MagneticCta>
+                  <MagneticCta
+                    href="/notes"
+                    variant="outline"
+                    className="font-semibold px-7"
+                  >
+                    Free notes
+                  </MagneticCta>
                 </RevealWrapper>
 
                 {/* Stats row */}
@@ -401,29 +401,13 @@ export default async function MarketingPage() {
             </RevealWrapper>
 
             {whyItems.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {whyItems.slice(0, 4).map((item, i) => (
-                  <RevealWrapper
-                    key={`${item.title}-${i}`}
-                    className={`stagger-${Math.min(i + 1, 4)}`}
-                  >
-                    <div className="card-bezel h-full">
-                      <div className="card-bezel-inner p-6 flex flex-col gap-4">
-                        <span className="w-12 h-12 rounded-xl flex items-center justify-center text-base font-black text-accent"
-                          style={{ background: "color-mix(in oklab, var(--accent) 10%, transparent)" }}
-                          aria-hidden="true"
-                        >
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <div>
-                          <h3 className="font-bold text-base text-foreground">{item.title}</h3>
-                          <p className="text-sm text-foreground/55 mt-1 leading-relaxed">{item.body}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </RevealWrapper>
-                ))}
-              </div>
+              <GlowFeatureCards
+                items={whyItems.slice(0, 4).map((item, i) => ({
+                  title: item.title,
+                  body: item.body,
+                  index: i,
+                }))}
+              />
             ) : (
               <RevealWrapper>
                 <div className="card-bezel">
@@ -486,9 +470,12 @@ export default async function MarketingPage() {
             </div>
 
             <RevealWrapper className="mt-8 text-center">
-              <Button asChild size="lg" className="font-bold px-8 bg-accent text-accent-foreground glow-accent-sm">
-                <Link href="/register">Start now — it&apos;s free</Link>
-              </Button>
+              <MagneticCta
+                href="/register"
+                className="font-bold px-8 bg-accent text-accent-foreground glow-accent-sm"
+              >
+                Start now — it&apos;s free
+              </MagneticCta>
             </RevealWrapper>
           </div>
         </section>
@@ -585,15 +572,19 @@ export default async function MarketingPage() {
                     Account banao — free hai. Har chapter ka notes bhi free hai. Shuruaat karo aaj.
                   </p>
                   <div className="relative z-10 flex flex-wrap gap-3 justify-center">
-                    <Button asChild
-                        size="lg"
-                        className="font-bold px-8 bg-accent text-accent-foreground glow-accent active:scale-[0.97] transition-transform"
-                      >
-                        <Link href="/register">Free account banao</Link>
-                      </Button>
-                    <Button asChild size="lg" variant="outline" className="font-semibold px-8">
-                      <Link href="/courses">Courses browse karo</Link>
-                    </Button>
+                    <MagneticCta
+                      href="/register"
+                      className="font-bold px-8 bg-accent text-accent-foreground glow-accent active:scale-[0.97] transition-transform"
+                    >
+                      Free account banao
+                    </MagneticCta>
+                    <MagneticCta
+                      href="/courses"
+                      variant="outline"
+                      className="font-semibold px-8"
+                    >
+                      Courses browse karo
+                    </MagneticCta>
                   </div>
                 </div>
               </div>

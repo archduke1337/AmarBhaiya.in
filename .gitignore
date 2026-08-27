@@ -13,6 +13,7 @@ node_modules/
 .claude/
 .mimocode/
 .kiro/
+.tools/
 
 # Turborepo and build output
 .turbo/
