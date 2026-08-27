@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { getPasswordStrength } from "@/lib/utils/password-strength";
 
 export function RegisterForm({ redirectPath }: { redirectPath: string }) {
@@ -102,11 +103,10 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="register-password" className="text-sm font-semibold text-foreground/70">Password</label>
-          <Input
+          <PasswordInput
             id="register-password"
             required
             placeholder="Min 8 chars, letter, number, symbol"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"

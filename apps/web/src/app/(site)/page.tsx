@@ -437,7 +437,122 @@ export default async function MarketingPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════════
-            SECTION 4 — CTA Banner
+            SECTION 5 — How it works
+        ═══════════════════════════════════════════════════ */}
+        <section aria-labelledby="how-heading" className="section-pad-sm">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <RevealWrapper className="mb-10 text-center">
+              <span className="eyebrow mb-4 mx-auto">How it works</span>
+              <h2 id="how-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
+                Three steps, zero friction.
+              </h2>
+              <p className="mx-auto mt-3 max-w-prose text-sm leading-6 text-foreground/60 sm:text-base">
+                From a free account to your first finished chapter in under five minutes.
+              </p>
+            </RevealWrapper>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                {
+                  step: "01",
+                  title: "Banao free account",
+                  body: "Email aur password se free account banao — koi card nahi, koi trial trap nahi.",
+                },
+                {
+                  step: "02",
+                  title: "Chuno apna path",
+                  body: "Class aur subject ke hisaab se notes, course, ya live session pehle milega jo actual me useful hai.",
+                },
+                {
+                  step: "03",
+                  title: "Roshni karo, results dekho",
+                  body: "Chhote structured lessons se chapter complete karo aur progress ko practical rakho.",
+                },
+              ].map((item, i) => (
+                <RevealWrapper key={item.step} className={`stagger-${Math.min(i + 1, 3)}`}>
+                  <div className="card-bezel h-full">
+                    <div className="card-bezel-inner p-6 flex flex-col gap-4">
+                      <span className="font-black text-4xl leading-none opacity-[0.16]" aria-hidden="true">
+                        {item.step}
+                      </span>
+                      <div>
+                        <h3 className="font-bold text-base text-foreground">{item.title}</h3>
+                        <p className="text-sm text-foreground/55 mt-1 leading-relaxed">{item.body}</p>
+                      </div>
+                    </div>
+                  </div>
+                </RevealWrapper>
+              ))}
+            </div>
+
+            <RevealWrapper className="mt-8 text-center">
+              <Button asChild size="lg" className="font-bold px-8 bg-accent text-accent-foreground glow-accent-sm">
+                <Link href="/register">Start now — it&apos;s free</Link>
+              </Button>
+            </RevealWrapper>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════
+            SECTION 6 — Testimonials
+        ═══════════════════════════════════════════════════ */}
+        <section aria-labelledby="testimonials-heading" className="section-pad-sm">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <RevealWrapper className="mb-10 text-center">
+              <span className="eyebrow mb-4 mx-auto">From students</span>
+              <h2 id="testimonials-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
+                4.8/5 — aur rising.
+              </h2>
+              <p className="mx-auto mt-3 max-w-prose text-sm leading-6 text-foreground/60 sm:text-base">
+                Real notes about what learning actually feels like here.
+              </p>
+            </RevealWrapper>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  quote: "Coaching ke notes mushkil the. Yahan har chapter ka free note seedha aur dry nahi — actually samajh me aata hai.",
+                  name: "Class 10 student",
+                  detail: "Science · Board prep",
+                },
+                {
+                  quote: "Course kharidne se pehle poora curriculum dekh sakte the. Paid hone ka matlab yahan tabhi hota hai jab value clear ho.",
+                  name: "Class 12 student",
+                  detail: "Maths · Competitive prep",
+                },
+                {
+                  quote: "Mere bete ko structured lessons ne lagatar padhna easy bana diya. Progress track karna bhi aasaan hai.",
+                  name: "Parent",
+                  detail: "Guardian of Class 8 student",
+                },
+              ].map((item, i) => (
+                <RevealWrapper key={item.name} className={`stagger-${Math.min(i + 1, 3)}`}>
+                  <div className="card-bezel h-full">
+                    <div className="card-bezel-inner p-6 flex flex-col gap-4">
+                      <div className="flex gap-0.5 text-accent" aria-label="5 out of 5 stars" role="img">
+                        {Array.from({ length: 5 }).map((_, j) => (
+                          <svg key={j} width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 2l2.95 6.27 6.9.92-5.05 4.87 1.26 6.84L12 17.9l-6.06 3.03 1.26-6.84L2.15 9.19l6.9-.92L12 2z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-sm font-medium leading-7 text-foreground/80">
+                        &ldquo;{item.quote}&rdquo;
+                      </p>
+                      <div className="mt-auto">
+                        <p className="font-bold text-sm text-foreground">{item.name}</p>
+                        <p className="text-xs text-foreground/50 mt-0.5">{item.detail}</p>
+                      </div>
+                    </div>
+                  </div>
+                </RevealWrapper>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════
+            SECTION 7 — CTA Banner
         ═══════════════════════════════════════════════════ */}
         <section aria-labelledby="cta-heading" className="section-pad-sm pb-safe">
           <div className="mx-auto max-w-5xl px-4 sm:px-6">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function LoginForm({ redirectPath }: { redirectPath: string }) {
   const router = useRouter();
@@ -89,11 +90,10 @@ export function LoginForm({ redirectPath }: { redirectPath: string }) {
               Forgot?
             </Link>
           </div>
-          <Input
+          <PasswordInput
             id="login-password"
             required
             placeholder="••••••••"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"

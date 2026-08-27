@@ -5,6 +5,7 @@ import Link from "next/link";
 import { confirmPasswordRecoveryAction } from "@/server/actions/verification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { getPasswordStrength } from "@/lib/utils/password-strength";
 
 export function ResetPasswordForm({
@@ -70,12 +71,11 @@ export function ResetPasswordForm({
             <label htmlFor="reset-password" className="text-sm font-semibold text-foreground/70">
               New password
             </label>
-            <Input
+            <PasswordInput
               id="reset-password"
               required
               name="password"
               placeholder="Min 8 chars, letter, number, symbol"
-              type="password"
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -110,11 +110,10 @@ export function ResetPasswordForm({
           <label htmlFor="reset-password-confirm" className="text-sm font-semibold text-foreground/70">
             Confirm password
           </label>
-          <Input
+          <PasswordInput
             id="reset-password-confirm"
             required
             placeholder="Re-enter your new password"
-            type="password"
             minLength={8}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
