@@ -84,7 +84,7 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
                 id="category"
                 name="category"
                 defaultValue={activeCategory}
-                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3.5 text-sm font-semibold text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
               >
                 <option value="all">All categories</option>
                 {categories.map((category) => (
@@ -125,7 +125,7 @@ export default async function BlogPage({ searchParams }: { searchParams: SearchP
                 <span>{post.authorName}</span>
               </div>
               <div className="space-y-3">
-                <h2 className="font-heading text-3xl font-black leading-[0.95] tracking-[-0.05em]">
+                <h2 className="font-heading text-3xl font-normal leading-[1.05] tracking-[-0.02em]">
                   {post.title}
                 </h2>
                 <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">

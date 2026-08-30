@@ -45,7 +45,7 @@ export default function ParentsPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {commitments.map((item, index) => (
             <RetroPanel key={item.title} tone={index % 2 === 0 ? "card" : "muted"} className="space-y-3">
-              <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">{item.title}</h2>
+              <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">{item.title}</h2>
               <p className="text-sm font-medium leading-7 text-foreground/80">{item.body}</p>
             </RetroPanel>
           ))}
@@ -56,7 +56,7 @@ export default function ParentsPage() {
         <RetroPanel tone="secondary" className="space-y-3">
           <div className="flex items-center gap-2.5">
             <ShieldCheck className="size-5 text-accent" aria-hidden="true" />
-            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">
+            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">
               Concerned about something?
             </h2>
           </div>

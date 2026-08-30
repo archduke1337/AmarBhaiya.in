@@ -46,8 +46,8 @@
     --overlay:            oklch(1 0 0);
     --overlay-foreground: var(--eclipse);
 
-    /* Muted */
-    --muted:     oklch(0.52 0.01 88);
+    /* Muted — darkened so text-muted-foreground meets WCAG AA (4.5:1) on the warm cream background */
+    --muted:     oklch(0.45 0.012 88);
     --scrollbar: oklch(0.88 0.006 88);
 
     /* Default chip/tag */
@@ -91,8 +91,10 @@
     --surface-primary:    var(--accent);
     --surface-ink:        color-mix(in oklab, var(--foreground) 6%, var(--surface));
     --surface-hover:      color-mix(in oklab, var(--surface) 88%, var(--accent) 12%);
-    --shadow-retro:       4px 4px 0 0 var(--border);
-    --shadow-retro-sm:    2px 2px 0 0 var(--border);
+    /* Legacy "retro" shadow names now map to soft elevation — the hard-offset
+       neo-brutalist look is retired in favour of a calmer, premium surface. */
+    --shadow-retro:       var(--surface-shadow);
+    --shadow-retro-sm:    0 1px 2px oklch(0 0 0 / 0.05);
 
     /* Shadows — soft ambient, iOS-style */
     --surface-shadow:
@@ -154,8 +156,8 @@
     --surface-primary:    var(--accent);
     --surface-ink:        oklch(0.22 0.008 262);
     --surface-hover:      color-mix(in oklab, var(--surface) 90%, var(--accent) 10%);
-    --shadow-retro:       4px 4px 0 0 var(--border);
-    --shadow-retro-sm:    2px 2px 0 0 var(--border);
+    --shadow-retro:       var(--surface-shadow);
+    --shadow-retro-sm:    0 2px 6px oklch(0 0 0 / 0.35);
 
     --surface-shadow: 0 2px 8px oklch(0 0 0 / 0.35), 0 8px 24px oklch(0 0 0 / 0.25);
     --overlay-shadow:
@@ -181,7 +183,10 @@
   --shadow-retro: var(--shadow-retro);
   --shadow-retro-sm: var(--shadow-retro-sm);
   --color-overlay:       var(--overlay);
-  --color-muted:         var(--muted);
+  /* --muted is the *text* gray (dark enough for AA). Backgrounds that want a
+     neutral fill use --color-muted → the light --default surface, so bg-muted
+     stays a proper light chip instead of inheriting the text gray. */
+  --color-muted:         var(--default);
   --color-accent:        var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-border:        var(--border);
@@ -296,12 +301,14 @@
     --safe-right:  env(safe-area-inset-right,  0px);
   }
 
-  /* Headings */
+  /* Headings — DM Serif Display is a 400-weight face; let it stay light and
+     editorial instead of synthesizing a heavy faux-bold. Hierarchy comes from
+     size + the serif/sans contrast, not from weight. */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.08;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.12;
     text-wrap: balance;
   }
 
@@ -374,18 +381,17 @@
     box-shadow: 0 0 20px -6px color-mix(in oklab, var(--accent) 35%, transparent);
   }
 
-  /* Double-bezel card (Doppelrand technique from high-end-visual-design skill) */
+  /* Framed card — a hairline tinted frame around a clean surface card.
+     Calm version of the old double-bezel: no inset highlight, no hard shadow. */
   .card-bezel {
-    padding: 6px;
-    border-radius: calc(var(--radius) + 6px);
-    background: color-mix(in oklab, var(--surface) 70%, var(--accent) 6%);
-    border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
-    box-shadow:
-      inset 0 1px 1px oklch(100% 0 0 / 0.12),
-      var(--surface-shadow);
+    padding: 1px;
+    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--surface) 72%, var(--accent) 5%);
+    border: 1px solid var(--border);
+    box-shadow: var(--surface-shadow);
   }
   .card-bezel-inner {
-    border-radius: var(--radius);
+    border-radius: calc(var(--radius) - 1px);
     background: var(--surface);
     overflow: hidden;
   }
@@ -427,16 +433,16 @@
     .site-container { width: min(100% - 3rem, 72rem); }
   }
 
-  /* Fluid island nav — floating pill */
+  /* Fluid island nav — floating pill (reduced blur for perf + calmness) */
   .nav-island {
     border-radius: 999px;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    background: color-mix(in oklab, var(--overlay) 72%, transparent);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    background: color-mix(in oklab, var(--overlay) 80%, transparent);
     border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
     box-shadow:
-      0 2px 16px oklch(0 0 0 / 0.12),
-      inset 0 1px 0 oklch(100% 0 0 / 0.08);
+      0 2px 12px oklch(0 0 0 / 0.08),
+      inset 0 1px 0 oklch(100% 0 0 / 0.06);
   }
 
   /* Eyebrow badge */
@@ -512,11 +518,37 @@
     display: none;
   }
 
+  /* ── Route/page entry animations ───────────────────────────
+     These classes were referenced across dashboard + auth views but had no
+     keyframes, so they silently did nothing. GPU-safe: transform + opacity. */
+  .animate-fade-in-up {
+    animation: fade-in-up 0.35s var(--ease-out-fluid) both;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out both;
+  }
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s var(--ease-out-fluid) both;
+  }
+
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(0); }
+  }
+
   /* Retro surface alias (used via retro-surface class in some panels) */
   .retro-surface {
     background: var(--surface-card);
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-retro);
+    box-shadow: var(--surface-shadow);
   }
 }
 

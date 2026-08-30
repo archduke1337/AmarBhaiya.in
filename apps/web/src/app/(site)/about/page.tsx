@@ -137,13 +137,39 @@ export default async function AboutPage() {
               <p className="site-kicker font-sans">
                 Layer {index + 1}
               </p>
-              <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+              <h3 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                 {item.title}
               </h3>
               <p className="text-sm font-medium leading-6 text-foreground/80">{item.detail}</p>
             </RetroPanel>
           ))}
         </div>
+      </section>
+
+      {/* Editorial band — the actual room where the teaching happens.
+          Wide classroom panorama keeps the story rooted in real sessions. */}
+      <section aria-label="The classroom" className="mx-auto max-w-6xl space-y-3">
+        <RevealWrapper>
+          <figure className="card-bezel overflow-hidden">
+            <div className="relative aspect-[21/9] w-full sm:aspect-[32/9]">
+              <Image
+                src="/images/IMG_1322.webp"
+                alt="Panoramic view of Amar Bhaiya's classroom during a session"
+                fill
+                sizes="(max-width: 1024px) 100vw, 1024px"
+                className="object-cover"
+              />
+            </div>
+            <figcaption className="flex items-center justify-between gap-3 border-t border-border/40 px-4 py-3 sm:px-5">
+              <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/60">
+                The room where lessons actually happen
+              </span>
+              <span className="hidden text-xs font-medium text-foreground/55 sm:block">
+                No studios, no sets
+              </span>
+            </figcaption>
+          </figure>
+        </RevealWrapper>
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[0.88fr_1.12fr]">
@@ -165,7 +191,7 @@ export default async function AboutPage() {
               <p className="site-kicker font-sans">
                 Rule {index + 1}
               </p>
-              <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+              <h3 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                 {rule.title}
               </h3>
               <p className="text-sm font-medium leading-7 text-foreground/80">{rule.detail}</p>
@@ -198,7 +224,7 @@ export default async function AboutPage() {
                 {item.year}
               </p>
               <div className="space-y-2">
-                <h3 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                <h3 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                   {item.title}
                 </h3>
                 <p className="text-sm font-medium leading-7 text-foreground/80">{item.detail}</p>

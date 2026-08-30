@@ -58,7 +58,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
   return (
     <div className="w-full flex flex-col gap-6 animate-fade-in-up">
       <div className="mb-2">
-        <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
+        <h2 className="text-[clamp(2rem,4vw,3rem)] font-normal tracking-[-0.02em] leading-[1.05] mb-3">
           Create account
         </h2>
         <p className="text-foreground/60 text-base font-medium">
@@ -132,7 +132,7 @@ export function RegisterForm({ redirectPath }: { redirectPath: string }) {
             </div>
           )}
           {password.length === 0 && (
-            <p className="text-xs text-foreground/50 px-2 font-medium">
+            <p className="text-xs text-foreground/60 px-2 font-medium">
               At least 8 characters with a letter, number, and special character.
             </p>
           )}

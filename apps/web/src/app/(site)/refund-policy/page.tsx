@@ -77,7 +77,7 @@ export default function RefundPolicyPage() {
       <section className="mx-auto max-w-6xl grid gap-4">
         {sections.map((item, index) => (
           <RetroPanel key={item.title} tone={index % 2 === 0 ? "card" : "muted"} className="space-y-3">
-            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">{item.title}</h2>
+            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">{item.title}</h2>
             <p className="text-sm font-medium leading-7 text-foreground/80">{item.body}</p>
           </RetroPanel>
         ))}

@@ -69,7 +69,7 @@ export function SearchableFaq({ groups }: { groups: FaqGroup[] }) {
       </div>
 
       {filteredGroups.length === 0 ? (
-        <div className="rounded-[calc(var(--radius)+2px)] border-2 border-dashed border-border bg-card px-6 py-10 text-center shadow-retro-sm">
+        <div className="rounded-[calc(var(--radius)+2px)] border border-dashed border-border bg-card px-6 py-10 text-center">
           <SearchX
             className="mx-auto mb-3 size-6 text-muted-foreground/50"
             aria-hidden="true"
@@ -87,13 +87,13 @@ export function SearchableFaq({ groups }: { groups: FaqGroup[] }) {
         <div className="space-y-4">
           {filteredGroups.map((group) => (
             <div key={group.title} className="space-y-3">
-              <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+              <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                 {group.title}
               </h2>
               {group.items.map((item) => (
                 <details
                   key={item.q}
-                  className="group overflow-hidden rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro"
+                  className="group overflow-hidden rounded-[calc(var(--radius)+2px)] border border-border bg-card shadow-[var(--surface-shadow)]"
                 >
                   <summary className="flex min-h-14 cursor-pointer list-none items-start justify-between gap-4 bg-secondary/75 px-4 py-4 text-sm font-sans font-bold leading-6 tracking-[0.01em] outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
                     {item.q}

@@ -239,7 +239,7 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="overflow-hidden rounded-[calc(var(--radius)+8px)] border-2 border-border bg-[color:var(--surface-card)] shadow-retro">
+    <div className="overflow-hidden rounded-[calc(var(--radius)+8px)] border border-border bg-[color:var(--surface-card)] shadow-retro">
       <div className="relative border-b-2 border-border bg-black">
         <video
           ref={videoRef}
@@ -275,7 +275,7 @@ export function VideoPlayer({
             className="absolute inset-0 flex items-center justify-center bg-black/10"
             aria-label="Play video"
           >
-            <div className="flex size-16 items-center justify-center rounded-[calc(var(--radius)+6px)] border-2 border-border bg-[color:var(--surface-secondary)] shadow-retro transition-transform hover:-translate-y-1">
+            <div className="flex size-16 items-center justify-center rounded-[calc(var(--radius)+6px)] border border-border bg-[color:var(--surface-secondary)] shadow-retro transition-transform hover:-translate-y-1">
               <Play className="ml-1 size-7 text-foreground" />
             </div>
           </button>
@@ -286,7 +286,7 @@ export function VideoPlayer({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             {title ? (
-              <p className="font-heading text-lg font-black tracking-[-0.04em]">
+              <p className="font-heading text-lg font-normal tracking-[-0.02em]">
                 {title}
               </p>
             ) : null}
@@ -362,7 +362,7 @@ export function VideoPlayer({
           aria-valuenow={Math.round(progress)}
           aria-valuetext={`${Math.round(progress)}% • ${formatTime(currentTime)} of ${formatTime(duration)}`}
           aria-label="Seek through lesson video"
-          className="h-4 cursor-pointer rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-ink)] p-[3px] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="h-4 cursor-pointer rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-ink)] p-[3px] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2"
           onClick={handleSeek}
           onKeyDown={handleSliderKeyDown}
         >

@@ -140,7 +140,7 @@ function CourseCard({ course }: { course: InstructorCourseListItem }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+              <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">
                 {course.title}
               </h2>
               <Badge variant={course.status === "Published" ? "default" : "outline"}>
@@ -229,7 +229,7 @@ function CourseCard({ course }: { course: InstructorCourseListItem }) {
         ) : null}
 
         {course.attentionFlags.length > 0 ? (
-          <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-muted)] px-4 py-3 shadow-retro-sm">
+          <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-muted)] px-4 py-3">
             <p className="font-heading text-xs font-black uppercase tracking-[0.14em] text-muted-foreground">
               Watch list
             </p>

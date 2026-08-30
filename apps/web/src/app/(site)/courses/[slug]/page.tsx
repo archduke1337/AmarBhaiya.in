@@ -145,7 +145,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             <p className="site-kicker font-sans">
               Course detail
             </p>
-            <h1 className="max-w-[15ch] font-heading text-[clamp(2.25rem,6vw,4.5rem)] font-black leading-[0.98] tracking-[-0.055em]">
+            <h1 className="max-w-[15ch] font-heading text-[clamp(2.25rem,6vw,4.5rem)] font-normal leading-[1.05] tracking-[-0.02em]">
               {course.title}
             </h1>
             <p className="max-w-3xl text-lg font-medium leading-8 text-muted-foreground">
@@ -157,31 +157,31 @@ export default async function CourseDetailPage({ params }: PageProps) {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5 text-sm">
-            <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-secondary px-3 py-3 shadow-retro-sm">
+            <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-secondary px-3 py-3 shadow-retro-sm">
               <p className="mb-1 font-heading text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Category
               </p>
               <p className="font-bold">{course.category}</p>
             </div>
-            <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-accent px-3 py-3 shadow-retro-sm">
+            <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-accent px-3 py-3 shadow-retro-sm">
               <p className="mb-1 font-heading text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Access
               </p>
               <p className="font-bold capitalize">{course.accessModel}</p>
             </div>
-            <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3 py-3 shadow-retro-sm">
+            <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3 py-3 shadow-retro-sm">
               <p className="mb-1 font-heading text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Lessons
               </p>
               <p className="font-bold">{course.totalLessons}</p>
             </div>
-            <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3 py-3 shadow-retro-sm">
+            <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3 py-3 shadow-retro-sm">
               <p className="mb-1 font-heading text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Hours
               </p>
               <p className="font-bold">{course.totalDurationHours}</p>
             </div>
-            <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-muted px-3 py-3 shadow-retro-sm">
+            <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-muted px-3 py-3 shadow-retro-sm">
               <p className="mb-1 font-heading text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Price
               </p>
@@ -226,7 +226,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
           </div>
 
           {enrolled && (
-            <p className="rounded-[calc(var(--radius)+4px)] border-2 border-border bg-secondary px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
+            <p className="rounded-[calc(var(--radius)+4px)] border border-border bg-secondary px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
               You are enrolled in this course
             </p>
           )}
@@ -240,11 +240,11 @@ export default async function CourseDetailPage({ params }: PageProps) {
               width={1280}
               height={720}
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="aspect-video w-full rounded-[calc(var(--radius)+4px)] border-2 border-border object-cover shadow-retro-sm"
+              className="aspect-video w-full rounded-[calc(var(--radius)+4px)] border border-border object-cover shadow-retro-sm"
               priority
             />
           ) : (
-            <div className="flex aspect-video items-center justify-center rounded-[calc(var(--radius)+4px)] border-2 border-border bg-card text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground shadow-retro-sm">
+            <div className="flex aspect-video items-center justify-center rounded-[calc(var(--radius)+4px)] border border-border bg-card text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground shadow-retro-sm">
               Thumbnail coming soon
             </div>
           )}
@@ -260,12 +260,12 @@ export default async function CourseDetailPage({ params }: PageProps) {
             {learningSignals.map((item, index) => (
               <div
                 key={item.title}
-                className={`rounded-[calc(var(--radius)+4px)] border-2 border-border px-4 py-4 shadow-retro-sm ${
+                className={`rounded-[calc(var(--radius)+4px)] border border-border px-4 py-4 shadow-retro-sm ${
                   index === 1 ? "bg-[color:var(--surface-accent)]" : "bg-[color:var(--surface-card)]"
                 }`}
               >
                 <item.icon className="size-4" />
-                <h2 className="mt-3 font-heading text-lg font-black tracking-[-0.04em]">
+                <h2 className="mt-3 font-heading text-lg font-normal tracking-[-0.02em]">
                   {item.title}
                 </h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-foreground/80">
@@ -279,7 +279,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
       <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
         <RetroPanel tone="accent" size="lg" className="space-y-4">
-          <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-[-0.04em]">What you will learn</h2>
+          <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-normal tracking-[-0.02em]">What you will learn</h2>
           {course.whatYouLearn.length === 0 ? (
             <p className="text-sm font-medium text-muted-foreground">No learning outcomes configured yet.</p>
           ) : null}
@@ -287,7 +287,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             {course.whatYouLearn.map((item) => (
               <li
                 key={item}
-                className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-4 py-3 text-sm font-semibold leading-6 text-foreground shadow-retro-sm"
+                className="rounded-[calc(var(--radius)+2px)] border border-border bg-card px-4 py-3 text-sm font-semibold leading-6 text-foreground shadow-retro-sm"
               >
                 {item}
               </li>
@@ -296,7 +296,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
         </RetroPanel>
 
         <RetroPanel tone="muted" size="lg" className="space-y-4">
-          <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-[-0.04em]">Requirements</h2>
+          <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-normal tracking-[-0.02em]">Requirements</h2>
           {course.requirements.length === 0 ? (
             <p className="text-sm font-medium text-muted-foreground">No specific requirements listed.</p>
           ) : null}
@@ -304,7 +304,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             {course.requirements.map((item) => (
               <li
                 key={item}
-                className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-4 py-3 text-sm font-semibold leading-6 text-foreground shadow-retro-sm"
+                className="rounded-[calc(var(--radius)+2px)] border border-border bg-card px-4 py-3 text-sm font-semibold leading-6 text-foreground shadow-retro-sm"
               >
                 {item}
               </li>
@@ -319,7 +319,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             <p className="site-kicker font-sans">
               Curriculum
             </p>
-            <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-[-0.04em]">
+            <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-normal tracking-[-0.02em]">
               See the path before you commit to it.
             </h2>
             <p className="max-w-3xl text-sm font-medium leading-7 text-foreground/80">
@@ -339,7 +339,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <p className="font-heading text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
                 Module {index + 1}
               </p>
-              <h3 className="font-heading text-[clamp(1.25rem,3vw,1.75rem)] font-black tracking-[-0.035em]">{module.title}</h3>
+              <h3 className="font-heading text-[clamp(1.25rem,3vw,1.75rem)] font-normal tracking-[-0.02em]">{module.title}</h3>
               <ul className="space-y-2">
                 {module.lessons.map((lesson) => {
                   const isAccessible =
@@ -350,7 +350,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
                   return (
                     <li
                       key={lesson.id}
-                      className="flex flex-wrap items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-4 py-3 text-sm font-semibold text-foreground shadow-retro-sm"
+                      className="flex flex-wrap items-center gap-2 rounded-[calc(var(--radius)+2px)] border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground shadow-retro-sm"
                     >
                       {isAccessible ? (
                         enrolled ? (

@@ -139,7 +139,7 @@ export default async function StudentDashboardPage() {
         <section className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-2xl font-black tracking-[-0.03em]">Continue Learning</h2>
+              <h2 className="text-2xl font-normal tracking-[-0.02em]">Continue Learning</h2>
               <div className="flex flex-wrap gap-2">
                 <Link href="/app/courses">
                    <span className="text-sm font-bold text-accent hover:text-accent-foreground transition-colors cursor-pointer">View all</span>
@@ -165,10 +165,10 @@ export default async function StudentDashboardPage() {
                     <div className="flex flex-col gap-4 p-5 rounded-2xl bg-surface border border-border/40 transition-all hover:bg-surface-hover hover:border-border/60 hover:shadow-[var(--surface-shadow)]">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex flex-col gap-1">
-                          <h3 className="text-lg font-black tracking-[-0.02em] group-hover:text-accent transition-colors">
+                          <h3 className="text-lg font-normal tracking-[-0.01em] group-hover:text-accent transition-colors">
                             {course.title}
                           </h3>
-                          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground/50">
+                          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground/60">
                             {course.completedLessons} of {course.totalLessons} lessons
                           </p>
                         </div>
@@ -176,7 +176,7 @@ export default async function StudentDashboardPage() {
 
                       <div className="flex flex-col gap-2">
                          <div className="flex justify-between items-center text-xs font-bold">
-                            <span className="text-foreground/50">
+                            <span className="text-foreground/60">
                               {course.resumePercent > 0
                                 ? `Resume: ${course.continueLessonTitle}`
                                 : `Up Next: ${course.continueLessonTitle}`}
@@ -201,12 +201,12 @@ export default async function StudentDashboardPage() {
           {/* Study Queue Section */}
           <div className="flex flex-col gap-4 mt-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-2xl font-black tracking-[-0.03em]">Study Queue</h2>
+              <h2 className="text-2xl font-normal tracking-[-0.02em]">Study Queue</h2>
             </div>
 
             {studyQueue.length === 0 ? (
               <div className="p-6 rounded-2xl border border-dashed border-border/60 bg-surface/30">
-                <p className="text-sm font-medium text-foreground/50 text-center">
+                <p className="text-sm font-medium text-foreground/60 text-center">
                   No pending assignments or quiz retakes right now.
                 </p>
               </div>
@@ -227,7 +227,7 @@ export default async function StudentDashboardPage() {
                            {item.title}
                         </p>
                       </div>
-                      <p className="text-xs font-medium text-foreground/50">
+                      <p className="text-xs font-medium text-foreground/60">
                         {item.courseTitle}{item.lessonTitle ? ` · ${item.lessonTitle}` : ""}
                       </p>
                     </div>
@@ -236,7 +236,7 @@ export default async function StudentDashboardPage() {
                          <span className="text-[10px] font-bold uppercase text-danger bg-danger/10 px-2 py-0.5 rounded">Overdue</span>
                       )}
                       {item.dueAt && (
-                         <span className="text-xs font-medium text-foreground/40">{formatRelativeTime(item.dueAt)}</span>
+                         <span className="text-xs font-medium text-foreground/55">{formatRelativeTime(item.dueAt)}</span>
                       )}
                       <ArrowRight className="size-4 text-foreground/30 group-hover:text-accent transition-colors shrink-0" />
                     </div>

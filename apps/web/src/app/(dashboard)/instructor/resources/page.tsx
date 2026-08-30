@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 const selectClassName =
-  "h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none transition-all focus-visible:-translate-y-px focus-visible:translate-x-px focus-visible:shadow-none focus-visible:ring-[3px] focus-visible:ring-ring/40";
+  "h-11 w-full rounded-[calc(var(--radius)+2px)] border border-border bg-input px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none transition-all focus-visible:-translate-y-px focus-visible:translate-x-px focus-visible:shadow-none focus-visible:ring-[3px] focus-visible:ring-ring/40";
 
 export default async function InstructorResourcesPage() {
   await requireRole(["admin", "instructor"]);
@@ -164,7 +164,7 @@ export default async function InstructorResourcesPage() {
         id="course-resources"
         className="scroll-mt-24 flex flex-col gap-3"
       >
-        <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+        <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
           Course Resources ({courseResources.length})
         </h2>
 
@@ -184,7 +184,7 @@ export default async function InstructorResourcesPage() {
               <div className="flex flex-col gap-2 p-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-heading text-lg font-black tracking-[-0.04em]">
+                    <h3 className="font-heading text-lg font-normal tracking-[-0.02em]">
                       {resource.title}
                     </h3>
                     <Badge variant="outline" className="text-[10px] uppercase">
@@ -358,7 +358,7 @@ export default async function InstructorResourcesPage() {
             />
           </label>
 
-          <label className="flex min-h-11 items-center gap-3 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3.5 shadow-retro-sm">
+          <label className="flex min-h-11 items-center gap-3 rounded-[calc(var(--radius)+2px)] border border-border bg-input px-3.5 shadow-retro-sm">
             <input
               name="isPublished"
               type="checkbox"
@@ -385,7 +385,7 @@ export default async function InstructorResourcesPage() {
         id="standalone-resources"
         className="scroll-mt-24 flex flex-col gap-3"
       >
-        <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+        <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
           Standalone Resources ({resources.length})
         </h2>
 
@@ -405,7 +405,7 @@ export default async function InstructorResourcesPage() {
               <div className="flex flex-col gap-2 p-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-heading text-lg font-black tracking-[-0.04em]">
+                    <h3 className="font-heading text-lg font-normal tracking-[-0.02em]">
                       {resource.title}
                     </h3>
                     <Badge variant="outline" className="text-[10px]">
@@ -511,7 +511,7 @@ export default async function InstructorResourcesPage() {
                   </label>
 
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                    <label className="flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3 shadow-retro-sm">
+                    <label className="flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border border-border bg-input px-3 shadow-retro-sm">
                       <input
                         name="isPublished"
                         type="checkbox"

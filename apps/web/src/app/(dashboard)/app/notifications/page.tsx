@@ -54,7 +54,7 @@ export default async function NotificationsPage() {
             <article
               key={notification.id}
               id={`notification-${notification.id}`}
-              className={`flex scroll-mt-24 flex-col gap-4 border-b-2 border-border px-5 py-4 transition-colors last:border-b-0 sm:flex-row sm:items-start ${
+              className={`flex scroll-mt-24 flex-col gap-4 border-b border-border/60 px-5 py-4 transition-colors last:border-b-0 sm:flex-row sm:items-start ${
                 notification.isRead
                   ? "opacity-70"
                   : "bg-[color:var(--surface-secondary)]"

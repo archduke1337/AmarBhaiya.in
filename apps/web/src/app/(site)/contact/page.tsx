@@ -68,9 +68,9 @@ export default async function ContactPage() {
               {contactChecklist.map((item, index) => (
                 <div
                   key={item}
-                  className="grid gap-3 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-4 py-3 shadow-retro-sm md:grid-cols-[32px_1fr] md:items-start"
+                  className="grid gap-3 rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-card)] px-4 py-3 md:grid-cols-[32px_1fr] md:items-start"
                 >
-                  <div className="flex size-8 items-center justify-center rounded-full border-2 border-border bg-[color:var(--surface-accent)] font-heading text-sm font-black">
+                  <div className="flex size-8 items-center justify-center rounded-full border border-border bg-[color:var(--surface-accent)] font-heading text-sm font-black">
                     {index + 1}
                   </div>
                   <p className="text-sm font-medium leading-6 text-foreground/80">{item}</p>
@@ -89,7 +89,7 @@ export default async function ContactPage() {
                 <p className="site-kicker font-sans">
                   Best for
                 </p>
-                <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+                <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">
                   {item.title}
                 </h2>
                 <p className="text-sm font-medium leading-6 text-foreground/80">{item.body}</p>

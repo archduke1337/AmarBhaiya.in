@@ -32,11 +32,11 @@ export function EmptyState({
         className
       )}
     >
-      <div className="w-16 h-16 rounded-full bg-surface-hover flex items-center justify-center text-foreground/50 mb-2">
+      <div className="w-16 h-16 rounded-full bg-surface-hover flex items-center justify-center text-foreground/60 mb-2">
         <Icon className="size-8" strokeWidth={1.5} />
       </div>
       <div>
-        <h3 className="mb-2 font-heading text-xl font-black tracking-[-0.03em]">{title}</h3>
+        <h3 className="mb-2 font-heading text-xl font-normal tracking-[-0.02em]">{title}</h3>
         <p className="mx-auto max-w-md text-sm font-medium leading-6 text-foreground/60">
           {description}
         </p>

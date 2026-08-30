@@ -181,7 +181,7 @@ function SubmissionSection({
   return (
     <section id={id} className="scroll-mt-24">
       <div className="mb-3 flex flex-col gap-1">
-        <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+        <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
           {title}
         </h2>
         <p className="text-sm font-medium leading-7 text-muted-foreground">
@@ -190,7 +190,7 @@ function SubmissionSection({
       </div>
 
       {childCount === 0 ? (
-        <div className="rounded-[calc(var(--radius)+6px)] border-2 border-dashed border-border bg-[color:var(--surface-card)] px-5 py-6 text-sm font-semibold leading-7 text-muted-foreground">
+        <div className="rounded-[calc(var(--radius)+6px)] border border-dashed border-border bg-[color:var(--surface-card)] px-5 py-6 text-sm font-semibold leading-7 text-muted-foreground">
           {emptyText}
         </div>
       ) : (
@@ -227,7 +227,7 @@ function SubmissionCard({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-heading text-lg font-black tracking-[-0.04em]">
+              <h3 className="font-heading text-lg font-normal tracking-[-0.02em]">
                 {submission.assignmentTitle}
               </h3>
               {variant === "pending" ? (
@@ -279,7 +279,7 @@ function SubmissionCard({
         </div>
 
         {submission.feedback ? (
-          <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-muted)] px-3 py-2 text-sm font-medium leading-7 text-muted-foreground shadow-retro-sm">
+          <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-muted)] px-3 py-2 text-sm font-medium leading-7 text-muted-foreground">
             {submission.feedback}
           </div>
         ) : null}

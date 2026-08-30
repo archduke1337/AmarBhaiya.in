@@ -24,7 +24,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="max-w-4xl break-words font-heading text-[clamp(1.75rem,3vw,2.75rem)] font-black leading-[1.04] tracking-[-0.045em]">
+        <h1 className="max-w-4xl break-words font-heading text-[clamp(1.75rem,3vw,2.75rem)] font-normal leading-[1.08] tracking-[-0.02em]">
           {title}
         </h1>
         {description && (

@@ -37,7 +37,7 @@ export default async function StudentLivePage() {
             id="upcoming-sessions"
             className="scroll-mt-24 flex flex-col gap-3"
           >
-            <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
+            <h2 className="font-heading text-lg font-normal tracking-[-0.02em] text-muted-foreground">
               Upcoming & live
             </h2>
             {sessions.length === 0 ? (
@@ -56,7 +56,7 @@ export default async function StudentLivePage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-col gap-1.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                        <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                           {session.title}
                         </h2>
                         <Badge
@@ -89,7 +89,7 @@ export default async function StudentLivePage() {
                             </a>
                           </Button>
                         ) : (
-                          <span className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-4 text-sm font-semibold text-muted-foreground shadow-retro-sm">
+                          <span className="inline-flex min-h-11 items-center rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-card)] px-4 text-sm font-semibold text-muted-foreground">
                             Join link coming soon
                           </span>
                         )
@@ -120,7 +120,7 @@ export default async function StudentLivePage() {
             id="recent-recordings"
             className="scroll-mt-24 flex flex-col gap-3"
           >
-            <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
+            <h2 className="font-heading text-lg font-normal tracking-[-0.02em] text-muted-foreground">
               Recent recordings
             </h2>
             {recordings.length === 0 ? (
@@ -138,7 +138,7 @@ export default async function StudentLivePage() {
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-col gap-1.5">
-                      <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                      <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                         {recording.title}
                       </h2>
                       <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">

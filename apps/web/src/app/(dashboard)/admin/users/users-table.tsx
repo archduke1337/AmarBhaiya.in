@@ -17,7 +17,7 @@ type UserItem = {
 };
 
 const selectClassName =
-  "h-10 flex-1 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3 text-xs font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40";
+  "h-10 flex-1 rounded-[calc(var(--radius)+2px)] border border-border bg-input px-3 text-xs font-semibold text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40";
 
 export function UsersTable({ users }: { users: UserItem[] }) {
   const [search, setSearch] = useState("");

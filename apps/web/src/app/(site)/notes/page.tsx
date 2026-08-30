@@ -215,10 +215,10 @@ export default async function PublicNotesPage({
                         {note.classTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.classTag}</span>}
                         {note.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.subjectTag}</span>}
                       </div>
-                      <h2 className="text-lg font-black tracking-[-0.02em] group-hover:text-accent transition-colors">{note.title}</h2>
-                      <p className="text-xs font-medium text-foreground/50">{note.description || "Clean study material ready for revision."}</p>
+                      <h2 className="text-lg font-normal tracking-[-0.01em] group-hover:text-accent transition-colors">{note.title}</h2>
+                      <p className="text-xs font-medium text-foreground/60">{note.description || "Clean study material ready for revision."}</p>
                     </div>
-                    <span className="shrink-0 text-[10px] font-bold text-foreground/40">{note.downloadCount.toLocaleString("en-IN")} downloads</span>
+                    <span className="shrink-0 text-[10px] font-bold text-foreground/55">{note.downloadCount.toLocaleString("en-IN")} downloads</span>
                   </div>
                 </Link>
               ))}
@@ -234,7 +234,7 @@ export default async function PublicNotesPage({
                       {selectedNote.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.subjectTag}</span>}
                       {selectedNote.chapterTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{selectedNote.chapterTag}</span>}
                     </div>
-                    <h2 className="text-xl font-black tracking-[-0.03em]">{selectedNote.title}</h2>
+                    <h2 className="text-xl font-normal tracking-[-0.02em]">{selectedNote.title}</h2>
                     <p className="text-sm font-medium text-foreground/60">{selectedNote.description || "Selected from the live notes library."}</p>
                   </div>
 
@@ -242,14 +242,14 @@ export default async function PublicNotesPage({
                     <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-3">
                       <Lock className="size-5 text-accent" aria-hidden="true" />
                       <p className="text-sm font-bold">Premium note</p>
-                      <p className="text-sm font-medium text-foreground/50">
+                      <p className="text-sm font-medium text-foreground/60">
                         This note is paid (₹{selectedNote.priceInr.toLocaleString("en-IN")}) and is not
                         available for direct download yet.
                       </p>
                     </div>
                   ) : selectedNote.downloadUrl ? (
                     <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-4">
-                      <p className="text-sm font-medium text-foreground/50">
+                      <p className="text-sm font-medium text-foreground/60">
                         Browser preview is not available — download the file and open it on your device.
                       </p>
                       {user ? (
@@ -259,7 +259,7 @@ export default async function PublicNotesPage({
                         />
                       ) : (
                         <>
-                          <p className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/45">
+                          <p className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/60">
                             Free to download — sign in first
                           </p>
                           <Link
@@ -280,14 +280,14 @@ export default async function PublicNotesPage({
                   ) : (
                     <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center">
                       <p className="text-sm font-bold">This resource has no file attached yet.</p>
-                      <p className="text-xs font-medium text-foreground/50 mt-1">The download will appear here once the file is uploaded.</p>
+                      <p className="text-xs font-medium text-foreground/60 mt-1">The download will appear here once the file is uploaded.</p>
                     </div>
                   )}
                 </>
               ) : (
                 <div className="text-center py-8">
                   <p className="text-sm font-bold">Select a note to see its download panel.</p>
-                  <p className="text-xs font-medium text-foreground/50 mt-1">Filter by class, subject, or type to find your chapter.</p>
+                  <p className="text-xs font-medium text-foreground/60 mt-1">Filter by class, subject, or type to find your chapter.</p>
                 </div>
               )}
             </div>

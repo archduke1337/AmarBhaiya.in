@@ -25,7 +25,7 @@ export function ActivityFeed({
   return (
     <div className="relative flex flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface shadow-[var(--surface-shadow)]">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 bg-surface/50">
-        <h3 className="font-heading text-base font-black tracking-[-0.02em]">{title}</h3>
+        <h3 className="font-heading text-base font-normal tracking-[-0.01em]">{title}</h3>
         {viewAllHref && (
           <Link
             href={viewAllHref}
@@ -38,7 +38,7 @@ export function ActivityFeed({
 
       <div className="flex flex-col">
         {items.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm font-medium text-foreground/50">
+          <div className="px-5 py-8 text-center text-sm font-medium text-foreground/60">
             {emptyText}
           </div>
         ) : (
@@ -61,7 +61,7 @@ export function ActivityFeed({
                       {item.description}
                     </p>
                     {item.timestamp && (
-                      <span className="shrink-0 text-[10px] font-bold text-foreground/40 whitespace-nowrap">
+                      <span className="shrink-0 text-[10px] font-bold text-foreground/55 whitespace-nowrap">
                         {item.timestamp}
                       </span>
                     )}

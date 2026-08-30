@@ -165,7 +165,7 @@ export function MobileSidebar({ role, userId }: SidebarProps) {
             <div className="border-b border-border/30 bg-surface px-6 pt-[calc(var(--safe-top)+1.5rem)] pb-6 text-foreground flex flex-col gap-2 relative overflow-hidden">
                <div aria-hidden="true" className="absolute -left-10 -bottom-10 w-[120px] h-[120px] rounded-full opacity-[0.06] blur-[40px]" style={{ background: "var(--accent)" }} />
                <p className="eyebrow self-start">{role}</p>
-               <h2 className="mt-1 text-2xl font-black tracking-[-0.03em]">Learning<span className="text-accent underline decoration-2 underline-offset-4 decoration-accent">Hub</span></h2>
+               <h2 className="mt-1 text-2xl font-normal tracking-[-0.02em]">Learning<span className="text-accent underline decoration-2 underline-offset-4 decoration-accent">Hub</span></h2>
             </div>
 
             <nav className="flex flex-col gap-1 p-4">

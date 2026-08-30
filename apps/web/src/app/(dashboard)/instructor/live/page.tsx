@@ -20,7 +20,7 @@ import {
 import { formatDateTime } from "@/lib/utils/format";
 
 const selectClassName =
-  "h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none transition-all focus-visible:-translate-y-px focus-visible:translate-x-px focus-visible:shadow-none focus-visible:ring-[3px] focus-visible:ring-ring/40";
+  "h-11 w-full rounded-[calc(var(--radius)+2px)] border border-border bg-input px-3.5 text-sm font-semibold text-foreground outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/40";
 
 function toDateTimeLocalValue(value: string | null): string {
   if (!value) {
@@ -99,7 +99,7 @@ export default async function InstructorLivePage() {
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+              <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                 Scheduled Sessions
               </h2>
               <p className="mt-1 text-sm font-medium leading-7 text-muted-foreground">
@@ -128,7 +128,7 @@ export default async function InstructorLivePage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-heading text-xl font-black tracking-[-0.04em]">
+                        <h3 className="font-heading text-xl font-normal tracking-[-0.02em]">
                           {session.title}
                         </h3>
                         <Badge variant={session.status === "live" ? "default" : "outline"}>
@@ -277,11 +277,11 @@ export default async function InstructorLivePage() {
           className="scroll-mt-24 self-start rounded-2xl border border-border/40 bg-surface p-5 xl:sticky xl:top-24"
         >
           <div className="mb-5 flex items-center gap-2">
-            <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-accent)] p-2 shadow-retro-sm">
+            <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-accent)] p-2">
               <Plus className="size-4" />
             </div>
             <div>
-              <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+              <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">
                 Create live class
               </h2>
               <p className="text-xs font-semibold leading-6 text-muted-foreground">

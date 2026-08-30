@@ -92,7 +92,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       elements.push(
         <h1
           key={elementKey++}
-          className="mt-6 mb-3 font-heading text-2xl font-black tracking-[-0.03em] first:mt-0"
+          className="mt-6 mb-3 font-heading text-2xl font-normal tracking-[-0.02em] first:mt-0"
         >
           <InlineMarkdown text={trimmed.slice(2)} />
         </h1>
@@ -105,7 +105,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       elements.push(
         <h2
           key={elementKey++}
-          className="mt-5 mb-2 font-heading text-xl font-black tracking-[-0.03em] first:mt-0"
+          className="mt-5 mb-2 font-heading text-xl font-normal tracking-[-0.02em] first:mt-0"
         >
           <InlineMarkdown text={trimmed.slice(3)} />
         </h2>

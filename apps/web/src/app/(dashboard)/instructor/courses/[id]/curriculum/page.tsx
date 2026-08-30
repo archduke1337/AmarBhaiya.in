@@ -106,7 +106,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
       {(course.publishBlockers.length > 0 || course.attentionFlags.length > 0) && (
         <section className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5 shadow-[var(--surface-shadow)]">
-          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Curriculum Health</h2>
+          <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">Curriculum Health</h2>
           {course.publishBlockers.length > 0 ? (
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.15em] text-destructive">
@@ -139,7 +139,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
       )}
 
       <section className="space-y-4 rounded-2xl border border-border/40 bg-surface p-6 shadow-[var(--surface-shadow)]">
-        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Create module</h2>
+        <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">Create module</h2>
         <form action={createCurriculumModuleFormAction} className="grid gap-3 md:grid-cols-2">
           <input type="hidden" name="courseId" value={course.id} />
 
@@ -439,7 +439,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
       {/* Quiz Management */}
       <section className="space-y-6 rounded-2xl border border-border/40 bg-surface p-6 shadow-[var(--surface-shadow)]">
-        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Course Quizzes ({quizzes.length})</h2>
+        <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">Course Quizzes ({quizzes.length})</h2>
 
         {/* Create quiz form */}
         <form action={createQuizFormAction} className="grid gap-3 rounded-xl border border-border/40 bg-background p-4 md:grid-cols-4">
@@ -562,7 +562,7 @@ export default async function InstructorCurriculumPage({ params }: PageProps) {
 
       {/* Assignment Management */}
       <section className="space-y-6 rounded-2xl border border-border/40 bg-surface p-6 shadow-[var(--surface-shadow)]">
-        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Assignments ({assignments.length})</h2>
+        <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">Assignments ({assignments.length})</h2>
 
         <form action={createAssignmentFormAction} className="grid gap-3 rounded-xl border border-border/40 bg-background p-4 md:grid-cols-2">
           <input type="hidden" name="courseId" value={course.id} />

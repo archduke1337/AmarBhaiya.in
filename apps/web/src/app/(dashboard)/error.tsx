@@ -17,12 +17,12 @@ export default function DashboardError({
         <AlertTriangle className="size-10 relative z-10" />
       </div>
       <div className="flex flex-col gap-2 relative z-10">
-        <h2 className="text-2xl font-black tracking-tight">Something went wrong</h2>
+        <h2 className="text-2xl font-normal tracking-[-0.02em]">Something went wrong</h2>
         <p className="max-w-md text-base font-medium text-foreground/60 leading-relaxed">
           Something went wrong while loading this view. Your data is safe — please try again, and if the problem persists, contact support.
         </p>
         {error.digest && (
-          <p className="text-xs font-mono text-foreground/40 mt-2">
+          <p className="text-xs font-mono text-foreground/55 mt-2">
             Error ID: {error.digest}
           </p>
         )}

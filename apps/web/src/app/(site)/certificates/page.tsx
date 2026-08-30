@@ -46,7 +46,7 @@ export default async function CertificatesPage({ searchParams }: CertificatesPag
                 name="id"
                 required
                 placeholder="Paste certificate ID"
-                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 text-sm font-medium text-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-accent/40"
+                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-card)] px-3 text-sm font-medium text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40"
               />
             </div>
             <Button type="submit" size="lg" className="font-bold">

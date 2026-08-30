@@ -30,7 +30,7 @@ export default async function ModeratorCommunityPage() {
             <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
               {action.label}
             </span>
-            <span className="font-heading text-xl font-black tabular-nums tracking-[-0.03em]">
+            <span className="font-heading text-xl font-normal tabular-nums tracking-[-0.02em]">
               {action.value}
             </span>
           </div>
@@ -42,7 +42,7 @@ export default async function ModeratorCommunityPage() {
         id="recent-threads"
         className="scroll-mt-24 flex flex-col gap-4"
       >
-        <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+        <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
           Community Threads ({data.recentThreads.length})
         </h2>
 

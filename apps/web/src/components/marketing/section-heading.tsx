@@ -37,7 +37,7 @@ function SectionHeading({
       ) : null}
       <TitleTag
         className={cn(
-          "max-w-[16ch] font-heading text-[clamp(2rem,5vw,4rem)] font-black leading-[1.02] tracking-[-0.05em] text-balance",
+          "max-w-[16ch] font-heading text-[clamp(2rem,5vw,4rem)] font-normal leading-[1.08] tracking-[-0.02em] text-balance",
           centered ? "mx-auto" : ""
         )}
       >

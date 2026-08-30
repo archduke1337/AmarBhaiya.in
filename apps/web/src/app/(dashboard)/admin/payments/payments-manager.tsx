@@ -478,7 +478,7 @@ export function PaymentsManager({
       >
         <div className="flex flex-col gap-3 border-b-2 border-border bg-[color:var(--surface-secondary)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="font-heading text-lg font-black tracking-[-0.04em]">
+            <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
               {statusFilter
                 ? `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Payments`
                 : "All Transactions"}
@@ -535,7 +535,7 @@ export function PaymentsManager({
       <aside className="flex flex-col gap-6">
         <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
-            <h2 className="font-heading text-base font-black tracking-[-0.03em] flex items-center gap-2">
+            <h2 className="font-heading text-base font-normal tracking-[-0.02em] flex items-center gap-2">
               <AlertTriangle className="size-4 text-amber-500" />
               Needs Attention
             </h2>
@@ -571,7 +571,7 @@ export function PaymentsManager({
 
         <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
-            <h2 className="font-heading text-base font-black tracking-[-0.03em] flex items-center gap-2">
+            <h2 className="font-heading text-base font-normal tracking-[-0.02em] flex items-center gap-2">
               <CheckCircle2 className="size-4 text-emerald-500" />
               Recent Payments
             </h2>
@@ -605,7 +605,7 @@ export function PaymentsManager({
 
         <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
-            <h2 className="font-heading text-base font-black tracking-[-0.03em]">
+            <h2 className="font-heading text-base font-normal tracking-[-0.02em]">
               Top Grossing Courses
             </h2>
           </div>
@@ -650,7 +650,7 @@ export function PaymentsManager({
 
         <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
           <div className="border-b-2 border-border px-5 py-3">
-            <h2 className="font-heading text-base font-black tracking-[-0.03em]">
+            <h2 className="font-heading text-base font-normal tracking-[-0.02em]">
               Status Breakdown
             </h2>
           </div>

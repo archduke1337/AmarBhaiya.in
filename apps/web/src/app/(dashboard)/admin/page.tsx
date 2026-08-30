@@ -122,7 +122,7 @@ export default async function AdminDashboardPage() {
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="font-bold text-base tracking-tight group-hover:text-accent transition-colors">{action.label}</span>
-                    <span className="text-xs font-medium text-foreground/50">{action.description}</span>
+                    <span className="text-xs font-medium text-foreground/60">{action.description}</span>
                   </div>
                 </div>
               </Link>

@@ -95,7 +95,7 @@ export default async function AdminBlogPage() {
             <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
               Blog Post Management
             </p>
-            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+            <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
               Edit or remove existing posts
             </h2>
           </div>
@@ -119,7 +119,7 @@ export default async function AdminBlogPage() {
               >
                 <div className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-1 min-w-0">
-                    <h3 className="font-heading text-lg font-black tracking-[-0.04em]">
+                    <h3 className="font-heading text-lg font-normal tracking-[-0.02em]">
                       {post.title}
                     </h3>
                     <p className="text-xs text-muted-foreground">

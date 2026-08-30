@@ -201,11 +201,11 @@ export default async function InstructorDashboardPage() {
                         {course.title}
                       </h3>
                       {course.shortDescription && (
-                        <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.08em] text-foreground/50">
+                        <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.08em] text-foreground/60">
                           {course.shortDescription}
                         </p>
                       )}
-                      <p className="text-xs font-medium text-foreground/50">
+                      <p className="text-xs font-medium text-foreground/60">
                         {course.moduleCount} module{course.moduleCount === 1 ? "" : "s"} ·{" "}
                         {course.totalLessons} lesson{course.totalLessons === 1 ? "" : "s"} ·{" "}
                         {course.activeEnrollments} enrollment{course.activeEnrollments === 1 ? "" : "s"}
@@ -215,7 +215,7 @@ export default async function InstructorDashboardPage() {
                           {course.publishBlockers[0]}
                         </p>
                       ) : course.attentionFlags[0] ? (
-                        <p className="text-xs font-bold text-foreground/50 mt-1">
+                        <p className="text-xs font-bold text-foreground/60 mt-1">
                           {course.attentionFlags[0]}
                         </p>
                       ) : null}

@@ -170,7 +170,7 @@ export default async function StudentAssignmentsPage() {
               id="pending-assignments"
               className="scroll-mt-24 flex flex-col gap-3"
             >
-              <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
+              <h2 className="font-heading text-lg font-normal tracking-[-0.02em] text-muted-foreground">
                 Pending ({pending.length})
               </h2>
               {pending.map((a) => (
@@ -182,7 +182,7 @@ export default async function StudentAssignmentsPage() {
                   <div className="flex flex-col gap-3 px-5 py-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="space-y-1">
-                        <h3 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                        <h3 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                           {a.title}
                         </h3>
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -210,13 +210,13 @@ export default async function StudentAssignmentsPage() {
                     encType="multipart/form-data"
                   >
                     <input type="hidden" name="assignmentId" value={a.id} />
-                    <label className="flex min-h-12 cursor-pointer items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-muted)] px-3 text-xs font-semibold shadow-retro-sm">
+                    <label className="flex min-h-12 cursor-pointer items-center gap-2 rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-muted)] px-3 text-xs font-semibold">
                       <Upload className="size-3.5 text-muted-foreground" />
                       <input
                         type="file"
                         name="file"
                         accept={acceptedAssignmentFileTypes}
-                        className="min-w-0 text-xs file:mr-2 file:rounded-[calc(var(--radius)+1px)] file:border-2 file:border-border file:bg-background file:px-2 file:py-1 file:text-xs"
+                        className="min-w-0 text-xs file:mr-2 file:rounded-[calc(var(--radius)+1px)] file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs"
                       />
                     </label>
                     <Button
@@ -241,7 +241,7 @@ export default async function StudentAssignmentsPage() {
               id="submitted-assignments"
               className="scroll-mt-24 flex flex-col gap-3"
             >
-              <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
+              <h2 className="font-heading text-lg font-normal tracking-[-0.02em] text-muted-foreground">
                 Submitted ({done.length})
               </h2>
               {done.map((a) => (
@@ -253,7 +253,7 @@ export default async function StudentAssignmentsPage() {
                   <div className="px-5 py-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="space-y-1">
-                        <h3 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                        <h3 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                           {a.title}
                         </h3>
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -282,7 +282,7 @@ export default async function StudentAssignmentsPage() {
                           href={`/api/submission-file/${a.submissionId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-card)] px-3 text-xs font-semibold shadow-retro-sm transition-colors hover:bg-[color:var(--surface-accent)]"
+                          className="inline-flex min-h-10 items-center gap-2 rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-card)] px-3 text-xs font-semibold transition-colors hover:bg-[color:var(--surface-accent)]"
                         >
                           <Download className="size-3" />
                           Open your submission

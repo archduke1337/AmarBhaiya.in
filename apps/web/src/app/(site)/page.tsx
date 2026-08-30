@@ -68,7 +68,6 @@ export default async function MarketingPage() {
   const heroDescription =
     homeContent.learnItems[0]?.desc?.trim() ||
     "Class 6 se 12 tak — har subject ke notes, video courses, aur live sessions. Coaching ki zaroorat nahi, Bhaiya hai na.";
-  const quickStats = stats.slice(0, 2);
 
   const announcement = homeContent.announcement;
   const collections = homeContent.collections;
@@ -84,15 +83,11 @@ export default async function MarketingPage() {
           aria-label="Hero"
           className="section-pad relative overflow-hidden"
         >
-          {/* Ambient glow orbs — GPU-safe, fixed pseudo-elements */}
+          {/* Faint warm glow — kept at a whisper so the photography leads */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
             <div
-              className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full opacity-[0.12] blur-[120px]"
+              className="absolute -top-40 -left-40 w-[560px] h-[560px] rounded-full opacity-[0.05] blur-[120px]"
               style={{ background: "var(--accent)" }}
-            />
-            <div
-              className="absolute -bottom-16 right-0 w-[400px] h-[400px] rounded-full opacity-[0.08] blur-[100px]"
-              style={{ background: "oklch(0.65 0.18 265)" }}
             />
           </div>
 
@@ -107,7 +102,7 @@ export default async function MarketingPage() {
                 </RevealWrapper>
 
                 <RevealWrapper className="stagger-1">
-                  <h1 className="max-w-[11ch] font-heading text-[clamp(2.5rem,8vw,5rem)] font-black leading-[0.96] tracking-[-0.055em] text-foreground">
+                  <h1 className="max-w-[11ch] font-heading text-[clamp(2.5rem,8vw,5rem)] font-normal leading-[1.02] tracking-[-0.02em] text-foreground">
                     Padhai simple,{" "}
                     <span
                       className="inline-block"
@@ -157,67 +152,67 @@ export default async function MarketingPage() {
                         <span className="text-xl font-black text-foreground leading-none">
                           {formatStatValue(stat.end, stat.suffix)}
                         </span>
-                        <span className="text-xs text-foreground/50 font-medium mt-0.5">{stat.label}</span>
+                        <span className="text-xs text-foreground/60 font-medium mt-0.5">{stat.label}</span>
                       </div>
                     ))}
                   </RevealWrapper>
                 ) : null}
               </div>
 
-              {/* Right — Asymmetric bento preview cards */}
-              <RevealWrapper className="stagger-2 grid grid-cols-2 gap-3">
-                {/* Big card */}
-                <div
-                  className="card-bezel col-span-2"
-                  style={{ background: "color-mix(in oklab, var(--surface) 85%, var(--accent) 8%)" }}
-                >
-                  <div className="card-bezel-inner p-4 sm:p-5">
-                    {featuredCourse ? (
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-3 mb-1">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black text-accent" style={{ background: "color-mix(in oklab, var(--accent) 12%, transparent)" }} aria-hidden="true">*</div>
-                          <div>
-                            <p className="font-bold text-sm text-foreground">{featuredCourse.title}</p>
-                            <p className="text-xs text-foreground/50">
-                              {featuredCourse.sub || "Popular with active students"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-foreground/70">
-                          <span className="rounded-full bg-surface-hover px-2 py-1">
-                            {featuredCourse.level}
-                          </span>
-                          <span className="rounded-full bg-surface-hover px-2 py-1">
-                            {featuredCourse.students} learners
-                          </span>
-                          <span className="rounded-full bg-surface-hover px-2 py-1">
-                            {featuredCourse.price}
-                          </span>
-                        </div>
-
-                        {featuredCourse.note ? (
-                          <p className="text-xs text-foreground/50">{featuredCourse.note}</p>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <p className="text-sm font-medium text-foreground/60">
-                        Featured course section updates automatically from published course data.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {quickStats.map((stat, index) => (
-                  <div key={`${stat.label}-${index}`} className="card-bezel">
-                    <div className="card-bezel-inner p-4 flex flex-col gap-1">
-                      <span className="text-2xl font-black text-foreground leading-none">
-                        {formatStatValue(stat.end, stat.suffix)}
-                      </span>
-                      <span className="text-xs text-foreground/50 font-medium">{stat.label}</span>
+              {/* Right — Classroom photography + floating course card.
+                  Real teaching environment, no stock imagery — matches the
+                  "Real rooms. Real sessions." positioning. */}
+              <RevealWrapper className="stagger-2">
+                <div className="relative">
+                  <figure className="relative overflow-hidden rounded-[calc(var(--radius)+4px)] border border-border/60 shadow-[var(--overlay-shadow)]">
+                    <div className="relative aspect-[4/5] w-full sm:aspect-[5/6]">
+                      <Image
+                        src="/images/IMG_9129.webp"
+                        alt="Amar Bhaiya teaching students in a live classroom session"
+                        fill
+                        priority
+                        sizes="(max-width: 1024px) 100vw, 560px"
+                        className="object-cover"
+                      />
                     </div>
-                  </div>
-                ))}
+                    <figcaption className="absolute left-3 top-3 rounded-full border border-border/40 bg-background/85 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/70 backdrop-blur">
+                      Live classroom, real teaching
+                    </figcaption>
+                  </figure>
+
+                  {/* Floating course card over the photo */}
+                  {featuredCourse ? (
+                    <div className="card-bezel absolute -bottom-5 left-4 right-4 sm:-bottom-6 sm:left-6 sm:right-auto sm:w-[19.5rem]">
+                      <div className="card-bezel-inner p-4 sm:p-5">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="flex size-9 shrink-0 items-center justify-center rounded-lg font-heading text-base font-normal text-accent"
+                              style={{ background: "color-mix(in oklab, var(--accent) 12%, transparent)" }}
+                              aria-hidden="true"
+                            >
+                              A
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate font-bold text-sm text-foreground">{featuredCourse.title}</p>
+                              <p className="truncate text-xs text-foreground/60">
+                                {featuredCourse.sub || "Popular with active students"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-xs font-semibold text-foreground/70">
+                            <span className="rounded-full bg-surface-hover px-2 py-1">{featuredCourse.level}</span>
+                            <span className="rounded-full bg-surface-hover px-2 py-1">{featuredCourse.students} learners</span>
+                            <span className="rounded-full bg-surface-hover px-2 py-1">{featuredCourse.price}</span>
+                          </div>
+                          {featuredCourse.note ? (
+                            <p className="text-xs leading-5 text-foreground/60">{featuredCourse.note}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </RevealWrapper>
             </div>
           </div>
@@ -226,7 +221,7 @@ export default async function MarketingPage() {
         {/* Trust strip — social proof */}
         <section aria-label="Trust indicators" className="mx-auto -mt-4 max-w-5xl px-4 sm:px-6">
           <RevealWrapper>
-            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl border border-border/40 bg-surface/80 px-4 py-3 text-center text-xs font-semibold leading-5 text-foreground/60 backdrop-blur sm:gap-x-6 sm:rounded-full">
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl border border-border/40 bg-surface/70 px-4 py-3 text-center text-xs font-semibold leading-5 text-foreground/60 sm:gap-x-6">
               <span className="inline-flex items-center gap-1.5"><span className="text-accent">★</span> 4.8/5 from students</span>
               <span className="hidden sm:inline opacity-30">·</span>
               <span>10k+ learners</span>
@@ -245,7 +240,7 @@ export default async function MarketingPage() {
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <RevealWrapper className="mb-10 text-center">
               <span className="eyebrow mb-4 mx-auto">Subjects</span>
-              <h2 id="subjects-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
+              <h2 id="subjects-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-normal tracking-[-0.02em]">
                 Har subject covered.
               </h2>
               <p className="mx-auto mt-3 max-w-prose text-sm leading-6 text-foreground/60 sm:text-base">
@@ -277,7 +272,7 @@ export default async function MarketingPage() {
                           </div>
                           <div>
                             <p className="font-bold text-sm text-foreground">{domain.title}</p>
-                            <p className="text-xs text-foreground/50 mt-0.5">{domain.sub}</p>
+                            <p className="text-xs text-foreground/60 mt-0.5">{domain.sub}</p>
                           </div>
                           <span
                             className="text-xs font-semibold self-start opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300"
@@ -311,7 +306,7 @@ export default async function MarketingPage() {
             <div className="mx-auto max-w-5xl px-4 sm:px-6">
               <RevealWrapper className="mb-8">
                 <span className="eyebrow mb-3 mx-auto">Collections</span>
-                <h2 id="collections-heading" className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-[-0.04em] text-center">
+                <h2 id="collections-heading" className="text-[clamp(1.5rem,4vw,2.5rem)] font-normal tracking-[-0.02em] text-center">
                   Curated learning packs
                 </h2>
               </RevealWrapper>
@@ -361,7 +356,7 @@ export default async function MarketingPage() {
                               {collection.subtitle}
                             </p>
                           )}
-                          <p className="text-xs text-foreground/40 mt-2">
+                          <p className="text-xs text-foreground/55 mt-2">
                             {collection.courseSlugs.length} course{collection.courseSlugs.length === 1 ? "" : "s"}
                           </p>
                         </div>
@@ -397,7 +392,7 @@ export default async function MarketingPage() {
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <RevealWrapper className="mb-12 text-center">
               <span className="eyebrow mb-4 mx-auto">Why amarbhaiya.in?</span>
-              <h2 id="features-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
+              <h2 id="features-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-normal tracking-[-0.02em]">
                 Simple. Honest. Useful.
               </h2>
             </RevealWrapper>
@@ -429,7 +424,7 @@ export default async function MarketingPage() {
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <RevealWrapper className="mb-10 text-center">
               <span className="eyebrow mb-4 mx-auto">How it works</span>
-              <h2 id="how-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
+              <h2 id="how-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-normal tracking-[-0.02em]">
                 Three steps, zero friction.
               </h2>
               <p className="mx-auto mt-3 max-w-prose text-sm leading-6 text-foreground/60 sm:text-base">
@@ -489,7 +484,7 @@ export default async function MarketingPage() {
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <RevealWrapper className="mb-10 text-center">
               <span className="eyebrow mb-4 mx-auto">From students</span>
-              <h2 id="testimonials-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-black tracking-[-0.04em]">
+              <h2 id="testimonials-heading" className="text-[clamp(1.75rem,5vw,3rem)] font-normal tracking-[-0.02em]">
                 4.8/5 — aur rising.
               </h2>
               <p className="mx-auto mt-3 max-w-prose text-sm leading-6 text-foreground/60 sm:text-base">
@@ -530,7 +525,7 @@ export default async function MarketingPage() {
                       </p>
                       <div className="mt-auto">
                         <p className="font-bold text-sm text-foreground">{item.name}</p>
-                        <p className="text-xs text-foreground/50 mt-0.5">{item.detail}</p>
+                        <p className="text-xs text-foreground/60 mt-0.5">{item.detail}</p>
                       </div>
                     </div>
                   </div>
@@ -615,25 +610,18 @@ export default async function MarketingPage() {
         <section aria-labelledby="cta-heading" className="section-pad-sm pb-safe">
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <RevealWrapper>
-              <div
-                className="rounded-[2rem] p-1.5 relative overflow-hidden"
-                style={{
-                  background: "linear-gradient(135deg, color-mix(in oklab, var(--accent) 30%, transparent), color-mix(in oklab, oklch(0.65 0.18 265) 30%, transparent))",
-                }}
-              ><div className="rounded-[calc(2rem-6px)] px-6 py-10 text-center flex flex-col items-center gap-6 sm:px-8 sm:py-14"
-                  style={{ background: "color-mix(in oklab, var(--surface) 92%, var(--accent) 8%)" }}
-                >
-                  {/* Glow behind text */}
+              <div className="card-bezel relative overflow-hidden">
+                <div className="card-bezel-inner relative flex flex-col items-center gap-6 px-6 py-10 text-center sm:px-8 sm:py-14">
+                  {/* Hairline accent edge — restrained, no glow blob */}
                   <div
-                    className="absolute inset-0 rounded-[calc(2rem-6px)] opacity-30 blur-3xl pointer-events-none"
-                    style={{ background: "radial-gradient(ellipse at center, var(--accent), transparent 70%)" }}
                     aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent"
                   />
 
                   <span className="eyebrow relative z-10">Start today</span>
                   <h2
                     id="cta-heading"
-                    className="relative z-10 text-[clamp(2rem,6vw,3.5rem)] font-black tracking-[-0.04em] text-foreground max-w-xl leading-tight"
+                    className="relative z-10 text-[clamp(2rem,6vw,3.5rem)] font-normal tracking-[-0.02em] text-foreground max-w-xl leading-tight"
                   >
                     Ek course free mein shuru karo.
                   </h2>
@@ -643,7 +631,7 @@ export default async function MarketingPage() {
                   <div className="relative z-10 flex flex-wrap gap-3 justify-center">
                     <MagneticCta
                       href="/register"
-                      className="font-bold px-8 bg-accent text-accent-foreground glow-accent active:scale-[0.97] transition-transform"
+                      className="font-bold px-8 bg-accent text-accent-foreground glow-accent-sm"
                     >
                       Free account banao
                     </MagneticCta>

@@ -75,7 +75,7 @@ export default async function StudentCoursesPage() {
             <section className="flex flex-col gap-4">
               <h2 className="text-xl font-black tracking-[-0.03em] flex items-center gap-2">
                 In Progress 
-                <span className="text-sm font-semibold bg-surface border border-border/40 text-foreground/50 px-2 py-0.5 rounded-full">{inProgress.length}</span>
+                <span className="text-sm font-semibold bg-surface border border-border/40 text-foreground/60 px-2 py-0.5 rounded-full">{inProgress.length}</span>
               </h2>
               <div className="grid gap-4 xl:grid-cols-2">
                 {inProgress.map((course) => (
@@ -153,7 +153,7 @@ function CourseCard({
               </span>
             ) : null}
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/40">
+          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/55">
             {course.totalLessons} lessons
           </span>
         </div>
@@ -163,7 +163,7 @@ function CourseCard({
         </h3>
 
         {!isComplete && course.continueLessonTitle && (
-          <p className="text-xs font-medium text-foreground/50">
+          <p className="text-xs font-medium text-foreground/60">
             {course.resumePercent > 0
               ? `Resume ${course.continueLessonTitle} at ${course.resumePercent}%`
               : `Up next: ${course.continueLessonTitle}`}
@@ -184,7 +184,7 @@ function CourseCard({
         </div>
 
         <div className="flex items-center justify-between gap-4 pt-2 border-t border-border/30 text-xs mt-auto">
-          <span className="font-semibold text-foreground/50">
+          <span className="font-semibold text-foreground/60">
             {course.completedLessons}/{course.totalLessons} lessons
           </span>
           <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.1em] transition-colors group-hover:text-accent">

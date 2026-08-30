@@ -35,7 +35,7 @@ export function DashboardHeader({
               {eyebrow}
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <p className="font-heading text-[clamp(1.5rem,3vw,2rem)] font-black leading-tight tracking-[-0.04em]" aria-label={`Welcome, ${firstName}`}>{firstName}</p>
+              <p className="font-heading text-[clamp(1.5rem,3vw,2rem)] font-normal leading-tight tracking-[-0.02em]" aria-label={`Welcome, ${firstName}`}>{firstName}</p>
               <div aria-hidden="true" className="hidden sm:flex items-center px-2 py-0.5 rounded-md bg-surface border border-border/60 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-foreground/70">
                 {role}
               </div>

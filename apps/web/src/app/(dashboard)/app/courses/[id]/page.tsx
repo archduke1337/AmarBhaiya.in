@@ -89,7 +89,7 @@ export default async function CoursePlayerPage({ params, searchParams }: PagePro
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-emerald-500" aria-hidden="true" />
               <div className="space-y-1">
-                <p className="font-heading text-lg font-black tracking-[-0.03em]">
+                <p className="font-heading text-lg font-normal tracking-[-0.02em]">
                   Payment successful — you&apos;re enrolled in {course.title}
                 </p>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -119,7 +119,7 @@ export default async function CoursePlayerPage({ params, searchParams }: PagePro
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Course overview
             </p>
-            <h1 className="font-heading text-3xl font-black tracking-[-0.05em] md:text-5xl">
+            <h1 className="font-heading text-3xl font-normal tracking-[-0.02em] md:text-5xl">
               {course.title}
             </h1>
             <p className="max-w-3xl text-sm font-medium leading-7 text-muted-foreground">
@@ -163,7 +163,7 @@ export default async function CoursePlayerPage({ params, searchParams }: PagePro
             className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5"
           >
             <item.icon className="size-4" />
-            <h2 className="font-heading text-xl font-black tracking-[-0.04em]">
+            <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">
               {item.title}
             </h2>
             <p className="text-sm font-medium leading-7 text-foreground/80">{item.body}</p>
@@ -202,7 +202,7 @@ export default async function CoursePlayerPage({ params, searchParams }: PagePro
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Module {moduleIndex + 1}
                 </p>
-                <h2 className="mt-1 font-heading text-2xl font-black tracking-[-0.04em]">
+                <h2 className="mt-1 font-heading text-2xl font-normal tracking-[-0.02em]">
                   {module.title}
                 </h2>
               </div>
@@ -246,7 +246,7 @@ export default async function CoursePlayerPage({ params, searchParams }: PagePro
 
       <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
         <div className="border-b-2 border-border px-5 py-3">
-          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+          <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
             Course Discussion ({courseComments.length})
           </h2>
           <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
@@ -285,7 +285,7 @@ export default async function CoursePlayerPage({ params, searchParams }: PagePro
                   <div className="mb-1 flex items-center gap-2">
                     <span className="text-xs font-medium">{comment.userName}</span>
                     {comment.userRole !== "student" ? (
-                      <span className="border-2 border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span className="border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                         {comment.userRole}
                       </span>
                     ) : null}

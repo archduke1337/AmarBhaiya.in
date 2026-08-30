@@ -90,7 +90,7 @@ export default function FaqPage() {
 
       <section className="mx-auto max-w-3xl">
         <RetroPanel tone="secondary" className="space-y-3">
-          <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+          <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
             Still have a question?
           </h2>
           <p className="text-sm font-medium leading-7 text-foreground/80">

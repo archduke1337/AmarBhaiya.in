@@ -48,7 +48,7 @@ export default function GrievanceRedressalPage() {
         <RetroPanel tone="secondary" className="space-y-3 p-6">
           <div className="flex items-center gap-2">
             <ShieldAlert className="size-5 text-accent" aria-hidden="true" />
-            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">Grievance Officer (IT Rules 2021, Rule 3(2))</h2>
+            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">Grievance Officer (IT Rules 2021, Rule 3(2))</h2>
           </div>
           <dl className="space-y-2 text-sm font-medium leading-7 text-foreground/80">
             <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
@@ -100,10 +100,10 @@ export default function GrievanceRedressalPage() {
       </section>
 
       <section className="mx-auto max-w-6xl grid gap-4">
-        <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">How it works</h2>
+        <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">How it works</h2>
         {process.map((item, index) => (
           <RetroPanel key={item.title} tone={index % 2 === 0 ? "card" : "muted"} className="space-y-3">
-            <h3 className="font-heading text-[clamp(1.2rem,2.5vw,1.5rem)] font-black tracking-[-0.03em]">{item.title}</h3>
+            <h3 className="font-heading text-[clamp(1.2rem,2.5vw,1.5rem)] font-normal tracking-[-0.02em]">{item.title}</h3>
             <p className="text-sm font-medium leading-7 text-foreground/80">{item.body}</p>
           </RetroPanel>
         ))}
@@ -111,7 +111,7 @@ export default function GrievanceRedressalPage() {
 
       <section className="mx-auto max-w-6xl grid gap-4">
         <RetroPanel tone="secondary" className="space-y-3">
-          <h3 className="font-heading text-[clamp(1.2rem,2.5vw,1.5rem)] font-black tracking-[-0.03em]">What to include</h3>
+          <h3 className="font-heading text-[clamp(1.2rem,2.5vw,1.5rem)] font-normal tracking-[-0.02em]">What to include</h3>
           <ul className="grid gap-2 list-disc pl-5 text-sm font-medium leading-7 text-foreground/80" role="list">
             <li>Account email and userId if logged in; order_id/providerRef + paymentId for billing.</li>
             <li>For content takedown: exact URL(s), why it violates law/policy, and your relationship to the content.</li>

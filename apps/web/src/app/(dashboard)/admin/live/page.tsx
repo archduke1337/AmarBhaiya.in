@@ -42,7 +42,7 @@ export default async function AdminLivePage() {
         id="upcoming-sessions"
         className="scroll-mt-24 flex flex-col gap-4"
       >
-        <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Live & Scheduled Sessions</h2>
+        <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">Live & Scheduled Sessions</h2>
 
         {data.upcoming.length === 0 ? (
           <EmptyState

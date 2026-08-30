@@ -30,7 +30,7 @@ export default function AuthLayout({
 
         {/* Messaging */}
         <div className="relative z-10 my-auto">
-          <h1 className="text-[clamp(2.5rem,4vw,4rem)] font-black leading-[1] tracking-[-0.04em] text-foreground max-w-lg mb-6">
+          <h1 className="text-[clamp(2.5rem,4vw,4rem)] font-normal leading-[1.06] tracking-[-0.02em] text-foreground max-w-lg mb-6">
             Padhai simple. <br/>
             Results honest.
           </h1>
@@ -41,7 +41,7 @@ export default function AuthLayout({
 
         {/* Footer info */}
         <div className="relative z-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground/40">Student Workspace</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground/55">Student Workspace</p>
         </div>
       </section>
 

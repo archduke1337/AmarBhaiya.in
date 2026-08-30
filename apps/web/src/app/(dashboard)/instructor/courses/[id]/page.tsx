@@ -94,7 +94,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
         className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4 scroll-mt-24"
       >
         <div className="flex flex-col gap-2">
-          <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Publish Readiness</h2>
+          <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">Publish Readiness</h2>
           <p className="text-sm text-muted-foreground">
             Publishing works best once the thumbnail, curriculum, and initial lesson media are in place.
           </p>
@@ -139,7 +139,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
 
       <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Course metadata</h2>
+          <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">Course metadata</h2>
           <Link
             href={`/instructor/courses/${course.id}/curriculum`}
             className="text-sm underline underline-offset-4"
@@ -247,7 +247,7 @@ export default async function InstructorCourseEditPage({ params }: PageProps) {
 
       {/* Thumbnail upload */}
       <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
-        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Course Thumbnail</h2>
+        <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">Course Thumbnail</h2>
         <p className="text-sm text-muted-foreground">
           Upload a cover image for this course. Recommended: 1280×720px, max 5MB.
           {course.thumbnailId

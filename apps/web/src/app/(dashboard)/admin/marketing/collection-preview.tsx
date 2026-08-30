@@ -117,7 +117,7 @@ export function CollectionPreview({ jsonValue }: CollectionPreviewProps) {
                         {collection.subtitle}
                       </p>
                     )}
-                    <p className="text-[11px] text-foreground/40 mt-2">
+                    <p className="text-[11px] text-foreground/55 mt-2">
                       {collection.courseSlugs.length} course
                       {collection.courseSlugs.length === 1 ? "" : "s"}
                     </p>

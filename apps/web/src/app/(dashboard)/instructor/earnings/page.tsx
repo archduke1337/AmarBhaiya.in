@@ -144,7 +144,7 @@ export default async function InstructorEarningsPage() {
 
           <div className="bg-surface border border-border/40 rounded-2xl overflow-hidden scroll-mt-24">
             <div className="border-b border-border/40 bg-surface-hover px-5 py-3">
-              <h2 className="font-heading text-lg font-black tracking-[-0.04em]">
+              <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
                 Revenue by Course
               </h2>
               <p className="mt-1 text-xs font-semibold leading-6 text-muted-foreground">

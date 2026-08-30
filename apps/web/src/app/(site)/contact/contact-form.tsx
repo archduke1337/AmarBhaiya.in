@@ -97,10 +97,10 @@ export function ContactForm() {
           <p className="font-heading text-[0.72rem] font-black uppercase tracking-[0.22em] text-muted-foreground">
             Contact form
           </p>
-          <h2 className="font-heading text-3xl font-black tracking-[-0.05em]">
+          <h2 className="font-heading text-3xl font-normal tracking-[-0.02em]">
             Start the conversation properly.
           </h2>
-          <p className="text-sm font-medium leading-6 text-muted-foreground">
+          <p className="text-sm font-medium leading-6 text-foreground/65">
             Tell us what you are trying to build, solve, or decide. We will reply with something useful.
           </p>
         </div>
@@ -173,8 +173,8 @@ export function ContactForm() {
             aria-live="polite"
             className={
               status === "success"
-                ? "rounded-[calc(var(--radius)+4px)] border-2 border-border bg-secondary px-4 py-3 text-sm font-semibold text-foreground"
-                : "rounded-[calc(var(--radius)+4px)] border-2 border-destructive bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
+                ? "rounded-[calc(var(--radius)+4px)] border border-emerald-600/30 bg-emerald-600/10 px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-400"
+                : "rounded-[calc(var(--radius)+4px)] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
             }
           >
             {feedback}

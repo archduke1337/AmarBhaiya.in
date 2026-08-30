@@ -60,7 +60,7 @@ export default async function StudentNotesPage({
     <div className="flex flex-col gap-8 pb-[10vh]">
       <div className="flex flex-col gap-2">
         <p className="eyebrow self-start">Study Notes</p>
-        <h1 className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] font-black tracking-[-0.045em] leading-[1.04]">
+        <h1 className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] font-normal tracking-[-0.02em] leading-[1.08]">
           Notes jo actually revision ke time kaam aayein.
         </h1>
         <p className="max-w-2xl text-sm font-medium text-foreground/60 leading-relaxed mt-2">
@@ -72,7 +72,7 @@ export default async function StudentNotesPage({
         <div className="bg-surface border border-border/40 rounded-2xl p-5 flex flex-col gap-5">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Category</p>
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/60">Category</p>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={{ pathname: "/app/notes", query: { ...(classFilter ? { class: classFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
@@ -93,7 +93,7 @@ export default async function StudentNotesPage({
             </div>
 
             <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Classes</p>
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/60">Classes</p>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={{ pathname: "/app/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(subjectFilter ? { subject: subjectFilter } : {}) } }}
@@ -114,7 +114,7 @@ export default async function StudentNotesPage({
             </div>
 
             <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/50">Subjects</p>
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/60">Subjects</p>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={{ pathname: "/app/notes", query: { ...(typeFilter ? { type: typeFilter } : {}), ...(classFilter ? { class: classFilter } : {}) } }}
@@ -159,9 +159,9 @@ export default async function StudentNotesPage({
                         {note.subjectTag && <span className="text-[10px] font-black uppercase tracking-[0.08em] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/60">{note.subjectTag}</span>}
                       </div>
                     <h2 className="text-lg font-black tracking-[-0.02em] group-hover:text-accent transition-colors">{note.title}</h2>
-                    <p className="text-xs font-medium text-foreground/50">{note.description || "Clean study material ready for revision."}</p>
+                    <p className="text-xs font-medium text-foreground/60">{note.description || "Clean study material ready for revision."}</p>
                   </div>
-                  <span className="shrink-0 text-[10px] font-bold text-foreground/40">{note.downloadCount.toLocaleString("en-IN")} downloads</span>
+                  <span className="shrink-0 text-[10px] font-bold text-foreground/55">{note.downloadCount.toLocaleString("en-IN")} downloads</span>
                 </div>
               </Link>
             ))}
@@ -185,14 +185,14 @@ export default async function StudentNotesPage({
                   <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-3">
                     <Lock className="size-5 text-accent" aria-hidden="true" />
                     <p className="text-sm font-bold">Premium note</p>
-                    <p className="text-sm font-medium text-foreground/50">
+                    <p className="text-sm font-medium text-foreground/60">
                       Yeh note paid hai (₹{selectedNote.priceInr.toLocaleString("en-IN")}) aur abhi
                       direct download ke liye available nahi hai.
                     </p>
                   </div>
                 ) : selectedNote.downloadUrl ? (
                   <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center flex flex-col items-center gap-4">
-                    <p className="text-sm font-medium text-foreground/50">
+                    <p className="text-sm font-medium text-foreground/60">
                       Browser preview available nahi hai. File download karo aur apne device mein open karo.
                     </p>
                     <NoteDownloadButton
@@ -203,14 +203,14 @@ export default async function StudentNotesPage({
                 ) : (
                   <div className="bg-surface-hover border border-dashed border-border/60 rounded-xl p-6 text-center">
                     <p className="text-sm font-bold">Is resource mein abhi file attach nahi hui hai.</p>
-                    <p className="text-xs font-medium text-foreground/50 mt-1">Jaise hi file upload hogi, yahin aa jayegi.</p>
+                    <p className="text-xs font-medium text-foreground/60 mt-1">Jaise hi file upload hogi, yahin aa jayegi.</p>
                   </div>
                 )}
               </>
             ) : (
               <div className="text-center py-8">
                 <p className="text-sm font-bold">Preview karne ke liye note select karo.</p>
-                <p className="text-xs font-medium text-foreground/50 mt-1">Jab real notes available hote hain, unka browser preview yahin dikhaya jata hai.</p>
+                <p className="text-xs font-medium text-foreground/60 mt-1">Jab real notes available hote hain, unka browser preview yahin dikhaya jata hai.</p>
               </div>
             )}
           </div>

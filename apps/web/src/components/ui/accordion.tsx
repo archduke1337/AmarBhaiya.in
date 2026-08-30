@@ -27,7 +27,7 @@ function AccordionItem({
     <AccordionPrimitive.Item
       data-slot="accordion-item"
       className={cn(
-        "overflow-hidden rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card shadow-retro not-last:mb-3",
+        "overflow-hidden rounded-[calc(var(--radius)+2px)] border border-border bg-card shadow-[var(--surface-shadow)] not-last:mb-3",
         className
       )}
       {...props}

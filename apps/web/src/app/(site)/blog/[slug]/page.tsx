@@ -107,7 +107,7 @@ export default async function BlogPostPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-4">
-            <h1 className="max-w-[16ch] font-heading text-[clamp(2.25rem,6vw,4.5rem)] font-black leading-[0.98] tracking-[-0.055em]">
+            <h1 className="max-w-[16ch] font-heading text-[clamp(2.25rem,6vw,4.5rem)] font-normal leading-[1.05] tracking-[-0.02em]">
               {post.title}
             </h1>
             <p className="max-w-3xl text-lg font-medium leading-8 text-muted-foreground">

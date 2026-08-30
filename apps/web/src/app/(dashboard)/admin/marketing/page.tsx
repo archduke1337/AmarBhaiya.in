@@ -182,7 +182,7 @@ export default async function AdminMarketingPage() {
               <span className="font-bold text-sm group-hover:text-accent transition-colors">
                 Course Management
               </span>
-              <p className="text-xs text-foreground/50">Publish, feature, archive</p>
+              <p className="text-xs text-foreground/60">Publish, feature, archive</p>
             </div>
           </div>
         </Link>
@@ -199,7 +199,7 @@ export default async function AdminMarketingPage() {
               <span className="font-bold text-sm group-hover:text-accent transition-colors">
                 Categories
               </span>
-              <p className="text-xs text-foreground/50">Organize course taxonomy</p>
+              <p className="text-xs text-foreground/60">Organize course taxonomy</p>
             </div>
           </div>
         </Link>
@@ -216,7 +216,7 @@ export default async function AdminMarketingPage() {
               <span className="font-bold text-sm group-hover:text-accent transition-colors">
                 Payment Records
               </span>
-              <p className="text-xs text-foreground/50">Transactions and refunds</p>
+              <p className="text-xs text-foreground/60">Transactions and refunds</p>
             </div>
           </div>
         </Link>
@@ -233,7 +233,7 @@ export default async function AdminMarketingPage() {
               <span className="font-bold text-sm group-hover:text-accent transition-colors">
                 Student Insights
               </span>
-              <p className="text-xs text-foreground/50">Profiles and engagement</p>
+              <p className="text-xs text-foreground/60">Profiles and engagement</p>
             </div>
           </div>
         </Link>
@@ -295,7 +295,7 @@ export default async function AdminMarketingPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <label className="inline-flex min-h-9 items-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3 shadow-retro-sm">
+                  <label className="inline-flex min-h-9 items-center gap-2 rounded-[calc(var(--radius)+2px)] border border-border bg-input px-3">
                     <input
                       type="checkbox"
                       name="isFeatured"
@@ -492,7 +492,7 @@ export default async function AdminMarketingPage() {
           <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
             Live Marketing Routes
           </p>
-          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+          <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
             Connected Page Previews
           </h2>
           <p className="mt-1 text-sm font-medium leading-7 text-muted-foreground">

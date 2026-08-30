@@ -121,7 +121,7 @@ export default async function StudentQuizHistoryPage() {
               <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Attempts
               </p>
-              <p className="font-heading text-4xl font-black tracking-[-0.08em]">
+              <p className="font-heading text-4xl font-normal tracking-[-0.02em]">
                 {attempts.length}
               </p>
             </div>
@@ -129,7 +129,7 @@ export default async function StudentQuizHistoryPage() {
               <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Passed
               </p>
-              <p className="font-heading text-4xl font-black tracking-[-0.08em]">
+              <p className="font-heading text-4xl font-normal tracking-[-0.02em]">
                 {passed}
               </p>
             </div>
@@ -137,7 +137,7 @@ export default async function StudentQuizHistoryPage() {
               <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                 Average
               </p>
-              <p className="font-heading text-4xl font-black tracking-[-0.08em]">
+              <p className="font-heading text-4xl font-normal tracking-[-0.02em]">
                 {avgScore}%
               </p>
             </div>
@@ -145,7 +145,7 @@ export default async function StudentQuizHistoryPage() {
 
           <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
             <div className="border-b-2 border-border px-5 py-4">
-              <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+              <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
                 Attempt history
               </h2>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">

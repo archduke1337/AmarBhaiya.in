@@ -32,7 +32,7 @@ export default async function CommunityPage() {
       {/* Create thread form */}
       <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
         <div className="border-b-2 border-border px-5 py-4">
-          <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+          <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
             Start a discussion
           </h2>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -52,7 +52,7 @@ export default async function CommunityPage() {
                 <select
                   id="forumCatId"
                   name="forumCatId"
-                  className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-input px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                  className="h-11 w-full rounded-[calc(var(--radius)+2px)] border border-border bg-input px-3.5 text-sm font-semibold text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
                   required
                   defaultValue={categories[0]?.id ?? ""}
                 >
@@ -99,7 +99,7 @@ export default async function CommunityPage() {
 
       {/* Thread list */}
       <section className="flex flex-col gap-3">
-        <h2 className="font-heading text-lg font-black tracking-[-0.03em] text-muted-foreground">
+        <h2 className="font-heading text-lg font-normal tracking-[-0.02em] text-muted-foreground">
           Discussions ({threads.length})
         </h2>
 
@@ -125,7 +125,7 @@ export default async function CommunityPage() {
                 )}
               </div>
 
-              <h3 className="font-heading text-2xl font-black leading-tight tracking-[-0.04em]">
+              <h3 className="font-heading text-2xl font-normal leading-tight tracking-[-0.02em]">
                 <Link
                   href={`/app/community/${thread.id}`}
                   className="hover:underline underline-offset-4"

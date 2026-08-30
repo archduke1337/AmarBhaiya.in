@@ -35,7 +35,7 @@ export function BottomTabBar({ role, userId }: BottomTabBarProps) {
                 "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-full px-2 py-2 transition-all duration-200 sm:min-w-[64px] sm:px-3",
                 active
                   ? "text-accent bg-accent/10"
-                  : "text-foreground/50 hover:text-foreground/80 hover:bg-surface/50"
+                  : "text-foreground/60 hover:text-foreground/90 hover:bg-surface/50"
               )}
             >
               <Icon

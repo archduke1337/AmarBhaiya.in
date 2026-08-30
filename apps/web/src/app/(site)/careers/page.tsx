@@ -65,7 +65,7 @@ export default function CareersPage() {
           {paths.map((path, index) => (
             <RetroPanel key={path.title} tone={index === 1 ? "secondary" : index === 2 ? "muted" : "card"} className="flex h-full flex-col gap-4">
               <path.icon className="size-5 text-accent" aria-hidden="true" />
-              <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">{path.title}</h2>
+              <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">{path.title}</h2>
               <p className="flex-1 text-sm font-medium leading-7 text-foreground/80">{path.body}</p>
             </RetroPanel>
           ))}
@@ -77,7 +77,7 @@ export default function CareersPage() {
           <p className="site-kicker font-sans">
             Start with context
           </p>
-          <h2 className="font-heading text-3xl font-black tracking-[-0.05em] md:text-4xl">
+          <h2 className="font-heading text-3xl font-normal tracking-[-0.02em] md:text-4xl">
             Tell us what you want to improve for students.
           </h2>
           <p className="mx-auto max-w-2xl text-sm font-medium leading-7 text-foreground/80">

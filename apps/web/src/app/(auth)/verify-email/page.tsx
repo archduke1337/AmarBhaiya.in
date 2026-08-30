@@ -26,7 +26,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
       <div className="w-full space-y-6 rounded-3xl border border-border/40 bg-surface p-6 shadow-[var(--surface-shadow)] sm:p-8">
         {result.success ? (
           <>
-            <h1 className="font-heading text-[clamp(1.75rem,4vw,2.5rem)] font-black leading-tight tracking-[-0.045em]">
+            <h1 className="font-heading text-[clamp(1.75rem,4vw,2.5rem)] font-normal leading-tight tracking-[-0.02em]">
               Email Verified
             </h1>
             <p className="mx-auto max-w-sm text-sm font-medium leading-6 text-muted-foreground">
@@ -39,7 +39,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
           </>
         ) : (
           <>
-            <h1 className="font-heading text-[clamp(1.75rem,4vw,2.5rem)] font-black leading-tight tracking-[-0.045em]">
+            <h1 className="font-heading text-[clamp(1.75rem,4vw,2.5rem)] font-normal leading-tight tracking-[-0.02em]">
               Verification Failed
             </h1>
             <p className="mx-auto max-w-sm text-sm font-medium leading-6 text-muted-foreground">

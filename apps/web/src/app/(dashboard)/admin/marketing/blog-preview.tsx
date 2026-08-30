@@ -51,7 +51,7 @@ export function BlogPreviewButton({ content }: BlogPreviewProps) {
                 return (
                   <h2
                     key={i}
-                    className="mt-5 mb-2 font-heading text-lg font-black tracking-[-0.03em] first:mt-0"
+                    className="mt-5 mb-2 font-heading text-lg font-normal tracking-[-0.02em] first:mt-0"
                   >
                     {trimmed.replace(/^## /, "")}
                   </h2>

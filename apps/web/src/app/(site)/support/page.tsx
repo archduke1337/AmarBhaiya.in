@@ -55,7 +55,7 @@ export default function SupportPage() {
           {channels.map((channel, index) => (
             <RetroPanel key={channel.title} tone={index % 2 === 0 ? "card" : "muted"} className="flex flex-col gap-3 p-6">
               <channel.icon className="size-5 text-accent" aria-hidden="true" />
-              <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">
+              <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">
                 {channel.title}
               </h2>
               <p className="text-sm font-medium leading-7 text-foreground/80">{channel.body}</p>
@@ -72,7 +72,7 @@ export default function SupportPage() {
 
       <section className="mx-auto max-w-6xl grid gap-4">
         <RetroPanel tone="secondary" className="space-y-3">
-          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">
+          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">
             Before you write
           </h2>
           <p className="text-sm font-medium leading-7 text-foreground/80">

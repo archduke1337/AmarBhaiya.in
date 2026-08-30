@@ -75,7 +75,7 @@ export default function PricingPage() {
             >
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">
+                  <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">
                     {tier.name}
                   </h2>
                   {tier.featured && <Sparkles className="size-4 text-accent" aria-hidden="true" />}
@@ -84,7 +84,7 @@ export default function PricingPage() {
               </div>
 
               <p className="flex items-baseline gap-2">
-                <span className="font-heading text-4xl font-black tracking-[-0.05em]">
+                <span className="font-heading text-4xl font-normal tracking-[-0.02em]">
                   {tier.price}
                 </span>
                 <span className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -109,7 +109,7 @@ export default function PricingPage() {
                 className={
                   tier.featured
                     ? "mt-auto inline-flex min-h-11 items-center justify-center rounded-[calc(var(--radius)+2px)] bg-accent px-4 text-sm font-bold text-accent-foreground transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-retro-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    : "mt-auto inline-flex min-h-11 items-center justify-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-background px-4 text-sm font-semibold text-foreground/80 transition-[box-shadow,transform,color] duration-200 hover:-translate-y-0.5 hover:text-foreground hover:shadow-retro-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    : "mt-auto inline-flex min-h-11 items-center justify-center rounded-[calc(var(--radius)+2px)] border border-border bg-background px-4 text-sm font-semibold text-foreground/80 transition-[box-shadow,transform,color] duration-200 hover:-translate-y-0.5 hover:text-foreground hover:shadow-[var(--surface-shadow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 }
               >
                 {tier.cta.label}
@@ -121,7 +121,7 @@ export default function PricingPage() {
 
       <section className="mx-auto max-w-6xl grid gap-4">
         <RetroPanel tone="muted" className="space-y-3">
-          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">Refunds and billing</h2>
+          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">Refunds and billing</h2>
           <p className="text-sm font-medium leading-7 text-foreground/80">
             Paid courses come with a clear refund window, and subscription renewals can be
             cancelled before the next cycle. See the{" "}

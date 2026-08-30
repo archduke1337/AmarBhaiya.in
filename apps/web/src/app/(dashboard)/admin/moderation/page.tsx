@@ -47,7 +47,7 @@ export default async function AdminModerationPage() {
         id="open-escalations"
         className="scroll-mt-24 flex flex-col gap-4"
       >
-        <h2 className="font-heading text-lg font-black tracking-[-0.03em]">Open Escalations</h2>
+        <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">Open Escalations</h2>
 
         {data.escalationItems.length === 0 ? (
           <EmptyState

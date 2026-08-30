@@ -82,7 +82,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
     return (
       <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 rounded-2xl border border-border/40 bg-surface py-14 text-center">
         <Lock className="size-10 text-muted-foreground" />
-        <h1 className="font-heading text-3xl font-black tracking-[-0.05em]">Lesson Locked</h1>
+        <h1 className="font-heading text-3xl font-normal tracking-[-0.02em]">Lesson Locked</h1>
         <p className="max-w-md text-sm font-medium leading-7 text-muted-foreground">
           This lesson sits inside a paid course. Enroll to access the full lesson sequence, downloadable resources, and discussion.
         </p>
@@ -323,7 +323,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
               </div>
 
               <div className="space-y-3">
-                <h1 className="font-heading text-3xl font-black tracking-[-0.05em] md:text-4xl">
+                <h1 className="font-heading text-3xl font-normal tracking-[-0.02em] md:text-4xl">
                   {String(lesson.title ?? "Lesson")}
                 </h1>
                 {typeof lesson.description === "string" && lesson.description.length > 0 ? (
@@ -343,7 +343,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
               </div>
 
               {lessonCompleted ? (
-                <span className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-accent)] px-4 text-xs font-semibold uppercase tracking-[0.14em] text-foreground shadow-retro-sm">
+                <span className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-accent)] px-4 text-xs font-semibold uppercase tracking-[0.14em] text-foreground shadow-retro-sm">
                   <CheckCircle className="size-4" />
                   Completed
                 </span>
@@ -356,7 +356,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                   </Button>
                 </form>
               ) : (
-                <span className="inline-flex min-h-11 w-fit items-center rounded-[calc(var(--radius)+2px)] border-2 border-border bg-[color:var(--surface-muted)] px-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground shadow-retro-sm">
+                <span className="inline-flex min-h-11 w-fit items-center rounded-[calc(var(--radius)+2px)] border border-border bg-[color:var(--surface-muted)] px-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground shadow-retro-sm">
                   Preview lesson
                 </span>
               )}
@@ -367,7 +367,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                 <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                   Progress
                 </p>
-                <p className="text-3xl font-heading font-black tracking-[-0.06em]">
+                <p className="text-3xl font-heading font-normal tracking-[-0.02em]">
                   {lessonCompleted ? "100%" : `${lessonPercentComplete}%`}
                 </p>
                 <p className="text-sm font-medium leading-6 text-foreground/75">
@@ -378,7 +378,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                 <p className="font-heading text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
                   Resources
                 </p>
-                <p className="text-3xl font-heading font-black tracking-[-0.06em]">
+                <p className="text-3xl font-heading font-normal tracking-[-0.02em]">
                   {lessonResourceItems.length}
                 </p>
                 <p className="text-sm font-medium leading-6 text-foreground/75">
@@ -406,7 +406,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
                         <Badge variant="outline">PDF preview</Badge>
-                        <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+                        <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                           {previewResource.title}
                         </h2>
                       </div>
@@ -417,7 +417,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                         </a>
                       </Button>
                     </div>
-                    <div className="overflow-hidden rounded-[calc(var(--radius)+4px)] border-2 border-border bg-white shadow-retro-sm">
+                    <div className="overflow-hidden rounded-[calc(var(--radius)+4px)] border border-border bg-white shadow-retro-sm">
                       <iframe
                         title={previewResource.title}
                         src={previewResource.href}
@@ -428,7 +428,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
                 ) : (
                   <div className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5">
                     <FileText className="size-5" />
-                    <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+                    <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                       Preview ke liye PDF attached nahi hai.
                     </h2>
                     <p className="text-sm font-medium leading-7 text-foreground/80">
@@ -440,7 +440,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
 
               <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
                 <div className="border-b-2 border-border px-5 py-4">
-                  <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+                  <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
                     Lesson resources ({lessonResourceItems.length})
                   </h2>
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -483,7 +483,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
           ) : (
             <div className="space-y-3 rounded-2xl border border-border/40 bg-surface p-5">
               <FileText className="size-6" />
-              <h2 className="font-heading text-2xl font-black tracking-[-0.04em]">
+              <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
                 Is lesson mein abhi notes attach nahi hue hain.
               </h2>
               <p className="max-w-2xl text-sm font-medium leading-7 text-foreground/80">
@@ -496,7 +496,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
         <TabsContent value="doubts" className="space-y-4">
           <div className="overflow-hidden rounded-2xl border border-border/40 bg-surface">
             <div className="border-b-2 border-border px-5 py-4">
-              <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+              <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
                 Lesson discussion ({comments.length})
               </h2>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -527,12 +527,12 @@ export default async function LessonViewerPage({ params }: PageProps) {
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <span className="text-xs font-semibold">{c.userName}</span>
                     {c.userRole !== "student" ? (
-                      <span className="border-2 border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span className="border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                         {c.userRole}
                       </span>
                     ) : null}
                     {c.isPinned ? (
-                      <span className="border-2 border-border bg-[color:var(--surface-secondary)] px-1.5 py-0.5 text-[10px] uppercase tracking-wider">
+                      <span className="border border-border bg-[color:var(--surface-secondary)] px-1.5 py-0.5 text-[10px] uppercase tracking-wider">
                         Pinned
                       </span>
                     ) : null}
@@ -559,7 +559,7 @@ export default async function LessonViewerPage({ params }: PageProps) {
             <div className="border-b-2 border-border px-5 py-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="size-4" />
-                <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+                <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
                   Course path ({allLessons.length})
                 </h2>
               </div>

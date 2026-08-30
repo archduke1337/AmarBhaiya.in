@@ -135,7 +135,7 @@ export default function PrivacyPage() {
       <section className="mx-auto max-w-6xl grid gap-4">
         {sections.map((section, index) => (
           <RetroPanel key={section.title} tone={index % 2 === 0 ? "card" : "muted"} className="space-y-3">
-            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">{section.title}</h2>
+            <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">{section.title}</h2>
             {section.body && <p className="text-sm font-medium leading-7 text-foreground/80">{section.body}</p>}
             {section.points && (
               <ul className="grid gap-2 list-disc pl-5" role="list">
@@ -152,7 +152,7 @@ export default function PrivacyPage() {
 
       <section className="mx-auto max-w-6xl">
         <RetroPanel tone="accent" className="space-y-3">
-          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-black tracking-[-0.04em]">Contact & grievance</h2>
+          <h2 className="font-heading text-[clamp(1.35rem,3vw,2rem)] font-normal tracking-[-0.02em]">Contact & grievance</h2>
           <p className="text-sm font-medium leading-7 text-foreground/80">
             Questions or requests (access/correction/deletion/withdrawal)? Email the grievance officer listed on{" "}
             <Link href="/grievance-redressal" className="font-bold text-accent hover:underline">grievance-redressal</Link> or use{" "}

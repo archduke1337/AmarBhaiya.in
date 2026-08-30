@@ -34,7 +34,7 @@ export function QuizForm({
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex flex-col gap-1.5">
-        <h1 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-black leading-tight tracking-[-0.04em]">{quizTitle}</h1>
+        <h1 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-normal leading-tight tracking-[-0.02em]">{quizTitle}</h1>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-muted-foreground">
           <span>{questions.length} questions</span>
           <span>Pass mark: {passMark}%</span>
@@ -65,7 +65,7 @@ export function QuizForm({
             <legend id={`question-${q.id}`} className="px-1 text-xs font-black uppercase tracking-[0.1em] text-muted-foreground">
               Question {i + 1}
             </legend>
-            <p className="font-heading text-base font-black leading-6 tracking-[-0.02em]" aria-hidden="true">{q.text}</p>
+            <p className="font-heading text-base font-normal leading-6 tracking-[-0.01em]" aria-hidden="true">{q.text}</p>
 
             {q.type === "true_false" ? (
               <div className="flex gap-4" role="group" aria-labelledby={`question-${q.id}`}>
@@ -153,12 +153,12 @@ export function QuizResult({
         )}
       </div>
 
-      <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-black leading-tight tracking-[-0.04em]">
+      <h2 className="font-heading text-[clamp(1.5rem,4vw,2.25rem)] font-normal leading-tight tracking-[-0.02em]">
         {passed ? "Congratulations!" : "Not quite there"}
       </h2>
 
       <div className="space-y-1">
-        <p className="font-heading text-5xl font-black tabular-nums tracking-[-0.05em]">{score}%</p>
+        <p className="font-heading text-5xl font-normal tabular-nums tracking-[-0.02em]">{score}%</p>
         <p className="text-sm font-medium leading-6 text-muted-foreground">
           {passed
             ? `You passed! (Pass mark: ${passMark}%)`

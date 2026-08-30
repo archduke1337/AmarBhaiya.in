@@ -93,7 +93,7 @@ export default async function AdminCategoriesPage() {
             <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
               Category List
             </p>
-            <h2 className="font-heading text-lg font-black tracking-[-0.03em]">
+            <h2 className="font-heading text-lg font-normal tracking-[-0.02em]">
               Existing Categories ({categories.length})
             </h2>
           </div>

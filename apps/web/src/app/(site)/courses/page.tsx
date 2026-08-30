@@ -196,13 +196,13 @@ export default async function CoursesPage({
               <p className="site-kicker font-sans">
                 Courses live
               </p>
-              <p className="font-heading text-4xl font-black tracking-[-0.08em]">{filteredCourses.length}</p>
+              <p className="font-heading text-4xl font-normal tracking-[-0.02em]">{filteredCourses.length}</p>
             </RetroPanel>
             <RetroPanel tone="accent" className="space-y-2">
               <p className="site-kicker font-sans">
                 Categories
               </p>
-              <p className="font-heading text-4xl font-black tracking-[-0.08em]">{categories.length}</p>
+              <p className="font-heading text-4xl font-normal tracking-[-0.02em]">{categories.length}</p>
             </RetroPanel>
           </div>
           <RetroPanel tone="card" className="space-y-3">
@@ -241,7 +241,7 @@ export default async function CoursesPage({
                 name="track"
                 aria-label="Filter by course track"
                 defaultValue={track}
-                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
               >
                 <option value="all">All tracks</option>
                 {trackOptions.map((item) => (
@@ -263,7 +263,7 @@ export default async function CoursesPage({
                 name="class"
                 aria-label="Filter by class"
                 defaultValue={classFilter}
-                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
               >
                 <option value="all">All classes</option>
                 {classOptions.map((item) => (
@@ -281,7 +281,7 @@ export default async function CoursesPage({
                 name="sort"
                 aria-label="Sort courses"
                 defaultValue={sort}
-                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                className="h-11 w-full rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3.5 text-sm font-semibold text-foreground shadow-retro-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
               >
                 <option value="popular">Sort by popular</option>
                 <option value="newest">Sort by newest</option>
@@ -315,7 +315,7 @@ export default async function CoursesPage({
             <p className="site-kicker font-sans">
               New here?
             </p>
-            <h2 className="font-heading text-2xl font-black tracking-[-0.05em]">
+            <h2 className="font-heading text-2xl font-normal tracking-[-0.02em]">
               Start with notes if you want quick clarity before choosing a full course.
             </h2>
             <p className="text-sm font-medium leading-7 text-foreground/80">
@@ -380,11 +380,11 @@ export default async function CoursesPage({
                 width={1280}
                 height={720}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="aspect-video w-full rounded-[calc(var(--radius)+4px)] border-2 border-border object-cover shadow-retro-sm"
+                className="aspect-video w-full rounded-[calc(var(--radius)+4px)] border border-border object-cover shadow-retro-sm"
                 loading="lazy"
               />
             ) : (
-              <div className="flex aspect-video w-full items-center justify-center rounded-[calc(var(--radius)+4px)] border-2 border-border bg-muted/40 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground shadow-retro-sm">
+              <div className="flex aspect-video w-full items-center justify-center rounded-[calc(var(--radius)+4px)] border border-border bg-muted/40 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground shadow-retro-sm">
                 No thumbnail
               </div>
             )}
@@ -399,7 +399,7 @@ export default async function CoursesPage({
             </div>
 
             <div className="space-y-2">
-              <h2 className="font-heading text-3xl leading-[0.96] font-black tracking-[-0.05em]">
+              <h2 className="font-heading text-3xl leading-[1.05] font-normal tracking-[-0.02em]">
                 {course.title}
               </h2>
               <p className="text-sm font-medium leading-7 text-foreground/80">
@@ -408,19 +408,19 @@ export default async function CoursesPage({
             </div>
 
             <div className="grid grid-cols-3 gap-3 text-sm">
-              <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3 py-3 shadow-retro-sm">
+              <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3 py-3 shadow-retro-sm">
                 <p className="mb-1 font-heading text-[0.65rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
                   Lessons
                 </p>
                 <p className="font-bold">{course.totalLessons}</p>
               </div>
-              <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3 py-3 shadow-retro-sm">
+              <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3 py-3 shadow-retro-sm">
                 <p className="mb-1 font-heading text-[0.65rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
                   Hours
                 </p>
                 <p className="font-bold">{course.totalDurationHours}</p>
               </div>
-              <div className="rounded-[calc(var(--radius)+2px)] border-2 border-border bg-card px-3 py-3 shadow-retro-sm">
+              <div className="rounded-[calc(var(--radius)+2px)] border border-border bg-card px-3 py-3 shadow-retro-sm">
                 <p className="mb-1 font-heading text-[0.65rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
                   Rating
                 </p>

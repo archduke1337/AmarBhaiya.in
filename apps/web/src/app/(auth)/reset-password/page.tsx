@@ -16,7 +16,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
     return (
       <div className="w-full flex flex-col gap-6 animate-fade-in-up">
         <div className="mb-2 text-center">
-          <h2 className="text-[clamp(2rem,4vw,3rem)] font-black tracking-[-0.03em] leading-none mb-3">
+          <h2 className="text-[clamp(2rem,4vw,3rem)] font-normal tracking-[-0.02em] leading-[1.05] mb-3">
             Invalid Link
           </h2>
           <p className="text-foreground/60 text-base font-medium">

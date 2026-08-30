@@ -12,7 +12,7 @@ export default function NotFound() {
         <p className="eyebrow self-start">Error 404</p>
 
         <div className="space-y-3">
-          <h1 className="max-w-[16ch] font-heading text-[clamp(2rem,5vw,3.5rem)] font-black leading-tight tracking-[-0.05em]">This page does not exist anymore.</h1>
+          <h1 className="max-w-[16ch] font-heading text-[clamp(2rem,5vw,3.5rem)] font-normal leading-[1.06] tracking-[-0.02em]">This page does not exist anymore.</h1>
           <p className="text-sm md:text-base text-muted-foreground max-w-2xl leading-relaxed">
             The link may be outdated, the route may have changed, or the resource was removed.
             Use one of the safe paths below to continue.

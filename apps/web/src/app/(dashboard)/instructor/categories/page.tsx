@@ -18,7 +18,7 @@ export default async function InstructorCategoriesPage() {
       />
 
       <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
-        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Add a category</h2>
+        <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">Add a category</h2>
         <p className="text-sm text-muted-foreground">
           Create and refine categories here so your courses are mapped correctly in discovery.
         </p>
@@ -77,7 +77,7 @@ export default async function InstructorCategoriesPage() {
       </section>
 
       <section className="bg-surface border border-border/40 rounded-2xl p-6 space-y-4">
-        <h2 className="font-heading text-xl font-black tracking-[-0.03em]">Edit categories</h2>
+        <h2 className="font-heading text-xl font-normal tracking-[-0.02em]">Edit categories</h2>
         {categories.length === 0 ? (
           <p className="text-sm text-muted-foreground">No categories found yet.</p>
         ) : null}

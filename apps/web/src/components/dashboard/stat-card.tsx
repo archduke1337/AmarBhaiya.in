@@ -45,7 +45,7 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <div className={cn("relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border border-border/40 bg-surface p-5 shadow-[var(--surface-shadow)] transition-transform duration-200 hover:-translate-y-0.5", className)}>
+    <div className={cn("relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border border-border/40 bg-surface p-5 shadow-[var(--surface-shadow)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_oklch(0_0_0/0.12)]", className)}>
       <div className="flex items-center justify-between">
         <p className="font-semibold text-sm text-foreground/60">{label}</p>
         {Icon && (
@@ -55,7 +55,7 @@ export function StatCard({
         )}
       </div>
       <div className="flex items-baseline gap-2 mt-1">
-        <p className="font-heading text-3xl font-black leading-none tracking-[-0.04em]">{value}</p>
+        <p className="font-heading text-3xl font-normal leading-none tracking-[-0.02em]">{value}</p>
       </div>
       {(description || trend) && (
         <div className="flex items-center gap-2 mt-auto pt-2">
@@ -72,7 +72,7 @@ export function StatCard({
             </span>
           )}
           {description && (
-            <p className="min-w-0 text-xs font-medium leading-5 text-foreground/50">
+            <p className="min-w-0 text-xs font-medium leading-5 text-foreground/60">
               {description}
             </p>
           )}

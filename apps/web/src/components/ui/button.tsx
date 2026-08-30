@@ -5,22 +5,22 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-[calc(var(--radius)+2px)] border-2 border-border font-sans text-[0.8rem] font-bold whitespace-nowrap tracking-[0.02em] text-center cursor-pointer transition-all duration-150 select-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/30 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-[calc(var(--radius)+2px)] border font-sans text-[0.8rem] font-bold whitespace-nowrap tracking-[0.02em] text-center cursor-pointer transition-[background-color,border-color,box-shadow,color,transform] duration-150 select-none outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/30 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-retro hover:bg-[color:var(--primary-hover)]",
+          "border-transparent bg-primary text-primary-foreground shadow-retro-sm hover:bg-[color:var(--primary-hover)]",
         outline:
-          "bg-[color:var(--surface-card)] text-card-foreground shadow-retro-sm hover:bg-[color:var(--surface-accent)] aria-expanded:bg-[color:var(--surface-accent)]",
+          "border-border bg-[color:var(--surface-card)] text-card-foreground shadow-retro-sm hover:bg-[color:var(--surface-accent)] aria-expanded:bg-[color:var(--surface-accent)]",
         secondary:
-          "bg-[color:var(--surface-secondary)] text-foreground shadow-retro hover:bg-secondary aria-expanded:bg-secondary",
+          "border-transparent bg-[color:var(--surface-secondary)] text-foreground shadow-retro-sm hover:bg-secondary aria-expanded:bg-secondary",
         ghost:
-          "bg-[color:var(--surface-accent)] text-accent-foreground shadow-retro-sm hover:bg-[color:var(--surface-muted)] aria-expanded:bg-[color:var(--surface-muted)]",
+          "border-transparent bg-transparent text-foreground/75 hover:bg-[color:var(--surface-accent)] hover:text-foreground aria-expanded:bg-[color:var(--surface-muted)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-retro hover:bg-[color-mix(in_oklab,var(--destructive)_92%,black_8%)] focus-visible:ring-destructive/40",
+          "border-transparent bg-destructive text-destructive-foreground shadow-retro-sm hover:bg-[color-mix(in_oklab,var(--destructive)_92%,black_8%)] focus-visible:ring-destructive/40",
         link:
-          "h-auto rounded-none border-0 bg-transparent px-0 font-sans text-sm font-semibold text-foreground underline decoration-2 underline-offset-4 shadow-none hover:translate-x-0 hover:translate-y-0 hover:text-primary hover:shadow-none active:translate-x-0 active:translate-y-0",
+          "h-auto rounded-none border-0 bg-transparent px-0 font-sans text-sm font-semibold text-foreground underline decoration-2 underline-offset-4 shadow-none hover:text-primary",
       },
       size: {
         default:

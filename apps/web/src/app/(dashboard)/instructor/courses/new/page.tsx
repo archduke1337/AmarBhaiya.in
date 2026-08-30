@@ -20,7 +20,7 @@ export default async function InstructorNewCoursePage() {
         className="overflow-hidden rounded-2xl border border-border/40 bg-surface"
       >
         <div className="border-b border-border/40 bg-surface-hover px-5 py-4">
-          <h2 className="font-heading text-base font-black tracking-[-0.03em]">
+          <h2 className="font-heading text-base font-normal tracking-[-0.02em]">
             Course Details
           </h2>
           <p className="mt-1 text-xs font-semibold text-muted-foreground">
