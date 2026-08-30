@@ -76,10 +76,11 @@ export function FormSubmitButton({
     <button
       {...props}
       disabled={disabled || isPending}
-      className="inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      aria-busy={isPending || undefined}
+      className={`inline-flex min-h-11 items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50 ${props.className ?? ""}`}
     >
       {isPending && (
-        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        <span className="inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
       )}
       {children}
     </button>

@@ -45,16 +45,16 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <div className={cn("relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border border-border/40 bg-surface p-5 shadow-[var(--surface-shadow)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_oklch(0_0_0/0.12)]", className)}>
+    <div className={cn("relative flex min-h-32 min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border border-border/50 bg-surface p-5 shadow-[var(--surface-shadow)] transition-[box-shadow,border-color] duration-200 hover:border-border hover:shadow-[var(--overlay-shadow)]", className)}>
       <div className="flex items-center justify-between">
-        <p className="font-semibold text-sm text-foreground/60">{label}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/60">{label}</p>
         {Icon && (
-          <div className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-accent">
+          <div className="flex size-9 items-center justify-center rounded-xl border border-border/50 bg-surface-hover text-accent">
             <Icon className="size-4" />
           </div>
         )}
       </div>
-      <div className="flex items-baseline gap-2 mt-1">
+      <div className="mt-auto flex items-baseline gap-2">
         <p className="font-heading text-3xl font-normal leading-none tracking-[-0.02em]">{value}</p>
       </div>
       {(description || trend) && (
@@ -62,7 +62,7 @@ export function StatCard({
           {trend && (
             <span
               className={cn(
-                "inline-flex items-center text-xs font-bold px-1.5 py-0.5 rounded-md",
+                "inline-flex items-center rounded-full px-2 py-1 text-xs font-bold",
                 trend.direction === "up" && "bg-success/10 text-success",
                 trend.direction === "down" && "bg-danger/10 text-danger",
                 trend.direction === "neutral" && "bg-surface-hover text-foreground/70"

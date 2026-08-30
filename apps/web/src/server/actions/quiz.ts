@@ -139,7 +139,7 @@ export async function addQuizQuestionAction(
 
   const quizId = String(formData.get("quizId") ?? "");
   const text = String(formData.get("text") ?? "").trim();
-  const type = String(formData.get("type") ?? "mcq");
+  const type = String(formData.get("type") ?? "mcq").trim().toLowerCase();
   const correctAnswer = String(formData.get("correctAnswer") ?? "").trim();
 
   const optionsRaw = String(formData.get("options") ?? "");
@@ -153,6 +153,15 @@ export async function addQuizQuestionAction(
 
   if (!quizId || !text || !correctAnswer) {
     return actionError("Quiz ID, question text, and correct answer are required.");
+  }
+  if (!["mcq", "true_false", "short_answer"].includes(type)) {
+    return actionError("Unsupported question type.");
+  }
+  if (type === "mcq" && options.length < 2) {
+    return actionError("Multiple-choice questions need at least two options.");
+  }
+  if (type === "mcq" && !options.some((option) => option.toLowerCase() === correctAnswer.toLowerCase())) {
+    return actionError("The correct answer must match one of the options.");
   }
 
   try {

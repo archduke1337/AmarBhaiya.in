@@ -90,8 +90,8 @@ export async function POST(request: Request) {
     }
 
     if (
-      typeof existingPayment?.userId === "string" &&
-      existingPayment.userId.length > 0 &&
+      typeof existingPayment.userId !== "string" ||
+      existingPayment.userId.length === 0 ||
       existingPayment.userId !== user.$id
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -106,16 +106,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (typeof existingPayment.courseId !== "string" || !existingPayment.courseId) {
+      return NextResponse.json({ error: "Payment course is missing." }, { status: 409 });
+    }
+
     const result = await reconcileCoursePayment({
       tablesDB,
       providerRef: parsed.data.orderId,
       providerPaymentId: parsed.data.paymentId,
       status: "completed",
       userId: user.$id,
-      courseId:
-        (typeof existingPayment.courseId === "string" && existingPayment.courseId.length > 0
-          ? existingPayment.courseId
-          : null) ?? null,
+      courseId: existingPayment.courseId,
       amount: typeof existingPayment?.amount === "number" ? existingPayment.amount : null,
       currency:
         typeof existingPayment?.currency === "string" && existingPayment.currency.length > 0

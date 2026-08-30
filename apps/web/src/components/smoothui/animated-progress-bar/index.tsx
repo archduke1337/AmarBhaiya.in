@@ -47,15 +47,16 @@ export default function AnimatedProgressBar({
           {label}
         </div>
       ) : null}
-      <div className="relative h-3 w-full overflow-hidden rounded border bg-background">
+      <div className="relative h-2.5 w-full overflow-hidden rounded-full border border-border/60 bg-background/80">
         <motion.div
           animate={{
-            width: `${Math.max(MIN_PROGRESS_VALUE, Math.min(MAX_PROGRESS_VALUE, value))}%`,
+            scaleX: Math.max(MIN_PROGRESS_VALUE, Math.min(MAX_PROGRESS_VALUE, value)) / MAX_PROGRESS_VALUE,
           }}
-          className={`h-full rounded bg-accent ${barClassName}`}
-          initial={{ width: MIN_PROGRESS_VALUE }}
+          className={`h-full origin-left rounded bg-accent ${barClassName}`}
+          initial={{ scaleX: MIN_PROGRESS_VALUE }}
           style={{ backgroundColor: color }}
           transition={shouldReduceMotion ? { duration: 0 } : SPRING}
+          aria-hidden="true"
         />
       </div>
     </div>

@@ -12,6 +12,7 @@ export interface AnimatedTabsProps {
   onChange?: (tabId: string) => void;
   tabs: { id: string; label: string; icon?: ReactNode }[];
   variant?: "underline" | "pill" | "segment";
+  panelId?: string;
 }
 
 const SPRING = {
@@ -27,11 +28,13 @@ export default function AnimatedTabs({
   onChange,
   variant = "underline",
   layoutId: customLayoutId,
+  panelId,
   className,
 }: AnimatedTabsProps) {
   const shouldReduceMotion = useReducedMotion();
   const generatedId = useId();
   const layoutId = customLayoutId ?? `animated-tabs-${generatedId}`;
+  const tablistLabel = "Content tabs";
 
   const [internalActiveTab, setInternalActiveTab] = useState(
     defaultTab ?? tabs[0]?.id ?? ""
@@ -125,7 +128,7 @@ export default function AnimatedTabs({
 
   return (
     <div
-      aria-label="Content tabs"
+      aria-label={tablistLabel}
       className={cn(baseContainerStyles, className)}
       role="tablist"
     >
@@ -134,6 +137,7 @@ export default function AnimatedTabs({
 
         return (
           <button
+            aria-controls={panelId ? `${panelId}-${tab.id}` : undefined}
             aria-selected={isActive}
             className={getTabStyles(isActive)}
             id={`${layoutId}-tab-${tab.id}`}

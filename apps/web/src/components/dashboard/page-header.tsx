@@ -17,7 +17,7 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-5 border-b border-border/40 pb-6 md:flex-row md:items-end md:justify-between", className)}>
       <div className="flex min-w-0 flex-col gap-2">
         {eyebrow && (
           <p className="eyebrow self-start">
@@ -34,7 +34,7 @@ export function PageHeader({
         )}
       </div>
       {actions && (
-        <div className="flex w-full shrink-0 flex-wrap items-center gap-2 mt-2 md:mt-0 md:w-auto">
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-2 md:mt-0 md:w-auto">
           {actions}
         </div>
       )}

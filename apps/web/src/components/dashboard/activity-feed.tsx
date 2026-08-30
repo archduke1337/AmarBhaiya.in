@@ -23,13 +23,13 @@ export function ActivityFeed({
   viewAllHref,
 }: ActivityFeedProps) {
   return (
-    <div className="relative flex flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface shadow-[var(--surface-shadow)]">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border/30 bg-surface/50">
+    <div className="relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-[var(--surface-shadow)]">
+      <div className="flex items-center justify-between gap-3 border-b border-border/40 bg-surface/50 px-5 py-4">
         <h3 className="font-heading text-base font-normal tracking-[-0.01em]">{title}</h3>
         {viewAllHref && (
           <Link
             href={viewAllHref}
-            className="inline-flex min-h-9 shrink-0 items-center text-xs font-bold uppercase tracking-[0.1em] text-accent hover:text-accent-foreground transition-colors"
+            className="inline-flex min-h-9 shrink-0 items-center text-xs font-bold uppercase tracking-[0.1em] text-accent transition-colors hover:text-foreground"
           >
             View All
           </Link>
@@ -74,7 +74,7 @@ export function ActivityFeed({
                   <Link
                     key={item.id}
                     href={item.href}
-                    className="group block min-h-20 px-5 py-4 transition-colors hover:bg-surface-hover"
+                    className="group block min-h-20 px-5 py-4 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover"
                   >
                     {content}
                   </Link>

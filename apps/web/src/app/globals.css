@@ -492,7 +492,7 @@
   /* Animate reveal — scroll entry */
   .reveal {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(12px);
     transition:
       opacity 0.28s var(--ease-out-fluid),
       transform 0.28s var(--ease-out-fluid);
@@ -548,6 +548,7 @@
   .retro-surface {
     background: var(--surface-card);
     border: 1px solid var(--border);
+    border-radius: 1rem;
     box-shadow: var(--surface-shadow);
   }
 }

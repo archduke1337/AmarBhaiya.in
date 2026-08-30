@@ -123,7 +123,9 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
     return false;
   }
   const prefixes = item.matchPrefixes ?? [item.href];
-  return prefixes.some((prefix) => pathname.startsWith(`${prefix}/`));
+  return prefixes.some(
+    (prefix) => pathname.startsWith(`${prefix}/`) || pathname.startsWith(`${prefix}?`) || pathname.startsWith(`${prefix}#`)
+  );
 }
 
 export function getBottomTabItems(role: Role, userId: string) {

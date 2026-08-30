@@ -24,7 +24,7 @@ export function Sidebar({ role, userId }: SidebarProps) {
   const navItems = getNavItems(role, userId);
 
   return (
-    <aside className="hidden h-full border-r border-border/40 bg-surface md:sticky md:top-0 md:flex md:h-screen md:flex-col overflow-y-auto">
+    <aside className="hidden h-full border-r border-border/50 bg-surface md:sticky md:top-0 md:flex md:h-screen md:flex-col md:overflow-y-auto">
       <div className="flex flex-col gap-1 border-b border-border/30 p-4 text-foreground xl:px-6 xl:py-6">
         <div className="flex items-center gap-2">
            <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }} aria-hidden="true">
@@ -46,16 +46,15 @@ export function Sidebar({ role, userId }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-200 md:justify-center md:w-11 xl:h-auto xl:w-auto xl:justify-start",
+                "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors duration-200 md:w-11 md:justify-center xl:h-auto xl:w-auto xl:justify-start",
                 isActive
-                  ? "bg-accent/10 text-accent"
-                  : "text-foreground/60 hover:text-foreground/90 hover:bg-surface-hover hover:scale-[0.98]"
+                  ? "bg-accent/10 text-accent"                    : "text-foreground/60 hover:bg-surface-hover hover:text-foreground/90"
               )}
               title={item.label}
             >
               <Icon
                 className={cn(
-                  "size-5 transition-transform duration-300 flex-shrink-0",
+                  "size-5 shrink-0 transition-transform duration-200",
                   isActive && "scale-110"
                 )}
                 strokeWidth={isActive ? 2.5 : 2}

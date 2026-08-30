@@ -121,6 +121,10 @@ export async function userHasCourseAccess({
     return false;
   }
 
+  if (course.isPublished === false) {
+    return false;
+  }
+
   let lesson: AnyRow | null = null;
   if (lessonId) {
     lesson = await getLessonRow(lessonId);
@@ -149,10 +153,6 @@ export async function userHasCourseAccess({
     }
   } catch {
     // Continue to public-access checks below.
-  }
-
-  if (course.isPublished === false) {
-    return false;
   }
 
   if (String(course.accessModel ?? "free") === "free") {
