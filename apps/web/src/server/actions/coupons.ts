@@ -19,8 +19,29 @@ const createCouponSchema = z.object({
   value: z.coerce.number().positive("Value must be positive.").max(1000000),
   maxUses: z.coerce.number().int().min(1).default(100),
   expiresAt: z.string().optional(),
-}).refine((data) => data.courseId || data.resourceId, {
-  message: "Either course or resource must be specified.",
+}).refine((data) => Boolean(data.courseId) !== Boolean(data.resourceId), {
+  message: "Choose exactly one course or resource.",
+}).superRefine((data, ctx) => {
+  if (data.type === "percent" && data.value > 100) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.too_big,
+      maximum: 100,
+      origin: "number",
+      inclusive: true,
+      path: ["value"],
+      message: "Percentage discounts cannot exceed 100%.",
+    });
+  }
+  if (data.expiresAt) {
+    const expiry = new Date(data.expiresAt);
+    if (Number.isNaN(expiry.getTime()) || expiry <= new Date()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["expiresAt"],
+        message: "Expiry must be a future date.",
+      });
+    }
+  }
 });
 
 // ── Helper ──────────────────────────────────────────────────────────────────

@@ -1,9 +1,9 @@
 # AmarBhaiya.in — Comprehensive Codebase Audit Report
 
-**Date:** July 12, 2026
+**Original audit date:** July 12, 2026
 **Analyst:** MiMoCode Deep Analysis
 **Scope:** Full codebase analysis — architecture, security, UI/UX, actions, Appwrite, SEO, performance, code quality
-**Files Analyzed:** 150+ source files across `src/`, config, CI/CD, and build tooling
+**Files Analyzed:** Historical audit scope; see `docs/REPOSITORY-MAP.md` for the current tracked-file inventory.
 
 ---
 
@@ -13,7 +13,7 @@ This report contains the original audit findings plus the remediation status bel
 
 AmarBhaiya.in is a **Next.js 16 + Appwrite** edtech platform serving Class 6-12 students. It has 4 user roles (admin, instructor, moderator, student), ~90 server actions, 25+ API routes, and a well-structured route group architecture. The codebase is **notably clean** — zero console.log artifacts, genuine Hinglish copywriting (not AI slop), and solid security foundations. However, it has **significant structural issues** that need addressing before scaling.
 
-**Overall Health: 6.5/10**
+**Overall Health: 8/10 (current snapshot)**
 
 | Category | Score | Key Issue |
 |----------|-------|-----------|

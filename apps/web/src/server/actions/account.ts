@@ -145,7 +145,7 @@ export async function changePasswordAction(
 
   const currentPassword = String(formData.get("currentPassword") ?? "");
   const newPassword = String(formData.get("newPassword") ?? "");
-  const confirmPassword = String(formData.get("confirmPassword") ?? "").trim();
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const parsedPassword = passwordSchema.safeParse(newPassword);
 
   if (!currentPassword) {

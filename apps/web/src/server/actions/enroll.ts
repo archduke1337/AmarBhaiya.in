@@ -95,7 +95,31 @@ async function findOrCreateEnrollment(
   } catch (error) {
     const appwriteError = error as { code?: number };
     if (appwriteError?.code === 409) {
-      return { status: "created" };
+      const conflicted = await tablesDB.listRows({
+        databaseId: APPWRITE_CONFIG.databaseId,
+        tableId: APPWRITE_CONFIG.tables.enrollments,
+        queries: [
+          Query.equal("courseId", [courseId]),
+          Query.equal("userId", [userId]),
+          Query.limit(1),
+        ],
+      }).catch(() => null);
+
+      const conflictedRow = (conflicted?.rows[0] as AnyRow | undefined) ?? null;
+      if (conflictedRow && isActiveEnrollmentRow(conflictedRow)) {
+        return { status: "already_active", enrollment: conflictedRow };
+      }
+      if (conflictedRow) {
+        const nextStatus = String(conflictedRow.status ?? "active") === "completed" ? "completed" : "active";
+        await tablesDB.updateRow({
+          databaseId: APPWRITE_CONFIG.databaseId,
+          tableId: APPWRITE_CONFIG.tables.enrollments,
+          rowId: conflictedRow.$id,
+          data: { isActive: true, status: nextStatus, accessModel: "free", paymentId: "" },
+        });
+        return { status: "reactivated", enrollment: conflictedRow };
+      }
+      return { status: "error", message: "Enrollment could not be confirmed. Please try again." };
     }
     return { status: "error", message: error instanceof Error ? error.message : "Failed to create enrollment" };
   }
